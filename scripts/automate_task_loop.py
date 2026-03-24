@@ -48,6 +48,8 @@ def reset_active() -> dict[str, Any]:
         "allowlist": [],
         "failure_summary": None,
         "notes": [],
+        "target_repo": None,
+        "target_kind": None,
     }
 
 
@@ -90,6 +92,14 @@ def write_summary(run_dir: Path, payload: dict[str, Any]) -> None:
     (run_dir / SUMMARY_FILE).write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def print_result(label: str, summary: str, next_action: str | None = None, extra: str | None = None) -> None:
+    print(f"{label} {summary}")
+    if extra:
+        print(extra)
+    if next_action:
+        print(f"Next action: {next_action}")
+
+
 def render_template(template: str | None, context: dict[str, str]) -> str | None:
     if template is None:
         return None
@@ -106,7 +116,7 @@ def task_targets_builder_repo(task: dict[str, Any], active: dict[str, Any]) -> b
 
 
 def persist_paused_state(active: dict[str, Any], status: dict[str, Any], note: str) -> None:
-    active["state"] = "implementing"
+    active["state"] = "paused"
     if not active.get("handed_to_codex_at"):
         active["handed_to_codex_at"] = now_iso()
     notes = list(active.get("notes", []))
@@ -115,6 +125,24 @@ def persist_paused_state(active: dict[str, Any], status: dict[str, Any], note: s
     active["notes"] = notes
     status["state"] = "implementing"
     status["active_task_id"] = active["task_id"]
+    status["last_run_at"] = now_iso()
+    write_data(ACTIVE, active)
+    write_data(STATUS, status)
+
+
+def persist_failure_state(
+    active: dict[str, Any],
+    status: dict[str, Any],
+    *,
+    blocked: bool,
+    summary: str,
+) -> None:
+    active["state"] = "failed"
+    active["failure_summary"] = summary
+    status["state"] = "blocked" if blocked else "retry_ready"
+    status["active_task_id"] = active.get("task_id")
+    status["last_task_id"] = active.get("task_id")
+    status["last_result"] = "blocked" if blocked else "refined"
     status["last_run_at"] = now_iso()
     write_data(ACTIVE, active)
     write_data(STATUS, status)
@@ -188,13 +216,29 @@ def run_argv(argv: list[str], cwd: Path, timeout: int | None = None) -> dict[str
         }
 
 
-def git_status_porcelain(repo: Path) -> dict[str, Any]:
+def ignored_git_paths_for_target(target_kind: str) -> tuple[str, ...]:
+    if target_kind != "builder":
+        return ()
+    return (
+        "active_task.yml",
+        "status.yml",
+        "builder_memory.md",
+        "task_history/",
+        "blockers/",
+        "run_logs/",
+    )
+
+
+def git_status_porcelain(repo: Path, *, ignored_prefixes: tuple[str, ...] = ()) -> dict[str, Any]:
     result = run_argv(["git", "status", "--porcelain"], repo)
     files: list[str] = []
     for line in result.get("stdout", "").splitlines():
         if not line.strip():
             continue
-        files.append(line[3:] if len(line) > 3 else line)
+        path = line[3:] if len(line) > 3 else line
+        if any(path == prefix or path.startswith(prefix) for prefix in ignored_prefixes):
+            continue
+        files.append(path)
     result["files"] = files
     return result
 
@@ -262,6 +306,33 @@ def open_blocker(task: dict[str, Any], summary: str, evidence: list[str]) -> Pat
     return path
 
 
+def validate_active_task_context(
+    active: dict[str, Any],
+    status: dict[str, Any],
+    task: dict[str, Any] | None,
+    *,
+    resume: bool,
+) -> tuple[str, str, str | None] | None:
+    if not active.get("task_id"):
+        return ("NO_ACTIVE_TASK", "No active task is currently loaded.", "Restore or select a task packet before rerunning automation.")
+    if task is None:
+        return ("INVALID_ACTIVE_TASK_STATE", f"Active task {active.get('task_id')} is missing from backlog.", "Repair backlog/active_task alignment before rerunning automation.")
+    if not active.get("run_log_dir"):
+        return ("INVALID_ACTIVE_TASK_STATE", "Active task is missing run_log_dir.", "Restore the active task from its existing run log before rerunning automation.")
+    if not active.get("prompt_file"):
+        return ("MISSING_PACKET", "Active task is missing prompt_file.", "Restore or rerender the packet before rerunning automation.")
+    prompt_file = Path(active["prompt_file"]).expanduser().resolve()
+    if not prompt_file.exists():
+        return ("MISSING_PACKET", f"Prompt file does not exist: {prompt_file}", "Restore or rerender the packet before rerunning automation.")
+    if resume and active.get("state") not in {"paused", "implementing"}:
+        return ("INVALID_ACTIVE_TASK_STATE", f"Cannot resume from active state '{active.get('state')}'.", "Run python3 scripts/automate_task_loop.py directly, or restore the paused task state first.")
+    if resume and active.get("state") == "implementing" and not active.get("handed_to_codex_at"):
+        return ("STALE_IMPLEMENTING_STATE", "Active task is implementing but has no recorded handoff time.", "Re-run python3 scripts/automate_task_loop.py to record a fresh pause/handoff before using --resume.")
+    if status.get("state") == "blocked" and status.get("active_task_id") is None:
+        return ("INVALID_ACTIVE_TASK_STATE", "Global status is blocked but no active task is attached.", "Restore the intended active task before rerunning automation.")
+    return None
+
+
 def classify_and_update_state(
     classification: str,
     summary: str,
@@ -291,29 +362,17 @@ def classify_and_update_state(
         task["retries_used"] = int(task.get("retries_used", 0)) + 1
         task["status"] = "retry_ready"
         task.setdefault("notes", []).append(summary)
-        active["state"] = "failed"
-        active["failure_summary"] = summary
-        status["state"] = "retry_ready"
-        status["last_task_id"] = task["id"]
-        status["active_task_id"] = task["id"]
-        status["last_result"] = "refined"
-        status["last_run_at"] = now_iso()
         status["stats"]["retry_ready_tasks"] = int(status["stats"].get("retry_ready_tasks", 0)) + 1
         append_memory(f"{task['id']} refined by automated loop. History: {history_path.name}")
-        write_data(ACTIVE, active)
+        persist_failure_state(active, status, blocked=False, summary=summary)
         return
 
     task["status"] = "blocked"
     task.setdefault("notes", []).append(summary)
     blocker_path = open_blocker(task, summary, automation_result.get("blocker_evidence", []))
-    status["state"] = "blocked"
-    status["last_task_id"] = task["id"]
-    status["active_task_id"] = None
-    status["last_result"] = "blocked"
-    status["last_run_at"] = now_iso()
     status["stats"]["blocked_tasks"] = int(status["stats"].get("blocked_tasks", 0)) + 1
     append_memory(f"{task['id']} blocked by automated loop via {blocker_path.name}. History: {history_path.name}")
-    write_data(ACTIVE, reset_active())
+    persist_failure_state(active, status, blocked=True, summary=summary)
 
 
 def build_context(
@@ -336,6 +395,11 @@ def build_context(
     }
 
 
+def attach_target_to_active(active: dict[str, Any], *, target_repo: Path, target_kind: str) -> None:
+    active["target_repo"] = str(target_repo)
+    active["target_kind"] = target_kind
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true")
@@ -347,17 +411,26 @@ def main() -> int:
     active = load_data(ACTIVE)
     status = load_data(STATUS)
 
-    if not active.get("task_id") or not active.get("run_log_dir") or not active.get("prompt_file"):
-        print("ACTIVE_TASK_REQUIRES_PACKET")
-        return 1
-
     product_repo = product_repo_path()
     builder_repo = builder_path_from_config("builder_root")
+    task = None
+    if active.get("task_id"):
+        try:
+            task = find_task(backlog, active["task_id"])
+        except KeyError:
+            task = None
+    validation_error = validate_active_task_context(active, status, task, resume=args.resume)
+    if validation_error:
+        label, summary, next_action = validation_error
+        print_result(label, summary, next_action)
+        return 1
+
     run_dir = Path(active["run_log_dir"]).expanduser().resolve()
     run_dir.mkdir(parents=True, exist_ok=True)
-    task = find_task(backlog, active["task_id"])
     target_kind = "builder" if task_targets_builder_repo(task, active) else "product"
     target_repo = builder_repo if target_kind == "builder" else product_repo
+    attach_target_to_active(active, target_repo=target_repo, target_kind=target_kind)
+    write_data(ACTIVE, active)
     context = build_context(active, task, product_repo, ROOT, target_repo, target_kind)
 
     executor_config = config.get("executor", {})
@@ -371,6 +444,7 @@ def main() -> int:
     vm_commands = list(vm_config.get("validation_commands", [])) + list(vm_config.get("runtime_validation_commands", []))
     local_validation_commands = list(active.get("verification_commands", []))
     use_vm_flow = target_kind == "product"
+    ignored_git_paths = ignored_git_paths_for_target(target_kind)
     plan = {
         "task_id": task["id"],
         "prompt_file": active["prompt_file"],
@@ -407,7 +481,7 @@ def main() -> int:
         }
         write_json(run_dir / RESULT_FILE, payload)
         write_summary(run_dir, payload)
-        print(f"DRY_RUN {run_dir / RESULT_FILE}")
+        print_result("DRY_RUN", f"Plan written to {run_dir / RESULT_FILE}")
         return 0
 
     status["state"] = "implementing"
@@ -435,10 +509,10 @@ def main() -> int:
         classify_and_update_state("blocked", summary, task, backlog, active, status, automation_result)
         write_data(BACKLOG, backlog)
         write_data(STATUS, status)
-        print("BLOCKED")
+        print_result("BLOCKED", summary, "Set the missing config values in config.yml and rerun python3 scripts/automate_task_loop.py.")
         return 2
 
-    baseline = git_status_porcelain(target_repo)
+    baseline = git_status_porcelain(target_repo, ignored_prefixes=ignored_git_paths)
     write_step(run_dir, "git_status_before", baseline)
     if git_config.get("require_clean_worktree", True) and baseline.get("files"):
         summary = f"{target_kind.title()} repo is dirty before automated execution; refusing to continue."
@@ -458,7 +532,7 @@ def main() -> int:
         classify_and_update_state("blocked", summary, task, backlog, active, status, automation_result)
         write_data(BACKLOG, backlog)
         write_data(STATUS, status)
-        print("BLOCKED")
+        print_result("BLOCKED", summary, f"Clean {target_repo} or relax git.require_clean_worktree before rerunning python3 scripts/automate_task_loop.py.")
         return 2
 
     if not args.resume and executor_mode == "human_gated":
@@ -493,12 +567,16 @@ def main() -> int:
         write_json(run_dir / RESULT_FILE, automation_result)
         write_summary(run_dir, automation_result)
         persist_paused_state(active, status, handoff_note)
-        print(f"PAUSED {active['prompt_file']}")
-        print("Resume with: python3 scripts/automate_task_loop.py --resume")
+        print_result(
+            "PAUSED",
+            f"Manual executor handoff recorded for {active['prompt_file']}.",
+            "After Codex applies changes in the target repo, run python3 scripts/automate_task_loop.py --resume.",
+            extra=f"Target repo: {target_repo}",
+        )
         return 0
 
     if args.resume:
-        after_executor = git_status_porcelain(target_repo)
+        after_executor = git_status_porcelain(target_repo, ignored_prefixes=ignored_git_paths)
         write_step(run_dir, "resume_check", after_executor)
         steps.append({
             "name": "resume_check",
@@ -518,7 +596,12 @@ def main() -> int:
             write_json(run_dir / RESULT_FILE, automation_result)
             write_summary(run_dir, automation_result)
             persist_paused_state(active, status, f"Resume attempted before {target_kind} repo changes were present.")
-            print(f"PAUSED waiting for {target_kind} repo changes")
+            print_result(
+                "PAUSED",
+                f"No {target_kind} repo changes were detected yet.",
+                f"Apply the packet in {target_repo} first, then rerun python3 scripts/automate_task_loop.py --resume.",
+                extra=f"Prompt file: {active['prompt_file']}",
+            )
             return 0
     else:
         executor_result = run_shell(
@@ -552,9 +635,9 @@ def main() -> int:
             classify_and_update_state("blocked", summary, task, backlog, active, status, automation_result)
             write_data(BACKLOG, backlog)
             write_data(STATUS, status)
-            print("BLOCKED")
+            print_result("BLOCKED", summary, "Fix the executor integration or switch back to human_gated mode before rerunning python3 scripts/automate_task_loop.py.")
             return 2
-        after_executor = git_status_porcelain(target_repo)
+        after_executor = git_status_porcelain(target_repo, ignored_prefixes=ignored_git_paths)
         write_step(run_dir, "git_status_after_executor", after_executor)
 
     changed_files = after_executor.get("files", [])
@@ -576,11 +659,11 @@ def main() -> int:
         classify_and_update_state("blocked", summary, task, backlog, active, status, automation_result)
         write_data(BACKLOG, backlog)
         write_data(STATUS, status)
-        print("BLOCKED")
+        print_result("BLOCKED", summary, f"Keep changes within the allowlist or adjust the task packet before rerunning. Current target repo: {target_repo}.")
         return 2
 
     if not changed_files:
-        summary = "Executor completed but no product repo changes were detected."
+        summary = f"Executor completed but no {target_kind} repo changes were detected."
         automation_result = {
             "task_id": task["id"],
             "classification": "refined",
@@ -596,7 +679,7 @@ def main() -> int:
         classify_and_update_state("refined", summary, task, backlog, active, status, automation_result)
         write_data(BACKLOG, backlog)
         write_data(STATUS, status)
-        print("REFINED")
+        print_result("REFINED", summary, f"Apply the packet in {target_repo} and rerun python3 scripts/automate_task_loop.py --resume if using human-gated execution.")
         return 1
 
     local_results: list[dict[str, Any]] = []
@@ -629,7 +712,7 @@ def main() -> int:
         classify_and_update_state("refined", summary, task, backlog, active, status, automation_result)
         write_data(BACKLOG, backlog)
         write_data(STATUS, status)
-        print("REFINED")
+        print_result("REFINED", summary, f"Inspect local validation output in {run_dir / RESULT_FILE}, fix the issue, then rerun python3 scripts/automate_task_loop.py.")
         return 1
 
     git_add = run_argv(["git", "add", "-A"], target_repo)
@@ -668,7 +751,7 @@ def main() -> int:
         classify_and_update_state("blocked", summary, task, backlog, active, status, automation_result)
         write_data(BACKLOG, backlog)
         write_data(STATUS, status)
-        print("BLOCKED")
+        print_result("BLOCKED", summary, f"Inspect git output in {run_dir / RESULT_FILE} and repair repo/push state before rerunning python3 scripts/automate_task_loop.py.")
         return 2
 
     vm_passed = True
@@ -717,7 +800,10 @@ def main() -> int:
     classify_and_update_state(classification, summary, task, backlog, active, status, automation_result)
     write_data(BACKLOG, backlog)
     write_data(STATUS, status)
-    print(classification.upper())
+    if classification == "accepted":
+        print_result("ACCEPTED", summary, "Review automation_summary.md for evidence and proceed to the next task.")
+    else:
+        print_result("REFINED", summary, f"Inspect {run_dir / RESULT_FILE} for VM validation details, then rerun once the issue is fixed.")
     return 0 if vm_passed else 1
 
 

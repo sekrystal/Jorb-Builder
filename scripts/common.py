@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import os
 import json
 
 
@@ -10,6 +11,9 @@ def expand_path(value: str) -> Path:
 
 
 def builder_root() -> Path:
+    override = os.environ.get("JORB_BUILDER_ROOT")
+    if override:
+        return Path(override).expanduser().resolve()
     return Path(__file__).resolve().parents[1]
 
 
