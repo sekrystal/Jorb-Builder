@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "state": "implementing",
+  "state": "blocked",
   "state_legend": {
     "idle": "No active task is currently in flight.",
     "task_selected": "A task has been selected but no packet has been rendered yet.",
@@ -10,17 +10,17 @@
     "retry_ready": "The task failed verification and is ready for a bounded retry.",
     "blocked": "The task is blocked and waiting for human intervention."
   },
-  "active_task_id": "JORB-INFRA-001",
+  "active_task_id": null,
   "last_task_id": "JORB-INFRA-001",
-  "last_result": "retry_ready",
-  "last_run_at": "2026-03-24T23:06:46.736236+00:00",
+  "last_result": "blocked",
+  "last_run_at": "2026-03-24T23:10:33.790034+00:00",
   "roadmap_focus": {
     "milestone": "M2",
     "theme": "discovery"
   },
   "stats": {
     "completed_tasks": 1,
-    "blocked_tasks": 2,
+    "blocked_tasks": 3,
     "retry_ready_tasks": 1
   },
   "notes": [

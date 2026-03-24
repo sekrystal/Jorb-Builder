@@ -1,22 +1,14 @@
 {
-  "task_id": "JORB-INFRA-001",
-  "title": "Automate JORB execution loop (packet \u2192 code \u2192 git \u2192 VM \u2192 validation)",
-  "state": "implementing",
-  "attempt": 2,
-  "started_at": "2026-03-24T22:41:08+00:00",
-  "handed_to_codex_at": "2026-03-24T23:02:31.195036+00:00",
-  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-24T224108Z/codex_prompt.md",
-  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-24T224108Z",
+  "task_id": null,
+  "title": null,
+  "state": "idle",
+  "attempt": 0,
+  "started_at": null,
+  "handed_to_codex_at": null,
+  "prompt_file": null,
+  "run_log_dir": null,
   "verification_commands": [],
-  "allowlist": [
-    "../jorb-builder/**"
-  ],
-  "failure_summary": "Product repo is dirty before automated execution; refusing to continue.",
-  "notes": [
-    "Rehydrated from the existing JORB-INFRA-001 packet after blocked state cleared for retry.",
-    "Use the existing run log and packet; do not advance to another task.",
-    "JORB-V1-002 remains preserved and blocked behind infra work.",
-    "Manual JORB Codex execution is required before resume.",
-    "Resume attempted before product repo changes were present."
-  ]
+  "allowlist": [],
+  "failure_summary": null,
+  "notes": []
 }
