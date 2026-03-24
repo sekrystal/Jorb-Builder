@@ -1,24 +1,31 @@
 {
-  "task_id": "JORB-INFRA-001",
-  "title": "Automate JORB execution loop (packet \u2192 code \u2192 git \u2192 VM \u2192 validation)",
-  "state": "failed",
-  "attempt": 2,
-  "started_at": "2026-03-24T23:30:00+00:00",
+  "task_id": "JORB-V1-002",
+  "title": "Persist and expose discovery query-family metrics end to end",
+  "state": "packet_rendered",
+  "attempt": 1,
+  "started_at": "2026-03-24T23:45:52+00:00",
   "handed_to_codex_at": null,
-  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-24T224108Z/codex_prompt.md",
-  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-24T224108Z",
+  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-24T234552Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-24T234552Z",
   "verification_commands": [
-    "python3 -m py_compile scripts/*.py",
-    "python3 scripts/automate_task_loop.py --dry-run"
+    "pytest tests/test_search_discovery.py tests/test_company_discovery.py tests/test_sync.py tests/test_workbench.py",
+    "./scripts/preflight_check.sh"
   ],
   "allowlist": [
-    "../jorb-builder/**"
+    "connectors/search_web.py",
+    "core/schemas.py",
+    "services/company_discovery.py",
+    "services/sync.py",
+    "ui/app.py",
+    "tests/test_search_discovery.py",
+    "tests/test_company_discovery.py",
+    "tests/test_sync.py",
+    "tests/test_workbench.py"
   ],
-  "failure_summary": "Builder repo is dirty before automated execution; refusing to continue.",
+  "failure_summary": null,
   "notes": [
-    "Restored from blocked/empty active state after builder state-machine hardening.",
-    "Resume from the existing JORB-INFRA-001 packet rather than advancing to product work."
+    "Restored as the next product task after accepting JORB-INFRA-001 for the v1 human_gated scope."
   ],
-  "target_repo": "/Users/samuelkrystal/projects/jorb-builder",
-  "target_kind": "builder"
+  "target_repo": "/Users/samuelkrystal/projects/jorb",
+  "target_kind": "product"
 }

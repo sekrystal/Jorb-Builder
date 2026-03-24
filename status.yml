@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "state": "blocked",
+  "state": "packet_rendered",
   "state_legend": {
     "idle": "No active task is currently in flight.",
     "task_selected": "A task has been selected but no packet has been rendered yet.",
@@ -10,16 +10,16 @@
     "retry_ready": "The task failed verification and is ready for a bounded retry.",
     "blocked": "The task is blocked and waiting for human intervention."
   },
-  "active_task_id": "JORB-INFRA-001",
+  "active_task_id": "JORB-V1-002",
   "last_task_id": "JORB-INFRA-001",
-  "last_result": "blocked",
-  "last_run_at": "2026-03-24T23:24:51.558156+00:00",
+  "last_result": "accepted",
+  "last_run_at": "2026-03-24T23:45:52+00:00",
   "roadmap_focus": {
     "milestone": "M2",
     "theme": "discovery"
   },
   "stats": {
-    "completed_tasks": 1,
+    "completed_tasks": 2,
     "blocked_tasks": 6,
     "retry_ready_tasks": 1
   },
@@ -29,6 +29,8 @@
     "JORB-V1-001 is accepted based on Ubuntu VM runtime proof that /discovery-status reflects the latest completed discovery cycle, including zero-yield outcomes.",
     "JORB-V1-002 is preserved but paused after blocking on dirty product repo during automated execution.",
     "JORB-INFRA-001 has been restored as the active retry task using its existing packet and run log.",
-    "JORB-INFRA-001 remains the correct next builder task after state-machine hardening; do not advance to product work yet."
+    "JORB-INFRA-001 remains the correct next builder task after state-machine hardening; do not advance to product work yet.",
+    "JORB-INFRA-001 is accepted for the intended v1 human_gated scope; callable executor integration remains a follow-on infra task.",
+    "JORB-V1-002 is restored as the next active product task and has a fresh packet rendered for execution through the hardened builder loop."
   ]
 }

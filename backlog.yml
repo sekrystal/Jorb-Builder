@@ -8,7 +8,7 @@
       "area": "builder",
       "milestone": "M0",
       "priority": 0,
-      "status": "blocked",
+      "status": "accepted",
       "retries_used": 1,
       "depends_on": [],
       "prompt": "implement_feature",
@@ -38,7 +38,43 @@
         "State-machine hardening landed after the stale dirty-repo block; task should resume from the existing packet for another bounded infra retry.",
         "Builder repo is dirty before automated execution; refusing to continue.",
         "Builder repo is dirty before automated execution; refusing to continue.",
-        "Builder repo is dirty before automated execution; refusing to continue."
+        "Builder repo is dirty before automated execution; refusing to continue.",
+        "Accepted for v1 scope: the human_gated automation loop now pauses with an explicit packet handoff and correctly stays paused on --resume until real target-repo changes exist.",
+        "Full callable executor integration remains a follow-on infrastructure task and is not part of this v1 acceptance."
+      ]
+    },
+    {
+      "id": "JORB-INFRA-002",
+      "title": "Replace human_gated executor mode with a real callable executor integration",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M0",
+      "priority": 2,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-001"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Replace the v1 human_gated executor handoff with a deterministic callable executor integration that can apply the active packet without manual paste steps.",
+      "why_it_matters": "True end-to-end automation still requires a callable executor; v1 only proves the human-gated orchestration loop.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "python3 scripts/automate_task_loop.py --dry-run"
+      ],
+      "acceptance": [
+        "builder can invoke a deterministic callable executor without manual clipboard or paste steps",
+        "automation logs still preserve explicit evidence for executor invocation and outputs",
+        "human_gated mode remains available as a bounded fallback if the callable executor is unavailable"
+      ],
+      "notes": [
+        "Follow-on infra task created after accepting JORB-INFRA-001 for the narrower human_gated v1 scope."
       ]
     },
     {
@@ -96,7 +132,7 @@
       "area": "discovery",
       "milestone": "M2",
       "priority": 1,
-      "status": "blocked",
+      "status": "selected",
       "retries_used": 0,
       "depends_on": [
         "JORB-V1-001"
@@ -133,7 +169,8 @@
         "Selected immediately after JORB-V1-001 acceptance because its dependency is now satisfied.",
         "Next packet rendered at /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-24T200115Z/codex_prompt.md.",
         "Product repo is dirty before automated execution; refusing to continue.",
-        "Preserved for later continuation after builder automation is hardened via JORB-INFRA-001."
+        "Preserved for later continuation after builder automation is hardened via JORB-INFRA-001.",
+        "Restored as the next product task after accepting JORB-INFRA-001 for the human_gated v1 scope."
       ]
     },
     {

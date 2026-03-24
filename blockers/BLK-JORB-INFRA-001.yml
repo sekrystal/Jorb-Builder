@@ -6,7 +6,7 @@
   "related_tasks": [
     "JORB-INFRA-001"
   ],
-  "status": "open",
+  "status": "resolved",
   "symptoms": [
     "Builder repo is dirty before automated execution; refusing to continue."
   ],
@@ -16,7 +16,7 @@
     "tests/test_automate_task_loop.py"
   ],
   "next_actions": [
-    "Inspect automation_result.json and narrow the next bounded refinement."
+    "Treat JORB-INFRA-001 as accepted for the v1 human_gated scope and track callable executor work separately."
   ],
   "human_needed": true
 }
