@@ -8,7 +8,7 @@
       "area": "builder",
       "milestone": "M0",
       "priority": 0,
-      "status": "blocked",
+      "status": "retry_ready",
       "retries_used": 1,
       "depends_on": [],
       "prompt": "implement_feature",
@@ -32,7 +32,8 @@
         "Promoted to active work after JORB-V1-002 blocked on dirty product repo during automated execution.",
         "Packet rendered at /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-24T224108Z/codex_prompt.md.",
         "Executor completed but no product repo changes were detected.",
-        "Product repo is dirty before automated execution; refusing to continue."
+        "Product repo is dirty before automated execution; refusing to continue.",
+        "Restored to retry_ready with the existing packet so infra work can continue without advancing tasks."
       ]
     },
     {

@@ -13,6 +13,7 @@ This is the durable short memory for the external Jorb builder.
 - JORB-V1-002 is the next selected task now that JORB-V1-001 is accepted.
 - JORB-INFRA-001 is queued as pending builder-side infrastructure work to automate the packet-to-VM execution loop while keeping the builder external to JORB.
 - JORB-INFRA-001 is now active so builder automation can be hardened first; JORB-V1-002 is preserved but intentionally paused.
+- JORB-INFRA-001 was restored from blocked to retry_ready using its existing packet at /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-24T224108Z/codex_prompt.md.
 
 ## Update rule
 Only add short bullets that materially change future task selection or reduce ambiguity.

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "state": "blocked",
+  "state": "implementing",
   "state_legend": {
     "idle": "No active task is currently in flight.",
     "task_selected": "A task has been selected but no packet has been rendered yet.",
@@ -10,10 +10,10 @@
     "retry_ready": "The task failed verification and is ready for a bounded retry.",
     "blocked": "The task is blocked and waiting for human intervention."
   },
-  "active_task_id": null,
+  "active_task_id": "JORB-INFRA-001",
   "last_task_id": "JORB-INFRA-001",
-  "last_result": "blocked",
-  "last_run_at": "2026-03-24T22:52:11.937532+00:00",
+  "last_result": "retry_ready",
+  "last_run_at": "2026-03-24T23:06:46.736236+00:00",
   "roadmap_focus": {
     "milestone": "M2",
     "theme": "discovery"
@@ -28,6 +28,6 @@
     "Primary focus is truthful discovery status and decisive discovery debugging",
     "JORB-V1-001 is accepted based on Ubuntu VM runtime proof that /discovery-status reflects the latest completed discovery cycle, including zero-yield outcomes.",
     "JORB-V1-002 is preserved but paused after blocking on dirty product repo during automated execution.",
-    "JORB-INFRA-001 is now the active builder task and its packet has been rendered."
+    "JORB-INFRA-001 has been restored as the active retry task using its existing packet and run log."
   ]
 }

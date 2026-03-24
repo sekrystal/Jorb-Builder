@@ -9,7 +9,7 @@ import shlex
 import subprocess
 from typing import Any
 
-from common import builder_root, expand_path, load_config, load_data, product_repo_path, write_data
+from common import builder_root, builder_path_from_config, expand_path, load_config, load_data, product_repo_path, write_data
 
 
 ROOT = builder_root()
@@ -94,6 +94,15 @@ def render_template(template: str | None, context: dict[str, str]) -> str | None
     if template is None:
         return None
     return template.format(**context)
+
+
+def task_targets_builder_repo(task: dict[str, Any], active: dict[str, Any]) -> bool:
+    allowlist = list(task.get("allowlist", []) or active.get("allowlist", []))
+    if task.get("area") == "builder":
+        return True
+    if any(str(entry).startswith("../jorb-builder") for entry in allowlist):
+        return True
+    return False
 
 
 def persist_paused_state(active: dict[str, Any], status: dict[str, Any], note: str) -> None:
@@ -307,7 +316,14 @@ def classify_and_update_state(
     write_data(ACTIVE, reset_active())
 
 
-def build_context(active: dict[str, Any], task: dict[str, Any], product_repo: Path, builder_root_path: Path) -> dict[str, str]:
+def build_context(
+    active: dict[str, Any],
+    task: dict[str, Any],
+    product_repo: Path,
+    builder_root_path: Path,
+    target_repo: Path,
+    target_kind: str,
+) -> dict[str, str]:
     return {
         "task_id": task["id"],
         "title": task["title"],
@@ -315,6 +331,8 @@ def build_context(active: dict[str, Any], task: dict[str, Any], product_repo: Pa
         "run_log_dir": active.get("run_log_dir") or "",
         "product_repo": str(product_repo),
         "builder_root": str(builder_root_path),
+        "target_repo": str(target_repo),
+        "target_kind": target_kind,
     }
 
 
@@ -334,10 +352,13 @@ def main() -> int:
         return 1
 
     product_repo = product_repo_path()
+    builder_repo = builder_path_from_config("builder_root")
     run_dir = Path(active["run_log_dir"]).expanduser().resolve()
     run_dir.mkdir(parents=True, exist_ok=True)
     task = find_task(backlog, active["task_id"])
-    context = build_context(active, task, product_repo, ROOT)
+    target_kind = "builder" if task_targets_builder_repo(task, active) else "product"
+    target_repo = builder_repo if target_kind == "builder" else product_repo
+    context = build_context(active, task, product_repo, ROOT, target_repo, target_kind)
 
     executor_config = config.get("executor", {})
     git_config = config.get("git", {})
@@ -348,24 +369,28 @@ def main() -> int:
     context["vm_product_repo"] = str(vm_repo)
 
     vm_commands = list(vm_config.get("validation_commands", [])) + list(vm_config.get("runtime_validation_commands", []))
+    local_validation_commands = list(active.get("verification_commands", []))
+    use_vm_flow = target_kind == "product"
     plan = {
         "task_id": task["id"],
         "prompt_file": active["prompt_file"],
         "run_log_dir": active["run_log_dir"],
+        "target_kind": target_kind,
+        "target_repo": str(target_repo),
         "executor_mode": executor_mode,
         "executor_command": render_template(executor_config.get("command"), context),
-        "local_validation_commands": list(active.get("verification_commands", [])),
+        "local_validation_commands": local_validation_commands,
         "git_push_command": render_template(git_config.get("push_command"), context),
-        "vm_pull_command": render_template(vm_config.get("pull_command"), context),
-        "vm_commands": [render_template(command, context) for command in vm_commands],
-        "ssh_target": vm_config.get("ssh_target"),
+        "vm_pull_command": render_template(vm_config.get("pull_command"), context) if use_vm_flow else None,
+        "vm_commands": [render_template(command, context) for command in vm_commands] if use_vm_flow else [],
+        "ssh_target": vm_config.get("ssh_target") if use_vm_flow else None,
         "missing_configuration": [],
     }
     if executor_mode != "human_gated" and not executor_config.get("command"):
         plan["missing_configuration"].append("executor.command")
-    if not vm_config.get("ssh_target"):
+    if use_vm_flow and not vm_config.get("ssh_target"):
         plan["missing_configuration"].append("vm.ssh_target")
-    if not vm_commands:
+    if use_vm_flow and not vm_commands:
         plan["missing_configuration"].append("vm.validation_commands or vm.runtime_validation_commands")
 
     if args.dry_run:
@@ -413,10 +438,10 @@ def main() -> int:
         print("BLOCKED")
         return 2
 
-    baseline = git_status_porcelain(product_repo)
+    baseline = git_status_porcelain(target_repo)
     write_step(run_dir, "git_status_before", baseline)
     if git_config.get("require_clean_worktree", True) and baseline.get("files"):
-        summary = "Product repo is dirty before automated execution; refusing to continue."
+        summary = f"{target_kind.title()} repo is dirty before automated execution; refusing to continue."
         blocker_evidence.extend(baseline.get("files", []))
         automation_result = {
             "task_id": task["id"],
@@ -444,7 +469,9 @@ def main() -> int:
             "prompt_file": active["prompt_file"],
             "run_log_dir": active["run_log_dir"],
             "resume_command": "python3 scripts/automate_task_loop.py --resume",
-            "message": "Open the packet, run the task in the JORB Codex workspace, then resume after product repo changes are present.",
+            "target_kind": target_kind,
+            "target_repo": str(target_repo),
+            "message": f"Open the packet, run the task in the {'builder' if target_kind == 'builder' else 'JORB'} Codex workspace, then resume after {target_kind} repo changes are present.",
             "started_at": now_iso(),
         }
         write_step(run_dir, "executor_handoff", handoff_payload)
@@ -452,16 +479,16 @@ def main() -> int:
             "task_id": task["id"],
             "classification": "paused",
             "finished_at": now_iso(),
-            "summary": "Manual executor handoff recorded. Resume after JORB Codex applies product repo changes.",
+            "summary": f"Manual executor handoff recorded. Resume after {target_kind} repo changes are applied.",
             "steps": [
                 {
                     "name": "executor_handoff",
                     "outcome": "paused",
-                    "detail": f"packet: {active['prompt_file']}; resume: python3 scripts/automate_task_loop.py --resume",
+                    "detail": f"packet: {active['prompt_file']}; target_repo: {target_repo}; resume: python3 scripts/automate_task_loop.py --resume",
                 }
             ],
             "changed_files": [],
-            "unproven_runtime_gaps": ["Product repo changes have not been applied yet; resume is required after manual JORB Codex execution."],
+            "unproven_runtime_gaps": [f"{target_kind.title()} repo changes have not been applied yet; resume is required after manual Codex execution."],
         }
         write_json(run_dir / RESULT_FILE, automation_result)
         write_summary(run_dir, automation_result)
@@ -471,27 +498,27 @@ def main() -> int:
         return 0
 
     if args.resume:
-        after_executor = git_status_porcelain(product_repo)
+        after_executor = git_status_porcelain(target_repo)
         write_step(run_dir, "resume_check", after_executor)
         steps.append({
             "name": "resume_check",
             "outcome": "passed" if after_executor.get("files") else "paused",
-            "detail": "Detected product repo changes after manual execution." if after_executor.get("files") else "No product repo changes detected yet.",
+            "detail": f"Detected {target_kind} repo changes after manual execution." if after_executor.get("files") else f"No {target_kind} repo changes detected yet.",
         })
         if not after_executor.get("files"):
             automation_result = {
                 "task_id": task["id"],
                 "classification": "paused",
                 "finished_at": now_iso(),
-                "summary": "Resume requested, but no product repo changes were detected yet.",
+                "summary": f"Resume requested, but no {target_kind} repo changes were detected yet.",
                 "steps": steps,
                 "changed_files": [],
-                "unproven_runtime_gaps": ["Manual JORB Codex execution has not produced detectable product repo changes yet."],
+                "unproven_runtime_gaps": [f"Manual Codex execution has not produced detectable {target_kind} repo changes yet."],
             }
             write_json(run_dir / RESULT_FILE, automation_result)
             write_summary(run_dir, automation_result)
-            persist_paused_state(active, status, "Resume attempted before product repo changes were present.")
-            print("PAUSED waiting for product repo changes")
+            persist_paused_state(active, status, f"Resume attempted before {target_kind} repo changes were present.")
+            print(f"PAUSED waiting for {target_kind} repo changes")
             return 0
     else:
         executor_result = run_shell(
@@ -527,7 +554,7 @@ def main() -> int:
             write_data(STATUS, status)
             print("BLOCKED")
             return 2
-        after_executor = git_status_porcelain(product_repo)
+        after_executor = git_status_porcelain(target_repo)
         write_step(run_dir, "git_status_after_executor", after_executor)
 
     changed_files = after_executor.get("files", [])
@@ -574,8 +601,8 @@ def main() -> int:
 
     local_results: list[dict[str, Any]] = []
     local_passed = True
-    for command in active.get("verification_commands", []):
-        result = run_shell(command, product_repo, shell_executable=shell_executable)
+    for command in local_validation_commands:
+        result = run_shell(command, target_repo, shell_executable=shell_executable)
         local_results.append(result)
         if not result["passed"]:
             local_passed = False
@@ -605,12 +632,12 @@ def main() -> int:
         print("REFINED")
         return 1
 
-    git_add = run_argv(["git", "add", "-A"], product_repo)
+    git_add = run_argv(["git", "add", "-A"], target_repo)
     commit_message = render_template(git_config.get("commit_message_template"), context) or f"{task['id']}: {task['title']}"
-    git_commit = run_argv(["git", "commit", "-m", commit_message], product_repo)
+    git_commit = run_argv(["git", "commit", "-m", commit_message], target_repo)
     git_push = run_shell(
         render_template(git_config.get("push_command"), context) or "git push",
-        product_repo,
+        target_repo,
         shell_executable=shell_executable,
     )
     write_step(run_dir, "git", {"add": git_add, "commit": git_commit, "push": git_push})
@@ -644,33 +671,37 @@ def main() -> int:
         print("BLOCKED")
         return 2
 
-    ssh_target = vm_config["ssh_target"]
-    ssh_options = list(vm_config.get("ssh_options", []))
-    vm_pull_command = f"cd {shlex.quote(str(vm_repo))} && {plan['vm_pull_command']}"
-    vm_pull = ssh_command(ssh_target, ssh_options, vm_pull_command, ROOT)
-    vm_results = [vm_pull]
-    vm_passed = vm_pull["passed"]
-    if vm_passed:
-        for command in plan["vm_commands"]:
-            remote = f"cd {shlex.quote(str(vm_repo))} && {command}"
-            result = ssh_command(ssh_target, ssh_options, remote, ROOT)
-            vm_results.append(result)
-            if not result["passed"]:
-                vm_passed = False
-                break
-    write_step(run_dir, "vm_validation", {"results": vm_results, "passed": vm_passed})
-    steps.append({
-        "name": "vm_validation",
-        "outcome": "accepted" if vm_passed else "refined",
-        "detail": "All VM validation commands passed." if vm_passed else "At least one VM validation command failed.",
-    })
-
-    classification = "accepted" if vm_passed else "refined"
-    summary = (
-        "Automated loop completed with VM validation success."
-        if vm_passed
-        else "VM validation failed after local validation and git push succeeded."
-    )
+    vm_passed = True
+    if use_vm_flow:
+        ssh_target = vm_config["ssh_target"]
+        ssh_options = list(vm_config.get("ssh_options", []))
+        vm_pull_command = f"cd {shlex.quote(str(vm_repo))} && {plan['vm_pull_command']}"
+        vm_pull = ssh_command(ssh_target, ssh_options, vm_pull_command, ROOT)
+        vm_results = [vm_pull]
+        vm_passed = vm_pull["passed"]
+        if vm_passed:
+            for command in plan["vm_commands"]:
+                remote = f"cd {shlex.quote(str(vm_repo))} && {command}"
+                result = ssh_command(ssh_target, ssh_options, remote, ROOT)
+                vm_results.append(result)
+                if not result["passed"]:
+                    vm_passed = False
+                    break
+        write_step(run_dir, "vm_validation", {"results": vm_results, "passed": vm_passed})
+        steps.append({
+            "name": "vm_validation",
+            "outcome": "accepted" if vm_passed else "refined",
+            "detail": "All VM validation commands passed." if vm_passed else "At least one VM validation command failed.",
+        })
+        classification = "accepted" if vm_passed else "refined"
+        summary = (
+            "Automated loop completed with VM validation success."
+            if vm_passed
+            else "VM validation failed after local validation and git push succeeded."
+        )
+    else:
+        classification = "accepted"
+        summary = "Automated loop completed with builder-side local validation success."
     automation_result = {
         "task_id": task["id"],
         "classification": classification,

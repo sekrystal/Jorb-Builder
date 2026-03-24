@@ -6,7 +6,7 @@
   "related_tasks": [
     "JORB-INFRA-001"
   ],
-  "status": "open",
+  "status": "resolved",
   "symptoms": [
     "Product repo is dirty before automated execution; refusing to continue."
   ],
@@ -17,5 +17,7 @@
   "next_actions": [
     "Inspect automation_result.json and narrow the next bounded refinement."
   ],
-  "human_needed": true
+  "human_needed": false,
+  "resolved_at": "2026-03-24T22:55:00+00:00",
+  "resolution": "Task restored to retry_ready using the existing packet and run log so work can continue without advancing to another task."
 }
