@@ -38,3 +38,5 @@ Does this directly improve:
 - opportunity quality
 - decision quality
 - system reliability
+
+- JORB-V1-002 blocked by automated loop via BLK-JORB-V1-002.yml. History: 2026-03-24T223418Z-JORB-V1-002.yml

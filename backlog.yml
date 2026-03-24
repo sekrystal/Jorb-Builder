@@ -87,7 +87,7 @@
       "area": "discovery",
       "milestone": "M2",
       "priority": 1,
-      "status": "selected",
+      "status": "blocked",
       "retries_used": 0,
       "depends_on": [
         "JORB-V1-001"
@@ -122,7 +122,8 @@
       ],
       "notes": [
         "Selected immediately after JORB-V1-001 acceptance because its dependency is now satisfied.",
-        "Next packet rendered at /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-24T200115Z/codex_prompt.md."
+        "Next packet rendered at /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-24T200115Z/codex_prompt.md.",
+        "Product repo is dirty before automated execution; refusing to continue."
       ]
     },
     {

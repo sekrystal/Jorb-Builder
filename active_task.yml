@@ -1,30 +1,14 @@
 {
-  "task_id": "JORB-V1-002",
-  "title": "Persist and expose discovery query-family metrics end to end",
-  "state": "packet_rendered",
-  "attempt": 1,
-  "started_at": "2026-03-24T20:01:15+00:00",
+  "task_id": null,
+  "title": null,
+  "state": "idle",
+  "attempt": 0,
+  "started_at": null,
   "handed_to_codex_at": null,
-  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-24T200115Z/codex_prompt.md",
-  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-24T200115Z",
-  "verification_commands": [
-    "pytest tests/test_search_discovery.py tests/test_company_discovery.py tests/test_sync.py tests/test_workbench.py",
-    "./scripts/preflight_check.sh"
-  ],
-  "allowlist": [
-    "connectors/search_web.py",
-    "core/schemas.py",
-    "services/company_discovery.py",
-    "services/sync.py",
-    "ui/app.py",
-    "tests/test_search_discovery.py",
-    "tests/test_company_discovery.py",
-    "tests/test_sync.py",
-    "tests/test_workbench.py"
-  ],
+  "prompt_file": null,
+  "run_log_dir": null,
+  "verification_commands": [],
+  "allowlist": [],
   "failure_summary": null,
-  "notes": [
-    "Selected after JORB-V1-001 was accepted with Ubuntu VM runtime proof, not just tests.",
-    "Focus now shifts to persisted query-family discovery metrics exposed end to end."
-  ]
+  "notes": []
 }

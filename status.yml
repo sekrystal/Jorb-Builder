@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "state": "packet_rendered",
+  "state": "blocked",
   "state_legend": {
     "idle": "No active task is currently in flight.",
     "task_selected": "A task has been selected but no packet has been rendered yet.",
@@ -10,17 +10,17 @@
     "retry_ready": "The task failed verification and is ready for a bounded retry.",
     "blocked": "The task is blocked and waiting for human intervention."
   },
-  "active_task_id": "JORB-V1-002",
-  "last_task_id": "JORB-V1-001",
-  "last_result": "accepted_with_vm_runtime_proof",
-  "last_run_at": "2026-03-24T20:01:15+00:00",
+  "active_task_id": null,
+  "last_task_id": "JORB-V1-002",
+  "last_result": "blocked",
+  "last_run_at": "2026-03-24T22:34:18.249634+00:00",
   "roadmap_focus": {
     "milestone": "M2",
     "theme": "discovery"
   },
   "stats": {
     "completed_tasks": 1,
-    "blocked_tasks": 0,
+    "blocked_tasks": 1,
     "retry_ready_tasks": 0
   },
   "notes": [

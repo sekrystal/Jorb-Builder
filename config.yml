@@ -20,21 +20,24 @@
     "preserve_step_logs": true
   },
   "executor": {
-    "command": null,
+    "command": "cat {prompt_file} | pbcopy && echo 'Paste into JORB Codex manually for now'",
     "shell": "/bin/zsh",
     "timeout_seconds": 1800
   },
   "git": {
     "require_clean_worktree": true,
     "commit_message_template": "{task_id}: {title}",
-    "push_command": "git push"
+    "push_command": "git push origin main"
   },
   "vm": {
-    "ssh_target": null,
+    "ssh_target": "gargantua1@192.168.64.3",
     "ssh_options": [],
     "product_repo": "~/projects/jorb",
-    "pull_command": "git pull --ff-only",
-    "validation_commands": [],
+    "pull_command": "git fetch origin && git pull --ff-only origin main",
+    "validation_commands": [
+      "source .venv/bin/activate && pytest tests/test_search_discovery.py tests/test_company_discovery.py tests/test_sync.py tests/test_workbench.py",
+      "bash scripts/preflight_check.sh"
+    ],
     "runtime_validation_commands": []
   },
   "verification": {
