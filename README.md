@@ -17,6 +17,7 @@ All builder scripts expand `~` at runtime, so the control files stay portable ac
 - runs deterministic verification commands against the product repo
 - records pass/fail into backlog, history, memory, and blockers
 - resumes cleanly from files after interruption
+- can optionally automate the bounded JORB execution loop when executor/git/vm config is set explicitly
 
 ## What this does not do
 - it does not edit the product repo automatically
@@ -64,6 +65,33 @@ python3 scripts/verify_task.py
 python3 scripts/record_result.py --codex-result-file ~/projects/jorb-builder/run_logs/<timestamp>/codex_result.md
 python3 scripts/show_status.py
 ```
+
+## Optional Automated Loop
+
+Once you have explicit executor, git, and VM settings in `config.yml`, the builder can run the narrow packet-to-VM loop in one bounded script:
+
+```bash
+cd ~/projects/jorb-builder
+python3 scripts/automate_task_loop.py --dry-run
+python3 scripts/automate_task_loop.py
+```
+
+What it does in v1:
+- loads the current active task and packet
+- invokes the configured executor command
+- captures executor output in the active run log
+- detects whether the product repo changed
+- runs the task's local verification commands
+- if local verification passes, commits and pushes the product repo
+- SSHes to the configured VM, pulls latest product code, and runs configured VM validation commands
+- writes `automation_result.json` and `automation_summary.md` into the active run log
+- classifies the outcome as `accepted`, `refined`, or `blocked`
+
+Important constraints:
+- keep the builder external to `~/projects/jorb`
+- keep the product repo worktree clean before automated execution unless you intentionally relax that rule
+- prefer explicit config in `config.yml` over environment-specific magic
+- use `--dry-run` first to confirm the planned executor/git/vm steps
 
 ## Safe recovery
 If the builder is stuck on a stale task you want to clear safely:

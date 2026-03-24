@@ -15,6 +15,28 @@
     "default_prompt": "implement_feature",
     "debug_prompt": "debug_failure"
   },
+  "automation": {
+    "mode": "explicit_script",
+    "preserve_step_logs": true
+  },
+  "executor": {
+    "command": null,
+    "shell": "/bin/zsh",
+    "timeout_seconds": 1800
+  },
+  "git": {
+    "require_clean_worktree": true,
+    "commit_message_template": "{task_id}: {title}",
+    "push_command": "git push"
+  },
+  "vm": {
+    "ssh_target": null,
+    "ssh_options": [],
+    "product_repo": "~/projects/jorb",
+    "pull_command": "git pull --ff-only",
+    "validation_commands": [],
+    "runtime_validation_commands": []
+  },
   "verification": {
     "default_check_group": "targeted",
     "required_on_completion": ["preflight"]

@@ -10,7 +10,7 @@ STATUS = ROOT / "status.yml"
 ACTIVE = ROOT / "active_task.yml"
 BLOCKERS_DIR = ROOT / "blockers"
 READY_STATES = {"ready", "retry_ready"}
-DONE_STATES = {"done"}
+DONE_STATES = {"done", "accepted"}
 ACTIVE_STATES = {"selected", "packet_rendered", "implementing", "verifying"}
 
 
