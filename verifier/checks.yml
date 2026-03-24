@@ -1,0 +1,12 @@
+{
+  "groups": {
+    "targeted": {
+      "description": "Focused verification for the active task",
+      "commands": ["{verification_commands}"]
+    },
+    "preflight": {
+      "description": "Full repo release gate",
+      "commands": ["./scripts/preflight_check.sh"]
+    }
+  }
+}

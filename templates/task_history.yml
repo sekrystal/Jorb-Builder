@@ -1,0 +1,17 @@
+{
+  "task_id": "",
+  "title": "",
+  "status": "",
+  "attempt": 0,
+  "started_at": "",
+  "completed_at": "",
+  "prompt": "",
+  "files_changed": [],
+  "commands_run": [],
+  "results": [],
+  "acceptance_met": [],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [],
+  "unproven_runtime_gaps": []
+}

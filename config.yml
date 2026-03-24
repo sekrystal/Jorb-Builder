@@ -1,0 +1,33 @@
+{
+  "builder": {
+    "name": "jorb-builder-v1",
+    "version": 1
+  },
+  "paths": {
+    "product_repo": "~/projects/jorb",
+    "builder_root": "~/projects/jorb-builder",
+    "run_logs": "~/projects/jorb-builder/run_logs",
+    "task_history": "~/projects/jorb-builder/task_history",
+    "blockers": "~/projects/jorb-builder/blockers"
+  },
+  "execution": {
+    "max_retries_per_task": 2,
+    "default_prompt": "implement_feature",
+    "debug_prompt": "debug_failure"
+  },
+  "verification": {
+    "default_check_group": "targeted",
+    "required_on_completion": ["preflight"]
+  },
+  "rules": {
+    "forbid_builder_code_in_product_repo": true,
+    "require_explicit_allowlist": true,
+    "require_explicit_verification": true,
+    "require_exact_return_format": true,
+    "allow_only_jorb_repo_edits": true
+  },
+  "codex": {
+    "worker": "vscode",
+    "mode": "manual_packet"
+  }
+}

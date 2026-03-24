@@ -1,0 +1,237 @@
+{
+  "version": 1,
+  "tasks": [
+    {
+      "id": "JORB-INFRA-001",
+      "title": "Automate JORB execution loop (packet \u2192 code \u2192 git \u2192 VM \u2192 validation)",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M0",
+      "priority": 0,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [],
+      "prompt": "implement_feature",
+      "objective": "Extend builder to autonomously execute JORB tasks end-to-end, including local validation, git operations, VM sync, and runtime validation.",
+      "why_it_matters": "The builder should be able to drive the full JORB execution loop with less manual operator handoff once the current bounded product work is stable enough.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [],
+      "acceptance": [
+        "builder can progress a bounded JORB task from packet through code application and structured result capture",
+        "builder can run local validation and record deterministic outcomes",
+        "builder can perform required git and VM sync steps with explicit state tracking",
+        "builder can support renewed runtime validation without collapsing task boundaries or repo separation"
+      ],
+      "notes": [
+        "Intentionally pending and not eligible for auto-selection yet.",
+        "This is builder-side infrastructure work and must remain external to the JORB product repo."
+      ]
+    },
+    {
+      "id": "JORB-V1-001",
+      "title": "Make /discovery-status reliably reflect the latest completed discovery cycle",
+      "type": "debugging",
+      "area": "discovery",
+      "milestone": "M2",
+      "priority": 1,
+      "status": "accepted",
+      "retries_used": 0,
+      "depends_on": [],
+      "prompt": "implement_feature",
+      "objective": "Ensure discovery status is a truthful source of latest completed-cycle state, even for zero-yield runs.",
+      "why_it_matters": "Operators cannot trust discovery until /discovery-status reliably shows latest planner and cycle metrics truth.",
+      "allowlist": [
+        "api/routes/agents.py",
+        "core/schemas.py",
+        "services/company_discovery.py",
+        "services/sync.py",
+        "tests/test_company_discovery.py",
+        "tests/test_sync.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_company_discovery.py tests/test_sync.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "latest completed discovery cycle metrics are visible even when discovery yields zero",
+        "latest planner/openai/discovery truth is sourced from persisted latest relevant rows rather than a shallow recent window alone",
+        "targeted tests cover the new truth behavior",
+        "preflight passes"
+      ],
+      "notes": [
+        "Targeted tests passed.",
+        "Preflight passed on VM.",
+        "VM before-state for /discovery-status was captured successfully and showed an empty baseline.",
+        "The prior sqlalchemy preflight failure was resolved as an environment/interpreter mismatch, not a repo dependency or code issue.",
+        "/discovery-status returns successfully on the VM; the earlier after-state hang is no longer the best interpretation.",
+        "API and worker are now on the same runtime DB, so the prior DATABASE_URL mismatch is no longer the active blocker.",
+        "Runtime acceptance is blocked because no discovery cycle has actually run on the VM: runtime_state=paused, worker_state=paused, run_once_requested=false, last_cycle_started_at=null, last_successful_cycle_at=null.",
+        "Avoid repeated blind reruns; the next action is a narrow runtime-control and trigger-flow validation to cause one real completed cycle, followed by renewed VM acceptance proof on /discovery-status.",
+        "Ubuntu VM runtime proof is complete: run_once executed successfully, the worker completed a full discovery cycle, /discovery-status reflected discovered companies, recent_items, recent_expansions including empty expansions, populated cycle_metrics, planner/triage/learning activity, and correctly surfaced zero-yield outcomes.",
+        "Accepted based on VM runtime proof, not just local tests and preflight."
+      ]
+    },
+    {
+      "id": "JORB-V1-002",
+      "title": "Persist and expose discovery query-family metrics end to end",
+      "type": "instrumentation",
+      "area": "discovery",
+      "milestone": "M2",
+      "priority": 1,
+      "status": "selected",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V1-001"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Attribute discovery outcomes by query family from planner query through accepted result, candidate conversion, and expansion selection.",
+      "why_it_matters": "The next VM run needs to show which query families are productive and which are dead weight.",
+      "allowlist": [
+        "connectors/search_web.py",
+        "core/schemas.py",
+        "services/company_discovery.py",
+        "services/sync.py",
+        "ui/app.py",
+        "tests/test_search_discovery.py",
+        "tests/test_company_discovery.py",
+        "tests/test_sync.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_search_discovery.py tests/test_company_discovery.py tests/test_sync.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "cycle_metrics contains query_family_metrics persisted from the latest cycle",
+        "discovery status exposes query family truth",
+        "UI can render query-family diagnostics without touching /leads",
+        "targeted tests and preflight pass"
+      ],
+      "notes": [
+        "Selected immediately after JORB-V1-001 acceptance because its dependency is now satisfied.",
+        "Next packet rendered at /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-24T200115Z/codex_prompt.md."
+      ]
+    },
+    {
+      "id": "JORB-V1-003",
+      "title": "Harden search provider failure classification and bounded failover after provider_self_link-only results",
+      "type": "debugging",
+      "area": "discovery",
+      "milestone": "M2",
+      "priority": 1,
+      "status": "ready",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V1-002"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Make search provider failure modes explicit and add a bounded fallback path when primary provider output is only provider self-links.",
+      "why_it_matters": "Discovery ingress is still the likeliest blocker for net new yield.",
+      "allowlist": [
+        "connectors/search_web.py",
+        "tests/test_search_discovery.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_search_discovery.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "provider_self_link-only output is treated as first-class provider failure",
+        "bounded failover or deterministic rewrite path is attempted and logged",
+        "accepted ATS roots and careers pages remain supported",
+        "targeted tests and preflight pass"
+      ]
+    },
+    {
+      "id": "JORB-V1-004",
+      "title": "Make discovery failure boundaries undeniable from accepted result to expansion outcome",
+      "type": "instrumentation",
+      "area": "discovery",
+      "milestone": "M2",
+      "priority": 1,
+      "status": "ready",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V1-003"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Persist and expose clear stage boundaries for accepted results, candidate conversions, selected expansions, empty expansions, and yielded listings.",
+      "why_it_matters": "We need to know whether discovery is failing at provider ingress, conversion, selection, or connector yield.",
+      "allowlist": [
+        "connectors/ashby.py",
+        "services/company_discovery.py",
+        "services/sync.py",
+        "tests/test_company_discovery.py",
+        "tests/test_sync.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_company_discovery.py tests/test_sync.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "cycle metrics distinguish accepted results, candidates, selected expansions, empty expansions, and listings yielded",
+        "expansion diagnostics make invalid or empty discovered surfaces obvious",
+        "targeted tests and preflight pass"
+      ]
+    },
+    {
+      "id": "JORB-V1-005",
+      "title": "Strengthen runtime and operator truth surfaces without regressing fast /leads",
+      "type": "feature",
+      "area": "runtime",
+      "milestone": "M1",
+      "priority": 2,
+      "status": "ready",
+      "retries_used": 0,
+      "depends_on": [],
+      "prompt": "implement_feature",
+      "objective": "Expose runtime phase, operator hints, and latest success/failure summaries more clearly in API and UI.",
+      "why_it_matters": "Operators need trustworthy runtime surfaces while discovery remains under active debugging.",
+      "allowlist": [
+        "core/schemas.py",
+        "services/runtime_control.py",
+        "services/autonomy.py",
+        "ui/app.py",
+        "README.md",
+        "OPERATIONS.md",
+        "tests/test_autonomy.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_autonomy.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "runtime phase and operator hints are visible in API and UI",
+        "docs match the runtime model",
+        "/leads hot path remains untouched",
+        "targeted tests and preflight pass"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "product": "Jorb",
+  "current_baseline": "Opportunity Scout successor with FastAPI, Streamlit, worker loop, ranking, critic, discovery, runtime control, and instrumentation.",
+  "milestones": [
+    {
+      "id": "M1",
+      "name": "Stable operator core",
+      "goal": "Fast leads, bounded runtime, trustworthy status surfaces, operator documentation"
+    },
+    {
+      "id": "M2",
+      "name": "Diagnosable discovery engine",
+      "goal": "Truthful discovery status, provider diagnostics, conversion attribution, bounded failover"
+    },
+    {
+      "id": "M3",
+      "name": "Complete lead lifecycle",
+      "goal": "Saved/applied/follow-up/investigation workflow completeness"
+    },
+    {
+      "id": "M4",
+      "name": "Career copilot foundation",
+      "goal": "Career direction, coaching, rejection learning, user-supplied listings"
+    }
+  ],
+  "themes": [
+    {"id": "runtime", "milestone": "M1", "priority": 1},
+    {"id": "discovery", "milestone": "M2", "priority": 1},
+    {"id": "lifecycle", "milestone": "M3", "priority": 2},
+    {"id": "coaching", "milestone": "M4", "priority": 3}
+  ]
+}
