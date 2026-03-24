@@ -8,8 +8,8 @@
       "area": "builder",
       "milestone": "M0",
       "priority": 0,
-      "status": "pending",
-      "retries_used": 0,
+      "status": "blocked",
+      "retries_used": 1,
       "depends_on": [],
       "prompt": "implement_feature",
       "objective": "Extend builder to autonomously execute JORB tasks end-to-end, including local validation, git operations, VM sync, and runtime validation.",
@@ -28,8 +28,11 @@
         "builder can support renewed runtime validation without collapsing task boundaries or repo separation"
       ],
       "notes": [
-        "Intentionally pending and not eligible for auto-selection yet.",
-        "This is builder-side infrastructure work and must remain external to the JORB product repo."
+        "This is builder-side infrastructure work and must remain external to the JORB product repo.",
+        "Promoted to active work after JORB-V1-002 blocked on dirty product repo during automated execution.",
+        "Packet rendered at /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-24T224108Z/codex_prompt.md.",
+        "Executor completed but no product repo changes were detected.",
+        "Product repo is dirty before automated execution; refusing to continue."
       ]
     },
     {
@@ -123,7 +126,8 @@
       "notes": [
         "Selected immediately after JORB-V1-001 acceptance because its dependency is now satisfied.",
         "Next packet rendered at /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-24T200115Z/codex_prompt.md.",
-        "Product repo is dirty before automated execution; refusing to continue."
+        "Product repo is dirty before automated execution; refusing to continue.",
+        "Preserved for later continuation after builder automation is hardened via JORB-INFRA-001."
       ]
     },
     {

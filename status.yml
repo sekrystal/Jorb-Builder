@@ -11,22 +11,23 @@
     "blocked": "The task is blocked and waiting for human intervention."
   },
   "active_task_id": null,
-  "last_task_id": "JORB-V1-002",
+  "last_task_id": "JORB-INFRA-001",
   "last_result": "blocked",
-  "last_run_at": "2026-03-24T22:34:18.249634+00:00",
+  "last_run_at": "2026-03-24T22:52:11.937532+00:00",
   "roadmap_focus": {
     "milestone": "M2",
     "theme": "discovery"
   },
   "stats": {
     "completed_tasks": 1,
-    "blocked_tasks": 1,
-    "retry_ready_tasks": 0
+    "blocked_tasks": 2,
+    "retry_ready_tasks": 1
   },
   "notes": [
     "Builder v1 bootstrapped",
     "Primary focus is truthful discovery status and decisive discovery debugging",
     "JORB-V1-001 is accepted based on Ubuntu VM runtime proof that /discovery-status reflects the latest completed discovery cycle, including zero-yield outcomes.",
-    "JORB-V1-002 is now selected and packet-rendered."
+    "JORB-V1-002 is preserved but paused after blocking on dirty product repo during automated execution.",
+    "JORB-INFRA-001 is now the active builder task and its packet has been rendered."
   ]
 }

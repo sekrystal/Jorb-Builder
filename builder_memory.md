@@ -12,6 +12,7 @@ This is the durable short memory for the external Jorb builder.
 - JORB-V1-001 is accepted based on Ubuntu VM runtime proof, including a real completed discovery cycle and correct zero-yield discovery-status surfacing.
 - JORB-V1-002 is the next selected task now that JORB-V1-001 is accepted.
 - JORB-INFRA-001 is queued as pending builder-side infrastructure work to automate the packet-to-VM execution loop while keeping the builder external to JORB.
+- JORB-INFRA-001 is now active so builder automation can be hardened first; JORB-V1-002 is preserved but intentionally paused.
 
 ## Update rule
 Only add short bullets that materially change future task selection or reduce ambiguity.
@@ -40,3 +41,7 @@ Does this directly improve:
 - system reliability
 
 - JORB-V1-002 blocked by automated loop via BLK-JORB-V1-002.yml. History: 2026-03-24T223418Z-JORB-V1-002.yml
+
+- JORB-INFRA-001 refined by automated loop. History: 2026-03-24T224227Z-JORB-INFRA-001.yml
+
+- JORB-INFRA-001 blocked by automated loop via BLK-JORB-INFRA-001.yml. History: 2026-03-24T225211Z-JORB-INFRA-001.yml

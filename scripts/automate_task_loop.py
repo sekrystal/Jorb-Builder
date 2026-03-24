@@ -96,6 +96,21 @@ def render_template(template: str | None, context: dict[str, str]) -> str | None
     return template.format(**context)
 
 
+def persist_paused_state(active: dict[str, Any], status: dict[str, Any], note: str) -> None:
+    active["state"] = "implementing"
+    if not active.get("handed_to_codex_at"):
+        active["handed_to_codex_at"] = now_iso()
+    notes = list(active.get("notes", []))
+    if note not in notes:
+        notes.append(note)
+    active["notes"] = notes
+    status["state"] = "implementing"
+    status["active_task_id"] = active["task_id"]
+    status["last_run_at"] = now_iso()
+    write_data(ACTIVE, active)
+    write_data(STATUS, status)
+
+
 def run_shell(command: str, cwd: Path, shell_executable: str, timeout: int | None = None) -> dict[str, Any]:
     started_at = now_iso()
     try:
@@ -306,6 +321,7 @@ def build_context(active: dict[str, Any], task: dict[str, Any], product_repo: Pa
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--resume", action="store_true")
     args = parser.parse_args()
 
     config = load_config()
@@ -326,6 +342,7 @@ def main() -> int:
     executor_config = config.get("executor", {})
     git_config = config.get("git", {})
     vm_config = config.get("vm", {})
+    executor_mode = executor_config.get("mode") or "command"
     shell_executable = executor_config.get("shell") or "/bin/zsh"
     vm_repo = expand_path(vm_config.get("product_repo", "~/projects/jorb"))
     context["vm_product_repo"] = str(vm_repo)
@@ -335,6 +352,7 @@ def main() -> int:
         "task_id": task["id"],
         "prompt_file": active["prompt_file"],
         "run_log_dir": active["run_log_dir"],
+        "executor_mode": executor_mode,
         "executor_command": render_template(executor_config.get("command"), context),
         "local_validation_commands": list(active.get("verification_commands", [])),
         "git_push_command": render_template(git_config.get("push_command"), context),
@@ -343,7 +361,7 @@ def main() -> int:
         "ssh_target": vm_config.get("ssh_target"),
         "missing_configuration": [],
     }
-    if not executor_config.get("command"):
+    if executor_mode != "human_gated" and not executor_config.get("command"):
         plan["missing_configuration"].append("executor.command")
     if not vm_config.get("ssh_target"):
         plan["missing_configuration"].append("vm.ssh_target")
@@ -418,42 +436,100 @@ def main() -> int:
         print("BLOCKED")
         return 2
 
-    executor_result = run_shell(
-        plan["executor_command"],
-        ROOT,
-        shell_executable=shell_executable,
-        timeout=int(executor_config.get("timeout_seconds", 1800)),
-    )
-    write_step(run_dir, "executor", executor_result)
-    steps.append({
-        "name": "executor",
-        "outcome": "passed" if executor_result["passed"] else "blocked",
-        "detail": executor_result["stderr"] or executor_result["stdout"],
-        "command": executor_result["command"],
-    })
-    if not executor_result["passed"]:
-        summary = "Executor command failed before local validation."
-        blocker_evidence.append(executor_result["stderr"] or executor_result["stdout"])
+    if not args.resume and executor_mode == "human_gated":
+        handoff_note = "Manual JORB Codex execution is required before resume."
+        handoff_payload = {
+            "mode": "human_gated",
+            "task_id": task["id"],
+            "prompt_file": active["prompt_file"],
+            "run_log_dir": active["run_log_dir"],
+            "resume_command": "python3 scripts/automate_task_loop.py --resume",
+            "message": "Open the packet, run the task in the JORB Codex workspace, then resume after product repo changes are present.",
+            "started_at": now_iso(),
+        }
+        write_step(run_dir, "executor_handoff", handoff_payload)
         automation_result = {
             "task_id": task["id"],
-            "classification": "blocked",
+            "classification": "paused",
             "finished_at": now_iso(),
-            "summary": summary,
-            "steps": steps,
+            "summary": "Manual executor handoff recorded. Resume after JORB Codex applies product repo changes.",
+            "steps": [
+                {
+                    "name": "executor_handoff",
+                    "outcome": "paused",
+                    "detail": f"packet: {active['prompt_file']}; resume: python3 scripts/automate_task_loop.py --resume",
+                }
+            ],
             "changed_files": [],
-            "blocker_evidence": blocker_evidence,
-            "unproven_runtime_gaps": [summary],
+            "unproven_runtime_gaps": ["Product repo changes have not been applied yet; resume is required after manual JORB Codex execution."],
         }
         write_json(run_dir / RESULT_FILE, automation_result)
         write_summary(run_dir, automation_result)
-        classify_and_update_state("blocked", summary, task, backlog, active, status, automation_result)
-        write_data(BACKLOG, backlog)
-        write_data(STATUS, status)
-        print("BLOCKED")
-        return 2
+        persist_paused_state(active, status, handoff_note)
+        print(f"PAUSED {active['prompt_file']}")
+        print("Resume with: python3 scripts/automate_task_loop.py --resume")
+        return 0
 
-    after_executor = git_status_porcelain(product_repo)
-    write_step(run_dir, "git_status_after_executor", after_executor)
+    if args.resume:
+        after_executor = git_status_porcelain(product_repo)
+        write_step(run_dir, "resume_check", after_executor)
+        steps.append({
+            "name": "resume_check",
+            "outcome": "passed" if after_executor.get("files") else "paused",
+            "detail": "Detected product repo changes after manual execution." if after_executor.get("files") else "No product repo changes detected yet.",
+        })
+        if not after_executor.get("files"):
+            automation_result = {
+                "task_id": task["id"],
+                "classification": "paused",
+                "finished_at": now_iso(),
+                "summary": "Resume requested, but no product repo changes were detected yet.",
+                "steps": steps,
+                "changed_files": [],
+                "unproven_runtime_gaps": ["Manual JORB Codex execution has not produced detectable product repo changes yet."],
+            }
+            write_json(run_dir / RESULT_FILE, automation_result)
+            write_summary(run_dir, automation_result)
+            persist_paused_state(active, status, "Resume attempted before product repo changes were present.")
+            print("PAUSED waiting for product repo changes")
+            return 0
+    else:
+        executor_result = run_shell(
+            plan["executor_command"],
+            ROOT,
+            shell_executable=shell_executable,
+            timeout=int(executor_config.get("timeout_seconds", 1800)),
+        )
+        write_step(run_dir, "executor", executor_result)
+        steps.append({
+            "name": "executor",
+            "outcome": "passed" if executor_result["passed"] else "blocked",
+            "detail": executor_result["stderr"] or executor_result["stdout"],
+            "command": executor_result["command"],
+        })
+        if not executor_result["passed"]:
+            summary = "Executor command failed before local validation."
+            blocker_evidence.append(executor_result["stderr"] or executor_result["stdout"])
+            automation_result = {
+                "task_id": task["id"],
+                "classification": "blocked",
+                "finished_at": now_iso(),
+                "summary": summary,
+                "steps": steps,
+                "changed_files": [],
+                "blocker_evidence": blocker_evidence,
+                "unproven_runtime_gaps": [summary],
+            }
+            write_json(run_dir / RESULT_FILE, automation_result)
+            write_summary(run_dir, automation_result)
+            classify_and_update_state("blocked", summary, task, backlog, active, status, automation_result)
+            write_data(BACKLOG, backlog)
+            write_data(STATUS, status)
+            print("BLOCKED")
+            return 2
+        after_executor = git_status_porcelain(product_repo)
+        write_step(run_dir, "git_status_after_executor", after_executor)
+
     changed_files = after_executor.get("files", [])
     allowlisted, disallowed = changed_files_are_allowlisted(changed_files, active.get("allowlist", []))
     if not allowlisted:

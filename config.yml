@@ -20,7 +20,8 @@
     "preserve_step_logs": true
   },
   "executor": {
-    "command": "cat {prompt_file} | pbcopy && echo 'Paste into JORB Codex manually for now'",
+    "mode": "human_gated",
+    "command": null,
     "shell": "/bin/zsh",
     "timeout_seconds": 1800
   },

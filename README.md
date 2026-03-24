@@ -78,7 +78,7 @@ python3 scripts/automate_task_loop.py
 
 What it does in v1:
 - loads the current active task and packet
-- invokes the configured executor command
+- invokes the configured executor command or pauses in explicit human-gated handoff mode
 - captures executor output in the active run log
 - detects whether the product repo changed
 - runs the task's local verification commands
@@ -92,6 +92,7 @@ Important constraints:
 - keep the product repo worktree clean before automated execution unless you intentionally relax that rule
 - prefer explicit config in `config.yml` over environment-specific magic
 - use `--dry-run` first to confirm the planned executor/git/vm steps
+- if `executor.mode` is `human_gated`, run `python3 scripts/automate_task_loop.py`, complete the packet manually in the JORB Codex workspace, then continue with `python3 scripts/automate_task_loop.py --resume`
 
 ## Safe recovery
 If the builder is stuck on a stale task you want to clear safely:
