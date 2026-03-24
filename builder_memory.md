@@ -14,6 +14,7 @@ This is the durable short memory for the external Jorb builder.
 - JORB-INFRA-001 is queued as pending builder-side infrastructure work to automate the packet-to-VM execution loop while keeping the builder external to JORB.
 - JORB-INFRA-001 is now active so builder automation can be hardened first; JORB-V1-002 is preserved but intentionally paused.
 - JORB-INFRA-001 was restored from blocked to retry_ready using its existing packet at /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-24T224108Z/codex_prompt.md.
+- JORB-INFRA-001 is still retryable after the stale builder dirty-repo block and should stay active until the hardened automation path is re-exercised cleanly.
 
 ## Update rule
 Only add short bullets that materially change future task selection or reduce ambiguity.
@@ -48,3 +49,9 @@ Does this directly improve:
 - JORB-INFRA-001 blocked by automated loop via BLK-JORB-INFRA-001.yml. History: 2026-03-24T225211Z-JORB-INFRA-001.yml
 
 - JORB-INFRA-001 blocked by automated loop via BLK-JORB-INFRA-001.yml. History: 2026-03-24T231033Z-JORB-INFRA-001.yml
+
+- JORB-INFRA-001 blocked by automated loop via BLK-JORB-INFRA-001.yml. History: 2026-03-24T232244Z-JORB-INFRA-001.yml
+
+- JORB-INFRA-001 blocked by automated loop via BLK-JORB-INFRA-001.yml. History: 2026-03-24T232329Z-JORB-INFRA-001.yml
+
+- JORB-INFRA-001 blocked by automated loop via BLK-JORB-INFRA-001.yml. History: 2026-03-24T232451Z-JORB-INFRA-001.yml

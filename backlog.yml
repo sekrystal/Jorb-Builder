@@ -34,6 +34,10 @@
         "Executor completed but no product repo changes were detected.",
         "Product repo is dirty before automated execution; refusing to continue.",
         "Restored to retry_ready with the existing packet so infra work can continue without advancing tasks.",
+        "Builder repo is dirty before automated execution; refusing to continue.",
+        "State-machine hardening landed after the stale dirty-repo block; task should resume from the existing packet for another bounded infra retry.",
+        "Builder repo is dirty before automated execution; refusing to continue.",
+        "Builder repo is dirty before automated execution; refusing to continue.",
         "Builder repo is dirty before automated execution; refusing to continue."
       ]
     },

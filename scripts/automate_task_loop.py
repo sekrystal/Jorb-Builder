@@ -221,6 +221,7 @@ def ignored_git_paths_for_target(target_kind: str) -> tuple[str, ...]:
         return ()
     return (
         "active_task.yml",
+        "backlog.yml",
         "status.yml",
         "builder_memory.md",
         "task_history/",

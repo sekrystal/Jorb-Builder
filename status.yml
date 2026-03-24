@@ -10,17 +10,17 @@
     "retry_ready": "The task failed verification and is ready for a bounded retry.",
     "blocked": "The task is blocked and waiting for human intervention."
   },
-  "active_task_id": null,
+  "active_task_id": "JORB-INFRA-001",
   "last_task_id": "JORB-INFRA-001",
   "last_result": "blocked",
-  "last_run_at": "2026-03-24T23:10:33.790034+00:00",
+  "last_run_at": "2026-03-24T23:24:51.558156+00:00",
   "roadmap_focus": {
     "milestone": "M2",
     "theme": "discovery"
   },
   "stats": {
     "completed_tasks": 1,
-    "blocked_tasks": 3,
+    "blocked_tasks": 6,
     "retry_ready_tasks": 1
   },
   "notes": [
@@ -28,6 +28,7 @@
     "Primary focus is truthful discovery status and decisive discovery debugging",
     "JORB-V1-001 is accepted based on Ubuntu VM runtime proof that /discovery-status reflects the latest completed discovery cycle, including zero-yield outcomes.",
     "JORB-V1-002 is preserved but paused after blocking on dirty product repo during automated execution.",
-    "JORB-INFRA-001 has been restored as the active retry task using its existing packet and run log."
+    "JORB-INFRA-001 has been restored as the active retry task using its existing packet and run log.",
+    "JORB-INFRA-001 remains the correct next builder task after state-machine hardening; do not advance to product work yet."
   ]
 }

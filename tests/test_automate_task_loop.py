@@ -210,6 +210,19 @@ def test_builder_side_pause_and_resume(tmp_path: Path) -> None:
     assert "builder repo changes" in result["summary"]
 
 
+def test_builder_side_ignores_backlog_dirt_when_pausing(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="TASK-BUILDER", area="builder", allowlist=["../jorb-builder/**"])
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["notes"].append("local builder retry note")
+    _write_json(builder_root / "backlog.yml", backlog)
+
+    pause = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert pause.returncode == 0
+    assert "PAUSED" in pause.stdout
+    assert "dirty before automated execution" not in pause.stdout
+
+
 def test_product_side_pause_and_resume(tmp_path: Path) -> None:
     builder_root, product_repo, run_log_dir, _ = _setup_builder_fixture(
         tmp_path,
