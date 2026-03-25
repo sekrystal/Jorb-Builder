@@ -20,8 +20,12 @@
     "preserve_step_logs": true
   },
   "executor": {
-    "mode": "human_gated",
+    "mode": "codex_exec",
     "command": null,
+    "codex_cli": "codex",
+    "sandbox": "workspace-write",
+    "full_auto": true,
+    "last_message_file": "codex_last_message.md",
     "shell": "/bin/zsh",
     "timeout_seconds": 1800
   },
@@ -54,6 +58,6 @@
   },
   "codex": {
     "worker": "vscode",
-    "mode": "manual_packet"
+    "mode": "exec"
   }
 }

@@ -59,6 +59,34 @@ def _write_activate_script(venv_dir: Path) -> None:
     )
 
 
+def _write_fake_codex(path: Path, *, relative_output: str, last_message: str = "fake codex applied change\n") -> None:
+    path.write_text(
+        "\n".join(
+            [
+                "#!/usr/bin/env python3",
+                "from pathlib import Path",
+                "import sys",
+                "",
+                "argv = sys.argv[1:]",
+                "output_file = None",
+                "for index, item in enumerate(argv):",
+                "    if item == '-o' and index + 1 < len(argv):",
+                "        output_file = Path(argv[index + 1])",
+                "prompt = sys.stdin.read()",
+                f"target = Path.cwd() / {relative_output!r}",
+                "target.parent.mkdir(parents=True, exist_ok=True)",
+                "target.write_text('applied by fake codex\\n', encoding='utf-8')",
+                "if output_file is not None:",
+                f"    output_file.write_text({last_message!r}, encoding='utf-8')",
+                "sys.stdout.write(prompt[:80])",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    path.chmod(0o755)
+
+
 def _ignore_path_in_git_status(repo: Path, pattern: str) -> None:
     exclude = repo / ".git" / "info" / "exclude"
     with exclude.open("a", encoding="utf-8") as handle:
@@ -636,6 +664,73 @@ def test_dirty_repo_blocks_and_preserves_active_task(tmp_path: Path) -> None:
     payload = _json(run_log_dir / "automation_result.json")
     assert payload["classification"] == "blocked"
     assert "Builder repo is dirty" in payload["summary"]
+
+
+def test_codex_exec_builder_task_runs_in_builder_repo(tmp_path: Path) -> None:
+    builder_root, _, run_log_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    fake_codex = tmp_path / "fake-codex-builder"
+    _write_fake_codex(fake_codex, relative_output="worker.py", last_message="builder codex ok\n")
+
+    config = _json(builder_root / "config.yml")
+    config["executor"]["mode"] = "codex_exec"
+    config["executor"]["codex_cli"] = str(fake_codex)
+    _write_json(builder_root / "config.yml", config)
+    _git(["add", "config.yml"], builder_root)
+    _git(["commit", "-m", "configure codex exec"], builder_root)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 0
+    assert "ACCEPTED" in result.stdout
+    assert (builder_root / "worker.py").exists()
+    executor = _json(run_log_dir / "executor.json")
+    assert executor["cwd"] == str(builder_root)
+    assert executor["last_message"] == "builder codex ok\n"
+    payload = _json(run_log_dir / "automation_result.json")
+    assert payload["classification"] == "accepted"
+    assert "worker.py" in payload["changed_files"]
+
+
+def test_codex_exec_product_task_runs_in_product_repo(tmp_path: Path) -> None:
+    builder_root, product_repo, run_log_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="discovery",
+        allowlist=["services/company_discovery.py"],
+    )
+    _commit_allowlisted_product_file(product_repo, "services/company_discovery.py", "print('seed')\n")
+    fake_codex = tmp_path / "fake-codex-product"
+    _write_fake_codex(fake_codex, relative_output="services/company_discovery.py", last_message="product codex ok\n")
+
+    config = _json(builder_root / "config.yml")
+    config["executor"]["mode"] = "codex_exec"
+    config["executor"]["codex_cli"] = str(fake_codex)
+    config["vm"]["ssh_target"] = "127.0.0.1"
+    config["vm"]["ssh_options"] = ["-o", "ConnectTimeout=1"]
+    _write_json(builder_root / "config.yml", config)
+    _git(["add", "config.yml"], builder_root)
+    _git(["commit", "-m", "configure codex exec"], builder_root)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 1
+    assert (product_repo / "services" / "company_discovery.py").exists()
+    executor = _json(run_log_dir / "executor.json")
+    assert executor["cwd"] == str(product_repo)
+    assert executor["last_message"] == "product codex ok\n"
+    payload = _json(run_log_dir / "automation_result.json")
+    step_names = [step["name"] for step in payload["steps"]]
+    assert payload["classification"] == "refined"
+    assert "executor" in step_names
+    assert "local_validation" in step_names
+    assert "git" in step_names
+    assert "vm_validation" in step_names
+    assert "services/company_discovery.py" in payload["changed_files"]
 
 
 def test_local_product_repo_path_still_behaves_as_expected(tmp_path: Path) -> None:

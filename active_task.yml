@@ -1,16 +1,25 @@
 {
-  "task_id": null,
-  "title": null,
-  "state": "idle",
-  "attempt": 0,
-  "started_at": null,
-  "handed_to_codex_at": null,
-  "prompt_file": null,
-  "run_log_dir": null,
-  "verification_commands": [],
-  "allowlist": [],
+  "task_id": "JORB-V1-003",
+  "title": "Harden search provider failure classification and bounded failover after provider_self_link-only results",
+  "state": "paused",
+  "attempt": 1,
+  "started_at": "2026-03-25T01:18:23.389029+00:00",
+  "handed_to_codex_at": "2026-03-25T01:19:26.840042+00:00",
+  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T011832Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T011832Z",
+  "verification_commands": [
+    "pytest tests/test_search_discovery.py",
+    "./scripts/preflight_check.sh"
+  ],
+  "allowlist": [
+    "connectors/search_web.py",
+    "tests/test_search_discovery.py"
+  ],
   "failure_summary": null,
-  "notes": [],
-  "target_repo": null,
-  "target_kind": null
+  "notes": [
+    "Manual JORB Codex execution is required before resume.",
+    "Resume attempted before product repo changes were present."
+  ],
+  "target_repo": "/Users/samuelkrystal/projects/jorb",
+  "target_kind": "product"
 }

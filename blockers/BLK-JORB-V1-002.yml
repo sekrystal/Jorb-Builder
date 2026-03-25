@@ -6,7 +6,7 @@
   "related_tasks": [
     "JORB-V1-002"
   ],
-  "status": "open",
+  "status": "resolved",
   "symptoms": [
     "Product repo is dirty before automated execution; refusing to continue."
   ],
@@ -22,7 +22,7 @@
     "ui/app.py"
   ],
   "next_actions": [
-    "Inspect automation_result.json and narrow the next bounded refinement."
+    "Blocker cleared after JORB-V1-002 reached accepted with full automated VM validation success."
   ],
   "human_needed": true
 }

@@ -6,6 +6,7 @@ from pathlib import Path
 import argparse
 import json
 import shlex
+import shutil
 import subprocess
 from typing import Any
 
@@ -202,6 +203,57 @@ def run_argv(argv: list[str], cwd: Path, timeout: int | None = None) -> dict[str
             "stdout": process.stdout,
             "stderr": process.stderr,
             "passed": process.returncode == 0,
+        }
+    except subprocess.TimeoutExpired as exc:
+        return {
+            "command": " ".join(shlex.quote(part) for part in argv),
+            "cwd": str(cwd),
+            "started_at": started_at,
+            "finished_at": now_iso(),
+            "returncode": None,
+            "stdout": exc.stdout or "",
+            "stderr": f"Timed out after {timeout} seconds.",
+            "passed": False,
+        }
+
+
+def run_argv_input(
+    argv: list[str],
+    cwd: Path,
+    *,
+    input_text: str,
+    timeout: int | None = None,
+) -> dict[str, Any]:
+    started_at = now_iso()
+    try:
+        process = subprocess.run(
+            argv,
+            cwd=str(cwd),
+            capture_output=True,
+            text=True,
+            input=input_text,
+            timeout=timeout,
+        )
+        return {
+            "command": " ".join(shlex.quote(part) for part in argv),
+            "cwd": str(cwd),
+            "started_at": started_at,
+            "finished_at": now_iso(),
+            "returncode": process.returncode,
+            "stdout": process.stdout,
+            "stderr": process.stderr,
+            "passed": process.returncode == 0,
+        }
+    except FileNotFoundError as exc:
+        return {
+            "command": " ".join(shlex.quote(part) for part in argv),
+            "cwd": str(cwd),
+            "started_at": started_at,
+            "finished_at": now_iso(),
+            "returncode": None,
+            "stdout": "",
+            "stderr": str(exc),
+            "passed": False,
         }
     except subprocess.TimeoutExpired as exc:
         return {
@@ -519,6 +571,23 @@ def build_context(
     }
 
 
+def codex_exec_argv(
+    executor_config: dict[str, Any],
+    *,
+    run_dir: Path,
+) -> list[str]:
+    cli = str(executor_config.get("codex_cli") or "codex")
+    argv = [cli, "exec"]
+    sandbox_mode = executor_config.get("sandbox")
+    if sandbox_mode:
+        argv.extend(["--sandbox", str(sandbox_mode)])
+    if executor_config.get("full_auto", True):
+        argv.append("--full-auto")
+    output_path = run_dir / str(executor_config.get("last_message_file") or "codex_last_message.md")
+    argv.extend(["-o", str(output_path), "-"])
+    return argv
+
+
 def attach_target_to_active(active: dict[str, Any], *, target_repo: Path, target_kind: str) -> None:
     active["target_repo"] = str(target_repo)
     active["target_kind"] = target_kind
@@ -562,6 +631,8 @@ def main() -> int:
     vm_config = config.get("vm", {})
     executor_mode = executor_config.get("mode") or "command"
     shell_executable = executor_config.get("shell") or "/bin/zsh"
+    codex_cli = str(executor_config.get("codex_cli") or "codex")
+    codex_last_message_path = run_dir / str(executor_config.get("last_message_file") or "codex_last_message.md")
     vm_repo = str(vm_config.get("product_repo", "~/projects/jorb"))
     context["vm_product_repo"] = vm_repo
 
@@ -583,6 +654,7 @@ def main() -> int:
         "target_repo": str(target_repo),
         "executor_mode": executor_mode,
         "executor_command": render_template(executor_config.get("command"), context),
+        "executor_codex_argv": codex_exec_argv(executor_config, run_dir=run_dir) if executor_mode == "codex_exec" else None,
         "local_validation_commands": local_validation_commands,
         "prepared_local_validation_commands": prepared_validation_commands,
         "git_push_command": render_template(git_config.get("push_command"), context),
@@ -593,7 +665,11 @@ def main() -> int:
         "retry_continuation": retry_continuation,
     }
     if executor_mode != "human_gated" and not executor_config.get("command"):
-        plan["missing_configuration"].append("executor.command")
+        if executor_mode == "codex_exec":
+            if shutil.which(codex_cli) is None and not Path(codex_cli).expanduser().exists():
+                plan["missing_configuration"].append("executor.codex_cli")
+        else:
+            plan["missing_configuration"].append("executor.command")
     if use_vm_flow and not vm_config.get("ssh_target"):
         plan["missing_configuration"].append("vm.ssh_target")
     if use_vm_flow and not vm_commands:
@@ -769,17 +845,29 @@ def main() -> int:
                 print_result("REFINED", summary, f"Reapply or restore the task changes in {target_repo}, then rerun python3 scripts/automate_task_loop.py.")
                 return 1
     else:
-        executor_result = run_shell(
-            plan["executor_command"],
-            ROOT,
-            shell_executable=shell_executable,
-            timeout=int(executor_config.get("timeout_seconds", 1800)),
-        )
+        prompt_text = Path(active["prompt_file"]).read_text(encoding="utf-8")
+        if executor_mode == "codex_exec":
+            executor_result = run_argv_input(
+                codex_exec_argv(executor_config, run_dir=run_dir),
+                target_repo,
+                input_text=prompt_text,
+                timeout=int(executor_config.get("timeout_seconds", 1800)),
+            )
+            if codex_last_message_path.exists():
+                executor_result["last_message_file"] = str(codex_last_message_path)
+                executor_result["last_message"] = codex_last_message_path.read_text(encoding="utf-8")
+        else:
+            executor_result = run_shell(
+                plan["executor_command"],
+                ROOT,
+                shell_executable=shell_executable,
+                timeout=int(executor_config.get("timeout_seconds", 1800)),
+            )
         write_step(run_dir, "executor", executor_result)
         steps.append({
             "name": "executor",
             "outcome": "passed" if executor_result["passed"] else "blocked",
-            "detail": executor_result["stderr"] or executor_result["stdout"],
+            "detail": executor_result.get("last_message") or executor_result["stderr"] or executor_result["stdout"],
             "command": executor_result["command"],
         })
         if not executor_result["passed"]:
