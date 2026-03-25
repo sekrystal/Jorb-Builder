@@ -1,0 +1,32 @@
+{
+  "task_id": "JORB-INFRA-005",
+  "title": "Add accepted task evidence linking and operator diagnostics",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-25T18:25:23.985172+00:00",
+  "completed_at": "2026-03-25T18:33:36.215033+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T182523Z/codex_prompt.md",
+  "files_changed": [
+    "scripts/automate_task_loop.py",
+    "templates/task_history.yml",
+    "tests/test_automate_task_loop.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T182523Z-JORB-INFRA-005/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed"
+  ],
+  "acceptance_met": [
+    "task history for accepted tasks links to core evidence artifacts",
+    "operator can quickly inspect why a task was accepted"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with builder-side local validation success."
+  ],
+  "unproven_runtime_gaps": []
+}

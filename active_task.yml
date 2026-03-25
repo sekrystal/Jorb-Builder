@@ -1,22 +1,25 @@
 {
-  "task_id": "JORB-INFRA-005",
-  "title": "Add accepted task evidence linking and operator diagnostics",
-  "state": "verifying",
+  "task_id": null,
+  "title": null,
+  "state": "completed",
   "attempt": 1,
-  "started_at": "2026-03-25T18:25:23.985172+00:00",
+  "started_at": "2026-03-25T18:33:37.336842+00:00",
   "handed_to_codex_at": null,
-  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T182523Z/codex_prompt.md",
-  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T182523Z-JORB-INFRA-005",
+  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T183336Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T183336Z-JORB-V1-016",
   "verification_commands": [
-    "python3 -m py_compile scripts/*.py",
-    "pytest tests/test_automate_task_loop.py"
+    "pytest tests/test_feedback_learning.py tests/test_workbench.py",
+    "./scripts/preflight_check.sh"
   ],
   "allowlist": [
-    "../jorb-builder/**"
+    "services/feedback_learning.py",
+    "ui/app.py",
+    "tests/test_feedback_learning.py",
+    "tests/test_workbench.py"
   ],
   "failure_summary": null,
   "notes": [],
-  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T182523Z",
-  "target_repo": "/Users/samuelkrystal/projects/jorb-builder",
-  "target_kind": "builder"
+  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T183336Z",
+  "target_repo": "/Users/samuelkrystal/projects/jorb",
+  "target_kind": "product"
 }

@@ -854,7 +854,7 @@
       "area": "learning",
       "milestone": "M4",
       "priority": 2,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V1-015"
@@ -882,7 +882,9 @@
         "system can generate targeted improvement recommendations",
         "tests cover parsing and recommendation mapping"
       ],
-      "notes": [],
+      "notes": [
+        "Automated loop completed with VM validation success."
+      ],
       "repo_path": "~/projects/jorb",
       "description": "Add a feedback pipeline that maps structured rejection reasons into targeted, non-generic improvement recommendations.\n\nLearning should be grounded in actual outcome data rather than generic coaching advice.",
       "acceptance_criteria": [
@@ -1072,7 +1074,7 @@
       "area": "builder",
       "milestone": "M0",
       "priority": 2,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-002"
@@ -1094,7 +1096,9 @@
         "task history for accepted tasks links to core evidence artifacts",
         "operator can quickly inspect why a task was accepted"
       ],
-      "notes": [],
+      "notes": [
+        "Automated loop completed with builder-side local validation success."
+      ],
       "repo_path": "~/projects/jorb-builder",
       "description": "Improve accepted-task observability by linking task history to core evidence artifacts and operator diagnostics.\n\nAcceptance should stay explainable as the builder takes on more autonomous work and longer-running product tasks.",
       "acceptance_criteria": [
