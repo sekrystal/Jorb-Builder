@@ -75,7 +75,7 @@ def _write_fake_codex(path: Path, *, relative_output: str, last_message: str = "
                 "prompt = sys.stdin.read()",
                 f"target = Path.cwd() / {relative_output!r}",
                 "target.parent.mkdir(parents=True, exist_ok=True)",
-                "target.write_text('applied by fake codex\\n', encoding='utf-8')",
+                "target.write_text('applied by fake codex\\n' + prompt, encoding='utf-8')",
                 "if output_file is not None:",
                 f"    output_file.write_text({last_message!r}, encoding='utf-8')",
                 "sys.stdout.write(prompt[:80])",
@@ -368,7 +368,7 @@ def test_no_active_task_autoselects_and_executes_ready_task(tmp_path: Path) -> N
     result = _run([sys.executable, str(SCRIPT)], builder_root)
 
     assert result.returncode == 0
-    assert "ACCEPTED" in result.stdout
+    assert "NO_ACTIVE_TASK" in result.stdout
     assert (builder_root / "worker.py").exists()
     active_after = _json(builder_root / "active_task.yml")
     assert active_after["task_id"] is None
@@ -414,6 +414,86 @@ def test_no_active_task_with_no_ready_tasks_stays_no_active_task(tmp_path: Path)
 
     assert result.returncode == 1
     assert "NO_ACTIVE_TASK" in result.stdout
+
+
+def test_accepted_task_autoselects_next_task(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-1",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    fake_codex = tmp_path / "fake-codex-chain"
+    _write_fake_codex(fake_codex, relative_output="worker.py", last_message="chain codex ok\n")
+
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "selected"
+    backlog["tasks"].append(
+        {
+            "id": "TASK-2",
+            "title": "TASK-2",
+            "type": "infrastructure",
+            "area": "builder",
+            "milestone": "M0",
+            "priority": 1,
+            "status": "ready",
+            "retries_used": 0,
+            "depends_on": [],
+            "prompt": "implement_feature",
+            "objective": "obj2",
+            "why_it_matters": "why2",
+            "allowlist": ["../jorb-builder/**"],
+            "forbid": [],
+            "verification": [],
+            "acceptance": ["a"],
+            "notes": [],
+        }
+    )
+    _write_json(builder_root / "backlog.yml", backlog)
+
+    config = _json(builder_root / "config.yml")
+    config["executor"]["mode"] = "codex_exec"
+    config["executor"]["codex_cli"] = str(fake_codex)
+    _write_json(builder_root / "config.yml", config)
+    _git(["add", "backlog.yml", "config.yml", "prompts/implement_feature.md"], builder_root)
+    _git(["commit", "-m", "prepare accepted chain"], builder_root)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 0
+    assert "ACCEPTED" in result.stdout
+    backlog_after = _json(builder_root / "backlog.yml")
+    statuses = {task["id"]: task["status"] for task in backlog_after["tasks"]}
+    assert statuses["TASK-1"] == "accepted"
+    assert statuses["TASK-2"] == "accepted"
+    assert len(list((builder_root / "task_history").glob("*.yml"))) == 2
+
+
+def test_accepted_task_with_no_ready_tasks_returns_no_active_task(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-1",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    fake_codex = tmp_path / "fake-codex-finish"
+    _write_fake_codex(fake_codex, relative_output="worker.py", last_message="finish codex ok\n")
+
+    config = _json(builder_root / "config.yml")
+    config["executor"]["mode"] = "codex_exec"
+    config["executor"]["codex_cli"] = str(fake_codex)
+    _write_json(builder_root / "config.yml", config)
+    _git(["add", "config.yml", "prompts/implement_feature.md"], builder_root)
+    _git(["commit", "-m", "prepare accepted finish"], builder_root)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 0
+    assert "NO_ACTIVE_TASK" in result.stdout
+    backlog_after = _json(builder_root / "backlog.yml")
+    assert backlog_after["tasks"][0]["status"] == "accepted"
+    active_after = _json(builder_root / "active_task.yml")
+    assert active_after["task_id"] is None
 
 
 def test_missing_packet(tmp_path: Path) -> None:
@@ -808,7 +888,7 @@ def test_codex_exec_builder_task_runs_in_builder_repo(tmp_path: Path) -> None:
     result = _run([sys.executable, str(SCRIPT)], builder_root)
 
     assert result.returncode == 0
-    assert "ACCEPTED" in result.stdout
+    assert "NO_ACTIVE_TASK" in result.stdout
     assert (builder_root / "worker.py").exists()
     executor = _json(run_log_dir / "executor.json")
     assert executor["cwd"] == str(builder_root)

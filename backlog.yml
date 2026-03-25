@@ -269,7 +269,7 @@
       "area": "runtime",
       "milestone": "M1",
       "priority": 2,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [],
       "prompt": "implement_feature",
@@ -298,6 +298,9 @@
         "docs match the runtime model",
         "/leads hot path remains untouched",
         "targeted tests and preflight pass"
+      ],
+      "notes": [
+        "Automated loop completed with VM validation success."
       ]
     }
   ]

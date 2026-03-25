@@ -617,12 +617,7 @@ def attach_target_to_active(active: dict[str, Any], *, target_repo: Path, target
     active["target_kind"] = target_kind
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--resume", action="store_true")
-    args = parser.parse_args()
-
+def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
     config = load_config()
     backlog, active, status, auto_bootstrapped = try_bootstrap_active_task()
 
@@ -1123,10 +1118,24 @@ def main() -> int:
     write_data(BACKLOG, backlog)
     write_data(STATUS, status)
     if classification == "accepted":
+        if allow_follow_on:
+            next_backlog, next_active, next_status, next_bootstrapped = try_bootstrap_active_task()
+            if next_bootstrapped:
+                return run_loop(args, allow_follow_on=False)
+            print_result("NO_ACTIVE_TASK", "No active task is currently loaded.", "No ready tasks remain after the accepted task completed.")
+            return 0
         print_result("ACCEPTED", summary, "Review automation_summary.md for evidence and proceed to the next task.")
     else:
         print_result("REFINED", summary, f"Inspect {run_dir / RESULT_FILE} for VM validation details, then rerun once the issue is fixed.")
     return 0 if vm_passed else 1
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--resume", action="store_true")
+    args = parser.parse_args()
+    return run_loop(args, allow_follow_on=True)
 
 
 if __name__ == "__main__":
