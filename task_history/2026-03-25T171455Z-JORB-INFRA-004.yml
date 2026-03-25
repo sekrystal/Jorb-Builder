@@ -1,0 +1,33 @@
+{
+  "task_id": "JORB-INFRA-004",
+  "title": "Eliminate interactive auth prompts in the builder loop",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-25T17:05:22.181810+00:00",
+  "completed_at": "2026-03-25T17:14:55.741395+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T170522Z/codex_prompt.md",
+  "files_changed": [
+    "README.md",
+    "scripts/automate_task_loop.py",
+    "tests/test_automate_task_loop.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T170522Z-JORB-INFRA-004/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed"
+  ],
+  "acceptance_met": [
+    "builder loop can run without repeated GitHub password prompts",
+    "builder loop can SSH to the VM without interactive password entry",
+    "operator docs explain required key setup"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with builder-side local validation success."
+  ],
+  "unproven_runtime_gaps": []
+}

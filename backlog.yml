@@ -1027,7 +1027,7 @@
       "area": "builder",
       "milestone": "M0",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-002"
@@ -1050,7 +1050,9 @@
         "builder loop can SSH to the VM without interactive password entry",
         "operator docs explain required key setup"
       ],
-      "notes": [],
+      "notes": [
+        "Automated loop completed with builder-side local validation success."
+      ],
       "repo_path": "~/projects/jorb-builder",
       "description": "Remove repeated interactive password prompts from GitHub, SSH, and VM validation under normal builder operation.\n\nA truly low-friction builder loop needs non-interactive auth so long live runs can complete unattended.",
       "acceptance_criteria": [
