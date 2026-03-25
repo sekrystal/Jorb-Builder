@@ -57,3 +57,7 @@ Does this directly improve:
 - JORB-INFRA-001 blocked by automated loop via BLK-JORB-INFRA-001.yml. History: 2026-03-24T232329Z-JORB-INFRA-001.yml
 
 - JORB-INFRA-001 blocked by automated loop via BLK-JORB-INFRA-001.yml. History: 2026-03-24T232451Z-JORB-INFRA-001.yml
+
+- JORB-V1-002 blocked by automated loop via BLK-JORB-V1-002.yml. History: 2026-03-25T000049Z-JORB-V1-002.yml
+
+- JORB-V1-002 refined by automated loop. History: 2026-03-25T000544Z-JORB-V1-002.yml

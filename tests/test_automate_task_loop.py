@@ -29,6 +29,11 @@ def _git(cmd: list[str], cwd: Path) -> None:
     subprocess.run(["git", *cmd], cwd=str(cwd), check=True, capture_output=True, text=True)
 
 
+def _init_bare_remote(path: Path) -> None:
+    path.mkdir(parents=True, exist_ok=True)
+    subprocess.run(["git", "init", "--bare", str(path)], check=True, capture_output=True, text=True)
+
+
 def _init_repo(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True)
     _git(["init"], path)
@@ -37,6 +42,36 @@ def _init_repo(path: Path) -> None:
     (path / ".gitignore").write_text(".pytest_cache\n", encoding="utf-8")
     _git(["add", ".gitignore"], path)
     _git(["commit", "-m", "init"], path)
+
+
+def _write_activate_script(venv_dir: Path) -> None:
+    activate = venv_dir / "bin" / "activate"
+    activate.parent.mkdir(parents=True, exist_ok=True)
+    activate.write_text(
+        "\n".join(
+            [
+                f'export VIRTUAL_ENV="{venv_dir}"',
+                'export PATH="$VIRTUAL_ENV/bin:$PATH"',
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+
+def _ignore_path_in_git_status(repo: Path, pattern: str) -> None:
+    exclude = repo / ".git" / "info" / "exclude"
+    with exclude.open("a", encoding="utf-8") as handle:
+        handle.write(f"{pattern}\n")
+
+
+def _commit_allowlisted_product_file(product_repo: Path, relative_path: str, content: str) -> None:
+    path = product_repo / relative_path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+    _git(["add", relative_path], product_repo)
+    _git(["commit", "-m", f"seed {relative_path}"], product_repo)
+    _git(["push", "origin", "HEAD"], product_repo)
 
 
 def _base_status() -> dict:
@@ -92,7 +127,7 @@ def _base_config(product_repo: Path, builder_root: Path) -> dict:
         "execution": {"max_retries_per_task": 2, "default_prompt": "implement_feature", "debug_prompt": "debug_failure"},
         "automation": {"mode": "explicit_script", "preserve_step_logs": True},
         "executor": {"mode": "human_gated", "command": None, "shell": "/bin/zsh", "timeout_seconds": 1800},
-        "git": {"require_clean_worktree": True, "commit_message_template": "{task_id}: {title}", "push_command": "git push origin main"},
+        "git": {"require_clean_worktree": True, "commit_message_template": "{task_id}: {title}", "push_command": "git push origin HEAD"},
         "vm": {"ssh_target": "vm.example", "ssh_options": [], "product_repo": str(product_repo), "pull_command": "git pull --ff-only", "validation_commands": ["echo ok"], "runtime_validation_commands": []},
         "verification": {"default_check_group": "targeted", "required_on_completion": ["preflight"]},
         "rules": {"forbid_builder_code_in_product_repo": True, "require_explicit_allowlist": True, "require_explicit_verification": True, "require_exact_return_format": True, "allow_only_jorb_repo_edits": True},
@@ -103,8 +138,16 @@ def _base_config(product_repo: Path, builder_root: Path) -> dict:
 def _setup_builder_fixture(tmp_path: Path, *, task_id: str, area: str, allowlist: list[str]) -> tuple[Path, Path, Path, Path]:
     builder_root = tmp_path / "builder"
     product_repo = tmp_path / "jorb"
+    builder_remote = tmp_path / "builder-remote.git"
+    product_remote = tmp_path / "jorb-remote.git"
     _init_repo(builder_root)
     _init_repo(product_repo)
+    _init_bare_remote(builder_remote)
+    _init_bare_remote(product_remote)
+    _git(["remote", "add", "origin", str(builder_remote)], builder_root)
+    _git(["remote", "add", "origin", str(product_remote)], product_repo)
+    _git(["push", "-u", "origin", "HEAD"], builder_root)
+    _git(["push", "-u", "origin", "HEAD"], product_repo)
 
     run_log_dir = builder_root / "run_logs" / "run-1"
     run_log_dir.mkdir(parents=True, exist_ok=True)
@@ -244,6 +287,101 @@ def test_product_side_pause_and_resume(tmp_path: Path) -> None:
     result = _json(run_log_dir / "automation_result.json")
     assert result["classification"] == "paused"
     assert "product repo changes" in result["summary"]
+
+
+def test_resume_allows_expected_dirty_builder_task_files(tmp_path: Path) -> None:
+    builder_root, _, run_log_dir, _ = _setup_builder_fixture(tmp_path, task_id="TASK-BUILDER", area="builder", allowlist=["../jorb-builder/**"])
+
+    pause = _run([sys.executable, str(SCRIPT)], builder_root)
+    assert pause.returncode == 0
+
+    (builder_root / "worker.py").write_text("print('ok')\n", encoding="utf-8")
+
+    resume = _run([sys.executable, str(SCRIPT), "--resume"], builder_root)
+
+    assert resume.returncode == 0
+    assert "BLOCKED Builder repo is dirty before automated execution" not in resume.stdout
+    payload = _json(run_log_dir / "automation_result.json")
+    assert payload["classification"] == "accepted"
+    assert "worker.py" in payload["changed_files"]
+
+
+def test_resume_blocks_out_of_allowlist_dirty_files(tmp_path: Path) -> None:
+    builder_root, product_repo, run_log_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="discovery",
+        allowlist=["services/company_discovery.py"],
+    )
+
+    pause = _run([sys.executable, str(SCRIPT)], builder_root)
+    assert pause.returncode == 0
+
+    (product_repo / "wrong.txt").write_text("wrong file\n", encoding="utf-8")
+
+    resume = _run([sys.executable, str(SCRIPT), "--resume"], builder_root)
+
+    assert resume.returncode in {1, 2}
+    assert "outside the task allowlist" in resume.stdout
+    payload = _json(run_log_dir / "automation_result.json")
+    assert payload["classification"] == "blocked"
+    assert "wrong.txt" in payload["blocker_evidence"]
+
+
+def test_product_validation_uses_venv_validation_when_present(tmp_path: Path) -> None:
+    builder_root, product_repo, run_log_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="discovery",
+        allowlist=["services/company_discovery.py"],
+    )
+    _commit_allowlisted_product_file(product_repo, "services/company_discovery.py", "print('seed')\n")
+
+    active = _json(builder_root / "active_task.yml")
+    active["verification_commands"] = [f'test "$VIRTUAL_ENV" = "{product_repo / ".venv_validation"}"']
+    _write_json(builder_root / "active_task.yml", active)
+
+    pause = _run([sys.executable, str(SCRIPT)], builder_root)
+    assert pause.returncode == 0
+
+    _ignore_path_in_git_status(product_repo, ".venv_validation")
+    _write_activate_script(product_repo / ".venv_validation")
+    (product_repo / "services" / "company_discovery.py").write_text("print('changed')\n", encoding="utf-8")
+
+    resume = _run([sys.executable, str(SCRIPT), "--resume"], builder_root)
+
+    assert resume.returncode in {1, 2}
+    assert "No product validation virtualenv found" not in resume.stdout
+    validation = _json(run_log_dir / "local_validation.json")
+    assert validation["passed"] is True
+    assert validation["venv_path"] == str(product_repo / ".venv_validation")
+
+
+def test_product_validation_fails_clearly_without_venv(tmp_path: Path) -> None:
+    builder_root, product_repo, run_log_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="discovery",
+        allowlist=["services/company_discovery.py"],
+    )
+    _commit_allowlisted_product_file(product_repo, "services/company_discovery.py", "print('seed')\n")
+
+    active = _json(builder_root / "active_task.yml")
+    active["verification_commands"] = ["echo validation"]
+    _write_json(builder_root / "active_task.yml", active)
+
+    pause = _run([sys.executable, str(SCRIPT)], builder_root)
+    assert pause.returncode == 0
+
+    (product_repo / "services" / "company_discovery.py").write_text("print('changed')\n", encoding="utf-8")
+
+    resume = _run([sys.executable, str(SCRIPT), "--resume"], builder_root)
+
+    assert resume.returncode == 2
+    assert "No product validation virtualenv found" in resume.stdout
+    payload = _json(run_log_dir / "automation_result.json")
+    assert payload["classification"] == "blocked"
+    assert "No product validation virtualenv found" in payload["summary"]
 
 
 def test_dirty_repo_blocks_and_preserves_active_task(tmp_path: Path) -> None:

@@ -132,8 +132,8 @@
       "area": "discovery",
       "milestone": "M2",
       "priority": 1,
-      "status": "selected",
-      "retries_used": 0,
+      "status": "retry_ready",
+      "retries_used": 1,
       "depends_on": [
         "JORB-V1-001"
       ],
@@ -170,7 +170,9 @@
         "Next packet rendered at /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-24T200115Z/codex_prompt.md.",
         "Product repo is dirty before automated execution; refusing to continue.",
         "Preserved for later continuation after builder automation is hardened via JORB-INFRA-001.",
-        "Restored as the next product task after accepting JORB-INFRA-001 for the human_gated v1 scope."
+        "Restored as the next product task after accepting JORB-INFRA-001 for the human_gated v1 scope.",
+        "Product repo is dirty before automated execution; refusing to continue.",
+        "Local validation failed after executor changes."
       ]
     },
     {

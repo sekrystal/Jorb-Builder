@@ -1,10 +1,10 @@
 {
   "task_id": "JORB-V1-002",
   "title": "Persist and expose discovery query-family metrics end to end",
-  "state": "packet_rendered",
+  "state": "failed",
   "attempt": 1,
   "started_at": "2026-03-24T23:45:52+00:00",
-  "handed_to_codex_at": null,
+  "handed_to_codex_at": "2026-03-24T23:51:47Z",
   "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-24T234552Z/codex_prompt.md",
   "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-24T234552Z",
   "verification_commands": [
@@ -22,9 +22,13 @@
     "tests/test_sync.py",
     "tests/test_workbench.py"
   ],
-  "failure_summary": null,
+  "failure_summary": "Local validation failed after executor changes.",
   "notes": [
-    "Restored as the next product task after accepting JORB-INFRA-001 for the v1 human_gated scope."
+    "Restored as the next product task after accepting JORB-INFRA-001 for the v1 human_gated scope.",
+    "Packet was already handed to Codex before builder state was repaired for resume.",
+    "Resume should continue from the existing packet and run log.",
+    "Resume attempted before product repo changes were present.",
+    "Blocked dirty-product-repo result came from the pre-fix resume path and should not prevent a fresh resume under the state-aware logic."
   ],
   "target_repo": "/Users/samuelkrystal/projects/jorb",
   "target_kind": "product"

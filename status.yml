@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "state": "packet_rendered",
+  "state": "retry_ready",
   "state_legend": {
     "idle": "No active task is currently in flight.",
     "task_selected": "A task has been selected but no packet has been rendered yet.",
@@ -11,17 +11,17 @@
     "blocked": "The task is blocked and waiting for human intervention."
   },
   "active_task_id": "JORB-V1-002",
-  "last_task_id": "JORB-INFRA-001",
-  "last_result": "accepted",
-  "last_run_at": "2026-03-24T23:45:52+00:00",
+  "last_task_id": "JORB-V1-002",
+  "last_result": "refined",
+  "last_run_at": "2026-03-25T00:05:44.721300+00:00",
   "roadmap_focus": {
     "milestone": "M2",
     "theme": "discovery"
   },
   "stats": {
     "completed_tasks": 2,
-    "blocked_tasks": 6,
-    "retry_ready_tasks": 1
+    "blocked_tasks": 7,
+    "retry_ready_tasks": 2
   },
   "notes": [
     "Builder v1 bootstrapped",
@@ -31,6 +31,8 @@
     "JORB-INFRA-001 has been restored as the active retry task using its existing packet and run log.",
     "JORB-INFRA-001 remains the correct next builder task after state-machine hardening; do not advance to product work yet.",
     "JORB-INFRA-001 is accepted for the intended v1 human_gated scope; callable executor integration remains a follow-on infra task.",
-    "JORB-V1-002 is restored as the next active product task and has a fresh packet rendered for execution through the hardened builder loop."
+    "JORB-V1-002 is restored as the next active product task and has a fresh packet rendered for execution through the hardened builder loop.",
+    "JORB-V1-002 handoff state was repaired so the existing packet can resume through the automation loop.",
+    "The earlier dirty-product-repo block came from the pre-fix resume path and should not be treated as the current task state."
   ]
 }

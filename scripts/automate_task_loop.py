@@ -252,12 +252,47 @@ def changed_files_are_allowlisted(changed_files: list[str], allowlist: list[str]
         normalized = changed.strip()
         allowed = any(
             normalized == entry
+            or entry == "../jorb-builder/**"
+            or (
+                entry.startswith("../jorb-builder/")
+                and (
+                    entry.removeprefix("../jorb-builder/") == "**"
+                    or normalized.startswith(entry.removeprefix("../jorb-builder/").removesuffix("/**"))
+                )
+            )
+            or (
+                entry.endswith("/**")
+                and normalized.startswith(entry.removesuffix("/**"))
+            )
             or (entry.endswith("/") and normalized.startswith(entry))
             for entry in allowlist
         )
         if not allowed:
             disallowed.append(normalized)
     return len(disallowed) == 0, disallowed
+
+
+def resolve_product_validation_venv(product_repo: Path) -> Path | None:
+    for dirname in (".venv_validation", ".venv", ".venv_j1"):
+        candidate = product_repo / dirname
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def validation_commands_for_target(
+    commands: list[str],
+    *,
+    target_kind: str,
+    target_repo: Path,
+) -> tuple[list[str], Path | None]:
+    if target_kind != "product":
+        return commands, None
+    venv_path = resolve_product_validation_venv(target_repo)
+    if venv_path is None:
+        return commands, None
+    wrapped = [f"source {shlex.quote(str(venv_path / 'bin' / 'activate'))} && {command}" for command in commands]
+    return wrapped, venv_path
 
 
 def ssh_command(target: str, options: list[str], remote_command: str, cwd: Path) -> dict[str, Any]:
@@ -444,6 +479,11 @@ def main() -> int:
 
     vm_commands = list(vm_config.get("validation_commands", [])) + list(vm_config.get("runtime_validation_commands", []))
     local_validation_commands = list(active.get("verification_commands", []))
+    prepared_validation_commands, validation_venv = validation_commands_for_target(
+        local_validation_commands,
+        target_kind=target_kind,
+        target_repo=target_repo,
+    )
     use_vm_flow = target_kind == "product"
     ignored_git_paths = ignored_git_paths_for_target(target_kind)
     plan = {
@@ -455,6 +495,7 @@ def main() -> int:
         "executor_mode": executor_mode,
         "executor_command": render_template(executor_config.get("command"), context),
         "local_validation_commands": local_validation_commands,
+        "prepared_local_validation_commands": prepared_validation_commands,
         "git_push_command": render_template(git_config.get("push_command"), context),
         "vm_pull_command": render_template(vm_config.get("pull_command"), context) if use_vm_flow else None,
         "vm_commands": [render_template(command, context) for command in vm_commands] if use_vm_flow else [],
@@ -515,7 +556,7 @@ def main() -> int:
 
     baseline = git_status_porcelain(target_repo, ignored_prefixes=ignored_git_paths)
     write_step(run_dir, "git_status_before", baseline)
-    if git_config.get("require_clean_worktree", True) and baseline.get("files"):
+    if not args.resume and git_config.get("require_clean_worktree", True) and baseline.get("files"):
         summary = f"{target_kind.title()} repo is dirty before automated execution; refusing to continue."
         blocker_evidence.extend(baseline.get("files", []))
         automation_result = {
@@ -577,7 +618,7 @@ def main() -> int:
         return 0
 
     if args.resume:
-        after_executor = git_status_porcelain(target_repo, ignored_prefixes=ignored_git_paths)
+        after_executor = baseline
         write_step(run_dir, "resume_check", after_executor)
         steps.append({
             "name": "resume_check",
@@ -683,14 +724,42 @@ def main() -> int:
         print_result("REFINED", summary, f"Apply the packet in {target_repo} and rerun python3 scripts/automate_task_loop.py --resume if using human-gated execution.")
         return 1
 
+    if target_kind == "product" and local_validation_commands and validation_venv is None:
+        summary = "No product validation virtualenv found. Expected one of: .venv_validation, .venv, .venv_j1."
+        automation_result = {
+            "task_id": task["id"],
+            "classification": "blocked",
+            "finished_at": now_iso(),
+            "summary": summary,
+            "steps": steps + [{"name": "local_validation_environment", "outcome": "blocked", "detail": summary}],
+            "changed_files": changed_files,
+            "blocker_evidence": [summary],
+            "unproven_runtime_gaps": [summary],
+        }
+        write_json(run_dir / RESULT_FILE, automation_result)
+        write_summary(run_dir, automation_result)
+        classify_and_update_state("blocked", summary, task, backlog, active, status, automation_result)
+        write_data(BACKLOG, backlog)
+        write_data(STATUS, status)
+        print_result("BLOCKED", summary, f"Create one of {target_repo}/.venv_validation, {target_repo}/.venv, or {target_repo}/.venv_j1, then rerun python3 scripts/automate_task_loop.py.")
+        return 2
+
     local_results: list[dict[str, Any]] = []
     local_passed = True
-    for command in local_validation_commands:
+    for command in prepared_validation_commands:
         result = run_shell(command, target_repo, shell_executable=shell_executable)
         local_results.append(result)
         if not result["passed"]:
             local_passed = False
-    write_step(run_dir, "local_validation", {"results": local_results, "passed": local_passed})
+    write_step(
+        run_dir,
+        "local_validation",
+        {
+            "results": local_results,
+            "passed": local_passed,
+            "venv_path": str(validation_venv) if validation_venv else None,
+        },
+    )
     steps.append({
         "name": "local_validation",
         "outcome": "passed" if local_passed else "refined",
