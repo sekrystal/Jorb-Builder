@@ -268,6 +268,35 @@ def _setup_builder_fixture(tmp_path: Path, *, task_id: str, area: str, allowlist
     _write_json(builder_root / "active_task.yml", _base_active(task_id, prompt_file, run_log_dir, allowlist))
     _write_json(builder_root / "config.yml", _base_config(product_repo, builder_root))
     (builder_root / "builder_memory.md").write_text("# Memory\n", encoding="utf-8")
+    prompts = builder_root / "prompts"
+    prompts.mkdir(exist_ok=True)
+    (prompts / "implement_feature.md").write_text(
+        "\n".join(
+            [
+                "You are patching the Jorb product repo at {product_repo}.",
+                "",
+                "Task: {task_id}",
+                "Title: {title}",
+                "",
+                "Objective:",
+                "{objective}",
+                "",
+                "Allowed files:",
+                "{allowlist}",
+                "",
+                "Forbidden files:",
+                "{forbidlist}",
+                "",
+                "Verification commands:",
+                "{verification_commands}",
+                "",
+                "Failure summary:",
+                "{failure_summary}",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
     (builder_root / "task_history").mkdir(exist_ok=True)
     (builder_root / "blockers").mkdir(exist_ok=True)
     _git(["add", "."], builder_root)
@@ -287,6 +316,99 @@ def test_no_active_task(tmp_path: Path) -> None:
     (builder_root / "builder_memory.md").write_text("# Memory\n", encoding="utf-8")
     (builder_root / "task_history").mkdir(exist_ok=True)
     (builder_root / "blockers").mkdir(exist_ok=True)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 1
+    assert "NO_ACTIVE_TASK" in result.stdout
+
+
+def test_no_active_task_autoselects_and_executes_ready_task(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    fake_codex = tmp_path / "fake-codex-auto"
+    _write_fake_codex(fake_codex, relative_output="worker.py", last_message="auto codex ok\n")
+
+    active = _json(builder_root / "active_task.yml")
+    active.update(
+        {
+            "task_id": None,
+            "title": None,
+            "state": "idle",
+            "attempt": 0,
+            "started_at": None,
+            "handed_to_codex_at": None,
+            "prompt_file": None,
+            "run_log_dir": None,
+            "verification_commands": [],
+            "allowlist": [],
+            "failure_summary": None,
+            "notes": [],
+            "target_repo": None,
+            "target_kind": None,
+        }
+    )
+    _write_json(builder_root / "active_task.yml", active)
+
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "ready"
+    _write_json(builder_root / "backlog.yml", backlog)
+
+    config = _json(builder_root / "config.yml")
+    config["executor"]["mode"] = "codex_exec"
+    config["executor"]["codex_cli"] = str(fake_codex)
+    _write_json(builder_root / "config.yml", config)
+    _git(["add", "active_task.yml", "backlog.yml", "config.yml", "prompts/implement_feature.md"], builder_root)
+    _git(["commit", "-m", "prepare auto bootstrap"], builder_root)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 0
+    assert "ACCEPTED" in result.stdout
+    assert (builder_root / "worker.py").exists()
+    active_after = _json(builder_root / "active_task.yml")
+    assert active_after["task_id"] is None
+    task_history = list((builder_root / "task_history").glob("*.yml"))
+    assert task_history
+
+
+def test_no_active_task_with_no_ready_tasks_stays_no_active_task(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    active = _json(builder_root / "active_task.yml")
+    active.update(
+        {
+            "task_id": None,
+            "title": None,
+            "state": "idle",
+            "attempt": 0,
+            "started_at": None,
+            "handed_to_codex_at": None,
+            "prompt_file": None,
+            "run_log_dir": None,
+            "verification_commands": [],
+            "allowlist": [],
+            "failure_summary": None,
+            "notes": [],
+            "target_repo": None,
+            "target_kind": None,
+        }
+    )
+    _write_json(builder_root / "active_task.yml", active)
+
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "accepted"
+    _write_json(builder_root / "backlog.yml", backlog)
+    _git(["add", "active_task.yml", "backlog.yml", "prompts/implement_feature.md"], builder_root)
+    _git(["commit", "-m", "prepare no ready task"], builder_root)
 
     result = _run([sys.executable, str(SCRIPT)], builder_root)
 

@@ -8,18 +8,22 @@ import json
 import shlex
 import shutil
 import subprocess
+import sys
 from typing import Any
 
 from common import builder_root, builder_path_from_config, expand_path, load_config, load_data, product_repo_path, write_data
 
 
 ROOT = builder_root()
+SCRIPTS_DIR = Path(__file__).resolve().parent
 ACTIVE = ROOT / "active_task.yml"
 BACKLOG = ROOT / "backlog.yml"
 STATUS = ROOT / "status.yml"
 MEMORY = ROOT / "builder_memory.md"
 TASK_HISTORY = ROOT / "task_history"
 BLOCKERS = ROOT / "blockers"
+SELECT_TASK = SCRIPTS_DIR / "select_task.py"
+RENDER_PACKET = SCRIPTS_DIR / "render_packet.py"
 RESULT_FILE = "automation_result.json"
 SUMMARY_FILE = "automation_summary.md"
 
@@ -571,6 +575,26 @@ def build_context(
     }
 
 
+def try_bootstrap_active_task() -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], bool]:
+    backlog = load_data(BACKLOG)
+    active = load_data(ACTIVE)
+    status = load_data(STATUS)
+    if active.get("task_id"):
+        return backlog, active, status, False
+
+    select_result = run_argv([sys.executable, str(SELECT_TASK)], ROOT)
+    if "NO_READY_TASK" in select_result.get("stdout", ""):
+        return backlog, active, status, False
+    if not select_result.get("passed"):
+        return backlog, active, status, False
+
+    render_result = run_argv([sys.executable, str(RENDER_PACKET)], ROOT)
+    if not render_result.get("passed"):
+        return load_data(BACKLOG), load_data(ACTIVE), load_data(STATUS), False
+
+    return load_data(BACKLOG), load_data(ACTIVE), load_data(STATUS), True
+
+
 def codex_exec_argv(
     executor_config: dict[str, Any],
     *,
@@ -600,9 +624,7 @@ def main() -> int:
     args = parser.parse_args()
 
     config = load_config()
-    backlog = load_data(BACKLOG)
-    active = load_data(ACTIVE)
-    status = load_data(STATUS)
+    backlog, active, status, auto_bootstrapped = try_bootstrap_active_task()
 
     product_repo = product_repo_path()
     builder_repo = builder_path_from_config("builder_root")
@@ -615,6 +637,9 @@ def main() -> int:
     validation_error = validate_active_task_context(active, status, task, resume=args.resume)
     if validation_error:
         label, summary, next_action = validation_error
+        if label == "NO_ACTIVE_TASK" and not auto_bootstrapped:
+            print_result(label, summary, next_action)
+            return 1
         print_result(label, summary, next_action)
         return 1
 

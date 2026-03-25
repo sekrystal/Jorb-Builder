@@ -230,7 +230,7 @@
       "area": "discovery",
       "milestone": "M2",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V1-003"
@@ -257,6 +257,9 @@
         "cycle metrics distinguish accepted results, candidates, selected expansions, empty expansions, and listings yielded",
         "expansion diagnostics make invalid or empty discovered surfaces obvious",
         "targeted tests and preflight pass"
+      ],
+      "notes": [
+        "Automated loop completed with VM validation success."
       ]
     },
     {
