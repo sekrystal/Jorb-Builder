@@ -219,9 +219,15 @@ def emit_progress(
         f"{bar} {percent}% Complete | Elapsed: {format_duration(elapsed)}"
     )
     if state == "failed":
-        task_line = f"[Task {task_id}] FAILED at Step {stage_index}: {stage_name}"
+        task_line = (
+            f"[Task {task_id}] FAILED at Step {stage_index}: {stage_name} "
+            f"| Elapsed: {format_duration(elapsed)}"
+        )
     elif state == "completed":
-        task_line = f"[Task {task_id}] Completed Step {stage_index}/{len(TASK_STAGE_NAMES)}: {stage_name}"
+        task_line = (
+            f"[Task {task_id}] Completed Step {stage_index}/{len(TASK_STAGE_NAMES)}: {stage_name} "
+            f"| Elapsed: {format_duration(elapsed)}"
+        )
     print(overall_line)
     print(task_line)
     if detail:
@@ -347,72 +353,110 @@ def persist_failure_state(
     )
 
 
-def run_shell(command: str, cwd: Path, shell_executable: str, timeout: int | None = None) -> dict[str, Any]:
+def run_shell(
+    command: str,
+    cwd: Path,
+    shell_executable: str,
+    timeout: int | None = None,
+    *,
+    heartbeat_seconds: int | None = None,
+    heartbeat: Callable[[dict[str, Any]], None] | None = None,
+) -> dict[str, Any]:
+    return run_process(
+        command,
+        cwd,
+        timeout=timeout,
+        shell=True,
+        shell_executable=shell_executable,
+        heartbeat_seconds=heartbeat_seconds,
+        heartbeat=heartbeat,
+    )
+
+
+def run_process(
+    command: str | list[str],
+    cwd: Path,
+    *,
+    timeout: int | None = None,
+    shell: bool = False,
+    shell_executable: str | None = None,
+    heartbeat_seconds: int | None = None,
+    heartbeat: Callable[[dict[str, Any]], None] | None = None,
+) -> dict[str, Any]:
     started_at = now_iso()
+    display_command = command if isinstance(command, str) else " ".join(shlex.quote(part) for part in command)
     try:
-        process = subprocess.run(
+        process = subprocess.Popen(
             command,
-            shell=True,
+            shell=shell,
             executable=shell_executable,
             cwd=str(cwd),
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            timeout=timeout,
         )
+    except FileNotFoundError as exc:
         return {
-            "command": command,
-            "cwd": str(cwd),
-            "started_at": started_at,
-            "finished_at": now_iso(),
-            "returncode": process.returncode,
-            "stdout": process.stdout,
-            "stderr": process.stderr,
-            "passed": process.returncode == 0,
-        }
-    except subprocess.TimeoutExpired as exc:
-        return {
-            "command": command,
+            "command": display_command,
             "cwd": str(cwd),
             "started_at": started_at,
             "finished_at": now_iso(),
             "returncode": None,
-            "stdout": exc.stdout or "",
-            "stderr": f"Timed out after {timeout} seconds.",
+            "stdout": "",
+            "stderr": str(exc),
             "passed": False,
         }
+    timed_out = False
+    started_monotonic = time.monotonic()
+    deadline = started_monotonic + timeout if timeout is not None else None
+    next_heartbeat = started_monotonic + max(1, heartbeat_seconds or 1)
+    while True:
+        now = time.monotonic()
+        returncode = process.poll()
+        if returncode is not None:
+            break
+        if deadline is not None and now >= deadline:
+            timed_out = True
+            _cleanup_process(process, {"terminate_sent": False, "kill_sent": False})
+            break
+        if heartbeat and heartbeat_seconds is not None and now >= next_heartbeat:
+            timeout_remaining = None if deadline is None else max(0, int(deadline - now))
+            heartbeat(
+                {
+                    "pid": process.pid,
+                    "elapsed_seconds": int(now - started_monotonic),
+                    "timeout_remaining_seconds": timeout_remaining,
+                    "process_status": "running" if process.poll() is None else f"exit_{process.poll()}",
+                    "command": display_command,
+                }
+            )
+            next_heartbeat = now + max(1, heartbeat_seconds)
+        time.sleep(0.1)
+    stdout, stderr = process.communicate()
+    if timed_out:
+        stderr = (stderr or "") + ("\n" if stderr else "") + f"Timed out after {timeout} seconds."
+        returncode = None
+    return {
+        "command": display_command,
+        "cwd": str(cwd),
+        "started_at": started_at,
+        "finished_at": now_iso(),
+        "returncode": returncode,
+        "stdout": stdout,
+        "stderr": stderr,
+        "passed": returncode == 0 and not timed_out,
+    }
 
 
-def run_argv(argv: list[str], cwd: Path, timeout: int | None = None) -> dict[str, Any]:
-    started_at = now_iso()
-    try:
-        process = subprocess.run(
-            argv,
-            cwd=str(cwd),
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-        )
-        return {
-            "command": " ".join(shlex.quote(part) for part in argv),
-            "cwd": str(cwd),
-            "started_at": started_at,
-            "finished_at": now_iso(),
-            "returncode": process.returncode,
-            "stdout": process.stdout,
-            "stderr": process.stderr,
-            "passed": process.returncode == 0,
-        }
-    except subprocess.TimeoutExpired as exc:
-        return {
-            "command": " ".join(shlex.quote(part) for part in argv),
-            "cwd": str(cwd),
-            "started_at": started_at,
-            "finished_at": now_iso(),
-            "returncode": None,
-            "stdout": exc.stdout or "",
-            "stderr": f"Timed out after {timeout} seconds.",
-            "passed": False,
-        }
+def run_argv(
+    argv: list[str],
+    cwd: Path,
+    timeout: int | None = None,
+    *,
+    heartbeat_seconds: int | None = None,
+    heartbeat: Callable[[dict[str, Any]], None] | None = None,
+) -> dict[str, Any]:
+    return run_process(argv, cwd, timeout=timeout, heartbeat_seconds=heartbeat_seconds, heartbeat=heartbeat)
 
 
 def run_argv_input(
@@ -791,8 +835,23 @@ def validation_commands_for_target(
     return wrapped, venv_path
 
 
-def ssh_command(target: str, options: list[str], remote_command: str, cwd: Path) -> dict[str, Any]:
-    return run_argv(["ssh", *options, target, remote_command], cwd)
+def ssh_command(
+    target: str,
+    options: list[str],
+    remote_command: str,
+    cwd: Path,
+    *,
+    timeout: int | None = None,
+    heartbeat_seconds: int | None = None,
+    heartbeat: Callable[[dict[str, Any]], None] | None = None,
+) -> dict[str, Any]:
+    return run_argv(
+        ["ssh", *options, target, remote_command],
+        cwd,
+        timeout=timeout,
+        heartbeat_seconds=heartbeat_seconds,
+        heartbeat=heartbeat,
+    )
 
 
 def record_history(task: dict[str, Any], active: dict[str, Any], automation_result: dict[str, Any]) -> Path:
@@ -1791,6 +1850,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
     vm_config = config.get("vm", {})
     executor_mode = executor_config.get("mode") or "command"
     shell_executable = executor_config.get("shell") or "/bin/zsh"
+    progress_heartbeat_seconds = int(executor_config.get("heartbeat_seconds", 15))
     codex_cli = str(executor_config.get("codex_cli") or "codex")
     codex_last_message_path = run_dir / str(executor_config.get("last_message_file") or "codex_last_message.md")
     vm_repo = str(vm_config.get("product_repo", "~/projects/jorb"))
@@ -1894,6 +1954,24 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
     active["started_at"] = now_iso()
     sync_run_state(active, status, "preflight_passed", task_id=active.get("task_id"), title=active.get("title"), run_log_dir=run_dir, last_result=status.get("last_result"))
     progress_started_at = active.get("started_at")
+
+    def emit_live_phase_progress(stage_index: int, label: str, command: str) -> Callable[[dict[str, Any]], None]:
+        def _emit(payload: dict[str, Any]) -> None:
+            detail = (
+                f"phase={label} | pid={payload.get('pid')} | elapsed={payload.get('elapsed_seconds')}s | "
+                f"timeout_remaining={payload.get('timeout_remaining_seconds')}s | command={command} | "
+                f"poll={payload.get('process_status')}"
+            )
+            emit_progress(
+                run_dir,
+                task_id=task["id"],
+                stage_index=stage_index,
+                backlog=backlog,
+                task_started_at=progress_started_at,
+                detail=detail,
+                extra_payload={"command": command, "phase_label": label, **payload},
+            )
+        return _emit
 
     emit_progress(run_dir, task_id=task["id"], stage_index=1, backlog=backlog, task_started_at=progress_started_at, detail="Task selected and state loaded.")
     emit_progress(run_dir, task_id=task["id"], stage_index=2, backlog=backlog, task_started_at=progress_started_at, detail=f"Prompt file ready at {active['prompt_file']}.")
@@ -2253,15 +2331,22 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         local_results: list[dict[str, Any]] = []
         local_passed = True
         for index, command in enumerate(prepared_validation_commands):
+            stage_index = 5 if index == 0 else 6
             emit_progress(
                 run_dir,
                 task_id=task["id"],
-                stage_index=5 if index == 0 else 6,
+                stage_index=stage_index,
                 backlog=backlog,
                 task_started_at=progress_started_at,
                 detail=command,
             )
-            result = run_shell(command, target_repo, shell_executable=shell_executable)
+            result = run_shell(
+                command,
+                target_repo,
+                shell_executable=shell_executable,
+                heartbeat_seconds=progress_heartbeat_seconds,
+                heartbeat=emit_live_phase_progress(stage_index, "local_validation", command),
+            )
             local_results.append(result)
             if not result["passed"]:
                 local_passed = False
@@ -2305,13 +2390,28 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             return 1
 
         emit_progress(run_dir, task_id=task["id"], stage_index=7, backlog=backlog, task_started_at=progress_started_at, detail="Running git add/commit/push.")
-        git_add = run_argv(["git", "add", "-A"], target_repo)
+        git_add_command = "git add -A"
+        git_add = run_argv(
+            ["git", "add", "-A"],
+            target_repo,
+            heartbeat_seconds=progress_heartbeat_seconds,
+            heartbeat=emit_live_phase_progress(7, "git_add", git_add_command),
+        )
         commit_message = render_template(git_config.get("commit_message_template"), context) or f"{task['id']}: {task['title']}"
-        git_commit = run_argv(["git", "commit", "-m", commit_message], target_repo)
+        git_commit_command = " ".join(shlex.quote(part) for part in ["git", "commit", "-m", commit_message])
+        git_commit = run_argv(
+            ["git", "commit", "-m", commit_message],
+            target_repo,
+            heartbeat_seconds=progress_heartbeat_seconds,
+            heartbeat=emit_live_phase_progress(7, "git_commit", git_commit_command),
+        )
+        git_push_command = render_template(git_config.get("push_command"), context) or "git push"
         git_push = run_shell(
-            render_template(git_config.get("push_command"), context) or "git push",
+            git_push_command,
             target_repo,
             shell_executable=shell_executable,
+            heartbeat_seconds=progress_heartbeat_seconds,
+            heartbeat=emit_live_phase_progress(7, "git_push", git_push_command),
         )
         write_step(run_dir, "git", {"add": git_add, "commit": git_commit, "push": git_push})
         steps.append({
@@ -2351,13 +2451,27 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         ssh_options = effective_vm_ssh_options
         emit_progress(run_dir, task_id=task["id"], stage_index=8, backlog=backlog, task_started_at=progress_started_at, detail=f"Running VM validation on {ssh_target}.")
         vm_pull_command = f"cd {shlex.quote(vm_repo)} && {plan['vm_pull_command']}"
-        vm_pull = ssh_command(ssh_target, ssh_options, vm_pull_command, ROOT)
+        vm_pull = ssh_command(
+            ssh_target,
+            ssh_options,
+            vm_pull_command,
+            ROOT,
+            heartbeat_seconds=progress_heartbeat_seconds,
+            heartbeat=emit_live_phase_progress(8, "vm_pull", vm_pull_command),
+        )
         vm_results = [vm_pull]
         vm_passed = vm_pull["passed"]
         if vm_passed:
             for command in plan["vm_commands"]:
                 remote = f"cd {shlex.quote(vm_repo)} && {command}"
-                result = ssh_command(ssh_target, ssh_options, remote, ROOT)
+                result = ssh_command(
+                    ssh_target,
+                    ssh_options,
+                    remote,
+                    ROOT,
+                    heartbeat_seconds=progress_heartbeat_seconds,
+                    heartbeat=emit_live_phase_progress(8, "vm_validation", remote),
+                )
                 vm_results.append(result)
                 if not result["passed"]:
                     vm_passed = False

@@ -1230,6 +1230,8 @@ def test_codex_exec_emits_heartbeat_progress_updates(tmp_path: Path) -> None:
     result = _run([sys.executable, str(SCRIPT)], builder_root)
 
     assert result.returncode == 0
+    assert "Step 3/9: Codex execution running" in result.stdout
+    assert "Elapsed:" in result.stdout
     assert "pid=" in result.stdout
     assert "output_exists=" in result.stdout
     run_dir = _active_run_dir(builder_root)
@@ -1240,6 +1242,47 @@ def test_codex_exec_emits_heartbeat_progress_updates(tmp_path: Path) -> None:
     assert any(event.get("status") == "waiting_for_first_output" for event in heartbeat_events)
     assert any("timeout_remaining_seconds" in event for event in heartbeat_events)
     assert "runnable after current" in result.stdout
+
+
+def test_local_validation_emits_live_progress_with_elapsed_time(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    fake_codex = tmp_path / "fake-codex-validation"
+    _write_fake_codex(fake_codex, relative_output="worker.py", last_message="validation progress ok\n")
+
+    config = _json(builder_root / "config.yml")
+    config["executor"]["mode"] = "codex_exec"
+    config["executor"]["codex_cli"] = str(fake_codex)
+    config["executor"]["heartbeat_seconds"] = 1
+    _write_json(builder_root / "config.yml", config)
+
+    active = _json(builder_root / "active_task.yml")
+    active["verification_commands"] = ["python3 -c 'import time; time.sleep(2)'"]
+    _write_json(builder_root / "active_task.yml", active)
+
+    _git(["add", "config.yml", "active_task.yml"], builder_root)
+    _git(["commit", "-m", "configure local validation progress"], builder_root)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 0
+    assert "Step 5/9: Local validation (pytest)" in result.stdout
+    assert "phase=local_validation" in result.stdout
+    assert "Elapsed:" in result.stdout
+    run_dir = _active_run_dir(builder_root)
+    progress_events = _progress_events(run_dir)
+    validation_events = [
+        event
+        for event in progress_events
+        if event["stage_name"] == "Local validation (pytest)" and event.get("phase_label") == "local_validation"
+    ]
+    assert validation_events
+    assert all(event["elapsed_seconds"] >= 0 for event in validation_events)
+    assert any(event.get("command") == "python3 -c 'import time; time.sleep(2)'" for event in validation_events)
 
 
 def test_long_running_codex_survives_multiple_heartbeat_intervals(tmp_path: Path) -> None:
