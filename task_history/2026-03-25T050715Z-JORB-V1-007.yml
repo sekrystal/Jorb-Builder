@@ -1,0 +1,29 @@
+{
+  "task_id": "JORB-V1-007",
+  "title": "Add resume and PDF upload ingestion with structured extraction",
+  "status": "blocked",
+  "attempt": 1,
+  "started_at": "2026-03-25T05:07:15.245428+00:00",
+  "completed_at": "2026-03-25T05:07:15.434072+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T050715Z/codex_prompt.md",
+  "files_changed": [],
+  "commands_run": [],
+  "results": [
+    "blocked"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [
+    "user can upload a resume or PDF through the interface",
+    "extraction populates structured profile fields",
+    "extraction output is reviewable and editable",
+    "parsing failures degrade gracefully and do not break onboarding",
+    "tests cover successful and partial extraction behavior"
+  ],
+  "blocker_opened": null,
+  "notes": [
+    "Authentication preflight indicates repeated or interactive prompts are likely."
+  ],
+  "unproven_runtime_gaps": [
+    "Authentication preflight indicates repeated or interactive prompts are likely."
+  ]
+}

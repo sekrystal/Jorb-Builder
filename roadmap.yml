@@ -83,11 +83,8 @@
   ],
   "phase_1_wedge": {
     "status": "active",
-    "goal": "Start the profile-first wedge without overloading task selection.",
+    "goal": "Keep the near-term queued work explicit and consistent with the canonical backlog.",
     "ready_task_ids": [
-      "JORB-V1-006"
-    ],
-    "pending_task_ids": [
       "JORB-V1-007",
       "JORB-V1-008",
       "JORB-V1-009",
@@ -99,6 +96,12 @@
       "JORB-V1-015",
       "JORB-INFRA-003",
       "JORB-INFRA-004"
+    ],
+    "pending_task_ids": [
+      "JORB-V1-016",
+      "JORB-V1-017",
+      "JORB-V1-018",
+      "JORB-INFRA-005"
     ]
   },
   "later_phases": [

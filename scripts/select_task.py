@@ -2,64 +2,43 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from common import builder_root, load_data, write_data
+from common import (
+    ACTIVE_TASK_STATES,
+    builder_root,
+    compute_backlog_diagnostics,
+    load_data,
+    load_validated_backlog,
+    write_data,
+)
 
 ROOT = builder_root()
-BACKLOG = ROOT / "backlog.yml"
 STATUS = ROOT / "status.yml"
 ACTIVE = ROOT / "active_task.yml"
-BLOCKERS_DIR = ROOT / "blockers"
-READY_STATES = {"ready", "retry_ready"}
-DONE_STATES = {"done", "accepted"}
-ACTIVE_STATES = {"selected", "packet_rendered", "implementing", "verifying"}
-
-
-def completed_ids(tasks: list[dict]) -> set[str]:
-    return {task["id"] for task in tasks if task.get("status") in DONE_STATES}
-
-
-def open_blocked_task_ids() -> set[str]:
-    blocked: set[str] = set()
-    if not BLOCKERS_DIR.exists():
-        return blocked
-    for file in sorted(BLOCKERS_DIR.glob("*.yml")):
-        data = load_data(file)
-        if data.get("status") != "open":
-            continue
-        for task_id in data.get("related_tasks", []):
-            blocked.add(task_id)
-    return blocked
-
-
-def is_unblocked(task: dict, done: set[str], blocked_ids: set[str]) -> bool:
-    if task.get("id") in blocked_ids:
-        return False
-    return all(dep in done for dep in task.get("depends_on", []))
-
-
-def choose_task(tasks: list[dict]) -> dict | None:
-    done = completed_ids(tasks)
-    blocked_ids = open_blocked_task_ids()
-    candidates = [
-        task for task in tasks
-        if task.get("status") in READY_STATES and is_unblocked(task, done, blocked_ids)
-    ]
-    candidates.sort(key=lambda task: (task.get("priority", 999), task.get("id", "")))
-    return candidates[0] if candidates else None
 
 
 def main() -> int:
-    backlog = load_data(BACKLOG)
+    backlog = load_validated_backlog()
     status = load_data(STATUS)
     active = load_data(ACTIVE)
 
-    if active.get("task_id") and active.get("state") in ACTIVE_STATES:
+    if backlog.get("errors"):
+        print("BACKLOG_INVALID")
+        for error in backlog["errors"]:
+            print(f"- {error.get('code')}: {error.get('detail')}")
+        return 1
+
+    if active.get("task_id") and active.get("state") in ACTIVE_TASK_STATES:
         print(f"ACTIVE_TASK_ALREADY_SET {active['task_id']}")
         return 0
 
-    task = choose_task(backlog.get("tasks", []))
+    diagnostics = compute_backlog_diagnostics(backlog)
+    task_id = diagnostics.get("next_selected_task_id")
+    task = next((entry for entry in backlog.get("tasks", []) if entry.get("id") == task_id), None)
     if not task:
-        print("NO_READY_TASK")
+        if diagnostics.get("selector_filtered_everything"):
+            print("SELECTOR_FILTERED_EVERYTHING")
+        else:
+            print("NO_READY_TASK")
         return 0
 
     now = datetime.now(timezone.utc).isoformat()

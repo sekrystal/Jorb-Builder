@@ -13,3 +13,6 @@ __pycache__/
 run_logs/
 tmp/
 *.log
+run_logs/
+active_task.yml
+status.yml

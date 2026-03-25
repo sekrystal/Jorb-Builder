@@ -1,0 +1,36 @@
+{
+  "task_id": "JORB-V1-007",
+  "title": "Add resume and PDF upload ingestion with structured extraction",
+  "status": "blocked",
+  "attempt": 1,
+  "started_at": "2026-03-25T05:43:35.618509+00:00",
+  "completed_at": "2026-03-25T05:43:35.702167+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T054335Z/codex_prompt.md",
+  "files_changed": [
+    "opportunity_scout.db-journal",
+    "tests/test_profile.py",
+    "tests/test_workbench.py",
+    "ui/app.py",
+    "services/document_ingest.py",
+    "services/profile_ingest.py"
+  ],
+  "commands_run": [],
+  "results": [
+    "blocked"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [
+    "user can upload a resume or PDF through the interface",
+    "extraction populates structured profile fields",
+    "extraction output is reviewable and editable",
+    "parsing failures degrade gracefully and do not break onboarding",
+    "tests cover successful and partial extraction behavior"
+  ],
+  "blocker_opened": null,
+  "notes": [
+    "Product repo is dirty before automated execution; refusing to continue."
+  ],
+  "unproven_runtime_gaps": [
+    "Product repo is dirty before automated execution; refusing to continue."
+  ]
+}

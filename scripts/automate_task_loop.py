@@ -5,13 +5,24 @@ from datetime import datetime, timezone
 from pathlib import Path
 import argparse
 import json
+import os
 import shlex
 import shutil
 import subprocess
 import sys
 from typing import Any
 
-from common import builder_root, builder_path_from_config, expand_path, load_config, load_data, product_repo_path, write_data
+from common import (
+    builder_root,
+    builder_path_from_config,
+    compute_backlog_diagnostics,
+    expand_path,
+    load_config,
+    load_data,
+    load_validated_backlog,
+    product_repo_path,
+    write_data,
+)
 
 
 ROOT = builder_root()
@@ -26,6 +37,39 @@ SELECT_TASK = SCRIPTS_DIR / "select_task.py"
 RENDER_PACKET = SCRIPTS_DIR / "render_packet.py"
 RESULT_FILE = "automation_result.json"
 SUMMARY_FILE = "automation_summary.md"
+PROGRESS_FILE = "progress.jsonl"
+CANONICAL_RUN_STATES = {
+    "idle",
+    "task_selected",
+    "preflight_passed",
+    "preflight_failed",
+    "implementing",
+    "verifying",
+    "completed",
+    "blocked",
+}
+TERMINAL_RUN_STATES = {"preflight_failed", "completed", "blocked"}
+TASK_STAGE_NAMES = [
+    "Task selected",
+    "Codex prompt generated",
+    "Codex execution running",
+    "Applying changes",
+    "Local validation (pytest)",
+    "Preflight check",
+    "Git commit and push",
+    "VM validation",
+    "Classification",
+]
+CANONICAL_STATE_LEGEND = {
+    "idle": "No active task is currently in flight.",
+    "task_selected": "A task has been selected and the current run has been initialized.",
+    "preflight_passed": "Auth and initial run gating passed; execution may continue.",
+    "preflight_failed": "Execution stopped before implementation because preflight gating failed.",
+    "implementing": "Implementation is in progress or awaiting executor-produced repo changes.",
+    "verifying": "Deterministic local and/or VM verification is in progress.",
+    "completed": "The active run completed successfully and reached a terminal accepted state.",
+    "blocked": "The active run reached a terminal blocked/refined state and requires intervention or retry.",
+}
 
 
 def now_iso() -> str:
@@ -55,6 +99,7 @@ def reset_active() -> dict[str, Any]:
         "notes": [],
         "target_repo": None,
         "target_kind": None,
+        "previous_run_log_dir": None,
     }
 
 
@@ -105,6 +150,143 @@ def print_result(label: str, summary: str, next_action: str | None = None, extra
         print(f"Next action: {next_action}")
 
 
+def format_duration(seconds: float) -> str:
+    total = max(0, int(seconds))
+    minutes, secs = divmod(total, 60)
+    hours, minutes = divmod(minutes, 60)
+    if hours:
+        return f"{hours}h {minutes}m {secs}s"
+    if minutes:
+        return f"{minutes}m {secs}s"
+    return f"{secs}s"
+
+
+def progress_bar(current: int, total: int, *, width: int = 10) -> str:
+    if total <= 0:
+        total = 1
+    filled = min(width, max(0, round((current / total) * width)))
+    return "[" + ("█" * filled) + ("░" * (width - filled)) + "]"
+
+
+def backlog_progress(backlog: dict[str, Any], active_task_id: str | None = None) -> dict[str, Any]:
+    diagnostics = compute_backlog_diagnostics(backlog)
+    completed = sum(1 for task in backlog.get("tasks", []) if task.get("status") in {"accepted", "done"})
+    remaining_ready = len(diagnostics.get("ordered_ready_queue", []))
+    current_index = completed + (1 if active_task_id else 0)
+    return {
+        "completed": completed,
+        "remaining_ready": remaining_ready,
+        "total": diagnostics.get("total_tasks", len(backlog.get("tasks", []))),
+        "current_index": current_index,
+    }
+
+
+def write_progress(run_dir: Path, payload: dict[str, Any]) -> None:
+    with (run_dir / PROGRESS_FILE).open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(payload) + "\n")
+
+
+def emit_progress(
+    run_dir: Path,
+    *,
+    task_id: str,
+    stage_index: int,
+    backlog: dict[str, Any],
+    task_started_at: str | None,
+    state: str = "running",
+    detail: str | None = None,
+) -> None:
+    if (run_dir / RESULT_FILE).exists():
+        raise RuntimeError("Cannot emit running progress after terminal automation_result.json exists.")
+    overall = backlog_progress(backlog, active_task_id=task_id)
+    elapsed = 0.0
+    if task_started_at:
+        try:
+            elapsed = max(0.0, (datetime.now(timezone.utc) - datetime.fromisoformat(task_started_at)).total_seconds())
+        except ValueError:
+            elapsed = 0.0
+    stage_name = TASK_STAGE_NAMES[max(0, min(stage_index - 1, len(TASK_STAGE_NAMES) - 1))]
+    bar = progress_bar(stage_index, len(TASK_STAGE_NAMES))
+    percent = int((stage_index / len(TASK_STAGE_NAMES)) * 100)
+    overall_line = f"[Overall Progress] {overall['completed']}/{overall['total']} tasks completed | {overall['remaining_ready']} remaining"
+    task_line = (
+        f"[Task {task_id}] Step {stage_index}/{len(TASK_STAGE_NAMES)}: {stage_name} "
+        f"{bar} {percent}% Complete | Elapsed: {format_duration(elapsed)}"
+    )
+    if state == "failed":
+        task_line = f"[Task {task_id}] FAILED at Step {stage_index}: {stage_name}"
+    elif state == "completed":
+        task_line = f"[Task {task_id}] Completed Step {stage_index}/{len(TASK_STAGE_NAMES)}: {stage_name}"
+    print(overall_line)
+    print(task_line)
+    if detail:
+        print(f"Detail: {detail}")
+    write_progress(
+        run_dir,
+        {
+            "timestamp": now_iso(),
+            "task_id": task_id,
+            "stage_index": stage_index,
+            "stage_name": stage_name,
+            "state": state,
+            "detail": detail,
+            "overall": overall,
+        },
+    )
+
+
+def allocate_run_dir(task_id: str) -> Path:
+    base = ROOT / "run_logs"
+    base.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H%M%SZ")
+    candidate = base / f"{stamp}-{task_id}"
+    suffix = 1
+    while candidate.exists():
+        candidate = base / f"{stamp}-{task_id}-{suffix}"
+        suffix += 1
+    candidate.mkdir(parents=True, exist_ok=False)
+    return candidate
+
+
+def sync_run_state(
+    active: dict[str, Any],
+    status: dict[str, Any],
+    state: str,
+    *,
+    task_id: str | None,
+    title: str | None,
+    run_log_dir: Path | None,
+    failure_summary: str | None = None,
+    last_result: str | None = None,
+) -> None:
+    if state not in CANONICAL_RUN_STATES:
+        raise RuntimeError(f"Invalid canonical run state: {state}")
+    active["task_id"] = task_id
+    active["title"] = title
+    active["state"] = state
+    active["run_log_dir"] = str(run_log_dir) if run_log_dir else None
+    active["failure_summary"] = failure_summary
+    status["state"] = state
+    status["active_task_id"] = task_id
+    status["last_run_at"] = now_iso()
+    if task_id:
+        status["last_task_id"] = task_id
+    if last_result is not None:
+        status["last_result"] = last_result
+    write_data(ACTIVE, active)
+    write_data(STATUS, status)
+
+
+def prepare_invocation_run_dir(active: dict[str, Any], task_id: str) -> tuple[Path | None, Path]:
+    previous = None
+    if active.get("run_log_dir"):
+        previous = Path(str(active["run_log_dir"])).expanduser().resolve()
+    run_dir = allocate_run_dir(task_id)
+    active["previous_run_log_dir"] = str(previous) if previous else None
+    active["run_log_dir"] = str(run_dir)
+    return previous, run_dir
+
+
 def render_template(template: str | None, context: dict[str, str]) -> str | None:
     if template is None:
         return None
@@ -121,18 +303,21 @@ def task_targets_builder_repo(task: dict[str, Any], active: dict[str, Any]) -> b
 
 
 def persist_paused_state(active: dict[str, Any], status: dict[str, Any], note: str) -> None:
-    active["state"] = "paused"
     if not active.get("handed_to_codex_at"):
         active["handed_to_codex_at"] = now_iso()
     notes = list(active.get("notes", []))
     if note not in notes:
         notes.append(note)
     active["notes"] = notes
-    status["state"] = "implementing"
-    status["active_task_id"] = active["task_id"]
-    status["last_run_at"] = now_iso()
-    write_data(ACTIVE, active)
-    write_data(STATUS, status)
+    sync_run_state(
+        active,
+        status,
+        "implementing",
+        task_id=active.get("task_id"),
+        title=active.get("title"),
+        run_log_dir=Path(active["run_log_dir"]).expanduser().resolve() if active.get("run_log_dir") else None,
+        last_result=status.get("last_result"),
+    )
 
 
 def persist_failure_state(
@@ -142,15 +327,16 @@ def persist_failure_state(
     blocked: bool,
     summary: str,
 ) -> None:
-    active["state"] = "failed"
-    active["failure_summary"] = summary
-    status["state"] = "blocked" if blocked else "retry_ready"
-    status["active_task_id"] = active.get("task_id")
-    status["last_task_id"] = active.get("task_id")
-    status["last_result"] = "blocked" if blocked else "refined"
-    status["last_run_at"] = now_iso()
-    write_data(ACTIVE, active)
-    write_data(STATUS, status)
+    sync_run_state(
+        active,
+        status,
+        "blocked" if blocked else "blocked",
+        task_id=active.get("task_id"),
+        title=active.get("title"),
+        run_log_dir=Path(active["run_log_dir"]).expanduser().resolve() if active.get("run_log_dir") else None,
+        failure_summary=summary,
+        last_result="blocked" if blocked else "refined",
+    )
 
 
 def run_shell(command: str, cwd: Path, shell_executable: str, timeout: int | None = None) -> dict[str, Any]:
@@ -270,6 +456,114 @@ def run_argv_input(
             "stderr": f"Timed out after {timeout} seconds.",
             "passed": False,
         }
+
+
+def tail_text(value: str | None, *, limit: int = 800) -> str:
+    text = value or ""
+    if len(text) <= limit:
+        return text
+    return text[-limit:]
+
+
+def run_codex_exec(
+    argv: list[str],
+    cwd: Path,
+    *,
+    input_text: str,
+    output_path: Path,
+    timeout: int,
+) -> dict[str, Any]:
+    started_at = now_iso()
+    command = " ".join(shlex.quote(part) for part in argv)
+    process: subprocess.Popen[str] | None = None
+    stdout = ""
+    stderr = ""
+    timed_out = False
+    cleanup = {"terminate_sent": False, "kill_sent": False}
+    try:
+        process = subprocess.Popen(
+            argv,
+            cwd=str(cwd),
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        try:
+            stdout, stderr = process.communicate(input=input_text, timeout=timeout)
+        except subprocess.TimeoutExpired:
+            timed_out = True
+            cleanup["terminate_sent"] = True
+            process.terminate()
+            try:
+                timeout_stdout, timeout_stderr = process.communicate(timeout=5)
+                stdout = timeout_stdout or stdout
+                stderr = timeout_stderr or stderr
+            except subprocess.TimeoutExpired:
+                cleanup["kill_sent"] = True
+                process.kill()
+                kill_stdout, kill_stderr = process.communicate()
+                stdout = kill_stdout or stdout
+                stderr = kill_stderr or stderr
+        returncode = process.returncode
+    except FileNotFoundError as exc:
+        return {
+            "command": command,
+            "cwd": str(cwd),
+            "started_at": started_at,
+            "finished_at": now_iso(),
+            "returncode": None,
+            "stdout": "",
+            "stderr": str(exc),
+            "stdout_tail": "",
+            "stderr_tail": str(exc),
+            "passed": False,
+            "timed_out": False,
+            "failure_reason": "executor_failure",
+            "cleanup": cleanup,
+        }
+
+    last_message = None
+    output_exists = output_path.exists()
+    output_nonempty = output_exists and output_path.stat().st_size > 0
+    if output_nonempty:
+        last_message = output_path.read_text(encoding="utf-8")
+    result = {
+        "command": command,
+        "cwd": str(cwd),
+        "started_at": started_at,
+        "finished_at": now_iso(),
+        "returncode": returncode,
+        "stdout": stdout,
+        "stderr": stderr,
+        "stdout_tail": tail_text(stdout),
+        "stderr_tail": tail_text(stderr),
+        "passed": returncode == 0 and output_nonempty and not timed_out,
+        "timed_out": timed_out,
+        "failure_reason": None,
+        "cleanup": cleanup,
+        "output_file": str(output_path),
+        "output_file_exists": output_exists,
+        "output_file_nonempty": output_nonempty,
+    }
+    if last_message is not None:
+        result["last_message_file"] = str(output_path)
+        result["last_message"] = last_message
+    if timed_out:
+        result["failure_reason"] = "executor_timeout"
+        result["stderr"] = (stderr + ("\n" if stderr else "")) + f"Timed out after {timeout} seconds."
+        result["stderr_tail"] = tail_text(result["stderr"])
+    elif returncode != 0:
+        result["failure_reason"] = "executor_failure"
+    elif not output_exists:
+        result["failure_reason"] = "executor_failure"
+        result["stderr"] = (stderr + ("\n" if stderr else "")) + "Codex executor exited successfully but did not create codex_last_message.md."
+        result["stderr_tail"] = tail_text(result["stderr"])
+    elif not output_nonempty:
+        result["failure_reason"] = "executor_failure"
+        result["stderr"] = (stderr + ("\n" if stderr else "")) + "Codex executor exited successfully but codex_last_message.md was empty."
+        result["stderr_tail"] = tail_text(result["stderr"])
+    return result
 
 
 def ignored_git_paths_for_target(target_kind: str) -> tuple[str, ...]:
@@ -407,6 +701,10 @@ def validate_active_task_context(
 ) -> tuple[str, str, str | None] | None:
     if not active.get("task_id"):
         return ("NO_ACTIVE_TASK", "No active task is currently loaded.", "Restore or select a task packet before rerunning automation.")
+    if status.get("active_task_id") not in {None, active.get("task_id")}:
+        return ("INVALID_ACTIVE_TASK_STATE", "status.yml active_task_id does not match active_task.yml.", "Repair state files before rerunning automation.")
+    if status.get("active_task_id") == active.get("task_id") and status.get("state") != active.get("state"):
+        return ("INVALID_ACTIVE_TASK_STATE", "active_task.yml and status.yml disagree on the current run state.", "Repair state files before rerunning automation.")
     if task is None:
         return ("INVALID_ACTIVE_TASK_STATE", f"Active task {active.get('task_id')} is missing from backlog.", "Repair backlog/active_task alignment before rerunning automation.")
     if not active.get("run_log_dir"):
@@ -416,11 +714,14 @@ def validate_active_task_context(
     prompt_file = Path(active["prompt_file"]).expanduser().resolve()
     if not prompt_file.exists():
         return ("MISSING_PACKET", f"Prompt file does not exist: {prompt_file}", "Restore or rerender the packet before rerunning automation.")
-    if resume and active.get("state") not in {"paused", "implementing"}:
+    current_run_dir = Path(active["run_log_dir"]).expanduser().resolve()
+    if (current_run_dir / RESULT_FILE).exists() and active.get("state") not in TERMINAL_RUN_STATES:
+        return ("INVALID_ACTIVE_TASK_STATE", "automation_result.json exists but the recorded run state is not terminal.", "Repair or reset the active task state before rerunning automation.")
+    if resume and active.get("state") != "implementing":
         return ("INVALID_ACTIVE_TASK_STATE", f"Cannot resume from active state '{active.get('state')}'.", "Run python3 scripts/automate_task_loop.py directly, or restore the paused task state first.")
-    if resume and active.get("state") == "implementing" and not active.get("handed_to_codex_at"):
+    if resume and not active.get("handed_to_codex_at"):
         return ("STALE_IMPLEMENTING_STATE", "Active task is implementing but has no recorded handoff time.", "Re-run python3 scripts/automate_task_loop.py to record a fresh pause/handoff before using --resume.")
-    if status.get("state") == "blocked" and status.get("active_task_id") is None:
+    if status.get("state") in TERMINAL_RUN_STATES and status.get("active_task_id") is None and active.get("task_id") is not None:
         return ("INVALID_ACTIVE_TASK_STATE", "Global status is blocked but no active task is attached.", "Restore the intended active task before rerunning automation.")
     return None
 
@@ -428,20 +729,23 @@ def validate_active_task_context(
 def is_retry_continuation(active: dict[str, Any], status: dict[str, Any], *, resume: bool) -> bool:
     return (
         not resume
-        and active.get("state") == "failed"
-        and status.get("state") == "retry_ready"
+        and active.get("state") == "blocked"
+        and status.get("state") == "blocked"
+        and status.get("last_result") == "refined"
         and status.get("active_task_id") == active.get("task_id")
     )
 
 
-def load_prior_automation_result(run_dir: Path) -> dict[str, Any] | None:
+def load_prior_automation_result(run_dir: Path | None) -> dict[str, Any] | None:
+    if run_dir is None:
+        return None
     path = run_dir / RESULT_FILE
     if not path.exists():
         return None
     return load_data(path)
 
 
-def prior_result_supports_vm_retry(run_dir: Path) -> dict[str, Any] | None:
+def prior_result_supports_vm_retry(run_dir: Path | None) -> dict[str, Any] | None:
     prior = load_prior_automation_result(run_dir)
     if prior:
         steps = {step.get("name"): step for step in prior.get("steps", [])}
@@ -521,6 +825,8 @@ def classify_and_update_state(
     active: dict[str, Any],
     status: dict[str, Any],
     automation_result: dict[str, Any],
+    *,
+    terminal_state: str | None = None,
 ) -> None:
     status.setdefault("stats", {})
     history_path = record_history(task, active, automation_result)
@@ -528,14 +834,19 @@ def classify_and_update_state(
     if classification == "accepted":
         task["status"] = "accepted"
         task.setdefault("notes", []).append(summary)
-        status["state"] = "idle"
-        status["last_task_id"] = task["id"]
-        status["active_task_id"] = None
-        status["last_result"] = "accepted"
-        status["last_run_at"] = now_iso()
         status["stats"]["completed_tasks"] = int(status["stats"].get("completed_tasks", 0)) + 1
         append_memory(f"{task['id']} accepted by automated loop. History: {history_path.name}")
-        write_data(ACTIVE, reset_active())
+        active["task_id"] = None
+        active["title"] = None
+        sync_run_state(
+            active,
+            status,
+            terminal_state or "completed",
+            task_id=None,
+            title=None,
+            run_log_dir=Path(active["run_log_dir"]).expanduser().resolve() if active.get("run_log_dir") else None,
+            last_result="accepted",
+        )
         return
 
     if classification == "refined":
@@ -544,7 +855,16 @@ def classify_and_update_state(
         task.setdefault("notes", []).append(summary)
         status["stats"]["retry_ready_tasks"] = int(status["stats"].get("retry_ready_tasks", 0)) + 1
         append_memory(f"{task['id']} refined by automated loop. History: {history_path.name}")
-        persist_failure_state(active, status, blocked=False, summary=summary)
+        sync_run_state(
+            active,
+            status,
+            terminal_state or "blocked",
+            task_id=active.get("task_id"),
+            title=active.get("title"),
+            run_log_dir=Path(active["run_log_dir"]).expanduser().resolve() if active.get("run_log_dir") else None,
+            failure_summary=summary,
+            last_result="refined",
+        )
         return
 
     task["status"] = "blocked"
@@ -552,7 +872,16 @@ def classify_and_update_state(
     blocker_path = open_blocker(task, summary, automation_result.get("blocker_evidence", []))
     status["stats"]["blocked_tasks"] = int(status["stats"].get("blocked_tasks", 0)) + 1
     append_memory(f"{task['id']} blocked by automated loop via {blocker_path.name}. History: {history_path.name}")
-    persist_failure_state(active, status, blocked=True, summary=summary)
+    sync_run_state(
+        active,
+        status,
+        terminal_state or "blocked",
+        task_id=active.get("task_id"),
+        title=active.get("title"),
+        run_log_dir=Path(active["run_log_dir"]).expanduser().resolve() if active.get("run_log_dir") else None,
+        failure_summary=summary,
+        last_result="blocked",
+    )
 
 
 def build_context(
@@ -575,15 +904,300 @@ def build_context(
     }
 
 
-def try_bootstrap_active_task() -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], bool]:
+def is_legacy_failed_state(active: dict[str, Any], status: dict[str, Any]) -> bool:
+    return active.get("state") == "failed" or status.get("state") in {"packet_rendered", "retry_ready"}
+
+
+def load_run_result_for(active: dict[str, Any]) -> dict[str, Any] | None:
+    run_log_dir = active.get("run_log_dir")
+    if not run_log_dir:
+        return None
+    result_path = Path(str(run_log_dir)).expanduser().resolve() / RESULT_FILE
+    if not result_path.exists():
+        return None
+    return load_data(result_path)
+
+
+def is_auth_preflight_only_block(active: dict[str, Any], status: dict[str, Any], run_result: dict[str, Any] | None) -> bool:
+    if not run_result:
+        return False
+    steps = list(run_result.get("steps", []))
+    return (
+        run_result.get("classification") == "blocked"
+        and run_result.get("summary") == "Authentication preflight indicates repeated or interactive prompts are likely."
+        and len(steps) == 1
+        and steps[0].get("name") == "auth_preflight"
+        and not active.get("handed_to_codex_at")
+        and status.get("last_result") == "blocked"
+    )
+
+
+def resolve_blocker_for_task(task_id: str, *, resolution: str) -> Path | None:
+    blocker_path = BLOCKERS / f"BLK-{task_id}.yml"
+    if not blocker_path.exists():
+        return None
+    blocker = load_data(blocker_path)
+    blocker["status"] = "resolved"
+    blocker["resolved_at"] = now_iso()
+    blocker["resolution"] = resolution
+    write_data(blocker_path, blocker)
+    return blocker_path
+
+
+def repair_legacy_state() -> int:
+    active = load_data(ACTIVE)
+    status = load_data(STATUS)
     backlog = load_data(BACKLOG)
+    repaired: list[str] = []
+
+    status["state_legend"] = dict(CANONICAL_STATE_LEGEND)
+    repaired.append("status.state_legend -> canonical")
+
+    if active.get("state") == "failed":
+        active["state"] = "blocked"
+        repaired.append("active_task.state failed -> blocked")
+
+    run_result = load_run_result_for(active)
+    task_id = active.get("task_id")
+    task = None
+    if task_id:
+        for item in backlog.get("tasks", []):
+            if item.get("id") == task_id:
+                task = item
+                break
+
+    if is_auth_preflight_only_block(active, status, run_result):
+        repaired_active = reset_active()
+        repaired_active["previous_run_log_dir"] = active.get("run_log_dir")
+        write_data(ACTIVE, repaired_active)
+
+        status["state"] = "idle"
+        status["active_task_id"] = None
+        status["last_task_id"] = task_id
+        status["last_result"] = "blocked"
+        status["last_run_at"] = now_iso()
+        write_data(STATUS, status)
+        repaired.append("preflight-only blocked run -> idle fresh rerun state")
+
+        if task is not None and task.get("status") == "blocked":
+            task["status"] = "ready"
+            task.setdefault("notes", []).append(
+                "Repaired from auth-preflight-only blocked attempt; task restored to ready for a truthful fresh rerun."
+            )
+            write_data(BACKLOG, backlog)
+            repaired.append(f"backlog task {task_id} blocked -> ready")
+
+        resolved = resolve_blocker_for_task(
+            str(task_id),
+            resolution="Resolved by state repair: auth preflight failed before implementation began; task restored for fresh rerun.",
+        )
+        if resolved is not None:
+            repaired.append(f"{resolved.name} resolved")
+
+        print("STATE_REPAIRED")
+        for line in repaired:
+            print(f"- {line}")
+        return 0
+
+    sync_run_state(
+        active,
+        status,
+        "blocked" if status.get("last_result") in {"blocked", "refined"} or is_legacy_failed_state(active, status) else "idle",
+        task_id=active.get("task_id"),
+        title=active.get("title"),
+        run_log_dir=Path(active["run_log_dir"]).expanduser().resolve() if active.get("run_log_dir") else None,
+        failure_summary=active.get("failure_summary"),
+        last_result=status.get("last_result"),
+    )
+    repaired.append(f"state normalized -> {load_data(STATUS).get('state')}")
+    print("STATE_REPAIRED")
+    for line in repaired:
+        print(f"- {line}")
+    return 0
+
+
+def inspect_backlog_payload() -> tuple[dict[str, Any], dict[str, Any]]:
+    backlog = load_validated_backlog()
+    diagnostics = compute_backlog_diagnostics(backlog) if not backlog.get("errors") else {
+        "total_tasks": len(backlog.get("tasks", [])),
+        "counts_by_status": {},
+        "ready_task_ids": [],
+        "pending_task_ids": [],
+        "retry_ready_task_ids": [],
+        "blocked_task_ids": [],
+        "ordered_ready_queue": [],
+        "next_selected_task_id": None,
+        "selector_filtered_everything": False,
+        "roadmap_affected": False,
+        "skipped_reasons": {},
+    }
+    return backlog, diagnostics
+
+
+def print_backlog_inspection(backlog: dict[str, Any], diagnostics: dict[str, Any]) -> int:
+    if backlog.get("errors"):
+        print("BACKLOG_INVALID")
+        for error in backlog["errors"]:
+            print(f"- {error.get('code')}: {error.get('detail')}")
+        return 1
+    print(f"total_tasks: {diagnostics['total_tasks']}")
+    print("counts_by_status: " + json.dumps(diagnostics["counts_by_status"], sort_keys=True))
+    print("ready_queue: " + json.dumps(diagnostics["ordered_ready_queue"]))
+    print("next_selected_task: " + json.dumps(diagnostics["next_selected_task_id"]))
+    print("ready_task_ids: " + json.dumps(diagnostics["ready_task_ids"]))
+    print("pending_task_ids: " + json.dumps(diagnostics["pending_task_ids"]))
+    print("retry_ready_task_ids: " + json.dumps(diagnostics["retry_ready_task_ids"]))
+    print("blocked_task_ids: " + json.dumps(diagnostics["blocked_task_ids"]))
+    print("roadmap_affected: " + json.dumps(diagnostics["roadmap_affected"]))
+    print("selector_filtered_everything: " + json.dumps(diagnostics["selector_filtered_everything"]))
+    if diagnostics.get("skipped_reasons"):
+        print("skipped_reasons: " + json.dumps(diagnostics["skipped_reasons"], sort_keys=True))
+    return 0
+
+
+def effective_ssh_options(vm_config: dict[str, Any]) -> list[str]:
+    options = list(vm_config.get("ssh_options", []))
+    target = str(vm_config.get("ssh_target") or "vm")
+    control_path = f"/tmp/jorb-builder-ssh-{target.replace('@', '_').replace(':', '_')}"
+    default_pairs = [
+        ("ControlMaster", "auto"),
+        ("ControlPersist", "10m"),
+        ("ControlPath", control_path),
+    ]
+    existing = {options[index + 1].split("=", 1)[0] for index, item in enumerate(options[:-1]) if item == "-o"}
+    for key, value in default_pairs:
+        if key not in existing:
+            options.extend(["-o", f"{key}={value}"])
+    return options
+
+
+def git_auth_status(target_repo: Path) -> dict[str, Any]:
+    remote = run_argv(["git", "remote", "get-url", "origin"], target_repo)
+    if not remote.get("passed"):
+        return {
+            "status": "missing_remote",
+            "interactive": True,
+            "detail": remote.get("stderr") or "git remote origin is unavailable.",
+            "remediation": ["git remote add origin git@github.com:<org>/<repo>.git"],
+        }
+    remote_url = remote.get("stdout", "").strip()
+    if remote_url.startswith("git@") or remote_url.startswith("ssh://"):
+        return {
+            "status": "ssh",
+            "interactive": False,
+            "detail": f"origin uses SSH: {remote_url}",
+            "remote_url": remote_url,
+            "remediation": [],
+        }
+    if remote_url.startswith("http://") or remote_url.startswith("https://"):
+        return {
+            "status": "https_interactive_likely",
+            "interactive": True,
+            "detail": f"origin uses HTTPS: {remote_url}",
+            "remote_url": remote_url,
+            "remediation": [
+                "git remote set-url origin git@github.com:<org>/<repo>.git",
+                "ssh-add ~/.ssh/id_ed25519",
+            ],
+        }
+    return {
+        "status": "local_or_custom",
+        "interactive": False,
+        "detail": f"origin uses {remote_url}",
+        "remote_url": remote_url,
+        "remediation": [],
+    }
+
+
+def vm_ssh_auth_status(vm_config: dict[str, Any], cwd: Path) -> dict[str, Any]:
+    target = vm_config.get("ssh_target")
+    if not target:
+        return {
+            "status": "missing_ssh_target",
+            "interactive": True,
+            "detail": "vm.ssh_target is not configured.",
+            "remediation": ["Set vm.ssh_target in config.yml"],
+        }
+    options = effective_ssh_options(vm_config) + ["-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=accept-new"]
+    probe = ssh_command(str(target), options, "true", cwd)
+    ssh_agent_loaded = bool(os.environ.get("SSH_AUTH_SOCK"))
+    stderr = (probe.get("stderr") or "") + "\n" + (probe.get("stdout") or "")
+    auth_failure_markers = ("Permission denied", "passphrase", "Host key verification failed", "Could not resolve hostname")
+    interactive = False if probe.get("passed") else any(marker in stderr for marker in auth_failure_markers[:3])
+    status = "batchmode_ready" if probe.get("passed") else ("interactive_auth_required" if interactive else "connectivity_unknown")
+    remediation = []
+    if interactive:
+        remediation = [
+            "ssh-add ~/.ssh/id_ed25519",
+            f"ssh {target}",
+            f"ssh-keyscan -H {str(target).split('@')[-1]} >> ~/.ssh/known_hosts",
+        ]
+    return {
+        "status": status,
+        "interactive": interactive,
+        "detail": probe.get("stderr") or probe.get("stdout") or f"ssh batch probe to {target}",
+        "ssh_agent_loaded": ssh_agent_loaded,
+        "command": probe.get("command"),
+        "remediation": remediation,
+    }
+
+
+def check_auth_status(config: dict[str, Any], *, target_kind: str, target_repo: Path, cwd: Path) -> dict[str, Any]:
+    git_status = git_auth_status(target_repo)
+    vm_status = {"status": "not_required", "interactive": False, "detail": "VM SSH not required for builder-only tasks.", "remediation": []}
+    if target_kind == "product":
+        vm_status = vm_ssh_auth_status(config.get("vm", {}), cwd)
+    interactive = bool(git_status.get("interactive")) or bool(vm_status.get("interactive"))
+    return {
+        "git": git_status,
+        "vm_ssh": vm_status,
+        "interactive_run_likely": interactive,
+    }
+
+
+def print_auth_status(auth: dict[str, Any]) -> int:
+    print("GitHub auth status: " + json.dumps(auth["git"], sort_keys=True))
+    print("VM SSH status: " + json.dumps(auth["vm_ssh"], sort_keys=True))
+    print("run_interactive: " + json.dumps(auth["interactive_run_likely"]))
+    if auth["git"].get("remediation"):
+        print("git_remediation:")
+        for command in auth["git"]["remediation"]:
+            print(f"- {command}")
+    if auth["vm_ssh"].get("remediation"):
+        print("vm_remediation:")
+        for command in auth["vm_ssh"]["remediation"]:
+            print(f"- {command}")
+    return 1 if auth["interactive_run_likely"] else 0
+
+
+def dispatch_standalone_mode(args: argparse.Namespace, config: dict[str, Any]) -> int | None:
+    if args.repair_state:
+        return repair_legacy_state()
+
+    if args.inspect_backlog:
+        backlog, diagnostics = inspect_backlog_payload()
+        return print_backlog_inspection(backlog, diagnostics)
+
+    if args.check_auth:
+        product_repo = product_repo_path()
+        auth = check_auth_status(config, target_kind="product", target_repo=product_repo, cwd=ROOT)
+        return print_auth_status(auth)
+
+    return None
+
+
+def try_bootstrap_active_task() -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], bool]:
+    backlog = load_validated_backlog()
     active = load_data(ACTIVE)
     status = load_data(STATUS)
     if active.get("task_id"):
         return backlog, active, status, False
 
+    if backlog.get("errors"):
+        return backlog, active, status, False
+
     select_result = run_argv([sys.executable, str(SELECT_TASK)], ROOT)
-    if "NO_READY_TASK" in select_result.get("stdout", ""):
+    if "NO_READY_TASK" in select_result.get("stdout", "") or "SELECTOR_FILTERED_EVERYTHING" in select_result.get("stdout", ""):
         return backlog, active, status, False
     if not select_result.get("passed"):
         return backlog, active, status, False
@@ -592,7 +1206,7 @@ def try_bootstrap_active_task() -> tuple[dict[str, Any], dict[str, Any], dict[st
     if not render_result.get("passed"):
         return load_data(BACKLOG), load_data(ACTIVE), load_data(STATUS), False
 
-    return load_data(BACKLOG), load_data(ACTIVE), load_data(STATUS), True
+    return load_validated_backlog(), load_data(ACTIVE), load_data(STATUS), True
 
 
 def codex_exec_argv(
@@ -619,7 +1233,14 @@ def attach_target_to_active(active: dict[str, Any], *, target_repo: Path, target
 
 def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
     config = load_config()
+    standalone_result = dispatch_standalone_mode(args, config)
+    if standalone_result is not None:
+        return standalone_result
+
     backlog, active, status, auto_bootstrapped = try_bootstrap_active_task()
+    prior_active_state = active.get("state")
+    prior_status_state = status.get("state")
+    prior_last_result = status.get("last_result")
 
     product_repo = product_repo_path()
     builder_repo = builder_path_from_config("builder_root")
@@ -633,17 +1254,48 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
     if validation_error:
         label, summary, next_action = validation_error
         if label == "NO_ACTIVE_TASK" and not auto_bootstrapped:
-            print_result(label, summary, next_action)
+            diagnostics = compute_backlog_diagnostics(backlog) if not backlog.get("errors") else None
+            if backlog.get("errors"):
+                print("BACKLOG_INVALID")
+                for error in backlog["errors"]:
+                    print(f"- {error.get('code')}: {error.get('detail')}")
+                return 1
+            if diagnostics and diagnostics.get("next_selected_task_id"):
+                print_result(
+                    "ACTIVE_TASK_MISSING_BUT_READY_TASKS_EXIST",
+                    "No active task is loaded even though ready tasks exist.",
+                    "Run python3 scripts/select_task.py and python3 scripts/render_packet.py, or rerun python3 scripts/automate_task_loop.py after repairing state.",
+                    extra=f"Next ready task: {diagnostics['next_selected_task_id']}",
+                )
+                return 1
+            if diagnostics and diagnostics.get("selector_filtered_everything"):
+                print_result(
+                    "SELECTOR_FILTERED_EVERYTHING",
+                    "Ready-status tasks exist, but blockers or dependencies filtered every candidate.",
+                    "Inspect backlog blockers/dependencies or run python3 scripts/automate_task_loop.py --inspect-backlog for details.",
+                )
+                return 1
+            print_result(
+                "NO_READY_TASKS_REMAIN",
+                "No ready tasks remain after backlog selection.",
+                "Inspect backlog.yml for the next task to mark ready, or run python3 scripts/automate_task_loop.py --inspect-backlog for details.",
+            )
             return 1
         print_result(label, summary, next_action)
         return 1
 
-    run_dir = Path(active["run_log_dir"]).expanduser().resolve()
-    run_dir.mkdir(parents=True, exist_ok=True)
+    previous_run_dir, run_dir = prepare_invocation_run_dir(active, active["task_id"])
     target_kind = "builder" if task_targets_builder_repo(task, active) else "product"
     target_repo = builder_repo if target_kind == "builder" else product_repo
     attach_target_to_active(active, target_repo=target_repo, target_kind=target_kind)
-    write_data(ACTIVE, active)
+    retry_continuation = (
+        not args.resume
+        and prior_active_state == "blocked"
+        and prior_status_state == "blocked"
+        and prior_last_result == "refined"
+        and status.get("active_task_id") == active.get("task_id")
+    )
+    sync_run_state(active, status, "task_selected", task_id=active.get("task_id"), title=active.get("title"), run_log_dir=run_dir, last_result=prior_last_result)
     context = build_context(active, task, product_repo, ROOT, target_repo, target_kind)
 
     executor_config = config.get("executor", {})
@@ -664,8 +1316,8 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         target_repo=target_repo,
     )
     use_vm_flow = target_kind == "product"
+    effective_vm_ssh_options = effective_ssh_options(vm_config) if use_vm_flow else []
     ignored_git_paths = ignored_git_paths_for_target(target_kind)
-    retry_continuation = is_retry_continuation(active, status, resume=args.resume)
     plan = {
         "task_id": task["id"],
         "prompt_file": active["prompt_file"],
@@ -681,6 +1333,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         "vm_pull_command": render_template(vm_config.get("pull_command"), context) if use_vm_flow else None,
         "vm_commands": [render_template(command, context) for command in vm_commands] if use_vm_flow else [],
         "ssh_target": vm_config.get("ssh_target") if use_vm_flow else None,
+        "ssh_options": effective_vm_ssh_options if use_vm_flow else [],
         "missing_configuration": [],
         "retry_continuation": retry_continuation,
     }
@@ -712,10 +1365,37 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         print_result("DRY_RUN", f"Plan written to {run_dir / RESULT_FILE}")
         return 0
 
-    status["state"] = "implementing"
-    status["active_task_id"] = task["id"]
-    status["last_run_at"] = now_iso()
-    write_data(STATUS, status)
+    auth_status = check_auth_status(config, target_kind=target_kind, target_repo=target_repo, cwd=ROOT)
+    write_step(run_dir, "auth_preflight", auth_status)
+    if auth_status["interactive_run_likely"]:
+        summary = "Authentication preflight indicates repeated or interactive prompts are likely."
+        sync_run_state(active, status, "preflight_failed", task_id=active.get("task_id"), title=active.get("title"), run_log_dir=run_dir, failure_summary=summary, last_result="blocked")
+        blocker_evidence = [auth_status["git"].get("detail", ""), auth_status["vm_ssh"].get("detail", "")]
+        automation_result = {
+            "task_id": task["id"],
+            "classification": "blocked",
+            "finished_at": now_iso(),
+            "summary": summary,
+            "steps": [{"name": "auth_preflight", "outcome": "blocked", "detail": json.dumps(auth_status, sort_keys=True)}],
+            "changed_files": [],
+            "blocker_evidence": [item for item in blocker_evidence if item],
+            "unproven_runtime_gaps": [summary],
+        }
+        write_json(run_dir / RESULT_FILE, automation_result)
+        write_summary(run_dir, automation_result)
+        classify_and_update_state("blocked", summary, task, backlog, active, status, automation_result, terminal_state="preflight_failed")
+        write_data(BACKLOG, backlog)
+        print_result(
+            "BLOCKED",
+            summary,
+            "Run python3 scripts/automate_task_loop.py --check-auth and apply the suggested SSH/Git fixes before rerunning automation.",
+        )
+        return 2
+
+    sync_run_state(active, status, "preflight_passed", task_id=active.get("task_id"), title=active.get("title"), run_log_dir=run_dir, last_result=status.get("last_result"))
+
+    emit_progress(run_dir, task_id=task["id"], stage_index=1, backlog=backlog, task_started_at=active.get("started_at"), detail="Task selected and state loaded.")
+    emit_progress(run_dir, task_id=task["id"], stage_index=2, backlog=backlog, task_started_at=active.get("started_at"), detail=f"Prompt file ready at {active['prompt_file']}.")
 
     steps: list[dict[str, Any]] = []
     blocker_evidence: list[str] = []
@@ -723,6 +1403,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
 
     if plan["missing_configuration"]:
         summary = "Missing automation configuration: " + ", ".join(plan["missing_configuration"])
+        emit_progress(run_dir, task_id=task["id"], stage_index=1, backlog=backlog, task_started_at=active.get("started_at"), state="failed", detail=summary)
         automation_result = {
             "task_id": task["id"],
             "classification": "blocked",
@@ -745,6 +1426,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
     write_step(run_dir, "git_status_before", baseline)
     if not args.resume and not retry_continuation and git_config.get("require_clean_worktree", True) and baseline.get("files"):
         summary = f"{target_kind.title()} repo is dirty before automated execution; refusing to continue."
+        emit_progress(run_dir, task_id=task["id"], stage_index=4, backlog=backlog, task_started_at=active.get("started_at"), state="failed", detail=summary)
         blocker_evidence.extend(baseline.get("files", []))
         automation_result = {
             "task_id": task["id"],
@@ -765,6 +1447,8 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         return 2
 
     if not args.resume and not retry_continuation and executor_mode == "human_gated":
+        sync_run_state(active, status, "implementing", task_id=active.get("task_id"), title=active.get("title"), run_log_dir=run_dir, last_result=status.get("last_result"))
+        emit_progress(run_dir, task_id=task["id"], stage_index=3, backlog=backlog, task_started_at=active.get("started_at"), detail="Recording manual executor handoff.")
         handoff_note = "Manual JORB Codex execution is required before resume."
         handoff_payload = {
             "mode": "human_gated",
@@ -793,8 +1477,6 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             "changed_files": [],
             "unproven_runtime_gaps": [f"{target_kind.title()} repo changes have not been applied yet; resume is required after manual Codex execution."],
         }
-        write_json(run_dir / RESULT_FILE, automation_result)
-        write_summary(run_dir, automation_result)
         persist_paused_state(active, status, handoff_note)
         print_result(
             "PAUSED",
@@ -805,6 +1487,8 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         return 0
 
     if args.resume:
+        sync_run_state(active, status, "implementing", task_id=active.get("task_id"), title=active.get("title"), run_log_dir=run_dir, last_result=status.get("last_result"))
+        emit_progress(run_dir, task_id=task["id"], stage_index=4, backlog=backlog, task_started_at=active.get("started_at"), detail=f"Checking {target_kind} repo for resumed task changes.")
         after_executor = baseline
         write_step(run_dir, "resume_check", after_executor)
         steps.append({
@@ -822,8 +1506,6 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
                 "changed_files": [],
                 "unproven_runtime_gaps": [f"Manual Codex execution has not produced detectable {target_kind} repo changes yet."],
             }
-            write_json(run_dir / RESULT_FILE, automation_result)
-            write_summary(run_dir, automation_result)
             persist_paused_state(active, status, f"Resume attempted before {target_kind} repo changes were present.")
             print_result(
                 "PAUSED",
@@ -833,6 +1515,8 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             )
             return 0
     elif retry_continuation:
+        sync_run_state(active, status, "implementing", task_id=active.get("task_id"), title=active.get("title"), run_log_dir=run_dir, last_result=status.get("last_result"))
+        emit_progress(run_dir, task_id=task["id"], stage_index=4, backlog=backlog, task_started_at=active.get("started_at"), detail=f"Continuing retry-ready task from existing {target_kind} repo changes.")
         after_executor = baseline
         write_step(run_dir, "retry_check", after_executor)
         steps.append({
@@ -841,7 +1525,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             "detail": f"Continuing from existing {target_kind} repo task changes." if after_executor.get("files") else f"No {target_kind} repo changes were found for retry continuation.",
         })
         if not after_executor.get("files"):
-            prior_vm_retry = prior_result_supports_vm_retry(run_dir)
+            prior_vm_retry = prior_result_supports_vm_retry(previous_run_dir)
             if prior_vm_retry:
                 steps[-1]["outcome"] = "passed"
                 steps[-1]["detail"] = "No current dirty repo changes; continuing from prior post-push VM retry context."
@@ -865,17 +1549,17 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
                 print_result("REFINED", summary, f"Reapply or restore the task changes in {target_repo}, then rerun python3 scripts/automate_task_loop.py.")
                 return 1
     else:
+        sync_run_state(active, status, "implementing", task_id=active.get("task_id"), title=active.get("title"), run_log_dir=run_dir, last_result=status.get("last_result"))
+        emit_progress(run_dir, task_id=task["id"], stage_index=3, backlog=backlog, task_started_at=active.get("started_at"), detail=f"Running executor in {target_repo}.")
         prompt_text = Path(active["prompt_file"]).read_text(encoding="utf-8")
         if executor_mode == "codex_exec":
-            executor_result = run_argv_input(
+            executor_result = run_codex_exec(
                 codex_exec_argv(executor_config, run_dir=run_dir),
                 target_repo,
                 input_text=prompt_text,
-                timeout=int(executor_config.get("timeout_seconds", 1800)),
+                output_path=codex_last_message_path,
+                timeout=int(executor_config.get("timeout_seconds", 300)),
             )
-            if codex_last_message_path.exists():
-                executor_result["last_message_file"] = str(codex_last_message_path)
-                executor_result["last_message"] = codex_last_message_path.read_text(encoding="utf-8")
         else:
             executor_result = run_shell(
                 plan["executor_command"],
@@ -891,8 +1575,16 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             "command": executor_result["command"],
         })
         if not executor_result["passed"]:
-            summary = "Executor command failed before local validation."
-            blocker_evidence.append(executor_result["stderr"] or executor_result["stdout"])
+            failure_reason = executor_result.get("failure_reason") or "executor_failure"
+            summary = "executor_timeout" if failure_reason == "executor_timeout" else "executor_failure"
+            emit_progress(run_dir, task_id=task["id"], stage_index=3, backlog=backlog, task_started_at=active.get("started_at"), state="failed", detail=summary)
+            blocker_evidence.extend(
+                [
+                    failure_reason,
+                    executor_result.get("stderr_tail") or executor_result.get("stderr"),
+                    executor_result.get("stdout_tail") or executor_result.get("stdout"),
+                ]
+            )
             automation_result = {
                 "task_id": task["id"],
                 "classification": "blocked",
@@ -900,7 +1592,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
                 "summary": summary,
                 "steps": steps,
                 "changed_files": [],
-                "blocker_evidence": blocker_evidence,
+                "blocker_evidence": [item for item in blocker_evidence if item],
                 "unproven_runtime_gaps": [summary],
             }
             write_json(run_dir / RESULT_FILE, automation_result)
@@ -912,10 +1604,11 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             return 2
         after_executor = git_status_porcelain(target_repo, ignored_prefixes=ignored_git_paths)
         write_step(run_dir, "git_status_after_executor", after_executor)
+        emit_progress(run_dir, task_id=task["id"], stage_index=4, backlog=backlog, task_started_at=active.get("started_at"), detail=f"Detected {len(after_executor.get('files', []))} changed file(s).")
 
     changed_files = after_executor.get("files", [])
     if retry_continuation and not changed_files:
-        prior_vm_retry = prior_result_supports_vm_retry(run_dir)
+        prior_vm_retry = prior_result_supports_vm_retry(previous_run_dir)
         if prior_vm_retry:
             changed_files = list(prior_vm_retry.get("changed_files", []))
             continue_from_prior_vm_retry = True
@@ -924,6 +1617,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
     allowlisted, disallowed = changed_files_are_allowlisted(changed_files, active.get("allowlist", []))
     if not allowlisted:
         summary = "Executor changed files outside the task allowlist."
+        emit_progress(run_dir, task_id=task["id"], stage_index=4, backlog=backlog, task_started_at=active.get("started_at"), state="failed", detail=summary)
         automation_result = {
             "task_id": task["id"],
             "classification": "blocked",
@@ -944,6 +1638,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
 
     if not changed_files:
         summary = f"Executor completed but no {target_kind} repo changes were detected."
+        emit_progress(run_dir, task_id=task["id"], stage_index=4, backlog=backlog, task_started_at=active.get("started_at"), state="failed", detail=summary)
         automation_result = {
             "task_id": task["id"],
             "classification": "refined",
@@ -968,6 +1663,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
 
     if target_kind == "product" and local_validation_commands and validation_venv is None and not continue_from_prior_vm_retry:
         summary = "No product validation virtualenv found. Expected one of: .venv_validation, .venv, .venv_j1."
+        emit_progress(run_dir, task_id=task["id"], stage_index=5, backlog=backlog, task_started_at=active.get("started_at"), state="failed", detail=summary)
         automation_result = {
             "task_id": task["id"],
             "classification": "blocked",
@@ -987,9 +1683,18 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         return 2
 
     if not continue_from_prior_vm_retry:
+        sync_run_state(active, status, "verifying", task_id=active.get("task_id"), title=active.get("title"), run_log_dir=run_dir, last_result=status.get("last_result"))
         local_results: list[dict[str, Any]] = []
         local_passed = True
-        for command in prepared_validation_commands:
+        for index, command in enumerate(prepared_validation_commands):
+            emit_progress(
+                run_dir,
+                task_id=task["id"],
+                stage_index=5 if index == 0 else 6,
+                backlog=backlog,
+                task_started_at=active.get("started_at"),
+                detail=command,
+            )
             result = run_shell(command, target_repo, shell_executable=shell_executable)
             local_results.append(result)
             if not result["passed"]:
@@ -1010,6 +1715,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         })
         if not local_passed:
             summary = "Local validation failed after executor changes."
+            emit_progress(run_dir, task_id=task["id"], stage_index=5, backlog=backlog, task_started_at=active.get("started_at"), state="failed", detail=summary)
             automation_result = {
                 "task_id": task["id"],
                 "classification": "refined",
@@ -1032,6 +1738,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             print_result("REFINED", summary, next_action)
             return 1
 
+        emit_progress(run_dir, task_id=task["id"], stage_index=7, backlog=backlog, task_started_at=active.get("started_at"), detail="Running git add/commit/push.")
         git_add = run_argv(["git", "add", "-A"], target_repo)
         commit_message = render_template(git_config.get("commit_message_template"), context) or f"{task['id']}: {task['title']}"
         git_commit = run_argv(["git", "commit", "-m", commit_message], target_repo)
@@ -1048,6 +1755,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         })
         if not (git_add["passed"] and git_commit["passed"] and git_push["passed"]):
             summary = "Git add/commit/push failed after local validation passed."
+            emit_progress(run_dir, task_id=task["id"], stage_index=7, backlog=backlog, task_started_at=active.get("started_at"), state="failed", detail=summary)
             blocker_evidence.extend([
                 git_add["stderr"] or git_add["stdout"],
                 git_commit["stderr"] or git_commit["stdout"],
@@ -1074,7 +1782,8 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
     vm_passed = True
     if use_vm_flow:
         ssh_target = vm_config["ssh_target"]
-        ssh_options = list(vm_config.get("ssh_options", []))
+        ssh_options = effective_vm_ssh_options
+        emit_progress(run_dir, task_id=task["id"], stage_index=8, backlog=backlog, task_started_at=active.get("started_at"), detail=f"Running VM validation on {ssh_target}.")
         vm_pull_command = f"cd {shlex.quote(vm_repo)} && {plan['vm_pull_command']}"
         vm_pull = ssh_command(ssh_target, ssh_options, vm_pull_command, ROOT)
         vm_results = [vm_pull]
@@ -1112,6 +1821,15 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         "blocker_evidence": [],
         "unproven_runtime_gaps": [] if vm_passed else [summary],
     }
+    emit_progress(
+        run_dir,
+        task_id=task["id"],
+        stage_index=9,
+        backlog=backlog,
+        task_started_at=active.get("started_at"),
+        state="completed" if classification == "accepted" else "failed",
+        detail=summary,
+    )
     write_json(run_dir / RESULT_FILE, automation_result)
     write_summary(run_dir, automation_result)
     classify_and_update_state(classification, summary, task, backlog, active, status, automation_result)
@@ -1122,7 +1840,20 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             next_backlog, next_active, next_status, next_bootstrapped = try_bootstrap_active_task()
             if next_bootstrapped:
                 return run_loop(args, allow_follow_on=False)
-            print_result("NO_ACTIVE_TASK", "No active task is currently loaded.", "No ready tasks remain after the accepted task completed.")
+            next_diagnostics = compute_backlog_diagnostics(next_backlog) if not next_backlog.get("errors") else None
+            if next_backlog.get("errors"):
+                print("BACKLOG_INVALID")
+                for error in next_backlog["errors"]:
+                    print(f"- {error.get('code')}: {error.get('detail')}")
+                return 1
+            if next_diagnostics and next_diagnostics.get("selector_filtered_everything"):
+                print_result(
+                    "SELECTOR_FILTERED_EVERYTHING",
+                    "Ready-status tasks exist, but blockers or dependencies filtered every candidate after acceptance.",
+                    "Run python3 scripts/automate_task_loop.py --inspect-backlog for skip reasons.",
+                )
+                return 1
+            print_result("NO_READY_TASKS_REMAIN", "No ready tasks remain after the accepted task completed.", "Mark the next task ready in backlog.yml before rerunning automation.")
             return 0
         print_result("ACCEPTED", summary, "Review automation_summary.md for evidence and proceed to the next task.")
     else:
@@ -1134,6 +1865,9 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--inspect-backlog", action="store_true")
+    parser.add_argument("--check-auth", action="store_true")
+    parser.add_argument("--repair-state", action="store_true")
     args = parser.parse_args()
     return run_loop(args, allow_follow_on=True)
 

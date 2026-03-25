@@ -8,10 +8,23 @@ import sys
 
 
 SCRIPT = Path("/Users/samuelkrystal/projects/jorb-builder/scripts/automate_task_loop.py")
+LIVE_BUILDER_ROOT = Path("/Users/samuelkrystal/projects/jorb-builder")
 
 
 def _json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _active_run_dir(builder_root: Path) -> Path:
+    active = _json(builder_root / "active_task.yml")
+    run_log_dir = active.get("run_log_dir")
+    if not run_log_dir:
+        status = _json(builder_root / "status.yml")
+        if status.get("state") == "completed":
+            run_dirs = sorted((builder_root / "run_logs").glob("*"))
+            return run_dirs[-1]
+        raise AssertionError("active_task.yml has no run_log_dir")
+    return Path(run_log_dir)
 
 
 def _write_json(path: Path, payload) -> None:
@@ -19,9 +32,11 @@ def _write_json(path: Path, payload) -> None:
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 
-def _run(cmd: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
+def _run(cmd: list[str], cwd: Path, *, extra_env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
     env = os.environ.copy()
     env["JORB_BUILDER_ROOT"] = str(cwd)
+    if extra_env:
+        env.update(extra_env)
     return subprocess.run(cmd, cwd=str(cwd), text=True, capture_output=True, env=env)
 
 
@@ -87,6 +102,50 @@ def _write_fake_codex(path: Path, *, relative_output: str, last_message: str = "
     path.chmod(0o755)
 
 
+def _write_fake_codex_without_output(path: Path, *, relative_output: str) -> None:
+    path.write_text(
+        "\n".join(
+            [
+                "#!/usr/bin/env python3",
+                "from pathlib import Path",
+                "import sys",
+                "prompt = sys.stdin.read()",
+                f"target = Path.cwd() / {relative_output!r}",
+                "target.parent.mkdir(parents=True, exist_ok=True)",
+                "target.write_text('applied without output\\n' + prompt, encoding='utf-8')",
+                "sys.stdout.write('ok')",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    path.chmod(0o755)
+
+
+def _write_fake_codex_hung(path: Path) -> None:
+    path.write_text(
+        "\n".join(
+            [
+                "#!/usr/bin/env python3",
+                "import signal",
+                "import sys",
+                "import time",
+                "",
+                "def _handle(signum, frame):",
+                "    sys.stderr.write(f'terminated by signal {signum}\\n')",
+                "    sys.stderr.flush()",
+                "    sys.exit(0)",
+                "",
+                "signal.signal(signal.SIGTERM, _handle)",
+                "signal.signal(signal.SIGINT, _handle)",
+                "sys.stdin.read()",
+                "time.sleep(3600)",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    path.chmod(0o755)
+
+
 def _ignore_path_in_git_status(repo: Path, pattern: str) -> None:
     exclude = repo / ".git" / "info" / "exclude"
     with exclude.open("a", encoding="utf-8") as handle:
@@ -144,12 +203,12 @@ def _base_active(task_id: str, prompt_file: Path, run_log_dir: Path, allowlist: 
 
 def _mark_retry_ready(builder_root: Path, *, handed_to_codex_at: str = "2026-03-24T00:10:00+00:00") -> None:
     active = _json(builder_root / "active_task.yml")
-    active["state"] = "failed"
+    active["state"] = "blocked"
     active["handed_to_codex_at"] = handed_to_codex_at
     _write_json(builder_root / "active_task.yml", active)
 
     status = _json(builder_root / "status.yml")
-    status["state"] = "retry_ready"
+    status["state"] = "blocked"
     status["active_task_id"] = active["task_id"]
     status["last_task_id"] = active["task_id"]
     status["last_result"] = "refined"
@@ -175,6 +234,50 @@ def _write_prior_vm_refined_result(run_log_dir: Path, *, changed_files: list[str
             "unproven_runtime_gaps": [
                 "VM validation failed after local validation and git push succeeded."
             ],
+        },
+    )
+
+
+def _seed_legacy_auth_preflight_blocked_state(builder_root: Path, *, task_id: str) -> None:
+    active = _json(builder_root / "active_task.yml")
+    active["state"] = "failed"
+    active["handed_to_codex_at"] = None
+    active["failure_summary"] = "Authentication preflight indicates repeated or interactive prompts are likely."
+    _write_json(builder_root / "active_task.yml", active)
+
+    status = _json(builder_root / "status.yml")
+    status["state"] = "implementing"
+    status["active_task_id"] = task_id
+    status["last_task_id"] = task_id
+    status["last_result"] = "blocked"
+    _write_json(builder_root / "status.yml", status)
+
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "blocked"
+    _write_json(builder_root / "backlog.yml", backlog)
+
+    run_dir = Path(active["run_log_dir"])
+    _write_json(
+        run_dir / "automation_result.json",
+        {
+            "task_id": task_id,
+            "classification": "blocked",
+            "finished_at": "2026-03-25T05:09:25.511690+00:00",
+            "summary": "Authentication preflight indicates repeated or interactive prompts are likely.",
+            "steps": [{"name": "auth_preflight", "outcome": "blocked", "detail": "auth blocked"}],
+            "changed_files": [],
+            "blocker_evidence": ["vm ssh auth required"],
+            "unproven_runtime_gaps": ["Authentication preflight indicates repeated or interactive prompts are likely."],
+        },
+    )
+    _write_json(
+        builder_root / "blockers" / f"BLK-{task_id}.yml",
+        {
+            "id": f"BLK-{task_id}",
+            "title": f"Task {task_id} blocked during automated execution",
+            "related_tasks": [task_id],
+            "status": "open",
+            "diagnosis": "Authentication preflight indicates repeated or interactive prompts are likely.",
         },
     )
 
@@ -264,7 +367,9 @@ def _setup_builder_fixture(tmp_path: Path, *, task_id: str, area: str, allowlist
         ],
     }
     _write_json(builder_root / "backlog.yml", backlog)
-    _write_json(builder_root / "status.yml", _base_status())
+    status = _base_status()
+    status["active_task_id"] = task_id
+    _write_json(builder_root / "status.yml", status)
     _write_json(builder_root / "active_task.yml", _base_active(task_id, prompt_file, run_log_dir, allowlist))
     _write_json(builder_root / "config.yml", _base_config(product_repo, builder_root))
     (builder_root / "builder_memory.md").write_text("# Memory\n", encoding="utf-8")
@@ -320,7 +425,7 @@ def test_no_active_task(tmp_path: Path) -> None:
     result = _run([sys.executable, str(SCRIPT)], builder_root)
 
     assert result.returncode == 1
-    assert "NO_ACTIVE_TASK" in result.stdout
+    assert "NO_READY_TASKS_REMAIN" in result.stdout
 
 
 def test_no_active_task_autoselects_and_executes_ready_task(tmp_path: Path) -> None:
@@ -368,7 +473,7 @@ def test_no_active_task_autoselects_and_executes_ready_task(tmp_path: Path) -> N
     result = _run([sys.executable, str(SCRIPT)], builder_root)
 
     assert result.returncode == 0
-    assert "NO_ACTIVE_TASK" in result.stdout
+    assert "NO_READY_TASKS_REMAIN" in result.stdout
     assert (builder_root / "worker.py").exists()
     active_after = _json(builder_root / "active_task.yml")
     assert active_after["task_id"] is None
@@ -413,7 +518,7 @@ def test_no_active_task_with_no_ready_tasks_stays_no_active_task(tmp_path: Path)
     result = _run([sys.executable, str(SCRIPT)], builder_root)
 
     assert result.returncode == 1
-    assert "NO_ACTIVE_TASK" in result.stdout
+    assert "NO_READY_TASKS_REMAIN" in result.stdout
 
 
 def test_accepted_task_autoselects_next_task(tmp_path: Path) -> None:
@@ -489,7 +594,7 @@ def test_accepted_task_with_no_ready_tasks_returns_no_active_task(tmp_path: Path
     result = _run([sys.executable, str(SCRIPT)], builder_root)
 
     assert result.returncode == 0
-    assert "NO_ACTIVE_TASK" in result.stdout
+    assert "NO_READY_TASKS_REMAIN" in result.stdout
     backlog_after = _json(builder_root / "backlog.yml")
     assert backlog_after["tasks"][0]["status"] == "accepted"
     active_after = _json(builder_root / "active_task.yml")
@@ -512,6 +617,9 @@ def test_stale_implementing_state(tmp_path: Path) -> None:
     active["state"] = "implementing"
     active["handed_to_codex_at"] = None
     _write_json(builder_root / "active_task.yml", active)
+    status = _json(builder_root / "status.yml")
+    status["state"] = "implementing"
+    _write_json(builder_root / "status.yml", status)
 
     result = _run([sys.executable, str(SCRIPT), "--resume"], builder_root)
 
@@ -527,17 +635,22 @@ def test_builder_side_pause_and_resume(tmp_path: Path) -> None:
     assert "PAUSED" in pause.stdout
     active = _json(builder_root / "active_task.yml")
     assert active["task_id"] == "TASK-BUILDER"
-    assert active["state"] == "paused"
+    assert active["state"] == "implementing"
     assert active["target_kind"] == "builder"
     assert active["target_repo"] == str(builder_root)
+    assert Path(active["run_log_dir"]) != run_log_dir
+    first_run_dir = Path(active["run_log_dir"])
+    assert not (first_run_dir / "automation_result.json").exists()
 
     resume = _run([sys.executable, str(SCRIPT), "--resume"], builder_root)
     assert resume.returncode == 0
     assert "PAUSED" in resume.stdout
     assert "builder repo changes" in resume.stdout
-    result = _json(run_log_dir / "automation_result.json")
-    assert result["classification"] == "paused"
-    assert "builder repo changes" in result["summary"]
+    second_run_dir = _active_run_dir(builder_root)
+    assert second_run_dir != first_run_dir
+    assert not (second_run_dir / "automation_result.json").exists()
+    resume_check = _json(second_run_dir / "resume_check.json")
+    assert resume_check["files"] == []
 
 
 def test_builder_side_ignores_backlog_dirt_when_pausing(tmp_path: Path) -> None:
@@ -554,7 +667,7 @@ def test_builder_side_ignores_backlog_dirt_when_pausing(tmp_path: Path) -> None:
 
 
 def test_product_side_pause_and_resume(tmp_path: Path) -> None:
-    builder_root, product_repo, run_log_dir, _ = _setup_builder_fixture(
+    builder_root, product_repo, _, _ = _setup_builder_fixture(
         tmp_path,
         task_id="TASK-PRODUCT",
         area="discovery",
@@ -571,13 +684,14 @@ def test_product_side_pause_and_resume(tmp_path: Path) -> None:
     resume = _run([sys.executable, str(SCRIPT), "--resume"], builder_root)
     assert resume.returncode == 0
     assert "product repo changes" in resume.stdout
-    result = _json(run_log_dir / "automation_result.json")
-    assert result["classification"] == "paused"
-    assert "product repo changes" in result["summary"]
+    run_dir = _active_run_dir(builder_root)
+    assert not (run_dir / "automation_result.json").exists()
+    resume_check = _json(run_dir / "resume_check.json")
+    assert resume_check["files"] == []
 
 
 def test_resume_allows_expected_dirty_builder_task_files(tmp_path: Path) -> None:
-    builder_root, _, run_log_dir, _ = _setup_builder_fixture(tmp_path, task_id="TASK-BUILDER", area="builder", allowlist=["../jorb-builder/**"])
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="TASK-BUILDER", area="builder", allowlist=["../jorb-builder/**"])
 
     pause = _run([sys.executable, str(SCRIPT)], builder_root)
     assert pause.returncode == 0
@@ -588,13 +702,13 @@ def test_resume_allows_expected_dirty_builder_task_files(tmp_path: Path) -> None
 
     assert resume.returncode == 0
     assert "BLOCKED Builder repo is dirty before automated execution" not in resume.stdout
-    payload = _json(run_log_dir / "automation_result.json")
+    payload = _json(_active_run_dir(builder_root) / "automation_result.json")
     assert payload["classification"] == "accepted"
     assert "worker.py" in payload["changed_files"]
 
 
 def test_resume_blocks_out_of_allowlist_dirty_files(tmp_path: Path) -> None:
-    builder_root, product_repo, run_log_dir, _ = _setup_builder_fixture(
+    builder_root, product_repo, _, _ = _setup_builder_fixture(
         tmp_path,
         task_id="TASK-PRODUCT",
         area="discovery",
@@ -610,13 +724,13 @@ def test_resume_blocks_out_of_allowlist_dirty_files(tmp_path: Path) -> None:
 
     assert resume.returncode in {1, 2}
     assert "outside the task allowlist" in resume.stdout
-    payload = _json(run_log_dir / "automation_result.json")
+    payload = _json(_active_run_dir(builder_root) / "automation_result.json")
     assert payload["classification"] == "blocked"
     assert "wrong.txt" in payload["blocker_evidence"]
 
 
 def test_product_validation_uses_venv_validation_when_present(tmp_path: Path) -> None:
-    builder_root, product_repo, run_log_dir, _ = _setup_builder_fixture(
+    builder_root, product_repo, _, _ = _setup_builder_fixture(
         tmp_path,
         task_id="TASK-PRODUCT",
         area="discovery",
@@ -639,13 +753,13 @@ def test_product_validation_uses_venv_validation_when_present(tmp_path: Path) ->
 
     assert resume.returncode in {1, 2}
     assert "No product validation virtualenv found" not in resume.stdout
-    validation = _json(run_log_dir / "local_validation.json")
+    validation = _json(_active_run_dir(builder_root) / "local_validation.json")
     assert validation["passed"] is True
     assert validation["venv_path"] == str(product_repo / ".venv_validation")
 
 
 def test_product_validation_fails_clearly_without_venv(tmp_path: Path) -> None:
-    builder_root, product_repo, run_log_dir, _ = _setup_builder_fixture(
+    builder_root, product_repo, _, _ = _setup_builder_fixture(
         tmp_path,
         task_id="TASK-PRODUCT",
         area="discovery",
@@ -666,13 +780,13 @@ def test_product_validation_fails_clearly_without_venv(tmp_path: Path) -> None:
 
     assert resume.returncode == 2
     assert "No product validation virtualenv found" in resume.stdout
-    payload = _json(run_log_dir / "automation_result.json")
+    payload = _json(_active_run_dir(builder_root) / "automation_result.json")
     assert payload["classification"] == "blocked"
     assert "No product validation virtualenv found" in payload["summary"]
 
 
 def test_retry_ready_product_task_continues_from_expected_dirty_files(tmp_path: Path) -> None:
-    builder_root, product_repo, run_log_dir, _ = _setup_builder_fixture(
+    builder_root, product_repo, _, _ = _setup_builder_fixture(
         tmp_path,
         task_id="TASK-PRODUCT",
         area="discovery",
@@ -693,17 +807,18 @@ def test_retry_ready_product_task_continues_from_expected_dirty_files(tmp_path: 
 
     assert result.returncode in {1, 2}
     assert "dirty before automated execution" not in result.stdout
-    payload = _json(run_log_dir / "automation_result.json")
+    run_dir = _active_run_dir(builder_root)
+    payload = _json(run_dir / "automation_result.json")
     step_names = [step["name"] for step in payload["steps"]]
     assert "retry_check" in step_names
     assert "local_validation" in step_names
-    validation = _json(run_log_dir / "local_validation.json")
+    validation = _json(run_dir / "local_validation.json")
     assert validation["passed"] is True
     assert validation["venv_path"] == str(product_repo / ".venv_validation")
 
 
 def test_retry_ready_product_task_blocks_out_of_allowlist_dirty_files(tmp_path: Path) -> None:
-    builder_root, product_repo, run_log_dir, _ = _setup_builder_fixture(
+    builder_root, product_repo, _, _ = _setup_builder_fixture(
         tmp_path,
         task_id="TASK-PRODUCT",
         area="discovery",
@@ -717,7 +832,7 @@ def test_retry_ready_product_task_blocks_out_of_allowlist_dirty_files(tmp_path: 
     assert result.returncode == 2
     assert "dirty before automated execution" not in result.stdout
     assert "outside the task allowlist" in result.stdout
-    payload = _json(run_log_dir / "automation_result.json")
+    payload = _json(_active_run_dir(builder_root) / "automation_result.json")
     step_names = [step["name"] for step in payload["steps"]]
     assert "retry_check" in step_names
     assert payload["classification"] == "blocked"
@@ -743,13 +858,15 @@ def test_retry_ready_product_task_retries_vm_without_dirty_files(tmp_path: Path)
 
     assert result.returncode == 1
     assert "Retry-ready task has no product repo changes to continue from." not in result.stdout
-    payload = _json(run_log_dir / "automation_result.json")
+    current_run_dir = _active_run_dir(builder_root)
+    payload = _json(current_run_dir / "automation_result.json")
     step_names = [step["name"] for step in payload["steps"]]
     assert "retry_check" in step_names
     assert "vm_validation" in step_names
     assert payload["summary"] == "VM validation failed after local validation and git push succeeded."
-    vm_validation = _json(run_log_dir / "vm_validation.json")
-    assert "ssh -o ConnectTimeout=1 127.0.0.1 " in vm_validation["results"][0]["command"]
+    vm_validation = _json(current_run_dir / "vm_validation.json")
+    assert "ssh -o ConnectTimeout=1 " in vm_validation["results"][0]["command"]
+    assert "ControlMaster=auto" in vm_validation["results"][0]["command"]
     assert "cd " + str(product_repo) + " && git pull --ff-only" in vm_validation["results"][0]["command"]
 
 
@@ -772,8 +889,9 @@ def test_vm_remote_home_path_is_preserved_in_ssh_command(tmp_path: Path) -> None
     result = _run([sys.executable, str(SCRIPT)], builder_root)
 
     assert result.returncode == 1
-    vm_validation = _json(run_log_dir / "vm_validation.json")
-    assert "ssh -o ConnectTimeout=1 127.0.0.1 " in vm_validation["results"][0]["command"]
+    vm_validation = _json(_active_run_dir(builder_root) / "vm_validation.json")
+    assert "ssh -o ConnectTimeout=1 " in vm_validation["results"][0]["command"]
+    assert "ControlMaster=auto" in vm_validation["results"][0]["command"]
     assert "cd /home/gargantua1/projects/jorb && git pull --ff-only" in vm_validation["results"][0]["command"]
     assert "/System/Volumes/Data/home/gargantua1/projects/jorb" not in vm_validation["results"][0]["command"]
 
@@ -826,14 +944,14 @@ def test_retry_ready_product_task_recovers_vm_retry_from_stage_files(tmp_path: P
 
     assert result.returncode == 1
     assert "Retry-ready task has no product repo changes to continue from." not in result.stdout
-    payload = _json(run_log_dir / "automation_result.json")
+    payload = _json(_active_run_dir(builder_root) / "automation_result.json")
     step_names = [step["name"] for step in payload["steps"]]
     assert "vm_validation" in step_names
     assert payload["summary"] == "VM validation failed after local validation and git push succeeded."
 
 
 def test_fresh_product_execution_still_blocks_on_dirty_repo(tmp_path: Path) -> None:
-    builder_root, product_repo, run_log_dir, _ = _setup_builder_fixture(
+    builder_root, product_repo, _, _ = _setup_builder_fixture(
         tmp_path,
         task_id="TASK-PRODUCT",
         area="discovery",
@@ -846,7 +964,7 @@ def test_fresh_product_execution_still_blocks_on_dirty_repo(tmp_path: Path) -> N
 
     assert result.returncode == 2
     assert "dirty before automated execution" in result.stdout
-    payload = _json(run_log_dir / "automation_result.json")
+    payload = _json(_active_run_dir(builder_root) / "automation_result.json")
     assert payload["classification"] == "blocked"
     assert "Product repo is dirty before automated execution" in payload["summary"]
 
@@ -860,10 +978,11 @@ def test_dirty_repo_blocks_and_preserves_active_task(tmp_path: Path) -> None:
     assert result.returncode == 2
     assert "BLOCKED" in result.stdout
     assert "Clean" in result.stdout
+    assert "FAILED at Step 4" in result.stdout
     active = _json(builder_root / "active_task.yml")
     assert active["task_id"] == "TASK-DIRTY"
-    assert active["state"] == "failed"
-    payload = _json(run_log_dir / "automation_result.json")
+    assert active["state"] == "blocked"
+    payload = _json(_active_run_dir(builder_root) / "automation_result.json")
     assert payload["classification"] == "blocked"
     assert "Builder repo is dirty" in payload["summary"]
 
@@ -888,18 +1007,22 @@ def test_codex_exec_builder_task_runs_in_builder_repo(tmp_path: Path) -> None:
     result = _run([sys.executable, str(SCRIPT)], builder_root)
 
     assert result.returncode == 0
-    assert "NO_ACTIVE_TASK" in result.stdout
+    assert "NO_READY_TASKS_REMAIN" in result.stdout
     assert (builder_root / "worker.py").exists()
-    executor = _json(run_log_dir / "executor.json")
+    run_dir = _active_run_dir(builder_root)
+    executor = _json(run_dir / "executor.json")
     assert executor["cwd"] == str(builder_root)
     assert executor["last_message"] == "builder codex ok\n"
-    payload = _json(run_log_dir / "automation_result.json")
+    assert executor["output_file_nonempty"] is True
+    payload = _json(run_dir / "automation_result.json")
     assert payload["classification"] == "accepted"
     assert "worker.py" in payload["changed_files"]
+    progress_events = (run_dir / "progress.jsonl").read_text(encoding="utf-8").splitlines()
+    assert any('"stage_name": "Git commit and push"' in line for line in progress_events)
 
 
 def test_codex_exec_product_task_runs_in_product_repo(tmp_path: Path) -> None:
-    builder_root, product_repo, run_log_dir, _ = _setup_builder_fixture(
+    builder_root, product_repo, _, _ = _setup_builder_fixture(
         tmp_path,
         task_id="TASK-PRODUCT",
         area="discovery",
@@ -922,10 +1045,11 @@ def test_codex_exec_product_task_runs_in_product_repo(tmp_path: Path) -> None:
 
     assert result.returncode == 1
     assert (product_repo / "services" / "company_discovery.py").exists()
-    executor = _json(run_log_dir / "executor.json")
+    run_dir = _active_run_dir(builder_root)
+    executor = _json(run_dir / "executor.json")
     assert executor["cwd"] == str(product_repo)
     assert executor["last_message"] == "product codex ok\n"
-    payload = _json(run_log_dir / "automation_result.json")
+    payload = _json(run_dir / "automation_result.json")
     step_names = [step["name"] for step in payload["steps"]]
     assert payload["classification"] == "refined"
     assert "executor" in step_names
@@ -936,7 +1060,7 @@ def test_codex_exec_product_task_runs_in_product_repo(tmp_path: Path) -> None:
 
 
 def test_local_product_repo_path_still_behaves_as_expected(tmp_path: Path) -> None:
-    builder_root, product_repo, run_log_dir, _ = _setup_builder_fixture(
+    builder_root, product_repo, _, _ = _setup_builder_fixture(
         tmp_path,
         task_id="TASK-PRODUCT",
         area="discovery",
@@ -960,5 +1084,428 @@ def test_local_product_repo_path_still_behaves_as_expected(tmp_path: Path) -> No
     assert resume.returncode in {1, 2}
     updated_active = _json(builder_root / "active_task.yml")
     assert updated_active["target_repo"] == str(product_repo)
-    validation = _json(run_log_dir / "local_validation.json")
+    validation = _json(_active_run_dir(builder_root) / "local_validation.json")
     assert validation["venv_path"] == str(product_repo / ".venv_validation")
+
+
+def test_inspect_backlog_reports_validation_errors(tmp_path: Path) -> None:
+    builder_root = tmp_path / "builder"
+    product_repo = tmp_path / "jorb"
+    _init_repo(builder_root)
+    _init_repo(product_repo)
+    _write_json(builder_root / "config.yml", _base_config(product_repo, builder_root))
+    _write_json(
+        builder_root / "backlog.yml",
+        {
+            "version": 1,
+            "tasks": [
+                {
+                    "id": "TASK-1",
+                    "title": "Bad task",
+                    "priority": "p1",
+                    "status": "ready",
+                    "type": "feature",
+                    "area": "discovery",
+                    "repo_path": str(product_repo),
+                    "description": "bad",
+                    "verification": [],
+                },
+                {
+                    "id": "TASK-1",
+                    "title": "Duplicate task",
+                    "priority": 1,
+                    "status": "nope",
+                    "type": "feature",
+                    "area": "discovery",
+                    "repo_path": str(product_repo),
+                    "description": "bad",
+                    "acceptance_criteria": [],
+                    "verification": [],
+                },
+            ],
+        },
+    )
+    _write_json(builder_root / "status.yml", _base_status())
+    _write_json(builder_root / "active_task.yml", {"task_id": None, "title": None, "state": "idle", "attempt": 0, "started_at": None, "handed_to_codex_at": None, "prompt_file": None, "run_log_dir": None, "verification_commands": [], "allowlist": [], "failure_summary": None, "notes": []})
+    (builder_root / "builder_memory.md").write_text("# Memory\n", encoding="utf-8")
+    (builder_root / "blockers").mkdir(exist_ok=True)
+
+    result = _run([sys.executable, str(SCRIPT), "--inspect-backlog"], builder_root)
+
+    assert result.returncode == 1
+    assert "BACKLOG_INVALID" in result.stdout
+    assert "duplicate_task_id" in result.stdout
+    assert "invalid_priority" in result.stdout
+
+
+def test_check_auth_reports_interactive_https_remote(tmp_path: Path) -> None:
+    builder_root, product_repo, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="discovery",
+        allowlist=["services/company_discovery.py"],
+    )
+    _git(["remote", "set-url", "origin", "https://github.com/example/jorb.git"], product_repo)
+    config = _json(builder_root / "config.yml")
+    config["vm"]["ssh_target"] = "127.0.0.1"
+    config["vm"]["ssh_options"] = ["-o", "ConnectTimeout=1"]
+    _write_json(builder_root / "config.yml", config)
+
+    result = _run([sys.executable, str(SCRIPT), "--check-auth"], builder_root)
+
+    assert result.returncode == 1
+    assert "GitHub auth status:" in result.stdout
+    assert "https_interactive_likely" in result.stdout
+    assert "run_interactive: true" in result.stdout.lower()
+
+
+def test_inspect_backlog_shows_ready_queue(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "ready"
+    backlog["tasks"].append(
+        {
+            "id": "TASK-LATER",
+            "title": "TASK-LATER",
+            "type": "infrastructure",
+            "area": "builder",
+            "milestone": "M0",
+            "priority": 2,
+            "status": "pending",
+            "retries_used": 0,
+            "depends_on": [],
+            "prompt": "implement_feature",
+            "objective": "obj2",
+            "why_it_matters": "why2",
+            "allowlist": ["../jorb-builder/**"],
+            "forbid": [],
+            "verification": [],
+            "acceptance": ["a"],
+            "notes": [],
+        }
+    )
+    _write_json(builder_root / "backlog.yml", backlog)
+
+    result = _run([sys.executable, str(SCRIPT), "--inspect-backlog"], builder_root)
+
+    assert result.returncode == 0
+    assert "ready_queue:" in result.stdout
+    assert '"TASK-BUILDER"' in result.stdout
+    assert "next_selected_task" in result.stdout
+
+
+def test_check_auth_runs_without_ready_tasks(tmp_path: Path) -> None:
+    builder_root = tmp_path / "builder"
+    product_repo = tmp_path / "jorb"
+    _init_repo(builder_root)
+    _init_repo(product_repo)
+    _write_json(builder_root / "config.yml", _base_config(product_repo, builder_root))
+    _write_json(builder_root / "backlog.yml", {"version": 1, "tasks": []})
+    _write_json(builder_root / "status.yml", _base_status())
+    _write_json(builder_root / "active_task.yml", {"task_id": None, "title": None, "state": "idle", "attempt": 0, "started_at": None, "handed_to_codex_at": None, "prompt_file": None, "run_log_dir": None, "verification_commands": [], "allowlist": [], "failure_summary": None, "notes": []})
+    (builder_root / "builder_memory.md").write_text("# Memory\n", encoding="utf-8")
+    (builder_root / "task_history").mkdir(exist_ok=True)
+    (builder_root / "blockers").mkdir(exist_ok=True)
+    _git(["remote", "add", "origin", "https://github.com/example/jorb.git"], product_repo)
+
+    result = _run([sys.executable, str(SCRIPT), "--check-auth"], builder_root)
+
+    assert result.returncode == 1
+    assert "GitHub auth status:" in result.stdout
+    assert "VM SSH status:" in result.stdout
+    assert "NO_READY_TASKS_REMAIN" not in result.stdout
+
+
+def test_mode_dispatch_order_keeps_check_auth_out_of_bootstrap(tmp_path: Path) -> None:
+    builder_root = tmp_path / "builder"
+    product_repo = tmp_path / "jorb"
+    _init_repo(builder_root)
+    _init_repo(product_repo)
+    _write_json(builder_root / "config.yml", _base_config(product_repo, builder_root))
+    _write_json(
+        builder_root / "backlog.yml",
+        {
+            "version": 1,
+            "tasks": [
+                {
+                    "id": "TASK-READY",
+                    "title": "TASK-READY",
+                    "type": "feature",
+                    "area": "discovery",
+                    "repo_path": str(product_repo),
+                    "description": "desc",
+                    "priority": 1,
+                    "status": "ready",
+                    "acceptance_criteria": [],
+                    "verification": [],
+                }
+            ],
+        },
+    )
+    _write_json(builder_root / "status.yml", _base_status())
+    _write_json(builder_root / "active_task.yml", {"task_id": None, "title": None, "state": "idle", "attempt": 0, "started_at": None, "handed_to_codex_at": None, "prompt_file": None, "run_log_dir": None, "verification_commands": [], "allowlist": [], "failure_summary": None, "notes": []})
+    (builder_root / "builder_memory.md").write_text("# Memory\n", encoding="utf-8")
+    (builder_root / "task_history").mkdir(exist_ok=True)
+    (builder_root / "blockers").mkdir(exist_ok=True)
+    _git(["remote", "add", "origin", "https://github.com/example/jorb.git"], product_repo)
+
+    result = _run([sys.executable, str(SCRIPT), "--check-auth"], builder_root)
+
+    assert result.returncode == 1
+    active_after = _json(builder_root / "active_task.yml")
+    assert active_after["task_id"] is None
+    assert "GitHub auth status:" in result.stdout
+    assert "NO_READY_TASKS_REMAIN" not in result.stdout
+
+
+def test_live_backlog_file_is_canonical_json_and_contains_new_tasks() -> None:
+    backlog = json.loads((LIVE_BUILDER_ROOT / "backlog.yml").read_text(encoding="utf-8"))
+    tasks = {task["id"]: task for task in backlog["tasks"]}
+
+    assert len(backlog["tasks"]) == 23
+    for task_id in [
+        "JORB-V1-006",
+        "JORB-V1-007",
+        "JORB-V1-015",
+        "JORB-V1-016",
+        "JORB-V1-017",
+        "JORB-INFRA-003",
+        "JORB-INFRA-004",
+        "JORB-INFRA-005",
+    ]:
+        assert task_id in tasks
+        assert tasks[task_id]["status"] in {
+            "pending",
+            "ready",
+            "retry_ready",
+            "selected",
+            "packet_rendered",
+            "implementing",
+            "verifying",
+            "blocked",
+            "accepted",
+            "done",
+        }
+
+
+def test_auth_preflight_failure_does_not_launch_executor_or_running_progress(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    fake_codex = tmp_path / "fake-codex-auth"
+    _write_fake_codex(fake_codex, relative_output="worker.py", last_message="should not run\n")
+
+    config = _json(builder_root / "config.yml")
+    config["executor"]["mode"] = "codex_exec"
+    config["executor"]["codex_cli"] = str(fake_codex)
+    _write_json(builder_root / "config.yml", config)
+    _git(["remote", "set-url", "origin", "https://github.com/example/builder.git"], builder_root)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 2
+    run_dir = _active_run_dir(builder_root)
+    assert not (run_dir / "executor.json").exists()
+    assert not (builder_root / "worker.py").exists()
+    progress_path = run_dir / "progress.jsonl"
+    if progress_path.exists():
+        progress_events = [json.loads(line) for line in progress_path.read_text(encoding="utf-8").splitlines()]
+        assert progress_events
+        assert all(event["state"] == "failed" for event in progress_events)
+    active = _json(builder_root / "active_task.yml")
+    status = _json(builder_root / "status.yml")
+    assert active["state"] == "preflight_failed"
+    assert status["state"] == "preflight_failed"
+    assert status["last_result"] == "blocked"
+
+
+def test_fresh_invocation_after_terminal_state_uses_new_run_dir(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    fake_codex = tmp_path / "fake-codex-fresh"
+    _write_fake_codex(fake_codex, relative_output="worker.py", last_message="fresh run ok\n")
+
+    config = _json(builder_root / "config.yml")
+    config["executor"]["mode"] = "codex_exec"
+    config["executor"]["codex_cli"] = str(fake_codex)
+    _write_json(builder_root / "config.yml", config)
+    _git(["add", "config.yml"], builder_root)
+    _git(["commit", "-m", "configure fresh run"], builder_root)
+
+    (builder_root / "dirty.txt").write_text("dirty\n", encoding="utf-8")
+    first = _run([sys.executable, str(SCRIPT)], builder_root)
+    assert first.returncode == 2
+    first_run_dir = _active_run_dir(builder_root)
+    (builder_root / "dirty.txt").unlink()
+
+    second = _run([sys.executable, str(SCRIPT)], builder_root)
+    assert second.returncode == 0
+    second_run_dir = _active_run_dir(builder_root)
+    assert second_run_dir != first_run_dir
+
+
+def test_missing_codex_last_message_triggers_executor_failure(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    fake_codex = tmp_path / "fake-codex-no-output"
+    _write_fake_codex_without_output(fake_codex, relative_output="worker.py")
+
+    config = _json(builder_root / "config.yml")
+    config["executor"]["mode"] = "codex_exec"
+    config["executor"]["codex_cli"] = str(fake_codex)
+    _write_json(builder_root / "config.yml", config)
+    _git(["add", "config.yml"], builder_root)
+    _git(["commit", "-m", "configure missing output"], builder_root)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 2
+    run_dir = _active_run_dir(builder_root)
+    executor = _json(run_dir / "executor.json")
+    assert executor["failure_reason"] == "executor_failure"
+    assert executor["output_file_exists"] is False
+    payload = _json(run_dir / "automation_result.json")
+    assert payload["classification"] == "blocked"
+    assert payload["summary"] == "executor_failure"
+    assert "did not create codex_last_message.md" in payload["steps"][0]["detail"]
+    assert "executor_failure" in payload["blocker_evidence"]
+
+
+def test_hung_codex_subprocess_times_out_and_is_blocked(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    fake_codex = tmp_path / "fake-codex-hung"
+    _write_fake_codex_hung(fake_codex)
+
+    config = _json(builder_root / "config.yml")
+    config["executor"]["mode"] = "codex_exec"
+    config["executor"]["codex_cli"] = str(fake_codex)
+    config["executor"]["timeout_seconds"] = 1
+    _write_json(builder_root / "config.yml", config)
+    _git(["add", "config.yml"], builder_root)
+    _git(["commit", "-m", "configure codex timeout"], builder_root)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 2
+    run_dir = _active_run_dir(builder_root)
+    executor = _json(run_dir / "executor.json")
+    assert executor["timed_out"] is True
+    assert executor["failure_reason"] == "executor_timeout"
+    assert executor["cleanup"]["terminate_sent"] is True
+    payload = _json(run_dir / "automation_result.json")
+    assert payload["classification"] == "blocked"
+    assert payload["summary"] == "executor_timeout"
+    assert "executor_timeout" in payload["blocker_evidence"]
+
+
+def test_state_consistency_mismatch_fails_fast(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    status = _json(builder_root / "status.yml")
+    status["state"] = "implementing"
+    status["active_task_id"] = "OTHER-TASK"
+    _write_json(builder_root / "status.yml", status)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 1
+    assert "INVALID_ACTIVE_TASK_STATE" in result.stdout
+
+
+def test_repair_state_migrates_legacy_failed_preflight_to_idle_ready(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="discovery",
+        allowlist=["services/company_discovery.py"],
+    )
+    _seed_legacy_auth_preflight_blocked_state(builder_root, task_id="TASK-PRODUCT")
+
+    result = _run([sys.executable, str(SCRIPT), "--repair-state"], builder_root)
+
+    assert result.returncode == 0
+    assert "STATE_REPAIRED" in result.stdout
+    active = _json(builder_root / "active_task.yml")
+    status = _json(builder_root / "status.yml")
+    backlog = _json(builder_root / "backlog.yml")
+    blocker = _json(builder_root / "blockers" / "BLK-TASK-PRODUCT.yml")
+    assert active["task_id"] is None
+    assert active["state"] == "idle"
+    assert active["previous_run_log_dir"] is not None
+    assert status["state"] == "idle"
+    assert status["active_task_id"] is None
+    assert set(status["state_legend"]) == {
+        "idle",
+        "task_selected",
+        "preflight_passed",
+        "preflight_failed",
+        "implementing",
+        "verifying",
+        "completed",
+        "blocked",
+    }
+    assert backlog["tasks"][0]["status"] == "ready"
+    assert blocker["status"] == "resolved"
+
+
+def test_repair_state_allows_clean_fresh_invocation(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    _seed_legacy_auth_preflight_blocked_state(builder_root, task_id="TASK-BUILDER")
+
+    repair = _run([sys.executable, str(SCRIPT), "--repair-state"], builder_root)
+    assert repair.returncode == 0
+
+    run = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert run.returncode == 0
+    assert "INVALID_ACTIVE_TASK_STATE" not in run.stdout
+    assert "PAUSED" in run.stdout
+
+
+def test_repair_state_does_not_introduce_false_resume_semantics(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    _seed_legacy_auth_preflight_blocked_state(builder_root, task_id="TASK-BUILDER")
+
+    repair = _run([sys.executable, str(SCRIPT), "--repair-state"], builder_root)
+    assert repair.returncode == 0
+
+    resume = _run([sys.executable, str(SCRIPT), "--resume"], builder_root)
+
+    assert resume.returncode == 1
+    assert "INVALID_ACTIVE_TASK_STATE" in resume.stdout
+    assert "packet_rendered" in resume.stdout

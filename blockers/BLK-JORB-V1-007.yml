@@ -1,0 +1,26 @@
+{
+  "id": "BLK-JORB-V1-007",
+  "title": "Task JORB-V1-007 blocked during automated execution",
+  "severity": "high",
+  "opened_at": "2026-03-25T05:43:35.702799+00:00",
+  "related_tasks": [
+    "JORB-V1-007"
+  ],
+  "status": "open",
+  "symptoms": [
+    "Product repo is dirty before automated execution; refusing to continue."
+  ],
+  "diagnosis": "Product repo is dirty before automated execution; refusing to continue.",
+  "evidence": [
+    "opportunity_scout.db-journal",
+    "tests/test_profile.py",
+    "tests/test_workbench.py",
+    "ui/app.py",
+    "services/document_ingest.py",
+    "services/profile_ingest.py"
+  ],
+  "next_actions": [
+    "Inspect automation_result.json and narrow the next bounded refinement."
+  ],
+  "human_needed": true
+}

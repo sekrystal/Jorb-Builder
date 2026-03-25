@@ -1,16 +1,26 @@
 {
-  "task_id": null,
-  "title": null,
-  "state": "idle",
-  "attempt": 0,
-  "started_at": null,
+  "task_id": "JORB-V1-007",
+  "title": "Add resume and PDF upload ingestion with structured extraction",
+  "state": "blocked",
+  "attempt": 1,
+  "started_at": "2026-03-25T05:43:35.618509+00:00",
   "handed_to_codex_at": null,
-  "prompt_file": null,
-  "run_log_dir": null,
-  "verification_commands": [],
-  "allowlist": [],
-  "failure_summary": null,
+  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T054335Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T054335Z-JORB-V1-007",
+  "verification_commands": [
+    "pytest tests/test_profile.py tests/test_workbench.py",
+    "./scripts/preflight_check.sh"
+  ],
+  "allowlist": [
+    "services/profile_ingest.py",
+    "services/document_ingest.py",
+    "ui/app.py",
+    "tests/test_profile.py",
+    "tests/test_workbench.py"
+  ],
+  "failure_summary": "Product repo is dirty before automated execution; refusing to continue.",
   "notes": [],
-  "target_repo": null,
-  "target_kind": null
+  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T054335Z",
+  "target_repo": "/Users/samuelkrystal/projects/jorb",
+  "target_kind": "product"
 }

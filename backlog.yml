@@ -1,5 +1,4 @@
 {
-  "version": 1,
   "tasks": [
     {
       "id": "JORB-INFRA-001",
@@ -41,6 +40,14 @@
         "Builder repo is dirty before automated execution; refusing to continue.",
         "Accepted for v1 scope: the human_gated automation loop now pauses with an explicit packet handoff and correctly stays paused on --resume until real target-repo changes exist.",
         "Full callable executor integration remains a follow-on infrastructure task and is not part of this v1 acceptance."
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Extend builder to autonomously execute JORB tasks end-to-end, including local validation, git operations, VM sync, and runtime validation.\n\nThe builder should be able to drive the full JORB execution loop with less manual operator handoff once the current bounded product work is stable enough.",
+      "acceptance_criteria": [
+        "builder can progress a bounded JORB task from packet through code application and structured result capture",
+        "builder can run local validation and record deterministic outcomes",
+        "builder can perform required git and VM sync steps with explicit state tracking",
+        "builder can support renewed runtime validation without collapsing task boundaries or repo separation"
       ]
     },
     {
@@ -77,6 +84,13 @@
         "Follow-on infra task created after accepting JORB-INFRA-001 for the narrower human_gated v1 scope.",
         "Accepted after adding a real callable executor path via codex exec while preserving the existing validation, git, VM, and accept/refine flow.",
         "The next live proof should use JORB-V1-003 as the first fresh end-to-end product task run through the real executor."
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Replace the v1 human_gated executor handoff with a deterministic callable executor integration that can apply the active packet without manual paste steps.\n\nTrue end-to-end automation still requires a callable executor; v1 only proves the human-gated orchestration loop.",
+      "acceptance_criteria": [
+        "builder can invoke a deterministic callable executor without manual clipboard or paste steps",
+        "automation logs still preserve explicit evidence for executor invocation and outputs",
+        "human_gated mode remains available as a bounded fallback if the callable executor is unavailable"
       ]
     },
     {
@@ -125,6 +139,14 @@
         "Avoid repeated blind reruns; the next action is a narrow runtime-control and trigger-flow validation to cause one real completed cycle, followed by renewed VM acceptance proof on /discovery-status.",
         "Ubuntu VM runtime proof is complete: run_once executed successfully, the worker completed a full discovery cycle, /discovery-status reflected discovered companies, recent_items, recent_expansions including empty expansions, populated cycle_metrics, planner/triage/learning activity, and correctly surfaced zero-yield outcomes.",
         "Accepted based on VM runtime proof, not just local tests and preflight."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Ensure discovery status is a truthful source of latest completed-cycle state, even for zero-yield runs.\n\nOperators cannot trust discovery until /discovery-status reliably shows latest planner and cycle metrics truth.",
+      "acceptance_criteria": [
+        "latest completed discovery cycle metrics are visible even when discovery yields zero",
+        "latest planner/openai/discovery truth is sourced from persisted latest relevant rows rather than a shallow recent window alone",
+        "targeted tests cover the new truth behavior",
+        "preflight passes"
       ]
     },
     {
@@ -183,6 +205,14 @@
         "VM validation failed after local validation and git push succeeded.",
         "VM validation failed after local validation and git push succeeded.",
         "Automated loop completed with VM validation success."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Attribute discovery outcomes by query family from planner query through accepted result, candidate conversion, and expansion selection.\n\nThe next VM run needs to show which query families are productive and which are dead weight.",
+      "acceptance_criteria": [
+        "cycle_metrics contains query_family_metrics persisted from the latest cycle",
+        "discovery status exposes query family truth",
+        "UI can render query-family diagnostics without touching /leads",
+        "targeted tests and preflight pass"
       ]
     },
     {
@@ -221,6 +251,14 @@
       "notes": [
         "Missing automation configuration: executor.codex_cli",
         "Automated loop completed with VM validation success."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Make search provider failure modes explicit and add a bounded fallback path when primary provider output is only provider self-links.\n\nDiscovery ingress is still the likeliest blocker for net new yield.",
+      "acceptance_criteria": [
+        "provider_self_link-only output is treated as first-class provider failure",
+        "bounded failover or deterministic rewrite path is attempted and logged",
+        "accepted ATS roots and careers pages remain supported",
+        "targeted tests and preflight pass"
       ]
     },
     {
@@ -260,6 +298,13 @@
       ],
       "notes": [
         "Automated loop completed with VM validation success."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Persist and expose clear stage boundaries for accepted results, candidate conversions, selected expansions, empty expansions, and yielded listings.\n\nWe need to know whether discovery is failing at provider ingress, conversion, selection, or connector yield.",
+      "acceptance_criteria": [
+        "cycle metrics distinguish accepted results, candidates, selected expansions, empty expansions, and listings yielded",
+        "expansion diagnostics make invalid or empty discovered surfaces obvious",
+        "targeted tests and preflight pass"
       ]
     },
     {
@@ -301,6 +346,14 @@
       ],
       "notes": [
         "Automated loop completed with VM validation success."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Expose runtime phase, operator hints, and latest success/failure summaries more clearly in API and UI.\n\nOperators need trustworthy runtime surfaces while discovery remains under active debugging.",
+      "acceptance_criteria": [
+        "runtime phase and operator hints are visible in API and UI",
+        "docs match the runtime model",
+        "/leads hot path remains untouched",
+        "targeted tests and preflight pass"
       ]
     },
     {
@@ -310,7 +363,7 @@
       "area": "profile",
       "milestone": "M4",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [],
       "prompt": "implement_feature",
@@ -338,7 +391,16 @@
         "tests cover schema creation and update behavior"
       ],
       "notes": [
-        "Normalized from imported task batch; kept as the only newly ready product task so task selection remains deterministic."
+        "Normalized from imported task batch; kept as the only newly ready product task so task selection remains deterministic.",
+        "Automated loop completed with VM validation success."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Create the core structured user profile schema that will drive targeting, ranking, and recommendation logic without drifting into generic coaching behavior.\n\nOpportunity intelligence needs durable, explicit profile inputs before onboarding, scoring, and recommendation work can become reliable.",
+      "acceptance_criteria": [
+        "a durable user profile schema exists in the product repo",
+        "profile fields are explicit, editable, and versionable",
+        "profile data can be used by downstream search and scoring logic",
+        "tests cover schema creation and update behavior"
       ]
     },
     {
@@ -348,7 +410,7 @@
       "area": "onboarding",
       "milestone": "M4",
       "priority": 1,
-      "status": "pending",
+      "status": "blocked",
       "retries_used": 0,
       "depends_on": [
         "JORB-V1-006"
@@ -378,7 +440,21 @@
         "parsing failures degrade gracefully and do not break onboarding",
         "tests cover successful and partial extraction behavior"
       ],
-      "notes": []
+      "notes": [
+        "Authentication preflight indicates repeated or interactive prompts are likely.",
+        "Authentication preflight indicates repeated or interactive prompts are likely.",
+        "Repaired from auth-preflight-only blocked attempt; task restored to ready for a truthful fresh rerun.",
+        "Product repo is dirty before automated execution; refusing to continue."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Add a working resume and PDF upload flow that parses documents into structured profile fields instead of storing opaque text blobs.\n\nStructured extraction is the bridge between raw user documents and usable targeting inputs for profile-driven opportunity intelligence.",
+      "acceptance_criteria": [
+        "user can upload a resume or PDF through the interface",
+        "extraction populates structured profile fields",
+        "extraction output is reviewable and editable",
+        "parsing failures degrade gracefully and do not break onboarding",
+        "tests cover successful and partial extraction behavior"
+      ]
     },
     {
       "id": "JORB-V1-008",
@@ -387,7 +463,7 @@
       "area": "onboarding",
       "milestone": "M4",
       "priority": 1,
-      "status": "pending",
+      "status": "ready",
       "retries_used": 0,
       "depends_on": [
         "JORB-V1-007"
@@ -417,7 +493,16 @@
         "interface remains simple and comprehensible",
         "tests cover persistence and downstream usage"
       ],
-      "notes": []
+      "notes": [],
+      "repo_path": "~/projects/jorb",
+      "description": "Add onboarding fields for confirmed skills, competencies, and explicit preferences that write into the structured profile layer.\n\nUsers need a clean way to confirm or correct extracted data before those inputs drive search parameters and recommendation logic.",
+      "acceptance_criteria": [
+        "onboarding includes editable skill and competency inputs",
+        "preference fields persist correctly",
+        "profile updates affect downstream targeting inputs",
+        "interface remains simple and comprehensible",
+        "tests cover persistence and downstream usage"
+      ]
     },
     {
       "id": "JORB-V1-009",
@@ -426,7 +511,7 @@
       "area": "onboarding",
       "milestone": "M4",
       "priority": 1,
-      "status": "pending",
+      "status": "ready",
       "retries_used": 0,
       "depends_on": [
         "JORB-V1-008"
@@ -454,7 +539,15 @@
         "output of onboarding becomes structured search and scoring input",
         "tests cover onboarding state progression"
       ],
-      "notes": []
+      "notes": [],
+      "repo_path": "~/projects/jorb",
+      "description": "Build a minimal onboarding flow from resume upload through profile review into target role selection and discovery entry.\n\nA clean onboarding path is required before profile-aware targeting can become a real product capability instead of scattered UI fields.",
+      "acceptance_criteria": [
+        "onboarding is linear, simple, and understandable",
+        "user can complete onboarding without dead ends",
+        "output of onboarding becomes structured search and scoring input",
+        "tests cover onboarding state progression"
+      ]
     },
     {
       "id": "JORB-V1-010",
@@ -470,7 +563,7 @@
       ],
       "prompt": "implement_feature",
       "objective": "Define a transparent recommendation score schema with explicit component metrics and traceable inputs.",
-      "why_it_matters": "JORB’s advantage depends on interpretable opportunity intelligence, not black-box ranking or generic advice.",
+      "why_it_matters": "JORB\u2019s advantage depends on interpretable opportunity intelligence, not black-box ranking or generic advice.",
       "allowlist": [
         "core/schemas.py",
         "services/pipeline.py",
@@ -492,7 +585,15 @@
         "final score and explanation can be surfaced in UI and API",
         "tests cover score assembly and explanation structure"
       ],
-      "notes": []
+      "notes": [],
+      "repo_path": "~/projects/jorb",
+      "description": "Define a transparent recommendation score schema with explicit component metrics and traceable inputs.\n\nJORB\u2019s advantage depends on interpretable opportunity intelligence, not black-box ranking or generic advice.",
+      "acceptance_criteria": [
+        "a structured recommendation score schema exists",
+        "each component has clear semantics and traceable inputs",
+        "final score and explanation can be surfaced in UI and API",
+        "tests cover score assembly and explanation structure"
+      ]
     },
     {
       "id": "JORB-V1-011",
@@ -501,7 +602,7 @@
       "area": "intelligence",
       "milestone": "M4",
       "priority": 1,
-      "status": "pending",
+      "status": "ready",
       "retries_used": 0,
       "depends_on": [
         "JORB-V1-010"
@@ -530,7 +631,15 @@
         "recommendation explanations can cite freshness logic",
         "tests cover fresh, stale, and evergreen edge cases"
       ],
-      "notes": []
+      "notes": [],
+      "repo_path": "~/projects/jorb",
+      "description": "Add explicit freshness, staleness, and evergreen metrics to opportunity intelligence with inspectable logic.\n\nAction guidance depends on whether a role is fresh, stale, or likely evergreen, not just whether it exists.",
+      "acceptance_criteria": [
+        "listings are classified with freshness related metrics",
+        "evergreen likelihood is represented explicitly",
+        "recommendation explanations can cite freshness logic",
+        "tests cover fresh, stale, and evergreen edge cases"
+      ]
     },
     {
       "id": "JORB-V1-012",
@@ -539,7 +648,7 @@
       "area": "ingestion",
       "milestone": "M3",
       "priority": 1,
-      "status": "pending",
+      "status": "ready",
       "retries_used": 0,
       "depends_on": [
         "JORB-V1-010"
@@ -567,7 +676,15 @@
         "provenance shows user submitted versus system discovered",
         "tests cover ingestion and evaluation behavior"
       ],
-      "notes": []
+      "notes": [],
+      "repo_path": "~/projects/jorb",
+      "description": "Let users submit job links and run them through the same normalization and evaluation pipeline as discovered listings.\n\nJORB should win on decision quality even when the listing source is user-supplied rather than system-discovered.",
+      "acceptance_criteria": [
+        "user can submit a job link manually",
+        "the job is normalized and scored through the same pipeline",
+        "provenance shows user submitted versus system discovered",
+        "tests cover ingestion and evaluation behavior"
+      ]
     },
     {
       "id": "JORB-V1-013",
@@ -607,7 +724,15 @@
         "diagnostics can show dead weight versus productive families",
         "tests cover lineage persistence and retrieval"
       ],
-      "notes": []
+      "notes": [],
+      "repo_path": "~/projects/jorb",
+      "description": "Persist end-to-end discovery lineage from planner query family through expansion outcome and surfaced yield.\n\nDiscovery needs undeniable lineage so productive versus dead-weight families can be distinguished without guesswork.",
+      "acceptance_criteria": [
+        "lineage from query family to expansion outcome is persisted",
+        "zero yield outcomes remain visible",
+        "diagnostics can show dead weight versus productive families",
+        "tests cover lineage persistence and retrieval"
+      ]
     },
     {
       "id": "JORB-V1-014",
@@ -616,7 +741,7 @@
       "area": "strategy",
       "milestone": "M4",
       "priority": 1,
-      "status": "pending",
+      "status": "ready",
       "retries_used": 0,
       "depends_on": [
         "JORB-V1-010",
@@ -646,7 +771,15 @@
         "UI renders action guidance clearly",
         "tests cover label selection and explanation output"
       ],
-      "notes": []
+      "notes": [],
+      "repo_path": "~/projects/jorb",
+      "description": "Add explicit action labels and compact explanations so surfaced roles come with decision-oriented guidance.\n\nUsers need to know whether to act now, wait, seek a referral, or skip, and why those recommendations were made.",
+      "acceptance_criteria": [
+        "surfaced opportunities include action label and explanation",
+        "explanations use explicit score and signal components",
+        "UI renders action guidance clearly",
+        "tests cover label selection and explanation output"
+      ]
     },
     {
       "id": "JORB-V1-015",
@@ -681,7 +814,14 @@
         "outcomes and reasons persist cleanly",
         "tests cover lifecycle transitions and stored reason codes"
       ],
-      "notes": []
+      "notes": [],
+      "repo_path": "~/projects/jorb",
+      "description": "Expand the application tracker into a durable outcome dataset with lifecycle states, reasons, and notes.\n\nReal learning and recommendation quality depend on richer outcome data than simple applied/not-applied tracking.",
+      "acceptance_criteria": [
+        "tracker supports richer lifecycle states",
+        "outcomes and reasons persist cleanly",
+        "tests cover lifecycle transitions and stored reason codes"
+      ]
     },
     {
       "id": "JORB-V1-016",
@@ -718,7 +858,15 @@
         "system can generate targeted improvement recommendations",
         "tests cover parsing and recommendation mapping"
       ],
-      "notes": []
+      "notes": [],
+      "repo_path": "~/projects/jorb",
+      "description": "Add a feedback pipeline that maps structured rejection reasons into targeted, non-generic improvement recommendations.\n\nLearning should be grounded in actual outcome data rather than generic coaching advice.",
+      "acceptance_criteria": [
+        "user can record rejection feedback",
+        "feedback can be categorized into structured reason buckets",
+        "system can generate targeted improvement recommendations",
+        "tests cover parsing and recommendation mapping"
+      ]
     },
     {
       "id": "JORB-V1-017",
@@ -756,7 +904,15 @@
         "no outreach content or automation is produced",
         "tests cover import and matching logic"
       ],
-      "notes": []
+      "notes": [],
+      "repo_path": "~/projects/jorb",
+      "description": "Add local network-data import so JORB can suggest referral paths and contact adjacency without automating outreach.\n\nReferral strategy can improve decision quality, but it should stay local-first and non-automated.",
+      "acceptance_criteria": [
+        "user can import network data locally",
+        "system can connect companies to possible referral paths",
+        "no outreach content or automation is produced",
+        "tests cover import and matching logic"
+      ]
     },
     {
       "id": "JORB-V1-018",
@@ -792,7 +948,14 @@
         "system distinguishes local versus cloud assisted paths",
         "tests cover inventory generation and basic export behavior"
       ],
-      "notes": []
+      "notes": [],
+      "repo_path": "~/projects/jorb",
+      "description": "Add a local data inventory surface so users can inspect stored data categories, provenance, and usage.\n\nA local-first product needs clear privacy surfaces before broader profile and learning features can be trusted.",
+      "acceptance_criteria": [
+        "user can inspect local stored data categories and provenance",
+        "system distinguishes local versus cloud assisted paths",
+        "tests cover inventory generation and basic export behavior"
+      ]
     },
     {
       "id": "JORB-INFRA-003",
@@ -824,7 +987,14 @@
         "long running runs show current phase and elapsed time",
         "tests cover progress event emission where practical"
       ],
-      "notes": []
+      "notes": [],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Add readable live progress output and elapsed timing to long-running builder loop steps.\n\nThe loop is now live and callable, so operator visibility during long executor, validation, git, and VM phases matters more than before.",
+      "acceptance_criteria": [
+        "automate_task_loop.py emits readable step progress",
+        "long running runs show current phase and elapsed time",
+        "tests cover progress event emission where practical"
+      ]
     },
     {
       "id": "JORB-INFRA-004",
@@ -856,7 +1026,14 @@
         "builder loop can SSH to the VM without interactive password entry",
         "operator docs explain required key setup"
       ],
-      "notes": []
+      "notes": [],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Remove repeated interactive password prompts from GitHub, SSH, and VM validation under normal builder operation.\n\nA truly low-friction builder loop needs non-interactive auth so long live runs can complete unattended.",
+      "acceptance_criteria": [
+        "builder loop can run without repeated GitHub password prompts",
+        "builder loop can SSH to the VM without interactive password entry",
+        "operator docs explain required key setup"
+      ]
     },
     {
       "id": "JORB-INFRA-005",
@@ -887,7 +1064,15 @@
         "task history for accepted tasks links to core evidence artifacts",
         "operator can quickly inspect why a task was accepted"
       ],
-      "notes": []
+      "notes": [],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Improve accepted-task observability by linking task history to core evidence artifacts and operator diagnostics.\n\nAcceptance should stay explainable as the builder takes on more autonomous work and longer-running product tasks.",
+      "acceptance_criteria": [
+        "task history for accepted tasks links to core evidence artifacts",
+        "operator can quickly inspect why a task was accepted"
+      ]
     }
-  ]
+  ],
+  "errors": [],
+  "version": 1
 }

@@ -1,26 +1,27 @@
 {
   "version": 1,
-  "state": "idle",
+  "state": "blocked",
   "state_legend": {
     "idle": "No active task is currently in flight.",
-    "task_selected": "A task has been selected but no packet has been rendered yet.",
-    "packet_rendered": "A Codex packet exists and is ready to hand to Codex.",
-    "implementing": "The packet has been handed to Codex and code changes are in progress.",
-    "verifying": "Deterministic verification is currently running or expected next.",
-    "retry_ready": "The task failed verification and is ready for a bounded retry.",
-    "blocked": "The task is blocked and waiting for human intervention."
+    "task_selected": "A task has been selected and the current run has been initialized.",
+    "preflight_passed": "Auth and initial run gating passed; execution may continue.",
+    "preflight_failed": "Execution stopped before implementation because preflight gating failed.",
+    "implementing": "Implementation is in progress or awaiting executor-produced repo changes.",
+    "verifying": "Deterministic local and/or VM verification is in progress.",
+    "completed": "The active run completed successfully and reached a terminal accepted state.",
+    "blocked": "The active run reached a terminal blocked/refined state and requires intervention or retry."
   },
-  "active_task_id": null,
-  "last_task_id": "JORB-V1-005",
-  "last_result": "accepted",
-  "last_run_at": "2026-03-25T02:34:10.407936+00:00",
+  "active_task_id": "JORB-V1-007",
+  "last_task_id": "JORB-V1-007",
+  "last_result": "blocked",
+  "last_run_at": "2026-03-25T05:43:35.703249+00:00",
   "roadmap_focus": {
     "milestone": "M2",
     "theme": "discovery"
   },
   "stats": {
-    "completed_tasks": 7,
-    "blocked_tasks": 8,
+    "completed_tasks": 8,
+    "blocked_tasks": 11,
     "retry_ready_tasks": 7
   },
   "notes": [
@@ -36,6 +37,6 @@
     "The earlier dirty-product-repo block came from the pre-fix resume path and should not be treated as the current task state.",
     "JORB-V1-002 should currently continue via retry_ready continuation on python3 scripts/automate_task_loop.py.",
     "JORB-INFRA-002 is accepted: builder now has a real callable executor path via codex exec instead of only the human_gated handoff.",
-    "JORB-V1-003 is the current live product task and should be the first fresh end-to-end run through the real executor."
+    "JORB-V1-005 is accepted and the current backlog has no remaining ready tasks; idle is the correct state until new work is added."
   ]
 }

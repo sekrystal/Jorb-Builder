@@ -6,7 +6,7 @@
   "related_tasks": [
     "JORB-V1-003"
   ],
-  "status": "open",
+  "status": "resolved",
   "symptoms": [
     "Missing automation configuration: executor.codex_cli"
   ],
@@ -15,7 +15,7 @@
     "executor.codex_cli"
   ],
   "next_actions": [
-    "Inspect automation_result.json and narrow the next bounded refinement."
+    "Blocker cleared after executor.codex_cli was configured and JORB-V1-003 reached accepted with automated VM validation success."
   ],
   "human_needed": true
 }
