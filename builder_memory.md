@@ -17,6 +17,7 @@ This is the durable short memory for the external Jorb builder.
 - JORB-INFRA-001 is still retryable after the stale builder dirty-repo block and should stay active until the hardened automation path is re-exercised cleanly.
 - JORB-INFRA-001 is accepted for v1 scope because the intended human_gated loop now pauses and resumes truthfully; true callable executor integration is a separate follow-on infra task.
 - JORB-V1-002 is restored as the next active product task and should now run through the hardened builder loop.
+- JORB-INFRA-002 is accepted: builder now has a real callable executor path via codex exec, and JORB-V1-003 is the first fresh product task to prove that live path.
 
 ## Update rule
 Only add short bullets that materially change future task selection or reduce ambiguity.
@@ -77,3 +78,7 @@ Does this directly improve:
 - JORB-V1-002 refined by automated loop. History: 2026-03-25T004709Z-JORB-V1-002.yml
 
 - JORB-V1-002 accepted by automated loop. History: 2026-03-25T010836Z-JORB-V1-002.yml
+
+- JORB-V1-003 blocked by automated loop via BLK-JORB-V1-003.yml. History: 2026-03-25T013237Z-JORB-V1-003.yml
+
+- JORB-V1-003 accepted by automated loop. History: 2026-03-25T013805Z-JORB-V1-003.yml

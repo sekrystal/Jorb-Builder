@@ -22,7 +22,7 @@
   "executor": {
     "mode": "codex_exec",
     "command": null,
-    "codex_cli": "codex",
+    "codex_cli": "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex",
     "sandbox": "workspace-write",
     "full_auto": true,
     "last_message_file": "codex_last_message.md",

@@ -1,0 +1,28 @@
+{
+  "task_id": "JORB-V1-003",
+  "title": "Harden search provider failure classification and bounded failover after provider_self_link-only results",
+  "status": "blocked",
+  "attempt": 1,
+  "started_at": "2026-03-25T01:18:23.389029+00:00",
+  "completed_at": "2026-03-25T01:32:37.301052+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T011832Z/codex_prompt.md",
+  "files_changed": [],
+  "commands_run": [],
+  "results": [
+    "blocked"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [
+    "provider_self_link-only output is treated as first-class provider failure",
+    "bounded failover or deterministic rewrite path is attempted and logged",
+    "accepted ATS roots and careers pages remain supported",
+    "targeted tests and preflight pass"
+  ],
+  "blocker_opened": null,
+  "notes": [
+    "Missing automation configuration: executor.codex_cli"
+  ],
+  "unproven_runtime_gaps": [
+    "Missing automation configuration: executor.codex_cli"
+  ]
+}

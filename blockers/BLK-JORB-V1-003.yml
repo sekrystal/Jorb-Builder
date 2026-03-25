@@ -1,0 +1,21 @@
+{
+  "id": "BLK-JORB-V1-003",
+  "title": "Task JORB-V1-003 blocked during automated execution",
+  "severity": "high",
+  "opened_at": "2026-03-25T01:32:37.302003+00:00",
+  "related_tasks": [
+    "JORB-V1-003"
+  ],
+  "status": "open",
+  "symptoms": [
+    "Missing automation configuration: executor.codex_cli"
+  ],
+  "diagnosis": "Missing automation configuration: executor.codex_cli",
+  "evidence": [
+    "executor.codex_cli"
+  ],
+  "next_actions": [
+    "Inspect automation_result.json and narrow the next bounded refinement."
+  ],
+  "human_needed": true
+}

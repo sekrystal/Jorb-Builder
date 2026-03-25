@@ -50,7 +50,7 @@
       "area": "builder",
       "milestone": "M0",
       "priority": 2,
-      "status": "pending",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-001"
@@ -74,7 +74,9 @@
         "human_gated mode remains available as a bounded fallback if the callable executor is unavailable"
       ],
       "notes": [
-        "Follow-on infra task created after accepting JORB-INFRA-001 for the narrower human_gated v1 scope."
+        "Follow-on infra task created after accepting JORB-INFRA-001 for the narrower human_gated v1 scope.",
+        "Accepted after adding a real callable executor path via codex exec while preserving the existing validation, git, VM, and accept/refine flow.",
+        "The next live proof should use JORB-V1-003 as the first fresh end-to-end product task run through the real executor."
       ]
     },
     {
@@ -190,7 +192,7 @@
       "area": "discovery",
       "milestone": "M2",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V1-002"
@@ -215,6 +217,10 @@
         "bounded failover or deterministic rewrite path is attempted and logged",
         "accepted ATS roots and careers pages remain supported",
         "targeted tests and preflight pass"
+      ],
+      "notes": [
+        "Missing automation configuration: executor.codex_cli",
+        "Automated loop completed with VM validation success."
       ]
     },
     {

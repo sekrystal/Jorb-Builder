@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "state": "implementing",
+  "state": "idle",
   "state_legend": {
     "idle": "No active task is currently in flight.",
     "task_selected": "A task has been selected but no packet has been rendered yet.",
@@ -10,17 +10,17 @@
     "retry_ready": "The task failed verification and is ready for a bounded retry.",
     "blocked": "The task is blocked and waiting for human intervention."
   },
-  "active_task_id": "JORB-V1-003",
-  "last_task_id": "JORB-V1-002",
+  "active_task_id": null,
+  "last_task_id": "JORB-V1-003",
   "last_result": "accepted",
-  "last_run_at": "2026-03-25T01:21:39.833872+00:00",
+  "last_run_at": "2026-03-25T01:38:05.543893+00:00",
   "roadmap_focus": {
     "milestone": "M2",
     "theme": "discovery"
   },
   "stats": {
-    "completed_tasks": 3,
-    "blocked_tasks": 7,
+    "completed_tasks": 5,
+    "blocked_tasks": 8,
     "retry_ready_tasks": 7
   },
   "notes": [
@@ -34,6 +34,8 @@
     "JORB-V1-002 is restored as the next active product task and has a fresh packet rendered for execution through the hardened builder loop.",
     "JORB-V1-002 handoff state was repaired so the existing packet can resume through the automation loop.",
     "The earlier dirty-product-repo block came from the pre-fix resume path and should not be treated as the current task state.",
-    "JORB-V1-002 should currently continue via retry_ready continuation on python3 scripts/automate_task_loop.py."
+    "JORB-V1-002 should currently continue via retry_ready continuation on python3 scripts/automate_task_loop.py.",
+    "JORB-INFRA-002 is accepted: builder now has a real callable executor path via codex exec instead of only the human_gated handoff.",
+    "JORB-V1-003 is the current live product task and should be the first fresh end-to-end run through the real executor."
   ]
 }
