@@ -16,3 +16,8 @@ tmp/
 run_logs/
 active_task.yml
 status.yml
+run_logs/
+active_task.yml
+status.yml
+*.pyc
+__pycache__/
