@@ -10,6 +10,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import threading
 import time
 from typing import Any, Callable
 
@@ -196,6 +197,7 @@ def emit_progress(
     task_started_at: str | None,
     state: str = "running",
     detail: str | None = None,
+    extra_payload: dict[str, Any] | None = None,
 ) -> None:
     if (run_dir / RESULT_FILE).exists():
         raise RuntimeError("Cannot emit running progress after terminal automation_result.json exists.")
@@ -209,7 +211,8 @@ def emit_progress(
     stage_name = TASK_STAGE_NAMES[max(0, min(stage_index - 1, len(TASK_STAGE_NAMES) - 1))]
     bar = progress_bar(stage_index, len(TASK_STAGE_NAMES))
     percent = int((stage_index / len(TASK_STAGE_NAMES)) * 100)
-    overall_line = f"[Overall Progress] {overall['completed']}/{overall['total']} tasks completed | {overall['remaining_ready']} remaining"
+    remaining_label = "runnable after current" if task_id else "runnable now"
+    overall_line = f"[Overall Progress] {overall['completed']}/{overall['total']} tasks completed | {overall['remaining_ready']} {remaining_label}"
     task_line = (
         f"[Task {task_id}] Step {stage_index}/{len(TASK_STAGE_NAMES)}: {stage_name} "
         f"{bar} {percent}% Complete | Elapsed: {format_duration(elapsed)}"
@@ -231,7 +234,9 @@ def emit_progress(
             "stage_name": stage_name,
             "state": state,
             "detail": detail,
+            "elapsed_seconds": int(elapsed),
             "overall": overall,
+            **(extra_payload or {}),
         },
     )
 
@@ -285,6 +290,7 @@ def prepare_invocation_run_dir(active: dict[str, Any], task_id: str) -> tuple[Pa
     run_dir = allocate_run_dir(task_id)
     active["previous_run_log_dir"] = str(previous) if previous else None
     active["run_log_dir"] = str(run_dir)
+    active["started_at"] = now_iso()
     return previous, run_dir
 
 
@@ -466,6 +472,33 @@ def tail_text(value: str | None, *, limit: int = 800) -> str:
     return text[-limit:]
 
 
+def _read_stream(stream: Any, sink: list[str]) -> None:
+    try:
+        sink.append(stream.read())
+    finally:
+        stream.close()
+
+
+def _cleanup_process(process: subprocess.Popen[str], cleanup: dict[str, bool], *, wait_seconds: float = 5.0) -> None:
+    if process.poll() is not None:
+        return
+    try:
+        cleanup["terminate_sent"] = True
+        process.terminate()
+        process.wait(timeout=wait_seconds)
+        return
+    except (ProcessLookupError, subprocess.TimeoutExpired):
+        pass
+    if process.poll() is not None:
+        return
+    try:
+        cleanup["kill_sent"] = True
+        process.kill()
+        process.wait(timeout=wait_seconds)
+    except (ProcessLookupError, subprocess.TimeoutExpired):
+        pass
+
+
 def run_codex_exec(
     argv: list[str],
     cwd: Path,
@@ -474,16 +507,23 @@ def run_codex_exec(
     output_path: Path,
     timeout: int,
     heartbeat_seconds: int = 15,
+    stall_seconds: int | None = None,
     heartbeat: Callable[[dict[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     started_at = now_iso()
     command = " ".join(shlex.quote(part) for part in argv)
     process: subprocess.Popen[str] | None = None
-    stdout = ""
-    stderr = ""
+    stdout_chunks: list[str] = []
+    stderr_chunks: list[str] = []
     timed_out = False
+    interrupted = False
     cleanup = {"terminate_sent": False, "kill_sent": False}
     pid = None
+    stream_activity = {
+        "stdout_seen": False,
+        "stderr_seen": False,
+        "last_stream_activity_monotonic": None,
+    }
     try:
         process = subprocess.Popen(
             argv,
@@ -494,50 +534,115 @@ def run_codex_exec(
             text=True,
         )
         pid = process.pid
-        deadline = time.monotonic() + timeout
-        next_heartbeat = time.monotonic() + max(1, heartbeat_seconds)
+        if process.stdin is not None:
+            try:
+                process.stdin.write(input_text)
+                process.stdin.close()
+            except BrokenPipeError:
+                pass
+        def _stream_reader(stream: Any, sink: list[str], stream_key: str) -> None:
+            try:
+                while True:
+                    chunk = stream.read(1024)
+                    if not chunk:
+                        break
+                    sink.append(chunk)
+                    stream_activity[stream_key] = True
+                    stream_activity["last_stream_activity_monotonic"] = time.monotonic()
+            finally:
+                stream.close()
+
+        stdout_thread = threading.Thread(target=_stream_reader, args=(process.stdout, stdout_chunks, "stdout_seen"), daemon=True) if process.stdout is not None else None
+        stderr_thread = threading.Thread(target=_stream_reader, args=(process.stderr, stderr_chunks, "stderr_seen"), daemon=True) if process.stderr is not None else None
+        if stdout_thread is not None:
+            stdout_thread.start()
+        if stderr_thread is not None:
+            stderr_thread.start()
+        started_monotonic = time.monotonic()
+        deadline = started_monotonic + timeout
+        heartbeat_interval = max(1, heartbeat_seconds)
+        stall_threshold = max(heartbeat_interval * 2, stall_seconds or max(heartbeat_interval * 4, 60))
+        next_heartbeat = started_monotonic + heartbeat_interval
+        last_artifact_signature: tuple[int, int | None] | None = None
+        last_artifact_change_monotonic: float | None = None
         try:
-            stdout, stderr = process.communicate(input=input_text, timeout=max(1, min(timeout, heartbeat_seconds)))
-        except subprocess.TimeoutExpired as exc:
-            stdout = exc.stdout or ""
-            stderr = exc.stderr or ""
             while True:
                 now = time.monotonic()
+                returncode = process.poll()
+                if returncode is not None:
+                    break
+                if now >= deadline:
+                    timed_out = True
+                    _cleanup_process(process, cleanup)
+                    break
                 if heartbeat and now >= next_heartbeat:
                     exists = output_path.exists()
+                    size = output_path.stat().st_size if exists else 0
                     mtime = output_path.stat().st_mtime if exists else None
+                    signature = (size, mtime)
+                    if exists and signature != last_artifact_signature:
+                        last_artifact_signature = signature
+                        last_artifact_change_monotonic = now
+                    timeout_remaining = max(0, int(deadline - now))
+                    artifact_age = int(now - last_artifact_change_monotonic) if last_artifact_change_monotonic is not None else None
+                    stream_age = (
+                        int(now - float(stream_activity["last_stream_activity_monotonic"]))
+                        if stream_activity["last_stream_activity_monotonic"] is not None
+                        else None
+                    )
+                    if exists:
+                        recent_signal_age = min(value for value in [artifact_age, stream_age] if value is not None) if any(
+                            value is not None for value in [artifact_age, stream_age]
+                        ) else None
+                        heartbeat_status = "healthy"
+                        waiting_on = "codex subprocess completion"
+                        if recent_signal_age is not None and recent_signal_age >= stall_threshold:
+                            heartbeat_status = "possibly_stalled"
+                    else:
+                        recent_signal_age = stream_age
+                        heartbeat_status = "healthy" if (stream_activity["stdout_seen"] or stream_activity["stderr_seen"]) else "waiting_for_first_output"
+                        waiting_on = output_path.name
+                        if (
+                            (recent_signal_age is not None and recent_signal_age >= stall_threshold)
+                            or (
+                                recent_signal_age is None
+                                and int(now - started_monotonic) >= stall_threshold
+                                and not (stream_activity["stdout_seen"] or stream_activity["stderr_seen"])
+                            )
+                        ):
+                            heartbeat_status = "possibly_stalled"
                     heartbeat(
                         {
                             "pid": pid,
-                            "elapsed_seconds": int(now - (deadline - timeout)),
+                            "elapsed_seconds": int(now - started_monotonic),
+                            "timeout_remaining_seconds": timeout_remaining,
+                            "output_file": str(output_path),
                             "last_message_exists": exists,
+                            "last_message_size_bytes": size if exists else 0,
                             "last_message_mtime": datetime.fromtimestamp(mtime, timezone.utc).isoformat() if mtime else None,
+                            "seconds_since_artifact_change": artifact_age,
+                            "seconds_since_stream_activity": stream_age,
+                            "process_status": "running" if process.poll() is None else f"exit_{process.poll()}",
+                            "stdout_seen": bool(stream_activity["stdout_seen"]),
+                            "stderr_seen": bool(stream_activity["stderr_seen"]),
+                            "status": heartbeat_status,
+                            "waiting_on": waiting_on,
+                            "stall_threshold_seconds": stall_threshold,
                         }
                     )
-                    next_heartbeat = now + max(1, heartbeat_seconds)
-                if now >= deadline:
-                    timed_out = True
-                    cleanup["terminate_sent"] = True
-                    process.terminate()
-                    try:
-                        timeout_stdout, timeout_stderr = process.communicate(timeout=5)
-                        stdout = timeout_stdout or stdout
-                        stderr = timeout_stderr or stderr
-                    except subprocess.TimeoutExpired:
-                        cleanup["kill_sent"] = True
-                        process.kill()
-                        kill_stdout, kill_stderr = process.communicate()
-                        stdout = kill_stdout or stdout
-                        stderr = kill_stderr or stderr
-                    break
-                try:
-                    remaining = max(0.1, min(deadline - now, heartbeat_seconds))
-                    stdout, stderr = process.communicate(timeout=remaining)
-                    break
-                except subprocess.TimeoutExpired as loop_exc:
-                    stdout = loop_exc.stdout or stdout
-                    stderr = loop_exc.stderr or stderr
+                    next_heartbeat = now + heartbeat_interval
+                sleep_for = min(0.2, max(0.05, deadline - now))
+                time.sleep(sleep_for)
+        except KeyboardInterrupt:
+            interrupted = True
+            _cleanup_process(process, cleanup)
+        if process.poll() is None:
+            process.wait(timeout=5)
         returncode = process.returncode
+        if stdout_thread is not None:
+            stdout_thread.join(timeout=1)
+        if stderr_thread is not None:
+            stderr_thread.join(timeout=1)
     except FileNotFoundError as exc:
         return {
             "command": command,
@@ -555,6 +660,8 @@ def run_codex_exec(
             "cleanup": cleanup,
         }
 
+    stdout = "".join(stdout_chunks)
+    stderr = "".join(stderr_chunks)
     last_message = None
     output_exists = output_path.exists()
     output_nonempty = output_exists and output_path.stat().st_size > 0
@@ -571,8 +678,9 @@ def run_codex_exec(
         "stderr": stderr,
         "stdout_tail": tail_text(stdout),
         "stderr_tail": tail_text(stderr),
-        "passed": returncode == 0 and output_nonempty and not timed_out,
+        "passed": returncode == 0 and output_nonempty and not timed_out and not interrupted,
         "timed_out": timed_out,
+        "interrupted": interrupted,
         "failure_reason": None,
         "cleanup": cleanup,
         "output_file": str(output_path),
@@ -582,7 +690,11 @@ def run_codex_exec(
     if last_message is not None:
         result["last_message_file"] = str(output_path)
         result["last_message"] = last_message
-    if timed_out:
+    if interrupted:
+        result["failure_reason"] = "executor_interrupted"
+        result["stderr"] = (stderr + ("\n" if stderr else "")) + "Interrupted by user."
+        result["stderr_tail"] = tail_text(result["stderr"])
+    elif timed_out:
         result["failure_reason"] = "executor_timeout"
         result["stderr"] = (stderr + ("\n" if stderr else "")) + f"Timed out after {timeout} seconds."
         result["stderr_tail"] = tail_text(result["stderr"])
@@ -864,6 +976,17 @@ def classify_and_update_state(
     status.setdefault("stats", {})
     history_path = record_history(task, active, automation_result)
 
+    if classification == "interrupted":
+        append_memory(f"{task['id']} interrupted by operator. History: {history_path.name}")
+        restore_rerunnable_after_interruption(
+            task,
+            active,
+            status,
+            run_log_dir=Path(active["run_log_dir"]).expanduser().resolve() if active.get("run_log_dir") else None,
+            summary=summary,
+        )
+        return
+
     if classification == "accepted":
         task["status"] = "accepted"
         task.setdefault("notes", []).append(summary)
@@ -915,6 +1038,33 @@ def classify_and_update_state(
         failure_summary=summary,
         last_result="blocked",
     )
+
+
+def restore_rerunnable_after_interruption(
+    task: dict[str, Any],
+    active: dict[str, Any],
+    status: dict[str, Any],
+    *,
+    run_log_dir: Path | None,
+    summary: str,
+) -> None:
+    current_status = str(task.get("status") or "")
+    if current_status in {"selected", "packet_rendered", "implementing", "verifying", "ready"}:
+        task["status"] = "ready"
+    elif current_status == "blocked":
+        return
+    previous_run_log_dir = str(run_log_dir) if run_log_dir else active.get("run_log_dir")
+    active.clear()
+    active.update(reset_active())
+    active["previous_run_log_dir"] = previous_run_log_dir
+    status["state"] = "idle"
+    status["active_task_id"] = None
+    status["last_task_id"] = task.get("id")
+    status["last_result"] = "interrupted"
+    status["last_run_at"] = now_iso()
+    task.setdefault("notes", []).append(summary)
+    write_data(ACTIVE, active)
+    write_data(STATUS, status)
 
 
 def build_context(
@@ -1040,6 +1190,52 @@ def resolve_blocker_for_task(task_id: str, *, resolution: str) -> Path | None:
     return blocker_path
 
 
+def update_blocker_for_task(
+    task_id: str,
+    *,
+    summary: str,
+    evidence: list[str],
+    next_actions: list[str],
+) -> Path:
+    blocker_path = BLOCKERS / f"BLK-{task_id}.yml"
+    blocker = load_data(blocker_path) if blocker_path.exists() else {
+        "id": f"BLK-{task_id}",
+        "title": f"Task {task_id} blocked during automated execution",
+        "severity": "high",
+        "opened_at": now_iso(),
+        "related_tasks": [task_id],
+    }
+    blocker["status"] = "open"
+    blocker["symptoms"] = [summary]
+    blocker["diagnosis"] = summary
+    blocker["evidence"] = evidence
+    blocker["next_actions"] = next_actions
+    blocker["human_needed"] = True
+    write_data(blocker_path, blocker)
+    return blocker_path
+
+
+def latest_terminal_run_dir(active: dict[str, Any]) -> Path | None:
+    candidates: list[Path] = []
+    for key in ("run_log_dir", "previous_run_log_dir"):
+        value = active.get(key)
+        if value:
+            path = Path(str(value)).expanduser().resolve()
+            if (path / RESULT_FILE).exists():
+                candidates.append(path)
+    if not candidates:
+        return None
+    candidates.sort(key=lambda item: item.name)
+    return candidates[-1]
+
+
+def blocked_dirty_repo_truth(task: dict[str, Any], active: dict[str, Any]) -> tuple[str, Path, list[str]]:
+    target_kind = "builder" if task_targets_builder_repo(task, active) else "product"
+    target_repo = builder_path_from_config("builder_root") if target_kind == "builder" else product_repo_path()
+    files = git_status_porcelain(target_repo, ignored_prefixes=ignored_git_paths_for_target(target_kind)).get("files", [])
+    return target_kind, target_repo, files
+
+
 def repair_legacy_state() -> int:
     active = load_data(ACTIVE)
     status = load_data(STATUS)
@@ -1090,6 +1286,67 @@ def repair_legacy_state() -> int:
         if resolved is not None:
             repaired.append(f"{resolved.name} resolved")
 
+        print("STATE_REPAIRED")
+        for line in repaired:
+            print(f"- {line}")
+        return 0
+
+    if task is not None and task.get("status") == "blocked":
+        target_kind, target_repo, dirty_files = blocked_dirty_repo_truth(task, active)
+        summary = f"{target_kind.title()} repo is dirty before automated execution; refusing to continue."
+        if dirty_files:
+            blocker_path = update_blocker_for_task(
+                str(task_id),
+                summary=summary,
+                evidence=dirty_files,
+                next_actions=[
+                    f"cd {target_repo}",
+                    "git status --short",
+                    "# commit, stash, or remove the in-progress changes before rerunning the builder",
+                ],
+            )
+            terminal_run_dir = latest_terminal_run_dir(active) or (Path(str(active["run_log_dir"])).expanduser().resolve() if active.get("run_log_dir") else None)
+            if terminal_run_dir and active.get("run_log_dir") and str(terminal_run_dir) != str(Path(str(active["run_log_dir"])).expanduser().resolve()):
+                active["previous_run_log_dir"] = active.get("run_log_dir")
+            sync_run_state(
+                active,
+                status,
+                "blocked",
+                task_id=active.get("task_id"),
+                title=active.get("title"),
+                run_log_dir=terminal_run_dir,
+                failure_summary=summary,
+                last_result="blocked",
+            )
+            write_data(BACKLOG, backlog)
+            repaired.append(f"{task_id} remains blocked: current dirty files still exist in {target_repo}")
+            repaired.append(f"{blocker_path.name} evidence refreshed")
+            print("STATE_REPAIRED")
+            for line in repaired:
+                print(f"- {line}")
+            return 0
+
+        task["status"] = "ready"
+        task.setdefault("notes", []).append(
+            "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again."
+        )
+        write_data(BACKLOG, backlog)
+        repaired_active = reset_active()
+        repaired_active["previous_run_log_dir"] = active.get("run_log_dir")
+        write_data(ACTIVE, repaired_active)
+        status["state"] = "idle"
+        status["active_task_id"] = None
+        status["last_task_id"] = task_id
+        status["last_result"] = "blocked"
+        status["last_run_at"] = now_iso()
+        write_data(STATUS, status)
+        repaired.append(f"backlog task {task_id} blocked -> ready")
+        resolved = resolve_blocker_for_task(
+            str(task_id),
+            resolution="Resolved by state repair: prior dirty-repo blocker is no longer current and the task is runnable again.",
+        )
+        if resolved is not None:
+            repaired.append(f"{resolved.name} resolved")
         print("STATE_REPAIRED")
         for line in repaired:
             print(f"- {line}")
@@ -1515,10 +1772,12 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         )
         return 2
 
+    active["started_at"] = now_iso()
     sync_run_state(active, status, "preflight_passed", task_id=active.get("task_id"), title=active.get("title"), run_log_dir=run_dir, last_result=status.get("last_result"))
+    progress_started_at = active.get("started_at")
 
-    emit_progress(run_dir, task_id=task["id"], stage_index=1, backlog=backlog, task_started_at=active.get("started_at"), detail="Task selected and state loaded.")
-    emit_progress(run_dir, task_id=task["id"], stage_index=2, backlog=backlog, task_started_at=active.get("started_at"), detail=f"Prompt file ready at {active['prompt_file']}.")
+    emit_progress(run_dir, task_id=task["id"], stage_index=1, backlog=backlog, task_started_at=progress_started_at, detail="Task selected and state loaded.")
+    emit_progress(run_dir, task_id=task["id"], stage_index=2, backlog=backlog, task_started_at=progress_started_at, detail=f"Prompt file ready at {active['prompt_file']}.")
 
     steps: list[dict[str, Any]] = []
     blocker_evidence: list[str] = []
@@ -1526,7 +1785,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
 
     if plan["missing_configuration"]:
         summary = "Missing automation configuration: " + ", ".join(plan["missing_configuration"])
-        emit_progress(run_dir, task_id=task["id"], stage_index=1, backlog=backlog, task_started_at=active.get("started_at"), state="failed", detail=summary)
+        emit_progress(run_dir, task_id=task["id"], stage_index=1, backlog=backlog, task_started_at=progress_started_at, state="failed", detail=summary)
         automation_result = {
             "task_id": task["id"],
             "classification": "blocked",
@@ -1549,7 +1808,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
     write_step(run_dir, "git_status_before", baseline)
     if not args.resume and not retry_continuation and git_config.get("require_clean_worktree", True) and baseline.get("files"):
         summary = f"{target_kind.title()} repo is dirty before automated execution; refusing to continue."
-        emit_progress(run_dir, task_id=task["id"], stage_index=4, backlog=backlog, task_started_at=active.get("started_at"), state="failed", detail=summary)
+        emit_progress(run_dir, task_id=task["id"], stage_index=4, backlog=backlog, task_started_at=progress_started_at, state="failed", detail=summary)
         blocker_evidence.extend(baseline.get("files", []))
         automation_result = {
             "task_id": task["id"],
@@ -1571,7 +1830,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
 
     if not args.resume and not retry_continuation and executor_mode == "human_gated":
         sync_run_state(active, status, "implementing", task_id=active.get("task_id"), title=active.get("title"), run_log_dir=run_dir, last_result=status.get("last_result"))
-        emit_progress(run_dir, task_id=task["id"], stage_index=3, backlog=backlog, task_started_at=active.get("started_at"), detail="Recording manual executor handoff.")
+        emit_progress(run_dir, task_id=task["id"], stage_index=3, backlog=backlog, task_started_at=progress_started_at, detail="Recording manual executor handoff.")
         handoff_note = "Manual JORB Codex execution is required before resume."
         handoff_payload = {
             "mode": "human_gated",
@@ -1611,7 +1870,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
 
     if args.resume:
         sync_run_state(active, status, "implementing", task_id=active.get("task_id"), title=active.get("title"), run_log_dir=run_dir, last_result=status.get("last_result"))
-        emit_progress(run_dir, task_id=task["id"], stage_index=4, backlog=backlog, task_started_at=active.get("started_at"), detail=f"Checking {target_kind} repo for resumed task changes.")
+        emit_progress(run_dir, task_id=task["id"], stage_index=4, backlog=backlog, task_started_at=progress_started_at, detail=f"Checking {target_kind} repo for resumed task changes.")
         after_executor = baseline
         write_step(run_dir, "resume_check", after_executor)
         steps.append({
@@ -1639,7 +1898,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             return 0
     elif retry_continuation:
         sync_run_state(active, status, "implementing", task_id=active.get("task_id"), title=active.get("title"), run_log_dir=run_dir, last_result=status.get("last_result"))
-        emit_progress(run_dir, task_id=task["id"], stage_index=4, backlog=backlog, task_started_at=active.get("started_at"), detail=f"Continuing retry-ready task from existing {target_kind} repo changes.")
+        emit_progress(run_dir, task_id=task["id"], stage_index=4, backlog=backlog, task_started_at=progress_started_at, detail=f"Continuing retry-ready task from existing {target_kind} repo changes.")
         after_executor = baseline
         write_step(run_dir, "retry_check", after_executor)
         steps.append({
@@ -1673,22 +1932,61 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
                 return 1
     else:
         sync_run_state(active, status, "implementing", task_id=active.get("task_id"), title=active.get("title"), run_log_dir=run_dir, last_result=status.get("last_result"))
-        emit_progress(run_dir, task_id=task["id"], stage_index=3, backlog=backlog, task_started_at=active.get("started_at"), detail=f"Running executor in {target_repo}.")
+        initial_timeout = int(executor_config.get("timeout_seconds", 300 if executor_mode == "codex_exec" else 1800))
+        initial_output = str(codex_last_message_path) if executor_mode == "codex_exec" else "n/a"
+        emit_progress(
+            run_dir,
+            task_id=task["id"],
+            stage_index=3,
+            backlog=backlog,
+            task_started_at=progress_started_at,
+            detail=(
+                f"status=waiting_for_first_output | waiting_on={Path(initial_output).name if initial_output != 'n/a' else 'executor completion'} | "
+                f"elapsed=0s | timeout_remaining={initial_timeout}s | prompt={active.get('prompt_file')} | "
+                f"output={initial_output} | output_exists=false | output_size=0B | output_mtime=none | "
+                f"artifact_age=none | stream_age=none | stdout_seen=false | stderr_seen=false | poll=not_started"
+            ),
+            extra_payload={
+                "status": "waiting_for_first_output",
+                "waiting_on": Path(initial_output).name if initial_output != "n/a" else "executor completion",
+                "timeout_remaining_seconds": initial_timeout,
+                "prompt_file": active.get("prompt_file"),
+                "output_file": initial_output,
+                "last_message_exists": False,
+                "last_message_size_bytes": 0,
+                "last_message_mtime": None,
+                "seconds_since_artifact_change": None,
+                "seconds_since_stream_activity": None,
+                "stdout_seen": False,
+                "stderr_seen": False,
+                "process_status": "not_started",
+            },
+        )
         prompt_text = Path(active["prompt_file"]).read_text(encoding="utf-8")
         if executor_mode == "codex_exec":
             def emit_codex_heartbeat(payload: dict[str, Any]) -> None:
                 detail = (
+                    f"status={payload.get('status')} | waiting_on={payload.get('waiting_on')} | "
                     f"pid={payload.get('pid')} | elapsed={payload.get('elapsed_seconds')}s | "
-                    f"last_message_exists={str(payload.get('last_message_exists')).lower()} | "
-                    f"last_message_mtime={payload.get('last_message_mtime') or 'none'}"
+                    f"timeout_remaining={payload.get('timeout_remaining_seconds')}s | "
+                    f"prompt={active.get('prompt_file')} | output={payload.get('output_file')} | "
+                    f"output_exists={str(payload.get('last_message_exists')).lower()} | "
+                    f"output_size={payload.get('last_message_size_bytes')}B | "
+                    f"output_mtime={payload.get('last_message_mtime') or 'none'} | "
+                    f"artifact_age={payload.get('seconds_since_artifact_change') if payload.get('seconds_since_artifact_change') is not None else 'none'}s | "
+                    f"stream_age={payload.get('seconds_since_stream_activity') if payload.get('seconds_since_stream_activity') is not None else 'none'}s | "
+                    f"stdout_seen={str(payload.get('stdout_seen')).lower()} | "
+                    f"stderr_seen={str(payload.get('stderr_seen')).lower()} | "
+                    f"poll={payload.get('process_status')}"
                 )
                 emit_progress(
                     run_dir,
                     task_id=task["id"],
                     stage_index=3,
                     backlog=backlog,
-                    task_started_at=active.get("started_at"),
+                    task_started_at=progress_started_at,
                     detail=detail,
+                    extra_payload={"prompt_file": active.get("prompt_file"), **payload},
                 )
 
             executor_result = run_codex_exec(
@@ -1698,6 +1996,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
                 output_path=codex_last_message_path,
                 timeout=int(executor_config.get("timeout_seconds", 300)),
                 heartbeat_seconds=int(executor_config.get("heartbeat_seconds", 15)),
+                stall_seconds=int(executor_config.get("stall_threshold_seconds", 0) or 0),
                 heartbeat=emit_codex_heartbeat,
             )
         else:
@@ -1716,8 +2015,13 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         })
         if not executor_result["passed"]:
             failure_reason = executor_result.get("failure_reason") or "executor_failure"
-            summary = "executor_timeout" if failure_reason == "executor_timeout" else "executor_failure"
-            emit_progress(run_dir, task_id=task["id"], stage_index=3, backlog=backlog, task_started_at=active.get("started_at"), state="failed", detail=summary)
+            if failure_reason == "executor_timeout":
+                summary = "executor_timeout"
+            elif failure_reason == "executor_interrupted":
+                summary = "executor_interrupted"
+            else:
+                summary = "executor_failure"
+            emit_progress(run_dir, task_id=task["id"], stage_index=3, backlog=backlog, task_started_at=progress_started_at, state="failed", detail=summary)
             blocker_evidence.extend(
                 [
                     failure_reason,
@@ -1727,7 +2031,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             )
             automation_result = {
                 "task_id": task["id"],
-                "classification": "blocked",
+                "classification": "interrupted" if failure_reason == "executor_interrupted" else "blocked",
                 "finished_at": now_iso(),
                 "summary": summary,
                 "steps": steps,
@@ -1737,14 +2041,17 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             }
             write_json(run_dir / RESULT_FILE, automation_result)
             write_summary(run_dir, automation_result)
-            classify_and_update_state("blocked", summary, task, backlog, active, status, automation_result)
+            classify_and_update_state("interrupted" if failure_reason == "executor_interrupted" else "blocked", summary, task, backlog, active, status, automation_result)
             write_data(BACKLOG, backlog)
+            if failure_reason == "executor_interrupted":
+                print_result("INTERRUPTED", "Executor interrupted by user.", "Rerun python3 scripts/automate_task_loop.py when you are ready to try again.")
+                return 130
             write_data(STATUS, status)
             print_result("BLOCKED", summary, "Fix the executor integration or switch back to human_gated mode before rerunning python3 scripts/automate_task_loop.py.")
             return 2
         after_executor = git_status_porcelain(target_repo, ignored_prefixes=ignored_git_paths)
         write_step(run_dir, "git_status_after_executor", after_executor)
-        emit_progress(run_dir, task_id=task["id"], stage_index=4, backlog=backlog, task_started_at=active.get("started_at"), detail=f"Detected {len(after_executor.get('files', []))} changed file(s).")
+        emit_progress(run_dir, task_id=task["id"], stage_index=4, backlog=backlog, task_started_at=progress_started_at, detail=f"Detected {len(after_executor.get('files', []))} changed file(s).")
 
     changed_files = after_executor.get("files", [])
     if retry_continuation and not changed_files:
@@ -1757,7 +2064,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
     allowlisted, disallowed = changed_files_are_allowlisted(changed_files, active.get("allowlist", []))
     if not allowlisted:
         summary = "Executor changed files outside the task allowlist."
-        emit_progress(run_dir, task_id=task["id"], stage_index=4, backlog=backlog, task_started_at=active.get("started_at"), state="failed", detail=summary)
+        emit_progress(run_dir, task_id=task["id"], stage_index=4, backlog=backlog, task_started_at=progress_started_at, state="failed", detail=summary)
         automation_result = {
             "task_id": task["id"],
             "classification": "blocked",
@@ -1778,7 +2085,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
 
     if not changed_files:
         summary = f"Executor completed but no {target_kind} repo changes were detected."
-        emit_progress(run_dir, task_id=task["id"], stage_index=4, backlog=backlog, task_started_at=active.get("started_at"), state="failed", detail=summary)
+        emit_progress(run_dir, task_id=task["id"], stage_index=4, backlog=backlog, task_started_at=progress_started_at, state="failed", detail=summary)
         automation_result = {
             "task_id": task["id"],
             "classification": "refined",
@@ -1803,7 +2110,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
 
     if target_kind == "product" and local_validation_commands and validation_venv is None and not continue_from_prior_vm_retry:
         summary = "No product validation virtualenv found. Expected one of: .venv_validation, .venv, .venv_j1."
-        emit_progress(run_dir, task_id=task["id"], stage_index=5, backlog=backlog, task_started_at=active.get("started_at"), state="failed", detail=summary)
+        emit_progress(run_dir, task_id=task["id"], stage_index=5, backlog=backlog, task_started_at=progress_started_at, state="failed", detail=summary)
         automation_result = {
             "task_id": task["id"],
             "classification": "blocked",
@@ -1832,7 +2139,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
                 task_id=task["id"],
                 stage_index=5 if index == 0 else 6,
                 backlog=backlog,
-                task_started_at=active.get("started_at"),
+                task_started_at=progress_started_at,
                 detail=command,
             )
             result = run_shell(command, target_repo, shell_executable=shell_executable)
@@ -1855,7 +2162,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         })
         if not local_passed:
             summary = "Local validation failed after executor changes."
-            emit_progress(run_dir, task_id=task["id"], stage_index=5, backlog=backlog, task_started_at=active.get("started_at"), state="failed", detail=summary)
+            emit_progress(run_dir, task_id=task["id"], stage_index=5, backlog=backlog, task_started_at=progress_started_at, state="failed", detail=summary)
             automation_result = {
                 "task_id": task["id"],
                 "classification": "refined",
@@ -1878,7 +2185,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             print_result("REFINED", summary, next_action)
             return 1
 
-        emit_progress(run_dir, task_id=task["id"], stage_index=7, backlog=backlog, task_started_at=active.get("started_at"), detail="Running git add/commit/push.")
+        emit_progress(run_dir, task_id=task["id"], stage_index=7, backlog=backlog, task_started_at=progress_started_at, detail="Running git add/commit/push.")
         git_add = run_argv(["git", "add", "-A"], target_repo)
         commit_message = render_template(git_config.get("commit_message_template"), context) or f"{task['id']}: {task['title']}"
         git_commit = run_argv(["git", "commit", "-m", commit_message], target_repo)
@@ -1895,7 +2202,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         })
         if not (git_add["passed"] and git_commit["passed"] and git_push["passed"]):
             summary = "Git add/commit/push failed after local validation passed."
-            emit_progress(run_dir, task_id=task["id"], stage_index=7, backlog=backlog, task_started_at=active.get("started_at"), state="failed", detail=summary)
+            emit_progress(run_dir, task_id=task["id"], stage_index=7, backlog=backlog, task_started_at=progress_started_at, state="failed", detail=summary)
             blocker_evidence.extend([
                 git_add["stderr"] or git_add["stdout"],
                 git_commit["stderr"] or git_commit["stdout"],
@@ -1923,7 +2230,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
     if use_vm_flow:
         ssh_target = vm_config["ssh_target"]
         ssh_options = effective_vm_ssh_options
-        emit_progress(run_dir, task_id=task["id"], stage_index=8, backlog=backlog, task_started_at=active.get("started_at"), detail=f"Running VM validation on {ssh_target}.")
+        emit_progress(run_dir, task_id=task["id"], stage_index=8, backlog=backlog, task_started_at=progress_started_at, detail=f"Running VM validation on {ssh_target}.")
         vm_pull_command = f"cd {shlex.quote(vm_repo)} && {plan['vm_pull_command']}"
         vm_pull = ssh_command(ssh_target, ssh_options, vm_pull_command, ROOT)
         vm_results = [vm_pull]
@@ -1966,7 +2273,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         task_id=task["id"],
         stage_index=9,
         backlog=backlog,
-        task_started_at=active.get("started_at"),
+        task_started_at=progress_started_at,
         state="completed" if classification == "accepted" else "failed",
         detail=summary,
     )
@@ -2009,7 +2316,11 @@ def main() -> int:
     parser.add_argument("--check-auth", action="store_true")
     parser.add_argument("--repair-state", action="store_true")
     args = parser.parse_args()
-    return run_loop(args, allow_follow_on=True)
+    try:
+        return run_loop(args, allow_follow_on=True)
+    except KeyboardInterrupt:
+        print_result("INTERRUPTED", "Run interrupted by user.")
+        return 130
 
 
 if __name__ == "__main__":

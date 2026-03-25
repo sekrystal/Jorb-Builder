@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "state": "implementing",
+  "state": "blocked",
   "state_legend": {
     "idle": "No active task is currently in flight.",
     "task_selected": "A task has been selected and the current run has been initialized.",
@@ -14,14 +14,14 @@
   "active_task_id": "JORB-V1-007",
   "last_task_id": "JORB-V1-007",
   "last_result": "blocked",
-  "last_run_at": "2026-03-25T05:46:48.870431+00:00",
+  "last_run_at": "2026-03-25T06:27:44.256257+00:00",
   "roadmap_focus": {
     "milestone": "M2",
     "theme": "discovery"
   },
   "stats": {
     "completed_tasks": 8,
-    "blocked_tasks": 11,
+    "blocked_tasks": 12,
     "retry_ready_tasks": 7
   },
   "notes": [

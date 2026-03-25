@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import importlib.util
 import json
 import os
 from pathlib import Path
+import signal
 import subprocess
 import sys
+import time
 
 
 SCRIPT = Path("/Users/samuelkrystal/projects/jorb-builder/scripts/automate_task_loop.py")
@@ -27,6 +30,33 @@ def _active_run_dir(builder_root: Path) -> Path:
     return Path(run_log_dir)
 
 
+def _load_script_module(builder_root: Path | None = None):
+    common_dir = str(SCRIPT.parent)
+    inserted = False
+    previous_root = os.environ.get("JORB_BUILDER_ROOT")
+    if builder_root is not None:
+        os.environ["JORB_BUILDER_ROOT"] = str(builder_root)
+    if common_dir not in sys.path:
+        sys.path.insert(0, common_dir)
+        inserted = True
+    try:
+        sys.modules.pop("common", None)
+        sys.modules.pop("automate_task_loop_test_module", None)
+        spec = importlib.util.spec_from_file_location("automate_task_loop_test_module", SCRIPT)
+        assert spec is not None and spec.loader is not None
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+    finally:
+        if inserted and sys.path and sys.path[0] == common_dir:
+            sys.path.pop(0)
+        if builder_root is not None:
+            if previous_root is None:
+                os.environ.pop("JORB_BUILDER_ROOT", None)
+            else:
+                os.environ["JORB_BUILDER_ROOT"] = previous_root
+
+
 def _write_json(path: Path, payload) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
@@ -38,6 +68,14 @@ def _run(cmd: list[str], cwd: Path, *, extra_env: dict[str, str] | None = None) 
     if extra_env:
         env.update(extra_env)
     return subprocess.run(cmd, cwd=str(cwd), text=True, capture_output=True, env=env)
+
+
+def _run_interruptible(cmd: list[str], cwd: Path, *, extra_env: dict[str, str] | None = None) -> subprocess.Popen[str]:
+    env = os.environ.copy()
+    env["JORB_BUILDER_ROOT"] = str(cwd)
+    if extra_env:
+        env.update(extra_env)
+    return subprocess.Popen(cmd, cwd=str(cwd), text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
 
 
 def _git(cmd: list[str], cwd: Path) -> None:
@@ -173,6 +211,10 @@ def _write_fake_codex_slow(path: Path, *, relative_output: str, sleep_seconds: i
         encoding="utf-8",
     )
     path.chmod(0o755)
+
+
+def _progress_events(run_dir: Path) -> list[dict]:
+    return [json.loads(line) for line in (run_dir / "progress.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
 def _ignore_path_in_git_status(repo: Path, pattern: str) -> None:
@@ -1162,10 +1204,257 @@ def test_codex_exec_emits_heartbeat_progress_updates(tmp_path: Path) -> None:
 
     assert result.returncode == 0
     assert "pid=" in result.stdout
-    assert "last_message_exists=" in result.stdout
+    assert "output_exists=" in result.stdout
     run_dir = _active_run_dir(builder_root)
-    progress_events = (run_dir / "progress.jsonl").read_text(encoding="utf-8").splitlines()
-    assert any('"stage_name": "Codex execution running"' in line and 'last_message_exists' in line for line in progress_events)
+    progress_events = _progress_events(run_dir)
+    heartbeat_events = [event for event in progress_events if event["stage_name"] == "Codex execution running" and "last_message_exists" in event]
+    assert heartbeat_events
+    assert all(event["elapsed_seconds"] >= 0 for event in heartbeat_events)
+    assert any(event.get("status") == "waiting_for_first_output" for event in heartbeat_events)
+    assert any("timeout_remaining_seconds" in event for event in heartbeat_events)
+    assert "runnable after current" in result.stdout
+
+
+def test_long_running_codex_survives_multiple_heartbeat_intervals(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    fake_codex = tmp_path / "fake-codex-long"
+    _write_fake_codex_slow(fake_codex, relative_output="worker.py", sleep_seconds=3, last_message="long codex ok\n")
+
+    config = _json(builder_root / "config.yml")
+    config["executor"]["mode"] = "codex_exec"
+    config["executor"]["codex_cli"] = str(fake_codex)
+    config["executor"]["heartbeat_seconds"] = 1
+    config["executor"]["timeout_seconds"] = 10
+    _write_json(builder_root / "config.yml", config)
+    _git(["add", "config.yml"], builder_root)
+    _git(["commit", "-m", "configure long codex"], builder_root)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 0
+    assert "TimeoutExpired" not in result.stderr
+    run_dir = _active_run_dir(builder_root)
+    heartbeat_events = [event for event in _progress_events(run_dir) if event["stage_name"] == "Codex execution running" and event["state"] == "running"]
+    assert len(heartbeat_events) >= 2
+    assert heartbeat_events[0]["elapsed_seconds"] < heartbeat_events[-1]["elapsed_seconds"]
+    assert all("waiting_on" in event for event in heartbeat_events)
+    assert any(event.get("status") == "waiting_for_first_output" for event in heartbeat_events)
+
+
+def test_fresh_run_progress_starts_near_zero_elapsed(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    fake_codex = tmp_path / "fake-codex-fast"
+    _write_fake_codex(fake_codex, relative_output="worker.py", last_message="fresh progress ok\n")
+
+    config = _json(builder_root / "config.yml")
+    config["executor"]["mode"] = "codex_exec"
+    config["executor"]["codex_cli"] = str(fake_codex)
+    _write_json(builder_root / "config.yml", config)
+    _git(["add", "config.yml"], builder_root)
+    _git(["commit", "-m", "configure fresh progress"], builder_root)
+
+    active = _json(builder_root / "active_task.yml")
+    active["started_at"] = "2020-01-01T00:00:00+00:00"
+    _write_json(builder_root / "active_task.yml", active)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 0
+    run_dir = _active_run_dir(builder_root)
+    first_event = _progress_events(run_dir)[0]
+    assert first_event["stage_name"] == "Task selected"
+    assert first_event["elapsed_seconds"] <= 1
+    assert "Elapsed: 0s" in result.stdout or "Elapsed: 1s" in result.stdout
+
+
+def test_codex_exec_reports_possibly_stalled_status(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    fake_codex = tmp_path / "fake-codex-stalled"
+    _write_fake_codex_slow(fake_codex, relative_output="worker.py", sleep_seconds=3, last_message="stalled codex ok\n")
+
+    config = _json(builder_root / "config.yml")
+    config["executor"]["mode"] = "codex_exec"
+    config["executor"]["codex_cli"] = str(fake_codex)
+    config["executor"]["heartbeat_seconds"] = 1
+    config["executor"]["stall_threshold_seconds"] = 1
+    config["executor"]["timeout_seconds"] = 10
+    _write_json(builder_root / "config.yml", config)
+    _git(["add", "config.yml"], builder_root)
+    _git(["commit", "-m", "configure stalled codex"], builder_root)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 0
+    assert "status=possibly_stalled" in result.stdout
+    run_dir = _active_run_dir(builder_root)
+    progress_events = _progress_events(run_dir)
+    assert any(event.get("status") == "possibly_stalled" for event in progress_events if event["stage_name"] == "Codex execution running")
+
+
+def test_codex_exec_stdin_is_not_resent_on_each_heartbeat(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    fake_codex = tmp_path / "fake-codex-stdin-once"
+    fake_codex.write_text(
+        "\n".join(
+            [
+                "#!/usr/bin/env python3",
+                "from pathlib import Path",
+                "import sys",
+                "import time",
+                "argv = sys.argv[1:]",
+                "output_file = None",
+                "for index, item in enumerate(argv):",
+                "    if item == '-o' and index + 1 < len(argv):",
+                "        output_file = Path(argv[index + 1])",
+                "prompt = sys.stdin.read()",
+                "target = Path.cwd() / 'worker.py'",
+                "target.write_text(prompt, encoding='utf-8')",
+                "time.sleep(2)",
+                "if output_file is not None:",
+                "    output_file.write_text('stdin once ok\\n', encoding='utf-8')",
+                "sys.stdout.write('done')",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    fake_codex.chmod(0o755)
+
+    config = _json(builder_root / "config.yml")
+    config["executor"]["mode"] = "codex_exec"
+    config["executor"]["codex_cli"] = str(fake_codex)
+    config["executor"]["heartbeat_seconds"] = 1
+    config["executor"]["timeout_seconds"] = 10
+    _write_json(builder_root / "config.yml", config)
+    _git(["add", "config.yml"], builder_root)
+    _git(["commit", "-m", "configure stdin once"], builder_root)
+    prompt_path = Path(_json(builder_root / "active_task.yml")["prompt_file"])
+    prompt_contents = prompt_path.read_text(encoding="utf-8")
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 0
+    applied = (builder_root / "worker.py").read_text(encoding="utf-8")
+    assert applied == prompt_contents
+
+
+def test_keyboard_interrupt_cleans_up_codex_process(tmp_path: Path) -> None:
+    module = _load_script_module()
+    fake_codex = tmp_path / "fake-codex-hung"
+    _write_fake_codex_hung(fake_codex)
+    output_path = tmp_path / "codex_last_message.md"
+    heartbeat_calls = {"count": 0}
+
+    def _interrupt(_: dict) -> None:
+        heartbeat_calls["count"] += 1
+        raise KeyboardInterrupt
+
+    result = module.run_codex_exec(
+        [str(fake_codex), "exec", "-o", str(output_path), "-"],
+        tmp_path,
+        input_text="prompt\n",
+        output_path=output_path,
+        timeout=10,
+        heartbeat_seconds=1,
+        heartbeat=_interrupt,
+    )
+
+    assert heartbeat_calls["count"] == 1
+    assert result["passed"] is False
+    assert result["failure_reason"] == "executor_interrupted"
+    assert result["cleanup"]["terminate_sent"] is True
+    assert result["stderr_tail"].endswith("Interrupted by user.")
+
+
+def test_interrupted_run_becomes_rerunnable_again(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    fake_codex = tmp_path / "fake-codex-hung"
+    _write_fake_codex_hung(fake_codex)
+
+    config = _json(builder_root / "config.yml")
+    config["executor"]["mode"] = "codex_exec"
+    config["executor"]["codex_cli"] = str(fake_codex)
+    config["executor"]["heartbeat_seconds"] = 1
+    config["executor"]["timeout_seconds"] = 30
+    _write_json(builder_root / "config.yml", config)
+    _git(["add", "config.yml"], builder_root)
+    _git(["commit", "-m", "configure interrupt rerun"], builder_root)
+
+    module = _load_script_module(builder_root)
+    backlog = _json(builder_root / "backlog.yml")
+    task = backlog["tasks"][0]
+    active = _json(builder_root / "active_task.yml")
+    status = _json(builder_root / "status.yml")
+    active["state"] = "implementing"
+    status["state"] = "implementing"
+    automation_result = {
+        "task_id": task["id"],
+        "classification": "interrupted",
+        "finished_at": "2026-03-24T00:00:01+00:00",
+        "summary": "executor_interrupted",
+        "steps": [{"name": "executor", "outcome": "interrupted", "detail": "Interrupted by user."}],
+        "changed_files": [],
+        "blocker_evidence": [],
+        "unproven_runtime_gaps": ["executor_interrupted"],
+    }
+    module.classify_and_update_state("interrupted", "executor_interrupted", task, backlog, active, status, automation_result)
+    module.write_data(module.BACKLOG, backlog)
+
+    backlog = _json(builder_root / "backlog.yml")
+    assert backlog["tasks"][0]["status"] == "ready"
+    active = _json(builder_root / "active_task.yml")
+    assert active["task_id"] is None
+    assert active["state"] == "idle"
+    status = _json(builder_root / "status.yml")
+    assert status["state"] == "idle"
+    assert status["active_task_id"] is None
+    inspect = _run([sys.executable, str(SCRIPT), "--inspect-backlog"], builder_root)
+    assert 'next_selected_task: "TASK-BUILDER"' in inspect.stdout
+    rerun = _run([sys.executable, str(SCRIPT)], builder_root)
+    assert "Step 1/9: Task selected" in rerun.stdout
+
+
+def test_interruption_does_not_override_real_blocker(tmp_path: Path) -> None:
+    builder_root, product_repo, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="discovery",
+        allowlist=["services/company_discovery.py"],
+    )
+    dirty = product_repo / "services" / "company_discovery.py"
+    dirty.parent.mkdir(parents=True, exist_ok=True)
+    dirty.write_text("dirty\n", encoding="utf-8")
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 2
+    assert "repo is dirty before automated execution" in result.stdout
+    backlog = _json(builder_root / "backlog.yml")
+    assert backlog["tasks"][0]["status"] == "blocked"
 
 
 def test_codex_exec_product_task_runs_in_product_repo(tmp_path: Path) -> None:
@@ -1654,3 +1943,80 @@ def test_repair_state_does_not_introduce_false_resume_semantics(tmp_path: Path) 
 
     assert resume.returncode == 1
     assert "ACTIVE_TASK_MISSING_BUT_READY_TASKS_EXIST" in resume.stdout
+
+
+def test_repair_state_reopens_stale_dirty_repo_blocker_when_repo_is_clean(tmp_path: Path) -> None:
+    builder_root, product_repo, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="discovery",
+        allowlist=["services/company_discovery.py"],
+    )
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "blocked"
+    _write_json(builder_root / "backlog.yml", backlog)
+    active = _json(builder_root / "active_task.yml")
+    active["state"] = "implementing"
+    active["target_repo"] = str(product_repo)
+    active["target_kind"] = "product"
+    _write_json(builder_root / "active_task.yml", active)
+    status = _json(builder_root / "status.yml")
+    status["state"] = "implementing"
+    status["last_result"] = "blocked"
+    _write_json(builder_root / "status.yml", status)
+    _write_json(
+        builder_root / "blockers" / "BLK-TASK-PRODUCT.yml",
+        {
+            "id": "BLK-TASK-PRODUCT",
+            "title": "Task TASK-PRODUCT blocked during automated execution",
+            "related_tasks": ["TASK-PRODUCT"],
+            "status": "open",
+            "diagnosis": "Product repo is dirty before automated execution; refusing to continue.",
+        },
+    )
+
+    repair = _run([sys.executable, str(SCRIPT), "--repair-state"], builder_root)
+    inspect = _run([sys.executable, str(SCRIPT), "--inspect-backlog"], builder_root)
+
+    assert repair.returncode == 0
+    assert "blocked -> ready" in repair.stdout
+    backlog_after = _json(builder_root / "backlog.yml")
+    assert backlog_after["tasks"][0]["status"] == "ready"
+    blocker_after = _json(builder_root / "blockers" / "BLK-TASK-PRODUCT.yml")
+    assert blocker_after["status"] == "resolved"
+    assert '"next_selected_task: "TASK-PRODUCT""' in inspect.stdout.lower() or 'next_selected_task: "TASK-PRODUCT"' in inspect.stdout
+
+
+def test_repair_state_keeps_current_dirty_repo_blocker_blocked(tmp_path: Path) -> None:
+    builder_root, product_repo, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="discovery",
+        allowlist=["services/company_discovery.py"],
+    )
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "blocked"
+    _write_json(builder_root / "backlog.yml", backlog)
+    active = _json(builder_root / "active_task.yml")
+    active["state"] = "implementing"
+    active["target_repo"] = str(product_repo)
+    active["target_kind"] = "product"
+    _write_json(builder_root / "active_task.yml", active)
+    status = _json(builder_root / "status.yml")
+    status["state"] = "implementing"
+    status["last_result"] = "blocked"
+    _write_json(builder_root / "status.yml", status)
+    (product_repo / "services").mkdir(exist_ok=True)
+    (product_repo / "services" / "company_discovery.py").write_text("print('changed')\n", encoding="utf-8")
+
+    repair = _run([sys.executable, str(SCRIPT), "--repair-state"], builder_root)
+
+    assert repair.returncode == 0
+    assert "remains blocked" in repair.stdout
+    active_after = _json(builder_root / "active_task.yml")
+    status_after = _json(builder_root / "status.yml")
+    blocker_after = _json(builder_root / "blockers" / "BLK-TASK-PRODUCT.yml")
+    assert active_after["state"] == "blocked"
+    assert status_after["state"] == "blocked"
+    assert blocker_after["status"] == "open"
+    assert "services/company_discovery.py" in blocker_after["evidence"] or "services/" in blocker_after["evidence"]

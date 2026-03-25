@@ -1,12 +1,12 @@
 {
   "task_id": "JORB-V1-007",
   "title": "Add resume and PDF upload ingestion with structured extraction",
-  "state": "implementing",
+  "state": "blocked",
   "attempt": 1,
-  "started_at": "2026-03-25T05:43:35.618509+00:00",
+  "started_at": "2026-03-25T06:27:05.033235+00:00",
   "handed_to_codex_at": null,
-  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T054335Z/codex_prompt.md",
-  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T054648Z-JORB-V1-007",
+  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T061048Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T062704Z-JORB-V1-007",
   "verification_commands": [
     "pytest tests/test_profile.py tests/test_workbench.py",
     "./scripts/preflight_check.sh"
@@ -18,9 +18,9 @@
     "tests/test_profile.py",
     "tests/test_workbench.py"
   ],
-  "failure_summary": null,
+  "failure_summary": "executor_interrupted",
   "notes": [],
-  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T054335Z-JORB-V1-007",
+  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T061048Z-JORB-V1-007",
   "target_repo": "/Users/samuelkrystal/projects/jorb",
   "target_kind": "product"
 }

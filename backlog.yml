@@ -444,7 +444,9 @@
         "Authentication preflight indicates repeated or interactive prompts are likely.",
         "Authentication preflight indicates repeated or interactive prompts are likely.",
         "Repaired from auth-preflight-only blocked attempt; task restored to ready for a truthful fresh rerun.",
-        "Product repo is dirty before automated execution; refusing to continue."
+        "Product repo is dirty before automated execution; refusing to continue.",
+        "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again.",
+        "executor_interrupted"
       ],
       "repo_path": "~/projects/jorb",
       "description": "Add a working resume and PDF upload flow that parses documents into structured profile fields instead of storing opaque text blobs.\n\nStructured extraction is the bridge between raw user documents and usable targeting inputs for profile-driven opportunity intelligence.",
