@@ -1,7 +1,7 @@
 {
-  "version": 2,
+  "version": 3,
   "product": "Jorb",
-  "current_baseline": "Opportunity Scout successor with FastAPI, Streamlit, worker loop, ranking, critic, discovery, runtime control, instrumentation, and an external builder loop with callable Codex execution.",
+  "current_baseline": "Phase 1 builder backlog is complete, but VM product review shows the live product still has runtime schema breakage, weak discovery yield, and a confusing control-panel-first UX.",
   "milestones": [
     {
       "id": "M0",
@@ -27,6 +27,11 @@
       "id": "M4",
       "name": "Profile and intelligence foundation",
       "goal": "Structured user profile, onboarding, recommendation scoring, and explainable action guidance"
+    },
+    {
+      "id": "M5",
+      "name": "Usable product runtime and UX",
+      "goal": "A functioning live runtime, jobs-first experience, optional onboarding, understandable IA, and resilient discovery on the VM"
     }
   ],
   "themes": [
@@ -37,12 +42,12 @@
     },
     {
       "id": "runtime",
-      "milestone": "M1",
+      "milestone": "M5",
       "priority": 1
     },
     {
       "id": "discovery",
-      "milestone": "M2",
+      "milestone": "M5",
       "priority": 1
     },
     {
@@ -57,7 +62,7 @@
     },
     {
       "id": "onboarding",
-      "milestone": "M4",
+      "milestone": "M5",
       "priority": 1
     },
     {
@@ -79,12 +84,30 @@
       "id": "privacy",
       "milestone": "M4",
       "priority": 2
+    },
+    {
+      "id": "ux",
+      "milestone": "M5",
+      "priority": 1
+    },
+    {
+      "id": "validation",
+      "milestone": "M5",
+      "priority": 1
     }
   ],
   "phase_1_wedge": {
-    "status": "active",
-    "goal": "Keep the near-term queued work explicit and consistent with the canonical backlog.",
-    "ready_task_ids": [
+    "status": "completed",
+    "goal": "Complete the original builder reliability, discovery, lifecycle, profile, and intelligence backlog.",
+    "accepted_task_ids": [
+      "JORB-INFRA-001",
+      "JORB-INFRA-002",
+      "JORB-V1-001",
+      "JORB-V1-002",
+      "JORB-V1-003",
+      "JORB-V1-004",
+      "JORB-V1-005",
+      "JORB-V1-006",
       "JORB-V1-007",
       "JORB-V1-008",
       "JORB-V1-009",
@@ -94,48 +117,36 @@
       "JORB-V1-013",
       "JORB-V1-014",
       "JORB-V1-015",
-      "JORB-INFRA-003",
-      "JORB-INFRA-004"
-    ],
-    "pending_task_ids": [
       "JORB-V1-016",
       "JORB-V1-017",
       "JORB-V1-018",
+      "JORB-INFRA-003",
+      "JORB-INFRA-004",
       "JORB-INFRA-005"
     ]
   },
-  "later_phases": [
-    {
-      "id": "phase_2_profile_to_intelligence",
-      "status": "pending",
-      "task_ids": [
-        "JORB-V1-007",
-        "JORB-V1-008",
-        "JORB-V1-009",
-        "JORB-V1-010",
-        "JORB-V1-011",
-        "JORB-V1-012",
-        "JORB-V1-014"
-      ]
-    },
-    {
-      "id": "phase_3_lifecycle_and_feedback",
-      "status": "pending",
-      "task_ids": [
-        "JORB-V1-015",
-        "JORB-V1-016"
-      ]
-    },
-    {
-      "id": "phase_4_network_privacy_and_builder_diagnostics",
-      "status": "pending",
-      "task_ids": [
-        "JORB-V1-017",
-        "JORB-V1-018",
-        "JORB-INFRA-003",
-        "JORB-INFRA-004",
-        "JORB-INFRA-005"
-      ]
-    }
-  ]
+  "phase_2_wedge": {
+    "status": "active",
+    "goal": "Translate VM product review into a usable jobs-first product with live runtime truth and resilient discovery.",
+    "vm_findings": [
+      "live worker/runtime fails against existing SQLite databases because applications table columns like status_reason_code are missing",
+      "search discovery repeatedly times out and yields zero discovered value in VM runtime",
+      "the current UI feels like an internal control panel instead of a jobs-first product",
+      "onboarding appears mandatory too early and obscures the path to first value",
+      "acceptance needs stronger live runtime proof, not only isolated tests",
+      "datetime.utcnow deprecation noise should be cleaned up after critical runtime and UX work"
+    ],
+    "ready_task_ids": [
+      "JORB-V2-001",
+      "JORB-V2-002"
+    ],
+    "pending_task_ids": [
+      "JORB-V2-003",
+      "JORB-V2-004",
+      "JORB-V2-005",
+      "JORB-V2-006",
+      "JORB-V2-007"
+    ]
+  },
+  "later_phases": []
 }

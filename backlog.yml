@@ -1109,6 +1109,368 @@
         "task history for accepted tasks links to core evidence artifacts",
         "operator can quickly inspect why a task was accepted"
       ]
+    },
+    {
+      "id": "JORB-V2-001",
+      "title": "Restore live SQLite compatibility for evolving applications schema",
+      "type": "debugging",
+      "area": "runtime",
+      "milestone": "M5",
+      "priority": 0,
+      "status": "ready",
+      "retries_used": 0,
+      "depends_on": [],
+      "prompt": "implement_feature",
+      "objective": "Make the live product work against existing SQLite databases even when applications table columns such as status_reason_code, outcome_code, and outcome_reason_code are missing.",
+      "why_it_matters": "The VM worker currently crashes in generate_follow_up_tasks because the runtime schema expected by the model no longer matches the on-disk applications table.",
+      "allowlist": [
+        "api/**",
+        "core/**",
+        "db/**",
+        "models/**",
+        "services/**",
+        "ui/app.py",
+        "scripts/preflight_check.sh",
+        "tests/test_applications.py",
+        "tests/test_autonomy.py",
+        "tests/test_hybrid_runtime.py",
+        "tests/test_production_runtime.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_applications.py tests/test_autonomy.py tests/test_hybrid_runtime.py tests/test_production_runtime.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "existing SQLite databases without applications.status_reason_code, applications.outcome_code, or applications.outcome_reason_code no longer crash worker or UI runtime paths",
+        "there is a compatibility or migration path that safely upgrades or tolerates older databases",
+        "generate_follow_up_tasks and other application-querying runtime flows behave safely on both old and current schemas",
+        "targeted tests and preflight pass"
+      ],
+      "notes": [
+        "Phase 2 task created from authoritative VM finding: sqlite3.OperationalError no such column applications.status_reason_code during generate_follow_up_tasks(session).",
+        "This is the first product blocker because the live runtime is currently broken before the UX can be trusted."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Restore runtime compatibility between the current application model and existing SQLite databases in the VM.\n\nSpecifically address missing applications columns such as status_reason_code, outcome_code, and outcome_reason_code so worker and UI runtime paths stop crashing on older databases.",
+      "acceptance_criteria": [
+        "existing SQLite databases without applications.status_reason_code, applications.outcome_code, or applications.outcome_reason_code no longer crash worker or UI runtime paths",
+        "there is a compatibility or migration path that safely upgrades or tolerates older databases",
+        "generate_follow_up_tasks and other application-querying runtime flows behave safely on both old and current schemas",
+        "targeted tests and preflight pass"
+      ]
+    },
+    {
+      "id": "JORB-V2-002",
+      "title": "Make the main product experience jobs-first with ranking and explanation up front",
+      "type": "feature",
+      "area": "ux",
+      "milestone": "M5",
+      "priority": 1,
+      "status": "ready",
+      "retries_used": 0,
+      "depends_on": [],
+      "prompt": "implement_feature",
+      "objective": "Reshape the primary UI so users see ranked opportunities and clear reasons first instead of internal control surfaces.",
+      "why_it_matters": "Manual VM review shows the app currently feels like an internal operator panel and does not deliver jobs-first value on first load.",
+      "allowlist": [
+        "api/**",
+        "core/**",
+        "services/**",
+        "ui/**",
+        "README.md",
+        "OPERATIONS.md",
+        "tests/test_pipeline.py",
+        "tests/test_ranking.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_pipeline.py tests/test_ranking.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "the default UI path shows jobs or opportunities first rather than internal diagnostic tabs",
+        "ranking signals and concise explanation are visible in the primary opportunity flow",
+        "the main screen is understandable without needing to understand builder, autonomy, or discovery internals",
+        "targeted tests and preflight pass"
+      ],
+      "notes": [
+        "Phase 2 task created from authoritative VM manual review: the app feels like an internal control panel instead of a job discovery and ranking product."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Rework the first-run and main-screen experience so the product opens on ranked jobs with concise explanation of why they matter.\n\nThe jobs list should be clearly primary, with internal runtime or diagnostic concepts either hidden, renamed, or pushed behind secondary surfaces.",
+      "acceptance_criteria": [
+        "the default UI path shows jobs or opportunities first rather than internal diagnostic tabs",
+        "ranking signals and concise explanation are visible in the primary opportunity flow",
+        "the main screen is understandable without needing to understand builder, autonomy, or discovery internals",
+        "targeted tests and preflight pass"
+      ]
+    },
+    {
+      "id": "JORB-V2-003",
+      "title": "Make onboarding optional and skippable before job exploration",
+      "type": "feature",
+      "area": "onboarding",
+      "milestone": "M5",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V2-002"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Let users reach job discovery quickly without being forced through resume upload or LinkedIn import before first value.",
+      "why_it_matters": "Manual review shows the product appears to demand resume and LinkedIn setup too early, which hides the core job-finding value.",
+      "allowlist": [
+        "api/**",
+        "core/**",
+        "services/**",
+        "ui/**",
+        "README.md",
+        "OPERATIONS.md",
+        "tests/test_profile.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_profile.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "resume upload and LinkedIn import are clearly optional or skippable before exploring jobs",
+        "users can reach the jobs-first main experience without dead ends or mandatory profile ingestion",
+        "optional onboarding still writes into the structured profile layer cleanly when used",
+        "targeted tests and preflight pass"
+      ],
+      "notes": [
+        "Phase 2 task created from authoritative VM manual review: onboarding wrongly appears to force resume and LinkedIn upload before value."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Make onboarding explicitly optional so users can explore ranked jobs before importing a resume or LinkedIn data.\n\nThe flow should still support later profile enrichment, but the initial path to value must be shorter and clearer.",
+      "acceptance_criteria": [
+        "resume upload and LinkedIn import are clearly optional or skippable before exploring jobs",
+        "users can reach the jobs-first main experience without dead ends or mandatory profile ingestion",
+        "optional onboarding still writes into the structured profile layer cleanly when used",
+        "targeted tests and preflight pass"
+      ]
+    },
+    {
+      "id": "JORB-V2-004",
+      "title": "Simplify information architecture and replace internal tab language",
+      "type": "feature",
+      "area": "ux",
+      "milestone": "M5",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V2-002",
+        "JORB-V2-003"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Collapse or rename confusing internal-facing sections so the product reads like a user-facing job tool rather than an operator console.",
+      "why_it_matters": "Manual review found that Discovery, Learning, Autonomy Ops, and Agent Activity are not meaningful user-facing concepts in the current product.",
+      "allowlist": [
+        "api/**",
+        "core/**",
+        "services/**",
+        "ui/**",
+        "README.md",
+        "OPERATIONS.md",
+        "tests/test_autonomy.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_autonomy.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "confusing internal tab labels are renamed, collapsed, or moved behind clearly secondary surfaces",
+        "user-facing navigation uses understandable product language tied to jobs, applications, profile, and settings",
+        "internal operator or diagnostic surfaces remain available where necessary without dominating the default UX",
+        "targeted tests and preflight pass"
+      ],
+      "notes": [
+        "Phase 2 task created from authoritative VM manual review: Discovery, Learning, Autonomy Ops, and Agent Activity read as internal concepts rather than useful product IA."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Simplify the app information architecture so the visible navigation speaks in product terms instead of internal subsystem labels.\n\nThe result should feel like a job discovery and ranking product, not an internal control panel.",
+      "acceptance_criteria": [
+        "confusing internal tab labels are renamed, collapsed, or moved behind clearly secondary surfaces",
+        "user-facing navigation uses understandable product language tied to jobs, applications, profile, and settings",
+        "internal operator or diagnostic surfaces remain available where necessary without dominating the default UX",
+        "targeted tests and preflight pass"
+      ]
+    },
+    {
+      "id": "JORB-V2-005",
+      "title": "Harden discovery against search timeouts and zero-yield runtime reality",
+      "type": "debugging",
+      "area": "discovery",
+      "milestone": "M5",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V2-001"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Handle repeated search_web timeout reality more gracefully and expose actionable diagnostics when discovery produces no ATS, companies, or verified results.",
+      "why_it_matters": "VM runtime logs show repeated DuckDuckGo timeouts and zero yielded value, which means the discovery path is not resilient enough to support a usable product.",
+      "allowlist": [
+        "api/**",
+        "connectors/**",
+        "core/**",
+        "services/**",
+        "ui/**",
+        "tests/test_company_discovery.py",
+        "tests/test_search_discovery.py",
+        "tests/test_sync.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_search_discovery.py tests/test_company_discovery.py tests/test_sync.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "search timeout and zero-yield conditions are classified clearly and surfaced in operator-visible diagnostics",
+        "discovery attempts a bounded fallback or degradation path when search_web produces nothing useful",
+        "the product can distinguish between no-jobs-found reality and upstream provider failure clearly",
+        "targeted tests and preflight pass"
+      ],
+      "notes": [
+        "Phase 2 task created from authoritative VM runtime findings: repeated duckduckgo connect timeout, pages_crawled 0, derived_ats_results 0, raw_results 0, verified 0."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Make discovery more resilient when real-world search providers time out or return nothing useful.\n\nThe product should expose whether the problem is upstream timeout, extraction failure, verification failure, or a genuine zero-yield search space, and should attempt a bounded fallback when appropriate.",
+      "acceptance_criteria": [
+        "search timeout and zero-yield conditions are classified clearly and surfaced in operator-visible diagnostics",
+        "discovery attempts a bounded fallback or degradation path when search_web produces nothing useful",
+        "the product can distinguish between no-jobs-found reality and upstream provider failure clearly",
+        "targeted tests and preflight pass"
+      ]
+    },
+    {
+      "id": "JORB-V2-006",
+      "title": "Require live runtime smoke validation for acceptance-critical product work",
+      "type": "infrastructure",
+      "area": "validation",
+      "milestone": "M5",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V2-001",
+        "JORB-V2-002",
+        "JORB-V2-003",
+        "JORB-V2-004",
+        "JORB-V2-005"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Strengthen acceptance for product work so critical tickets require live runtime smoke proof, not only isolated local tests.",
+      "why_it_matters": "The previous backlog was fully accepted even though the VM product remained broken and confusing, so Phase 2 needs stronger runtime-proof gates.",
+      "allowlist": [
+        "README.md",
+        "OPERATIONS.md",
+        "api/**",
+        "core/**",
+        "scripts/**",
+        "services/**",
+        "tests/test_production_runtime.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_production_runtime.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh",
+        "./scripts/runtime_self_check.sh"
+      ],
+      "acceptance": [
+        "acceptance-critical product tasks define explicit live smoke checks covering API, worker, and primary UI path where relevant",
+        "runtime validation distinguishes local test success from actual live product proof",
+        "docs and smoke tooling reflect the minimum evidence required before future product acceptance",
+        "targeted tests, preflight, and smoke checks pass"
+      ],
+      "notes": [
+        "Phase 2 task created because the authoritative VM review showed the product was still unusable despite the builder reporting the prior backlog complete."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Raise the acceptance bar for product work by requiring live runtime smoke evidence alongside unit and integration tests.\n\nThe goal is to stop accepting major product phases that still fail or confuse users in the VM runtime.",
+      "acceptance_criteria": [
+        "acceptance-critical product tasks define explicit live smoke checks covering API, worker, and primary UI path where relevant",
+        "runtime validation distinguishes local test success from actual live product proof",
+        "docs and smoke tooling reflect the minimum evidence required before future product acceptance",
+        "targeted tests, preflight, and smoke checks pass"
+      ]
+    },
+    {
+      "id": "JORB-V2-007",
+      "title": "Remove datetime.utcnow deprecation noise from active UI and runtime paths",
+      "type": "polish",
+      "area": "runtime",
+      "milestone": "M5",
+      "priority": 2,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V2-006"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Clean up repeated datetime.utcnow deprecation warnings in active UI and runtime paths without broadening scope beyond targeted Phase 2 polish.",
+      "why_it_matters": "The warning noise is not the highest priority, but it obscures real runtime signals during VM review and should be cleaned up after the critical product fixes land.",
+      "allowlist": [
+        "api/**",
+        "core/**",
+        "services/**",
+        "ui/**",
+        "tests/test_production_runtime.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_production_runtime.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "datetime.utcnow deprecation warnings are removed from the targeted active UI and runtime paths touched by Phase 2 work",
+        "warning cleanup does not regress runtime behavior or broaden into unrelated refactors",
+        "targeted tests and preflight pass"
+      ],
+      "notes": [
+        "Lower-priority Phase 2 polish task created from repeated VM warning noise in ui/app.py and related runtime paths."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Remove repeated datetime.utcnow deprecation noise from the active UI and runtime paths touched by Phase 2.\n\nThis is intentionally a polish task after the critical runtime, discovery, and usability blockers are addressed.",
+      "acceptance_criteria": [
+        "datetime.utcnow deprecation warnings are removed from the targeted active UI and runtime paths touched by Phase 2 work",
+        "warning cleanup does not regress runtime behavior or broaden into unrelated refactors",
+        "targeted tests and preflight pass"
+      ]
     }
   ],
   "errors": [],
