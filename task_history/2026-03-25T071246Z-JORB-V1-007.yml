@@ -1,0 +1,37 @@
+{
+  "task_id": "JORB-V1-007",
+  "title": "Add resume and PDF upload ingestion with structured extraction",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-25T07:07:41.713872+00:00",
+  "completed_at": "2026-03-25T07:12:46.113692+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T070741Z/codex_prompt.md",
+  "files_changed": [
+    "services/document_ingest.py",
+    "tests/test_profile.py",
+    "tests/test_workbench.py",
+    "ui/app.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T070741Z-JORB-V1-007/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "user can upload a resume or PDF through the interface",
+    "extraction populates structured profile fields",
+    "extraction output is reviewable and editable",
+    "parsing failures degrade gracefully and do not break onboarding",
+    "tests cover successful and partial extraction behavior"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "unproven_runtime_gaps": []
+}

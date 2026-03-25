@@ -11,17 +11,17 @@
     "completed": "The active run completed successfully and reached a terminal accepted state.",
     "blocked": "The active run reached a terminal blocked/refined state and requires intervention or retry."
   },
-  "active_task_id": "JORB-V1-007",
-  "last_task_id": "JORB-V1-007",
+  "active_task_id": "JORB-INFRA-003",
+  "last_task_id": "JORB-INFRA-003",
   "last_result": "blocked",
-  "last_run_at": "2026-03-25T06:27:44.256257+00:00",
+  "last_run_at": "2026-03-25T16:55:54.066640+00:00",
   "roadmap_focus": {
     "milestone": "M2",
     "theme": "discovery"
   },
   "stats": {
-    "completed_tasks": 8,
-    "blocked_tasks": 12,
+    "completed_tasks": 15,
+    "blocked_tasks": 14,
     "retry_ready_tasks": 7
   },
   "notes": [

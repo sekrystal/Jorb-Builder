@@ -1,0 +1,36 @@
+{
+  "task_id": "JORB-V1-014",
+  "title": "Add recommendation action labels and explanations",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-25T14:39:52.310603+00:00",
+  "completed_at": "2026-03-25T14:43:23.449694+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T143952Z/codex_prompt.md",
+  "files_changed": [
+    "core/schemas.py",
+    "tests/test_pipeline.py",
+    "tests/test_workbench.py",
+    "ui/app.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T143952Z-JORB-V1-014/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "surfaced opportunities include action label and explanation",
+    "explanations use explicit score and signal components",
+    "UI renders action guidance clearly",
+    "tests cover label selection and explanation output"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "unproven_runtime_gaps": []
+}

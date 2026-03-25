@@ -1,0 +1,36 @@
+{
+  "task_id": "JORB-V1-012",
+  "title": "Add user supplied job link ingestion into the same evaluation pipeline",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-25T14:32:52.337277+00:00",
+  "completed_at": "2026-03-25T14:39:52.131801+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T143252Z/codex_prompt.md",
+  "files_changed": [
+    "services/pipeline.py",
+    "tests/test_pipeline.py",
+    "tests/test_workbench.py",
+    "ui/app.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T143252Z-JORB-V1-012/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "user can submit a job link manually",
+    "the job is normalized and scored through the same pipeline",
+    "provenance shows user submitted versus system discovered",
+    "tests cover ingestion and evaluation behavior"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "unproven_runtime_gaps": []
+}

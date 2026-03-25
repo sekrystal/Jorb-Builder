@@ -1,0 +1,36 @@
+{
+  "task_id": "JORB-V1-011",
+  "title": "Add freshness and evergreen detection metrics to opportunity intelligence",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-25T14:19:43.808537+00:00",
+  "completed_at": "2026-03-25T14:26:11.171052+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T141943Z/codex_prompt.md",
+  "files_changed": [
+    "connectors/search_web.py",
+    "services/pipeline.py",
+    "tests/test_pipeline.py",
+    "tests/test_search_discovery.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T141943Z-JORB-V1-011/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "listings are classified with freshness related metrics",
+    "evergreen likelihood is represented explicitly",
+    "recommendation explanations can cite freshness logic",
+    "tests cover fresh, stale, and evergreen edge cases"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "unproven_runtime_gaps": []
+}

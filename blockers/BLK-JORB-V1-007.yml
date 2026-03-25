@@ -2,21 +2,22 @@
   "id": "BLK-JORB-V1-007",
   "title": "Task JORB-V1-007 blocked during automated execution",
   "severity": "high",
-  "opened_at": "2026-03-25T06:27:44.255796+00:00",
+  "opened_at": "2026-03-25T06:58:49.185738+00:00",
   "related_tasks": [
     "JORB-V1-007"
   ],
-  "status": "open",
+  "status": "resolved",
   "symptoms": [
-    "executor_interrupted"
+    "Product repo is dirty before automated execution; refusing to continue."
   ],
-  "diagnosis": "executor_interrupted",
+  "diagnosis": "Product repo is dirty before automated execution; refusing to continue.",
   "evidence": [
-    "executor_interrupted",
-    "sh -lc \"sed -n '1,260p' core/schemas.py\" in /Users/samuelkrystal/projects/jorb succeeded in 0ms:\nfrom __future__ import annotations\n\nfrom datetime import datetime\nfrom typing import Any, Literal, Optional\n\nfrom pydantic import BaseModel, Field\nfrom pydantic import model_validator\n\n\nFeedbackAction = Literal[\n    \"like\",\n    \"dislike\",\n    \"save\",\n    \"applied\",\n    \"mute_company\",\n    \"mute_title_pattern\",\n    \"too_senior\",\n    \"too_junior\",\n    \"wrong_function\",\n    \"wrong_geography\",\nexec\n/bin/zsh -lc \"grep -Rni \\\"def ingest_resume\\\\|@.*resume\\\\|/resume\\\\|candidate-profile\\\\|class CandidateProfilePayload\\\\|class StructuredCandidateProfile\\\\|extract_text_from_resume_upload\\\\|def _extract_summary\\\" core services api . | head -n 200\" in /Users/samuelkrystal/projects/jorb\nInterrupted by user."
+    "services/document_ingest.py"
   ],
   "next_actions": [
     "Inspect automation_result.json and narrow the next bounded refinement."
   ],
-  "human_needed": true
+  "human_needed": true,
+  "resolved_at": "2026-03-25T07:00:54.840571+00:00",
+  "resolution": "Resolved by state repair: prior dirty-repo blocker is no longer current and the task is runnable again."
 }

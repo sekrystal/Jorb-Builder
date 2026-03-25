@@ -592,6 +592,33 @@ def test_no_active_task_with_no_ready_tasks_stays_no_active_task(tmp_path: Path)
     assert "NO_READY_TASKS_REMAIN" in result.stdout
 
 
+def test_task_selected_active_state_is_runnable_for_normal_run(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "ready"
+    _write_json(builder_root / "backlog.yml", backlog)
+    active = _json(builder_root / "active_task.yml")
+    active["state"] = "task_selected"
+    _write_json(builder_root / "active_task.yml", active)
+    status = _json(builder_root / "status.yml")
+    status["state"] = "task_selected"
+    status["active_task_id"] = "TASK-BUILDER"
+    _write_json(builder_root / "status.yml", status)
+    _git(["add", "active_task.yml", "backlog.yml", "status.yml", "prompts/implement_feature.md"], builder_root)
+    _git(["commit", "-m", "prepare task selected run"], builder_root)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 0
+    assert "ACTIVE_TASK_MISSING_BUT_READY_TASKS_EXIST" not in result.stdout
+    assert "PAUSED" in result.stdout or "Step 1/9: Task selected" in result.stdout
+
+
 def test_normal_run_does_not_start_when_selector_has_no_runnable_task(tmp_path: Path) -> None:
     builder_root, _, _, _ = _setup_builder_fixture(
         tmp_path,
@@ -1275,6 +1302,7 @@ def test_fresh_run_progress_starts_near_zero_elapsed(tmp_path: Path) -> None:
     assert first_event["stage_name"] == "Task selected"
     assert first_event["elapsed_seconds"] <= 1
     assert "Elapsed: 0s" in result.stdout or "Elapsed: 1s" in result.stdout
+    assert "Step 1/9: Task selected [░░░░░░░░░░] 0% Complete" in result.stdout
 
 
 def test_codex_exec_reports_possibly_stalled_status(tmp_path: Path) -> None:
@@ -2013,10 +2041,137 @@ def test_repair_state_keeps_current_dirty_repo_blocker_blocked(tmp_path: Path) -
 
     assert repair.returncode == 0
     assert "remains blocked" in repair.stdout
+
+
+def test_repair_state_reopens_stale_executor_interruption_when_no_real_blocker_remains(tmp_path: Path) -> None:
+    builder_root, product_repo, run_log_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="discovery",
+        allowlist=["services/company_discovery.py"],
+    )
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "blocked"
+    _write_json(builder_root / "backlog.yml", backlog)
+    active = _json(builder_root / "active_task.yml")
+    active["state"] = "blocked"
+    active["target_repo"] = str(product_repo)
+    active["target_kind"] = "product"
+    active["failure_summary"] = "executor_interrupted"
+    _write_json(builder_root / "active_task.yml", active)
+    status = _json(builder_root / "status.yml")
+    status["state"] = "blocked"
+    status["last_result"] = "blocked"
+    _write_json(builder_root / "status.yml", status)
+    _write_json(
+        run_log_dir / "automation_result.json",
+        {
+            "task_id": "TASK-PRODUCT",
+            "classification": "interrupted",
+            "finished_at": "2026-03-24T00:20:00+00:00",
+            "summary": "executor_interrupted",
+            "steps": [{"name": "executor", "outcome": "interrupted", "detail": "Interrupted by user."}],
+            "changed_files": [],
+            "blocker_evidence": [],
+            "unproven_runtime_gaps": ["executor_interrupted"],
+        },
+    )
+    _write_json(
+        builder_root / "blockers" / "BLK-TASK-PRODUCT.yml",
+        {
+            "id": "BLK-TASK-PRODUCT",
+            "title": "Task TASK-PRODUCT blocked during automated execution",
+            "related_tasks": ["TASK-PRODUCT"],
+            "status": "open",
+            "diagnosis": "executor_interrupted",
+        },
+    )
+
+    repair = _run([sys.executable, str(SCRIPT), "--repair-state"], builder_root)
+    inspect = _run([sys.executable, str(SCRIPT), "--inspect-backlog"], builder_root)
+
+    assert repair.returncode == 0
+    assert "blocked -> ready" in repair.stdout
+    backlog_after = _json(builder_root / "backlog.yml")
+    assert backlog_after["tasks"][0]["status"] == "ready"
+    active_after = _json(builder_root / "active_task.yml")
+    assert active_after["task_id"] is None
+    assert active_after["state"] == "idle"
+    status_after = _json(builder_root / "status.yml")
+    assert status_after["state"] == "idle"
+    blocker_after = _json(builder_root / "blockers" / "BLK-TASK-PRODUCT.yml")
+    assert blocker_after["status"] == "resolved"
+    assert 'next_selected_task: "TASK-PRODUCT"' in inspect.stdout
+
+
+def test_dry_run_does_not_leave_stale_task_selected_state(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "ready"
+    _write_json(builder_root / "backlog.yml", backlog)
+    active = _json(builder_root / "active_task.yml")
+    active["state"] = "task_selected"
+    _write_json(builder_root / "active_task.yml", active)
+    status = _json(builder_root / "status.yml")
+    status["state"] = "task_selected"
+    status["active_task_id"] = "TASK-BUILDER"
+    _write_json(builder_root / "status.yml", status)
+    _git(["add", "active_task.yml", "backlog.yml", "status.yml", "prompts/implement_feature.md"], builder_root)
+    _git(["commit", "-m", "prepare dry run state"], builder_root)
+
+    dry_run = _run([sys.executable, str(SCRIPT), "--dry-run"], builder_root)
+    assert dry_run.returncode == 0
     active_after = _json(builder_root / "active_task.yml")
     status_after = _json(builder_root / "status.yml")
-    blocker_after = _json(builder_root / "blockers" / "BLK-TASK-PRODUCT.yml")
-    assert active_after["state"] == "blocked"
-    assert status_after["state"] == "blocked"
-    assert blocker_after["status"] == "open"
-    assert "services/company_discovery.py" in blocker_after["evidence"] or "services/" in blocker_after["evidence"]
+    assert active_after["task_id"] is None
+    assert active_after["state"] == "idle"
+    assert status_after["state"] == "idle"
+    run = _run([sys.executable, str(SCRIPT)], builder_root)
+    assert "INVALID_ACTIVE_TASK_STATE" not in run.stdout
+
+
+def test_repair_state_clears_stale_dry_run_active_state(tmp_path: Path) -> None:
+    builder_root, _, run_log_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "ready"
+    _write_json(builder_root / "backlog.yml", backlog)
+    active = _json(builder_root / "active_task.yml")
+    active["state"] = "task_selected"
+    _write_json(builder_root / "active_task.yml", active)
+    status = _json(builder_root / "status.yml")
+    status["state"] = "task_selected"
+    status["active_task_id"] = "TASK-BUILDER"
+    _write_json(builder_root / "status.yml", status)
+    _write_json(
+        run_log_dir / "automation_result.json",
+        {
+            "task_id": "TASK-BUILDER",
+            "classification": "dry_run",
+            "finished_at": "2026-03-25T07:01:48.098517+00:00",
+            "summary": "Dry run only. No executor, git, or VM commands were executed.",
+            "steps": [{"name": "plan", "outcome": "planned", "detail": "plan"}],
+            "changed_files": [],
+            "unproven_runtime_gaps": ["Automation loop not executed; this was a dry run."],
+        },
+    )
+
+    repair = _run([sys.executable, str(SCRIPT), "--repair-state"], builder_root)
+
+    assert repair.returncode == 0
+    active_after = _json(builder_root / "active_task.yml")
+    status_after = _json(builder_root / "status.yml")
+    backlog_after = _json(builder_root / "backlog.yml")
+    assert active_after["state"] == "idle"
+    assert active_after["task_id"] is None
+    assert status_after["state"] == "idle"
+    assert backlog_after["tasks"][0]["status"] == "ready"

@@ -209,8 +209,9 @@ def emit_progress(
         except ValueError:
             elapsed = 0.0
     stage_name = TASK_STAGE_NAMES[max(0, min(stage_index - 1, len(TASK_STAGE_NAMES) - 1))]
-    bar = progress_bar(stage_index, len(TASK_STAGE_NAMES))
-    percent = int((stage_index / len(TASK_STAGE_NAMES)) * 100)
+    completed_stages = max(0, min(stage_index - (0 if state == "completed" else 1), len(TASK_STAGE_NAMES)))
+    bar = progress_bar(completed_stages, len(TASK_STAGE_NAMES))
+    percent = int((completed_stages / len(TASK_STAGE_NAMES)) * 100)
     remaining_label = "runnable after current" if task_id else "runnable now"
     overall_line = f"[Overall Progress] {overall['completed']}/{overall['total']} tasks completed | {overall['remaining_ready']} {remaining_label}"
     task_line = (
@@ -1147,7 +1148,7 @@ def resolve_execution_candidate(
                     active_candidate_id = active_task_id
                 else:
                     active_reasons.append(f"blocked_state_not_retry_ready:{task_status}")
-            elif active_state in {"selected", "packet_rendered", "implementing", "verifying"}:
+            elif active_state in {"selected", "task_selected", "packet_rendered", "implementing", "verifying"}:
                 active_candidate_id = active_task_id
             else:
                 active_reasons.append(f"non_runnable_active_state:{active_state}")
@@ -1175,6 +1176,29 @@ def is_auth_preflight_only_block(active: dict[str, Any], status: dict[str, Any],
         and steps[0].get("name") == "auth_preflight"
         and not active.get("handed_to_codex_at")
         and status.get("last_result") == "blocked"
+    )
+
+
+def is_executor_interrupted_only_block(active: dict[str, Any], status: dict[str, Any], run_result: dict[str, Any] | None) -> bool:
+    if not run_result:
+        return False
+    steps = list(run_result.get("steps", []))
+    return (
+        run_result.get("classification") in {"blocked", "interrupted"}
+        and run_result.get("summary") == "executor_interrupted"
+        and len(steps) == 1
+        and steps[0].get("name") == "executor"
+        and steps[0].get("outcome") in {"blocked", "interrupted"}
+        and status.get("last_result") in {"blocked", "interrupted"}
+    )
+
+
+def is_stale_dry_run_state(active: dict[str, Any], status: dict[str, Any], run_result: dict[str, Any] | None) -> bool:
+    return (
+        bool(run_result)
+        and run_result.get("classification") == "dry_run"
+        and active.get("state") == "task_selected"
+        and status.get("state") == "task_selected"
     )
 
 
@@ -1286,6 +1310,90 @@ def repair_legacy_state() -> int:
         if resolved is not None:
             repaired.append(f"{resolved.name} resolved")
 
+        print("STATE_REPAIRED")
+        for line in repaired:
+            print(f"- {line}")
+        return 0
+
+    if task is not None and is_stale_dry_run_state(active, status, run_result):
+        if task.get("status") in {"selected", "packet_rendered", "ready"}:
+            task["status"] = "ready"
+            task.setdefault("notes", []).append(
+                "Repaired from stale dry-run state; no execution occurred and the task remains runnable."
+            )
+            write_data(BACKLOG, backlog)
+            repaired.append(f"backlog task {task_id} normalized -> ready")
+        repaired_active = reset_active()
+        repaired_active["previous_run_log_dir"] = active.get("run_log_dir")
+        write_data(ACTIVE, repaired_active)
+        status["state"] = "idle"
+        status["active_task_id"] = None
+        status["last_task_id"] = task_id
+        status["last_result"] = status.get("last_result")
+        status["last_run_at"] = now_iso()
+        write_data(STATUS, status)
+        repaired.append("stale dry-run active state -> idle")
+        print("STATE_REPAIRED")
+        for line in repaired:
+            print(f"- {line}")
+        return 0
+
+    if task is not None and task.get("status") == "blocked" and is_executor_interrupted_only_block(active, status, run_result):
+        target_kind, target_repo, dirty_files = blocked_dirty_repo_truth(task, active)
+        if dirty_files:
+            summary = f"{target_kind.title()} repo is dirty before automated execution; refusing to continue."
+            blocker_path = update_blocker_for_task(
+                str(task_id),
+                summary=summary,
+                evidence=dirty_files,
+                next_actions=[
+                    f"cd {target_repo}",
+                    "git status --short",
+                    "# commit, stash, or remove the in-progress changes before rerunning the builder",
+                ],
+            )
+            terminal_run_dir = latest_terminal_run_dir(active) or (Path(str(active["run_log_dir"])).expanduser().resolve() if active.get("run_log_dir") else None)
+            if terminal_run_dir and active.get("run_log_dir") and str(terminal_run_dir) != str(Path(str(active["run_log_dir"])).expanduser().resolve()):
+                active["previous_run_log_dir"] = active.get("run_log_dir")
+            sync_run_state(
+                active,
+                status,
+                "blocked",
+                task_id=active.get("task_id"),
+                title=active.get("title"),
+                run_log_dir=terminal_run_dir,
+                failure_summary=summary,
+                last_result="blocked",
+            )
+            write_data(BACKLOG, backlog)
+            repaired.append(f"{task_id} remains blocked: current dirty files still exist in {target_repo}")
+            repaired.append(f"{blocker_path.name} evidence refreshed")
+            print("STATE_REPAIRED")
+            for line in repaired:
+                print(f"- {line}")
+            return 0
+
+        task["status"] = "ready"
+        task.setdefault("notes", []).append(
+            "Repaired from stale executor interruption; no underlying blocker remains and the task is runnable again."
+        )
+        write_data(BACKLOG, backlog)
+        repaired_active = reset_active()
+        repaired_active["previous_run_log_dir"] = active.get("run_log_dir")
+        write_data(ACTIVE, repaired_active)
+        status["state"] = "idle"
+        status["active_task_id"] = None
+        status["last_task_id"] = task_id
+        status["last_result"] = "interrupted"
+        status["last_run_at"] = now_iso()
+        write_data(STATUS, status)
+        repaired.append(f"backlog task {task_id} blocked -> ready")
+        resolved = resolve_blocker_for_task(
+            str(task_id),
+            resolution="Resolved by state repair: prior executor interruption left no real blocker and the task is runnable again.",
+        )
+        if resolved is not None:
+            repaired.append(f"{resolved.name} resolved")
         print("STATE_REPAIRED")
         for line in repaired:
             print(f"- {line}")
@@ -1742,6 +1850,17 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         }
         write_json(run_dir / RESULT_FILE, payload)
         write_summary(run_dir, payload)
+        if task.get("status") in {"selected", "packet_rendered"}:
+            task["status"] = "ready"
+            write_data(BACKLOG, backlog)
+        repaired_active = reset_active()
+        repaired_active["previous_run_log_dir"] = str(run_dir)
+        write_data(ACTIVE, repaired_active)
+        status["state"] = "idle"
+        status["active_task_id"] = None
+        status["last_task_id"] = task["id"]
+        status["last_run_at"] = now_iso()
+        write_data(STATUS, status)
         print_result("DRY_RUN", f"Plan written to {run_dir / RESULT_FILE}")
         return 0
 
@@ -1973,8 +2092,8 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
                     f"output_exists={str(payload.get('last_message_exists')).lower()} | "
                     f"output_size={payload.get('last_message_size_bytes')}B | "
                     f"output_mtime={payload.get('last_message_mtime') or 'none'} | "
-                    f"artifact_age={payload.get('seconds_since_artifact_change') if payload.get('seconds_since_artifact_change') is not None else 'none'}s | "
-                    f"stream_age={payload.get('seconds_since_stream_activity') if payload.get('seconds_since_stream_activity') is not None else 'none'}s | "
+                    f"artifact_age={(str(payload.get('seconds_since_artifact_change')) + 's') if payload.get('seconds_since_artifact_change') is not None else 'none'} | "
+                    f"stream_age={(str(payload.get('seconds_since_stream_activity')) + 's') if payload.get('seconds_since_stream_activity') is not None else 'none'} | "
                     f"stdout_seen={str(payload.get('stdout_seen')).lower()} | "
                     f"stderr_seen={str(payload.get('stderr_seen')).lower()} | "
                     f"poll={payload.get('process_status')}"

@@ -410,7 +410,7 @@
       "area": "onboarding",
       "milestone": "M4",
       "priority": 1,
-      "status": "blocked",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V1-006"
@@ -446,7 +446,13 @@
         "Repaired from auth-preflight-only blocked attempt; task restored to ready for a truthful fresh rerun.",
         "Product repo is dirty before automated execution; refusing to continue.",
         "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again.",
-        "executor_interrupted"
+        "executor_interrupted",
+        "Repaired from stale executor interruption; no underlying blocker remains and the task is runnable again.",
+        "executor_interrupted",
+        "Product repo is dirty before automated execution; refusing to continue.",
+        "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again.",
+        "Repaired from stale dry-run state; no execution occurred and the task remains runnable.",
+        "Automated loop completed with VM validation success."
       ],
       "repo_path": "~/projects/jorb",
       "description": "Add a working resume and PDF upload flow that parses documents into structured profile fields instead of storing opaque text blobs.\n\nStructured extraction is the bridge between raw user documents and usable targeting inputs for profile-driven opportunity intelligence.",
@@ -465,7 +471,7 @@
       "area": "onboarding",
       "milestone": "M4",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V1-007"
@@ -495,7 +501,9 @@
         "interface remains simple and comprehensible",
         "tests cover persistence and downstream usage"
       ],
-      "notes": [],
+      "notes": [
+        "Automated loop completed with VM validation success."
+      ],
       "repo_path": "~/projects/jorb",
       "description": "Add onboarding fields for confirmed skills, competencies, and explicit preferences that write into the structured profile layer.\n\nUsers need a clean way to confirm or correct extracted data before those inputs drive search parameters and recommendation logic.",
       "acceptance_criteria": [
@@ -513,7 +521,7 @@
       "area": "onboarding",
       "milestone": "M4",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V1-008"
@@ -541,7 +549,9 @@
         "output of onboarding becomes structured search and scoring input",
         "tests cover onboarding state progression"
       ],
-      "notes": [],
+      "notes": [
+        "Automated loop completed with VM validation success."
+      ],
       "repo_path": "~/projects/jorb",
       "description": "Build a minimal onboarding flow from resume upload through profile review into target role selection and discovery entry.\n\nA clean onboarding path is required before profile-aware targeting can become a real product capability instead of scattered UI fields.",
       "acceptance_criteria": [
@@ -558,7 +568,7 @@
       "area": "intelligence",
       "milestone": "M4",
       "priority": 1,
-      "status": "pending",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V1-006"
@@ -587,7 +597,9 @@
         "final score and explanation can be surfaced in UI and API",
         "tests cover score assembly and explanation structure"
       ],
-      "notes": [],
+      "notes": [
+        "Automated loop completed with VM validation success."
+      ],
       "repo_path": "~/projects/jorb",
       "description": "Define a transparent recommendation score schema with explicit component metrics and traceable inputs.\n\nJORB\u2019s advantage depends on interpretable opportunity intelligence, not black-box ranking or generic advice.",
       "acceptance_criteria": [
@@ -604,7 +616,7 @@
       "area": "intelligence",
       "milestone": "M4",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V1-010"
@@ -633,7 +645,9 @@
         "recommendation explanations can cite freshness logic",
         "tests cover fresh, stale, and evergreen edge cases"
       ],
-      "notes": [],
+      "notes": [
+        "Automated loop completed with VM validation success."
+      ],
       "repo_path": "~/projects/jorb",
       "description": "Add explicit freshness, staleness, and evergreen metrics to opportunity intelligence with inspectable logic.\n\nAction guidance depends on whether a role is fresh, stale, or likely evergreen, not just whether it exists.",
       "acceptance_criteria": [
@@ -650,7 +664,7 @@
       "area": "ingestion",
       "milestone": "M3",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V1-010"
@@ -678,7 +692,9 @@
         "provenance shows user submitted versus system discovered",
         "tests cover ingestion and evaluation behavior"
       ],
-      "notes": [],
+      "notes": [
+        "Automated loop completed with VM validation success."
+      ],
       "repo_path": "~/projects/jorb",
       "description": "Let users submit job links and run them through the same normalization and evaluation pipeline as discovered listings.\n\nJORB should win on decision quality even when the listing source is user-supplied rather than system-discovered.",
       "acceptance_criteria": [
@@ -695,7 +711,7 @@
       "area": "discovery",
       "milestone": "M2",
       "priority": 1,
-      "status": "pending",
+      "status": "ready",
       "retries_used": 0,
       "depends_on": [
         "JORB-V1-002"
@@ -743,7 +759,7 @@
       "area": "strategy",
       "milestone": "M4",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V1-010",
@@ -773,7 +789,9 @@
         "UI renders action guidance clearly",
         "tests cover label selection and explanation output"
       ],
-      "notes": [],
+      "notes": [
+        "Automated loop completed with VM validation success."
+      ],
       "repo_path": "~/projects/jorb",
       "description": "Add explicit action labels and compact explanations so surfaced roles come with decision-oriented guidance.\n\nUsers need to know whether to act now, wait, seek a referral, or skip, and why those recommendations were made.",
       "acceptance_criteria": [
@@ -790,7 +808,7 @@
       "area": "tracking",
       "milestone": "M3",
       "priority": 1,
-      "status": "pending",
+      "status": "ready",
       "retries_used": 0,
       "depends_on": [],
       "prompt": "implement_feature",
@@ -832,7 +850,7 @@
       "area": "learning",
       "milestone": "M4",
       "priority": 2,
-      "status": "pending",
+      "status": "ready",
       "retries_used": 0,
       "depends_on": [
         "JORB-V1-015"
@@ -877,7 +895,7 @@
       "area": "strategy",
       "milestone": "M4",
       "priority": 2,
-      "status": "pending",
+      "status": "ready",
       "retries_used": 0,
       "depends_on": [
         "JORB-V1-006"
@@ -923,7 +941,7 @@
       "area": "privacy",
       "milestone": "M4",
       "priority": 2,
-      "status": "pending",
+      "status": "ready",
       "retries_used": 0,
       "depends_on": [
         "JORB-V1-006"
@@ -966,7 +984,7 @@
       "area": "builder",
       "milestone": "M0",
       "priority": 1,
-      "status": "pending",
+      "status": "blocked",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-002"
@@ -989,7 +1007,9 @@
         "long running runs show current phase and elapsed time",
         "tests cover progress event emission where practical"
       ],
-      "notes": [],
+      "notes": [
+        "Builder repo is dirty before automated execution; refusing to continue."
+      ],
       "repo_path": "~/projects/jorb-builder",
       "description": "Add readable live progress output and elapsed timing to long-running builder loop steps.\n\nThe loop is now live and callable, so operator visibility during long executor, validation, git, and VM phases matters more than before.",
       "acceptance_criteria": [
@@ -1005,7 +1025,7 @@
       "area": "builder",
       "milestone": "M0",
       "priority": 1,
-      "status": "pending",
+      "status": "ready",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-002"
@@ -1044,7 +1064,7 @@
       "area": "builder",
       "milestone": "M0",
       "priority": 2,
-      "status": "pending",
+      "status": "ready",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-002"
