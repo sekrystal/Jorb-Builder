@@ -13,7 +13,7 @@
   "active_task_id": "JORB-V1-002",
   "last_task_id": "JORB-V1-002",
   "last_result": "refined",
-  "last_run_at": "2026-03-25T00:05:44.721300+00:00",
+  "last_run_at": "2026-03-25T00:27:10.236491+00:00",
   "roadmap_focus": {
     "milestone": "M2",
     "theme": "discovery"
@@ -21,7 +21,7 @@
   "stats": {
     "completed_tasks": 2,
     "blocked_tasks": 7,
-    "retry_ready_tasks": 2
+    "retry_ready_tasks": 3
   },
   "notes": [
     "Builder v1 bootstrapped",
@@ -33,6 +33,7 @@
     "JORB-INFRA-001 is accepted for the intended v1 human_gated scope; callable executor integration remains a follow-on infra task.",
     "JORB-V1-002 is restored as the next active product task and has a fresh packet rendered for execution through the hardened builder loop.",
     "JORB-V1-002 handoff state was repaired so the existing packet can resume through the automation loop.",
-    "The earlier dirty-product-repo block came from the pre-fix resume path and should not be treated as the current task state."
+    "The earlier dirty-product-repo block came from the pre-fix resume path and should not be treated as the current task state.",
+    "JORB-V1-002 should currently continue via retry_ready continuation on python3 scripts/automate_task_loop.py."
   ]
 }

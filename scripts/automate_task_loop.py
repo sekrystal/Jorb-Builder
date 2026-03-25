@@ -369,6 +369,15 @@ def validate_active_task_context(
     return None
 
 
+def is_retry_continuation(active: dict[str, Any], status: dict[str, Any], *, resume: bool) -> bool:
+    return (
+        not resume
+        and active.get("state") == "failed"
+        and status.get("state") == "retry_ready"
+        and status.get("active_task_id") == active.get("task_id")
+    )
+
+
 def classify_and_update_state(
     classification: str,
     summary: str,
@@ -486,6 +495,7 @@ def main() -> int:
     )
     use_vm_flow = target_kind == "product"
     ignored_git_paths = ignored_git_paths_for_target(target_kind)
+    retry_continuation = is_retry_continuation(active, status, resume=args.resume)
     plan = {
         "task_id": task["id"],
         "prompt_file": active["prompt_file"],
@@ -501,6 +511,7 @@ def main() -> int:
         "vm_commands": [render_template(command, context) for command in vm_commands] if use_vm_flow else [],
         "ssh_target": vm_config.get("ssh_target") if use_vm_flow else None,
         "missing_configuration": [],
+        "retry_continuation": retry_continuation,
     }
     if executor_mode != "human_gated" and not executor_config.get("command"):
         plan["missing_configuration"].append("executor.command")
@@ -556,7 +567,7 @@ def main() -> int:
 
     baseline = git_status_porcelain(target_repo, ignored_prefixes=ignored_git_paths)
     write_step(run_dir, "git_status_before", baseline)
-    if not args.resume and git_config.get("require_clean_worktree", True) and baseline.get("files"):
+    if not args.resume and not retry_continuation and git_config.get("require_clean_worktree", True) and baseline.get("files"):
         summary = f"{target_kind.title()} repo is dirty before automated execution; refusing to continue."
         blocker_evidence.extend(baseline.get("files", []))
         automation_result = {
@@ -577,7 +588,7 @@ def main() -> int:
         print_result("BLOCKED", summary, f"Clean {target_repo} or relax git.require_clean_worktree before rerunning python3 scripts/automate_task_loop.py.")
         return 2
 
-    if not args.resume and executor_mode == "human_gated":
+    if not args.resume and not retry_continuation and executor_mode == "human_gated":
         handoff_note = "Manual JORB Codex execution is required before resume."
         handoff_payload = {
             "mode": "human_gated",
@@ -645,6 +656,33 @@ def main() -> int:
                 extra=f"Prompt file: {active['prompt_file']}",
             )
             return 0
+    elif retry_continuation:
+        after_executor = baseline
+        write_step(run_dir, "retry_check", after_executor)
+        steps.append({
+            "name": "retry_check",
+            "outcome": "passed" if after_executor.get("files") else "refined",
+            "detail": f"Continuing from existing {target_kind} repo task changes." if after_executor.get("files") else f"No {target_kind} repo changes were found for retry continuation.",
+        })
+        if not after_executor.get("files"):
+            summary = f"Retry-ready task has no {target_kind} repo changes to continue from."
+            automation_result = {
+                "task_id": task["id"],
+                "classification": "refined",
+                "finished_at": now_iso(),
+                "summary": summary,
+                "steps": steps,
+                "changed_files": [],
+                "blocker_evidence": [],
+                "unproven_runtime_gaps": [summary],
+            }
+            write_json(run_dir / RESULT_FILE, automation_result)
+            write_summary(run_dir, automation_result)
+            classify_and_update_state("refined", summary, task, backlog, active, status, automation_result)
+            write_data(BACKLOG, backlog)
+            write_data(STATUS, status)
+            print_result("REFINED", summary, f"Reapply or restore the task changes in {target_repo}, then rerun python3 scripts/automate_task_loop.py.")
+            return 1
     else:
         executor_result = run_shell(
             plan["executor_command"],
@@ -721,7 +759,11 @@ def main() -> int:
         classify_and_update_state("refined", summary, task, backlog, active, status, automation_result)
         write_data(BACKLOG, backlog)
         write_data(STATUS, status)
-        print_result("REFINED", summary, f"Apply the packet in {target_repo} and rerun python3 scripts/automate_task_loop.py --resume if using human-gated execution.")
+        if retry_continuation:
+            next_action = f"Fix the task changes already present in {target_repo}, then rerun python3 scripts/automate_task_loop.py."
+        else:
+            next_action = f"Apply the packet in {target_repo} and rerun python3 scripts/automate_task_loop.py --resume if using human-gated execution."
+        print_result("REFINED", summary, next_action)
         return 1
 
     if target_kind == "product" and local_validation_commands and validation_venv is None:
@@ -782,7 +824,11 @@ def main() -> int:
         classify_and_update_state("refined", summary, task, backlog, active, status, automation_result)
         write_data(BACKLOG, backlog)
         write_data(STATUS, status)
-        print_result("REFINED", summary, f"Inspect local validation output in {run_dir / RESULT_FILE}, fix the issue, then rerun python3 scripts/automate_task_loop.py.")
+        if retry_continuation:
+            next_action = f"Inspect local validation output in {run_dir / RESULT_FILE}, fix the current task changes in {target_repo}, then rerun python3 scripts/automate_task_loop.py."
+        else:
+            next_action = f"Inspect local validation output in {run_dir / RESULT_FILE}, fix the issue, then rerun python3 scripts/automate_task_loop.py."
+        print_result("REFINED", summary, next_action)
         return 1
 
     git_add = run_argv(["git", "add", "-A"], target_repo)

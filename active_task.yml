@@ -22,13 +22,14 @@
     "tests/test_sync.py",
     "tests/test_workbench.py"
   ],
-  "failure_summary": "Local validation failed after executor changes.",
+  "failure_summary": "VM validation failed after local validation and git push succeeded.",
   "notes": [
     "Restored as the next product task after accepting JORB-INFRA-001 for the v1 human_gated scope.",
     "Packet was already handed to Codex before builder state was repaired for resume.",
     "Resume should continue from the existing packet and run log.",
     "Resume attempted before product repo changes were present.",
-    "Blocked dirty-product-repo result came from the pre-fix resume path and should not prevent a fresh resume under the state-aware logic."
+    "Blocked dirty-product-repo result came from the pre-fix resume path and should not prevent a fresh resume under the state-aware logic.",
+    "Task is being continued from retry_ready state after local validation failed on existing product changes."
   ],
   "target_repo": "/Users/samuelkrystal/projects/jorb",
   "target_kind": "product"

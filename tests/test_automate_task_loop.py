@@ -114,6 +114,20 @@ def _base_active(task_id: str, prompt_file: Path, run_log_dir: Path, allowlist: 
     }
 
 
+def _mark_retry_ready(builder_root: Path, *, handed_to_codex_at: str = "2026-03-24T00:10:00+00:00") -> None:
+    active = _json(builder_root / "active_task.yml")
+    active["state"] = "failed"
+    active["handed_to_codex_at"] = handed_to_codex_at
+    _write_json(builder_root / "active_task.yml", active)
+
+    status = _json(builder_root / "status.yml")
+    status["state"] = "retry_ready"
+    status["active_task_id"] = active["task_id"]
+    status["last_task_id"] = active["task_id"]
+    status["last_result"] = "refined"
+    _write_json(builder_root / "status.yml", status)
+
+
 def _base_config(product_repo: Path, builder_root: Path) -> dict:
     return {
         "builder": {"name": "jorb-builder-v1", "version": 1},
@@ -382,6 +396,78 @@ def test_product_validation_fails_clearly_without_venv(tmp_path: Path) -> None:
     payload = _json(run_log_dir / "automation_result.json")
     assert payload["classification"] == "blocked"
     assert "No product validation virtualenv found" in payload["summary"]
+
+
+def test_retry_ready_product_task_continues_from_expected_dirty_files(tmp_path: Path) -> None:
+    builder_root, product_repo, run_log_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="discovery",
+        allowlist=["services/company_discovery.py"],
+    )
+    _commit_allowlisted_product_file(product_repo, "services/company_discovery.py", "print('seed')\n")
+    _ignore_path_in_git_status(product_repo, ".venv_validation")
+    _write_activate_script(product_repo / ".venv_validation")
+
+    active = _json(builder_root / "active_task.yml")
+    active["verification_commands"] = [f'test "$VIRTUAL_ENV" = "{product_repo / ".venv_validation"}"']
+    _write_json(builder_root / "active_task.yml", active)
+    _mark_retry_ready(builder_root)
+
+    (product_repo / "services" / "company_discovery.py").write_text("print('changed')\n", encoding="utf-8")
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode in {1, 2}
+    assert "dirty before automated execution" not in result.stdout
+    payload = _json(run_log_dir / "automation_result.json")
+    step_names = [step["name"] for step in payload["steps"]]
+    assert "retry_check" in step_names
+    assert "local_validation" in step_names
+    validation = _json(run_log_dir / "local_validation.json")
+    assert validation["passed"] is True
+    assert validation["venv_path"] == str(product_repo / ".venv_validation")
+
+
+def test_retry_ready_product_task_blocks_out_of_allowlist_dirty_files(tmp_path: Path) -> None:
+    builder_root, product_repo, run_log_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="discovery",
+        allowlist=["services/company_discovery.py"],
+    )
+    _mark_retry_ready(builder_root)
+    (product_repo / "wrong.txt").write_text("wrong file\n", encoding="utf-8")
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 2
+    assert "dirty before automated execution" not in result.stdout
+    assert "outside the task allowlist" in result.stdout
+    payload = _json(run_log_dir / "automation_result.json")
+    step_names = [step["name"] for step in payload["steps"]]
+    assert "retry_check" in step_names
+    assert payload["classification"] == "blocked"
+    assert "wrong.txt" in payload["blocker_evidence"]
+
+
+def test_fresh_product_execution_still_blocks_on_dirty_repo(tmp_path: Path) -> None:
+    builder_root, product_repo, run_log_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="discovery",
+        allowlist=["services/company_discovery.py"],
+    )
+    (product_repo / "services").mkdir(exist_ok=True)
+    (product_repo / "services" / "company_discovery.py").write_text("print('changed')\n", encoding="utf-8")
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 2
+    assert "dirty before automated execution" in result.stdout
+    payload = _json(run_log_dir / "automation_result.json")
+    assert payload["classification"] == "blocked"
+    assert "Product repo is dirty before automated execution" in payload["summary"]
 
 
 def test_dirty_repo_blocks_and_preserves_active_task(tmp_path: Path) -> None:

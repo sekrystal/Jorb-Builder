@@ -133,7 +133,7 @@
       "milestone": "M2",
       "priority": 1,
       "status": "retry_ready",
-      "retries_used": 1,
+      "retries_used": 2,
       "depends_on": [
         "JORB-V1-001"
       ],
@@ -172,7 +172,10 @@
         "Preserved for later continuation after builder automation is hardened via JORB-INFRA-001.",
         "Restored as the next product task after accepting JORB-INFRA-001 for the human_gated v1 scope.",
         "Product repo is dirty before automated execution; refusing to continue.",
-        "Local validation failed after executor changes."
+        "Local validation failed after executor changes.",
+        "Product repo is dirty before automated execution; refusing to continue.",
+        "Product repo is dirty before automated execution; refusing to continue.",
+        "VM validation failed after local validation and git push succeeded."
       ]
     },
     {
