@@ -562,8 +562,8 @@ def main() -> int:
     vm_config = config.get("vm", {})
     executor_mode = executor_config.get("mode") or "command"
     shell_executable = executor_config.get("shell") or "/bin/zsh"
-    vm_repo = expand_path(vm_config.get("product_repo", "~/projects/jorb"))
-    context["vm_product_repo"] = str(vm_repo)
+    vm_repo = str(vm_config.get("product_repo", "~/projects/jorb"))
+    context["vm_product_repo"] = vm_repo
 
     vm_commands = list(vm_config.get("validation_commands", [])) + list(vm_config.get("runtime_validation_commands", []))
     local_validation_commands = list(active.get("verification_commands", []))
@@ -967,13 +967,13 @@ def main() -> int:
     if use_vm_flow:
         ssh_target = vm_config["ssh_target"]
         ssh_options = list(vm_config.get("ssh_options", []))
-        vm_pull_command = f"cd {shlex.quote(str(vm_repo))} && {plan['vm_pull_command']}"
+        vm_pull_command = f"cd {shlex.quote(vm_repo)} && {plan['vm_pull_command']}"
         vm_pull = ssh_command(ssh_target, ssh_options, vm_pull_command, ROOT)
         vm_results = [vm_pull]
         vm_passed = vm_pull["passed"]
         if vm_passed:
             for command in plan["vm_commands"]:
-                remote = f"cd {shlex.quote(str(vm_repo))} && {command}"
+                remote = f"cd {shlex.quote(vm_repo)} && {command}"
                 result = ssh_command(ssh_target, ssh_options, remote, ROOT)
                 vm_results.append(result)
                 if not result["passed"]:

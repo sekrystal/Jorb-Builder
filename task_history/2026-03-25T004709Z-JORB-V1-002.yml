@@ -1,0 +1,38 @@
+{
+  "task_id": "JORB-V1-002",
+  "title": "Persist and expose discovery query-family metrics end to end",
+  "status": "refined",
+  "attempt": 1,
+  "started_at": "2026-03-24T23:45:52+00:00",
+  "completed_at": "2026-03-25T00:47:09.499279+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-24T234552Z/codex_prompt.md",
+  "files_changed": [
+    "connectors/search_web.py",
+    "services/company_discovery.py",
+    "services/sync.py",
+    "tests/test_company_discovery.py",
+    "tests/test_search_discovery.py",
+    "tests/test_sync.py",
+    "tests/test_workbench.py",
+    "ui/app.py"
+  ],
+  "commands_run": [],
+  "results": [
+    "passed",
+    "refined"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [
+    "cycle_metrics contains query_family_metrics persisted from the latest cycle",
+    "discovery status exposes query family truth",
+    "UI can render query-family diagnostics without touching /leads",
+    "targeted tests and preflight pass"
+  ],
+  "blocker_opened": null,
+  "notes": [
+    "VM validation failed after local validation and git push succeeded."
+  ],
+  "unproven_runtime_gaps": [
+    "VM validation failed after local validation and git push succeeded."
+  ]
+}

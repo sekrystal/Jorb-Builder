@@ -518,6 +518,34 @@ def test_retry_ready_product_task_retries_vm_without_dirty_files(tmp_path: Path)
     assert "retry_check" in step_names
     assert "vm_validation" in step_names
     assert payload["summary"] == "VM validation failed after local validation and git push succeeded."
+    vm_validation = _json(run_log_dir / "vm_validation.json")
+    assert "ssh -o ConnectTimeout=1 127.0.0.1 " in vm_validation["results"][0]["command"]
+    assert "cd " + str(product_repo) + " && git pull --ff-only" in vm_validation["results"][0]["command"]
+
+
+def test_vm_remote_home_path_is_preserved_in_ssh_command(tmp_path: Path) -> None:
+    builder_root, _, run_log_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="discovery",
+        allowlist=["services/company_discovery.py"],
+    )
+    _mark_retry_ready(builder_root)
+    _write_prior_vm_refined_result(run_log_dir, changed_files=["services/company_discovery.py"])
+
+    config = _json(builder_root / "config.yml")
+    config["vm"]["ssh_target"] = "127.0.0.1"
+    config["vm"]["ssh_options"] = ["-o", "ConnectTimeout=1"]
+    config["vm"]["product_repo"] = "/home/gargantua1/projects/jorb"
+    _write_json(builder_root / "config.yml", config)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 1
+    vm_validation = _json(run_log_dir / "vm_validation.json")
+    assert "ssh -o ConnectTimeout=1 127.0.0.1 " in vm_validation["results"][0]["command"]
+    assert "cd /home/gargantua1/projects/jorb && git pull --ff-only" in vm_validation["results"][0]["command"]
+    assert "/System/Volumes/Data/home/gargantua1/projects/jorb" not in vm_validation["results"][0]["command"]
 
 
 def test_retry_ready_product_task_recovers_vm_retry_from_stage_files(tmp_path: Path) -> None:
@@ -608,3 +636,32 @@ def test_dirty_repo_blocks_and_preserves_active_task(tmp_path: Path) -> None:
     payload = _json(run_log_dir / "automation_result.json")
     assert payload["classification"] == "blocked"
     assert "Builder repo is dirty" in payload["summary"]
+
+
+def test_local_product_repo_path_still_behaves_as_expected(tmp_path: Path) -> None:
+    builder_root, product_repo, run_log_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="discovery",
+        allowlist=["services/company_discovery.py"],
+    )
+    _commit_allowlisted_product_file(product_repo, "services/company_discovery.py", "print('seed')\n")
+    _ignore_path_in_git_status(product_repo, ".venv_validation")
+    _write_activate_script(product_repo / ".venv_validation")
+
+    active = _json(builder_root / "active_task.yml")
+    active["verification_commands"] = [f'test "$VIRTUAL_ENV" = "{product_repo / ".venv_validation"}"']
+    _write_json(builder_root / "active_task.yml", active)
+
+    pause = _run([sys.executable, str(SCRIPT)], builder_root)
+    assert pause.returncode == 0
+
+    (product_repo / "services" / "company_discovery.py").write_text("print('changed')\n", encoding="utf-8")
+
+    resume = _run([sys.executable, str(SCRIPT), "--resume"], builder_root)
+
+    assert resume.returncode in {1, 2}
+    updated_active = _json(builder_root / "active_task.yml")
+    assert updated_active["target_repo"] == str(product_repo)
+    validation = _json(run_log_dir / "local_validation.json")
+    assert validation["venv_path"] == str(product_repo / ".venv_validation")

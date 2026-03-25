@@ -13,7 +13,7 @@
   "active_task_id": "JORB-V1-002",
   "last_task_id": "JORB-V1-002",
   "last_result": "refined",
-  "last_run_at": "2026-03-25T00:38:28.933014+00:00",
+  "last_run_at": "2026-03-25T00:47:09.505407+00:00",
   "roadmap_focus": {
     "milestone": "M2",
     "theme": "discovery"
@@ -21,7 +21,7 @@
   "stats": {
     "completed_tasks": 2,
     "blocked_tasks": 7,
-    "retry_ready_tasks": 6
+    "retry_ready_tasks": 7
   },
   "notes": [
     "Builder v1 bootstrapped",

@@ -133,7 +133,7 @@
       "milestone": "M2",
       "priority": 1,
       "status": "retry_ready",
-      "retries_used": 5,
+      "retries_used": 6,
       "depends_on": [
         "JORB-V1-001"
       ],
@@ -178,6 +178,7 @@
         "VM validation failed after local validation and git push succeeded.",
         "Retry-ready task has no product repo changes to continue from.",
         "Retry-ready task has no product repo changes to continue from.",
+        "VM validation failed after local validation and git push succeeded.",
         "VM validation failed after local validation and git push succeeded."
       ]
     },
