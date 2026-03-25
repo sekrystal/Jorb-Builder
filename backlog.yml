@@ -901,7 +901,7 @@
       "area": "strategy",
       "milestone": "M4",
       "priority": 2,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V1-006"
@@ -930,7 +930,9 @@
         "no outreach content or automation is produced",
         "tests cover import and matching logic"
       ],
-      "notes": [],
+      "notes": [
+        "Automated loop completed with VM validation success."
+      ],
       "repo_path": "~/projects/jorb",
       "description": "Add local network-data import so JORB can suggest referral paths and contact adjacency without automating outreach.\n\nReferral strategy can improve decision quality, but it should stay local-first and non-automated.",
       "acceptance_criteria": [
@@ -947,7 +949,7 @@
       "area": "privacy",
       "milestone": "M4",
       "priority": 2,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V1-006"
@@ -974,7 +976,9 @@
         "system distinguishes local versus cloud assisted paths",
         "tests cover inventory generation and basic export behavior"
       ],
-      "notes": [],
+      "notes": [
+        "Automated loop completed with VM validation success."
+      ],
       "repo_path": "~/projects/jorb",
       "description": "Add a local data inventory surface so users can inspect stored data categories, provenance, and usage.\n\nA local-first product needs clear privacy surfaces before broader profile and learning features can be trusted.",
       "acceptance_criteria": [

@@ -129,3 +129,7 @@ Does this directly improve:
 - JORB-INFRA-005 accepted by automated loop. History: 2026-03-25T183336Z-JORB-INFRA-005.yml
 
 - JORB-V1-016 accepted by automated loop. History: 2026-03-25T183805Z-JORB-V1-016.yml
+
+- JORB-V1-017 accepted by automated loop. History: 2026-03-25T191959Z-JORB-V1-017.yml
+
+- JORB-V1-018 accepted by automated loop. History: 2026-03-25T192410Z-JORB-V1-018.yml

@@ -1,0 +1,118 @@
+{
+  "task_id": "JORB-V1-018",
+  "title": "Add privacy and local data inventory surface",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-25T19:19:59.771738+00:00",
+  "completed_at": "2026-03-25T19:24:10.227701+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191959Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191959Z-JORB-V1-018",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191959Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191959Z-JORB-V1-018"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191959Z-JORB-V1-018/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191959Z-JORB-V1-018/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191959Z-JORB-V1-018/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191959Z-JORB-V1-018/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191959Z-JORB-V1-018/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191959Z-JORB-V1-018/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191959Z-JORB-V1-018/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191959Z-JORB-V1-018/executor.json"
+    }
+  ],
+  "files_changed": [
+    "services/profile.py",
+    "tests/test_profile.py",
+    "tests/test_workbench.py",
+    "ui/app.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191959Z-JORB-V1-018/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "user can inspect local stored data categories and provenance",
+    "system distinguishes local versus cloud assisted paths",
+    "tests cover inventory generation and basic export behavior"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [
+      "user can inspect local stored data categories and provenance",
+      "system distinguishes local versus cloud assisted paths",
+      "tests cover inventory generation and basic export behavior"
+    ],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Added a privacy inventory builder in `services/profile.py` that reports stored profile data categories, provenance, usage, example values, and whether each category is `local_only` or `cloud_assisted`. Added a new read-only Privacy / local data inventory surface plus JSON export in `ui/app.py`. Added tests for inventory generation, processing-path labeling, and export summary behavior.\n\n2. Exact files changed\n   1. `services/profile.py`\n   2. `ui/app.py`\n   3. `tests/test_profile.py`\n   4. `tests/test_workbench.py`\n\n3. Exact tests added or updated\n   1. Added `test_profile_data_inventory_surfaces_categories_provenance_and_processing_path` in [/Users/samuelkrystal/projects/jorb/tests/test_profile.py](/Users/samuelkrystal/projects/jorb/tests/test_profile.py)\n   2. Added `test_profile_inventory_frame_labels_local_and_cloud_assisted_categories` in [/Users/samuelkrystal/projects/jorb/tests/test_workbench.py](/Users/samuelkrystal/projects/jorb/tests/test_workbench.py)\n   3. Added `test_profile_inventory_export_summarizes_basic_export_behavior` in [/Users/samuelkrystal/projects/jorb/tests/test_workbench.py](/Users/samuelkrystal/projects/jorb/tests/test_workbench.py)\n\n4. Exact commands run\n   1. `sed -n '1,260p' services/profile.py`\n   2. `sed -n '1,320p' ui/app.py`\n   3. `sed -n '1,260p' tests/test_profile.py`\n   4. `sed -n '1,280p' tests/test_workbench.py`\n   5. `rg -n \"profile|network import|download_button|sidebar|expander|Privacy|privacy\" ui/app.py`\n   6. `sed -n '320,760p' ui/app.py`\n   7. `grep -n \"Candidate profile\\|Profile\\|render_profile\\|network import\\|profile review\\|download_button\\|st.sidebar\\|tabs\\|Privacy\" -n ui/app.py`\n   8. `sed -n '760,1240p' ui/app.py`\n   9. `sed -n '1,260p' core/schemas.py`\n   10. `grep -n \"class CandidateProfile\\|class ResumeDocument\" -n core/models.py && sed -n '1,240p' core/models.py`\n   11. `sed -n '1,260p' tests/test_workbench.py`\n   12. `sed -n '1,260p' tests/test_profile.py`\n   13. `sed -n '260,360p' tests/test_profile.py`\n   14. `sed -n '260,420p' tests/test_workbench.py`\n   15. `pytest tests/test_profile.py tests/test_workbench.py`\n   16. `./scripts/preflight_check.sh`\n   17. `python scripts/reset_demo.py`\n   18. `python -c \"import sqlalchemy, streamlit, fastapi; print('deps-ok')\"`\n   19. `which pytest`\n   20. `python3 -V`\n   21. `head -n 1 $(which pytest)`\n   22. `/opt/homebrew/opt/python@3.10/bin/python3.10 -c \"import sqlalchemy, streamlit, fastapi; print('deps-ok')\"`\n   23. `/opt/homebrew/opt/python@3.10/bin/python3.10 scripts/reset_demo.py`\n   24. `/opt/homebrew/opt/python@3.10/bin/python3.10 -m uvicorn api.main:app --host 127.0.0.1 --port 8000`\n   25. `/opt/homebrew/opt/python@3.10/bin/python3.10 -m streamlit run ui/app.py --server.headless true --server.port 8501`\n   26. `PATH=\"/opt/homebrew/opt/python@3.10/bin:$PATH\" ./scripts/preflight_check.sh`\n\n5. Exact results\n   1. `pytest tests/test_profile.py tests/test_workbench.py`: passed, `32 passed in 1.86s`\n   2. `./scripts/preflight_check.sh`: failed in `init_db smoke` with `ModuleNotFoundError: No module named 'sqlalchemy'` because the script used system `python3` (`Python 3.9.6`) rather than the Homebrew Python used by `pytest`\n   3. `python scripts/reset_demo.py`: failed because `python` is not installed on PATH in this shell\n   4. `python -c \"import sqlalchemy, streamlit, fastapi; print('deps-ok')\"`: failed because `python` is not installed on PATH in this shell\n   5. `/opt/homebrew/opt/python@3.10/bin/python3.10 -c \"import sqlalchemy, streamlit, fastapi; print('deps-ok')\"`: passed, printed `deps-ok`\n   6. `/opt/homebrew/opt/python@3.10/bin/python3.10 scripts/reset_demo.py`: passed and completed demo reset with surfaced discovery data\n   7. `/opt/homebrew/opt/python@3.10/bin/python3.10 -m uvicorn api.main:app --host 127.0.0.1 --port 8000`: app started, then failed to bind `127.0.0.1:8000` with `operation not permitted`\n   8. `/opt/homebrew/opt/python@3.10/bin/python3.10 -m streamlit run ui/app.py --server.headless true --server.port 8501`: failed to bind the port with `PermissionError: [Errno 1] Operation not permitted`\n   9. `PATH=\"/opt/homebrew/opt/python@3.10/bin:$PATH\" ./scripts/preflight_check.sh`: still failed in `init_db smoke` with the same `ModuleNotFoundError: No module named 'sqlalchemy'`\n\n6. Honest note on what remains unproven\n   Live FastAPI and Streamlit verification could not be completed in this sandbox because binding local ports is not permitted, so I could not prove the new privacy surface in a running UI or API session. The repo preflight script also remains unproven in this environment because it resolves to a `python3` interpreter without `sqlalchemy`, even though the targeted tests and `reset_demo.py` succeeded under Homebrew Python 3.10."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 18 vulnerabilities on sekrystal/Jorb's default branch (15 moderate, 3 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   886a8b1..4751998  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 4,
+    "changed_files": [
+      "services/profile.py",
+      "tests/test_profile.py",
+      "tests/test_workbench.py",
+      "ui/app.py"
+    ],
+    "unproven_runtime_gaps": []
+  },
+  "unproven_runtime_gaps": []
+}

@@ -3,23 +3,23 @@
   "title": null,
   "state": "completed",
   "attempt": 1,
-  "started_at": "2026-03-25T18:33:37.336842+00:00",
+  "started_at": "2026-03-25T19:19:59.771738+00:00",
   "handed_to_codex_at": null,
-  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T183336Z/codex_prompt.md",
-  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T183336Z-JORB-V1-016",
+  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191959Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191959Z-JORB-V1-018",
   "verification_commands": [
-    "pytest tests/test_feedback_learning.py tests/test_workbench.py",
+    "pytest tests/test_profile.py tests/test_workbench.py",
     "./scripts/preflight_check.sh"
   ],
   "allowlist": [
-    "services/feedback_learning.py",
+    "services/profile.py",
     "ui/app.py",
-    "tests/test_feedback_learning.py",
+    "tests/test_profile.py",
     "tests/test_workbench.py"
   ],
   "failure_summary": null,
   "notes": [],
-  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T183336Z",
+  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191959Z",
   "target_repo": "/Users/samuelkrystal/projects/jorb",
   "target_kind": "product"
 }

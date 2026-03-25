@@ -1,0 +1,122 @@
+{
+  "task_id": "JORB-V1-017",
+  "title": "Add LinkedIn or network data import for referral strategy",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-25T19:15:46.719242+00:00",
+  "completed_at": "2026-03-25T19:19:59.317270+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191545Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191545Z-JORB-V1-017",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191545Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191545Z-JORB-V1-017"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191545Z-JORB-V1-017/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191545Z-JORB-V1-017/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191545Z-JORB-V1-017/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191545Z-JORB-V1-017/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191545Z-JORB-V1-017/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191545Z-JORB-V1-017/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191545Z-JORB-V1-017/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191545Z-JORB-V1-017/executor.json"
+    }
+  ],
+  "files_changed": [
+    "services/profile.py",
+    "tests/test_profile.py",
+    "tests/test_workbench.py",
+    "ui/app.py",
+    "services/network_import.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191545Z-JORB-V1-017/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "user can import network data locally",
+    "system can connect companies to possible referral paths",
+    "no outreach content or automation is produced",
+    "tests cover import and matching logic"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [
+      "user can import network data locally",
+      "system can connect companies to possible referral paths",
+      "no outreach content or automation is produced",
+      "tests cover import and matching logic"
+    ],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Added a new local CSV network import flow and referral matcher. `services/network_import.py` parses LinkedIn/network CSV data into saved local contacts, `services/profile.py` stores that import inside the existing profile summary JSON, and `ui/app.py` now lets the user import network CSV data locally and shows company-matched referral paths in lead detail views with explicit \u201cno outreach/no automation\u201d messaging.\n\n2. Exact files changed\n- `/Users/samuelkrystal/projects/jorb/services/profile.py`\n- `/Users/samuelkrystal/projects/jorb/services/network_import.py`\n- `/Users/samuelkrystal/projects/jorb/ui/app.py`\n- `/Users/samuelkrystal/projects/jorb/tests/test_profile.py`\n- `/Users/samuelkrystal/projects/jorb/tests/test_workbench.py`\n\n3. Exact tests added or updated\n- Updated `/Users/samuelkrystal/projects/jorb/tests/test_profile.py`\n  - `test_network_import_parses_csv_and_matches_company_referral_paths`\n  - `test_network_import_round_trips_through_profile_summary`\n- Updated `/Users/samuelkrystal/projects/jorb/tests/test_workbench.py`\n  - `test_referral_strategy_summary_uses_saved_network_matches`\n\n4. Exact commands run\n- `pytest tests/test_profile.py tests/test_workbench.py`\n- `./scripts/preflight_check.sh`\n\n5. Exact results\n- `pytest tests/test_profile.py tests/test_workbench.py`\n  - Passed: `29 passed in 1.83s`\n- `./scripts/preflight_check.sh`\n  - Failed during `init_db smoke`\n  - Exact failure: `ModuleNotFoundError: No module named 'sqlalchemy'`\n  - `compileall` completed successfully before that failure\n\n6. Honest note on what remains unproven\n- I did not prove FastAPI boot, Streamlit boot, or the changed workflow in the live app/API.\n- I did not run `python scripts/reset_demo.py`.\n- The required broader preflight/runtime validation is blocked in this environment because the `python3` interpreter used by `./scripts/preflight_check.sh` is missing `sqlalchemy`."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 18 vulnerabilities on sekrystal/Jorb's default branch (15 moderate, 3 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   34ccdf7..886a8b1  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 5,
+    "changed_files": [
+      "services/profile.py",
+      "tests/test_profile.py",
+      "tests/test_workbench.py",
+      "ui/app.py",
+      "services/network_import.py"
+    ],
+    "unproven_runtime_gaps": []
+  },
+  "unproven_runtime_gaps": []
+}
