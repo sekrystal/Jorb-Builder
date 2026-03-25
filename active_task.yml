@@ -3,20 +3,24 @@
   "title": null,
   "state": "completed",
   "attempt": 1,
-  "started_at": "2026-03-25T17:05:22.181810+00:00",
+  "started_at": "2026-03-25T18:17:26.796958+00:00",
   "handed_to_codex_at": null,
-  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T170522Z/codex_prompt.md",
-  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T170522Z-JORB-INFRA-004",
+  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T181726Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T181726Z-JORB-V1-015",
   "verification_commands": [
-    "python3 -m py_compile scripts/*.py",
-    "pytest tests/test_automate_task_loop.py"
+    "pytest tests/test_applications.py tests/test_workbench.py",
+    "./scripts/preflight_check.sh"
   ],
   "allowlist": [
-    "../jorb-builder/**"
+    "core/models.py",
+    "core/schemas.py",
+    "services/applications.py",
+    "tests/test_applications.py",
+    "tests/test_workbench.py"
   ],
   "failure_summary": null,
   "notes": [],
-  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T170522Z",
-  "target_repo": "/Users/samuelkrystal/projects/jorb-builder",
-  "target_kind": "builder"
+  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T181726Z",
+  "target_repo": "/Users/samuelkrystal/projects/jorb",
+  "target_kind": "product"
 }

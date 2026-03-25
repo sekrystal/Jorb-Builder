@@ -711,7 +711,7 @@
       "area": "discovery",
       "milestone": "M2",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V1-002"
@@ -742,7 +742,9 @@
         "diagnostics can show dead weight versus productive families",
         "tests cover lineage persistence and retrieval"
       ],
-      "notes": [],
+      "notes": [
+        "Automated loop completed with VM validation success."
+      ],
       "repo_path": "~/projects/jorb",
       "description": "Persist end-to-end discovery lineage from planner query family through expansion outcome and surfaced yield.\n\nDiscovery needs undeniable lineage so productive versus dead-weight families can be distinguished without guesswork.",
       "acceptance_criteria": [
@@ -808,7 +810,7 @@
       "area": "tracking",
       "milestone": "M3",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [],
       "prompt": "implement_feature",
@@ -834,7 +836,9 @@
         "outcomes and reasons persist cleanly",
         "tests cover lifecycle transitions and stored reason codes"
       ],
-      "notes": [],
+      "notes": [
+        "Automated loop completed with VM validation success."
+      ],
       "repo_path": "~/projects/jorb",
       "description": "Expand the application tracker into a durable outcome dataset with lifecycle states, reasons, and notes.\n\nReal learning and recommendation quality depend on richer outcome data than simple applied/not-applied tracking.",
       "acceptance_criteria": [

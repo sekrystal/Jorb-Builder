@@ -1,0 +1,36 @@
+{
+  "task_id": "JORB-V1-015",
+  "title": "Expand tracker schema for outcomes and reasons",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-25T18:17:26.796958+00:00",
+  "completed_at": "2026-03-25T18:20:56.560635+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T181726Z/codex_prompt.md",
+  "files_changed": [
+    "core/models.py",
+    "core/schemas.py",
+    "services/applications.py",
+    "tests/test_workbench.py",
+    "tests/test_applications.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T181726Z-JORB-V1-015/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "tracker supports richer lifecycle states",
+    "outcomes and reasons persist cleanly",
+    "tests cover lifecycle transitions and stored reason codes"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "unproven_runtime_gaps": []
+}
