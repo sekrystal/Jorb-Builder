@@ -1,12 +1,12 @@
 {
-  "task_id": "JORB-INFRA-003",
-  "title": "Add live progress output and elapsed timing to builder loop",
+  "task_id": "JORB-INFRA-004",
+  "title": "Eliminate interactive auth prompts in the builder loop",
   "state": "verifying",
   "attempt": 1,
-  "started_at": "2026-03-25T16:57:50.505927+00:00",
+  "started_at": "2026-03-25T17:05:22.181810+00:00",
   "handed_to_codex_at": null,
-  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T165750Z/codex_prompt.md",
-  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T165750Z-JORB-INFRA-003",
+  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T170522Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T170522Z-JORB-INFRA-004",
   "verification_commands": [
     "python3 -m py_compile scripts/*.py",
     "pytest tests/test_automate_task_loop.py"
@@ -16,7 +16,7 @@
   ],
   "failure_summary": null,
   "notes": [],
-  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T165750Z",
+  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T170522Z",
   "target_repo": "/Users/samuelkrystal/projects/jorb-builder",
   "target_kind": "builder"
 }

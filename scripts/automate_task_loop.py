@@ -72,6 +72,9 @@ CANONICAL_STATE_LEGEND = {
     "completed": "The active run completed successfully and reached a terminal accepted state.",
     "blocked": "The active run reached a terminal blocked/refined state and requires intervention or retry.",
 }
+NONINTERACTIVE_GIT_ENV = {
+    "GIT_TERMINAL_PROMPT": "0",
+}
 
 
 def now_iso() -> str:
@@ -358,6 +361,7 @@ def run_shell(
     cwd: Path,
     shell_executable: str,
     timeout: int | None = None,
+    env: dict[str, str] | None = None,
     *,
     heartbeat_seconds: int | None = None,
     heartbeat: Callable[[dict[str, Any]], None] | None = None,
@@ -368,6 +372,7 @@ def run_shell(
         timeout=timeout,
         shell=True,
         shell_executable=shell_executable,
+        env=env,
         heartbeat_seconds=heartbeat_seconds,
         heartbeat=heartbeat,
     )
@@ -380,6 +385,7 @@ def run_process(
     timeout: int | None = None,
     shell: bool = False,
     shell_executable: str | None = None,
+    env: dict[str, str] | None = None,
     heartbeat_seconds: int | None = None,
     heartbeat: Callable[[dict[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
@@ -394,6 +400,7 @@ def run_process(
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
+            env={**os.environ, **(env or {})},
         )
     except FileNotFoundError as exc:
         return {
@@ -452,11 +459,12 @@ def run_argv(
     argv: list[str],
     cwd: Path,
     timeout: int | None = None,
+    env: dict[str, str] | None = None,
     *,
     heartbeat_seconds: int | None = None,
     heartbeat: Callable[[dict[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
-    return run_process(argv, cwd, timeout=timeout, heartbeat_seconds=heartbeat_seconds, heartbeat=heartbeat)
+    return run_process(argv, cwd, timeout=timeout, env=env, heartbeat_seconds=heartbeat_seconds, heartbeat=heartbeat)
 
 
 def run_argv_input(
@@ -465,6 +473,7 @@ def run_argv_input(
     *,
     input_text: str,
     timeout: int | None = None,
+    env: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     started_at = now_iso()
     try:
@@ -475,6 +484,7 @@ def run_argv_input(
             text=True,
             input=input_text,
             timeout=timeout,
+            env={**os.environ, **(env or {})},
         )
         return {
             "command": " ".join(shlex.quote(part) for part in argv),
@@ -1591,6 +1601,19 @@ def effective_ssh_options(vm_config: dict[str, Any]) -> list[str]:
     return options
 
 
+def noninteractive_vm_ssh_options(vm_config: dict[str, Any]) -> list[str]:
+    options = effective_ssh_options(vm_config)
+    existing = {options[index + 1].split("=", 1)[0] for index, item in enumerate(options[:-1]) if item == "-o"}
+    default_pairs = [
+        ("BatchMode", "yes"),
+        ("StrictHostKeyChecking", "accept-new"),
+    ]
+    for key, value in default_pairs:
+        if key not in existing:
+            options.extend(["-o", f"{key}={value}"])
+    return options
+
+
 def git_auth_status(target_repo: Path) -> dict[str, Any]:
     remote = run_argv(["git", "remote", "get-url", "origin"], target_repo)
     if not remote.get("passed"):
@@ -1638,7 +1661,7 @@ def vm_ssh_auth_status(vm_config: dict[str, Any], cwd: Path) -> dict[str, Any]:
             "detail": "vm.ssh_target is not configured.",
             "remediation": ["Set vm.ssh_target in config.yml"],
         }
-    options = effective_ssh_options(vm_config) + ["-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=accept-new"]
+    options = noninteractive_vm_ssh_options(vm_config)
     probe = ssh_command(str(target), options, "true", cwd)
     ssh_agent_loaded = bool(os.environ.get("SSH_AUTH_SOCK"))
     stderr = (probe.get("stderr") or "") + "\n" + (probe.get("stdout") or "")
@@ -1864,7 +1887,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         target_repo=target_repo,
     )
     use_vm_flow = target_kind == "product"
-    effective_vm_ssh_options = effective_ssh_options(vm_config) if use_vm_flow else []
+    effective_vm_ssh_options = noninteractive_vm_ssh_options(vm_config) if use_vm_flow else []
     ignored_git_paths = ignored_git_paths_for_target(target_kind)
     plan = {
         "task_id": task["id"],
@@ -2394,6 +2417,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         git_add = run_argv(
             ["git", "add", "-A"],
             target_repo,
+            env=NONINTERACTIVE_GIT_ENV,
             heartbeat_seconds=progress_heartbeat_seconds,
             heartbeat=emit_live_phase_progress(7, "git_add", git_add_command),
         )
@@ -2402,6 +2426,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         git_commit = run_argv(
             ["git", "commit", "-m", commit_message],
             target_repo,
+            env=NONINTERACTIVE_GIT_ENV,
             heartbeat_seconds=progress_heartbeat_seconds,
             heartbeat=emit_live_phase_progress(7, "git_commit", git_commit_command),
         )
@@ -2410,6 +2435,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             git_push_command,
             target_repo,
             shell_executable=shell_executable,
+            env=NONINTERACTIVE_GIT_ENV,
             heartbeat_seconds=progress_heartbeat_seconds,
             heartbeat=emit_live_phase_progress(7, "git_push", git_push_command),
         )
@@ -2450,7 +2476,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         ssh_target = vm_config["ssh_target"]
         ssh_options = effective_vm_ssh_options
         emit_progress(run_dir, task_id=task["id"], stage_index=8, backlog=backlog, task_started_at=progress_started_at, detail=f"Running VM validation on {ssh_target}.")
-        vm_pull_command = f"cd {shlex.quote(vm_repo)} && {plan['vm_pull_command']}"
+        vm_pull_command = f"cd {shlex.quote(vm_repo)} && env GIT_TERMINAL_PROMPT=0 {plan['vm_pull_command']}"
         vm_pull = ssh_command(
             ssh_target,
             ssh_options,

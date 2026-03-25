@@ -1054,7 +1054,9 @@ def test_retry_ready_product_task_retries_vm_without_dirty_files(tmp_path: Path)
     vm_validation = _json(current_run_dir / "vm_validation.json")
     assert "ssh -o ConnectTimeout=1 " in vm_validation["results"][0]["command"]
     assert "ControlMaster=auto" in vm_validation["results"][0]["command"]
-    assert "cd " + str(product_repo) + " && git pull --ff-only" in vm_validation["results"][0]["command"]
+    assert "BatchMode=yes" in vm_validation["results"][0]["command"]
+    assert "StrictHostKeyChecking=accept-new" in vm_validation["results"][0]["command"]
+    assert "cd " + str(product_repo) + " && env GIT_TERMINAL_PROMPT=0 git pull --ff-only" in vm_validation["results"][0]["command"]
 
 
 def test_vm_remote_home_path_is_preserved_in_ssh_command(tmp_path: Path) -> None:
@@ -1079,8 +1081,41 @@ def test_vm_remote_home_path_is_preserved_in_ssh_command(tmp_path: Path) -> None
     vm_validation = _json(_active_run_dir(builder_root) / "vm_validation.json")
     assert "ssh -o ConnectTimeout=1 " in vm_validation["results"][0]["command"]
     assert "ControlMaster=auto" in vm_validation["results"][0]["command"]
-    assert "cd /home/gargantua1/projects/jorb && git pull --ff-only" in vm_validation["results"][0]["command"]
+    assert "BatchMode=yes" in vm_validation["results"][0]["command"]
+    assert "StrictHostKeyChecking=accept-new" in vm_validation["results"][0]["command"]
+    assert "env GIT_TERMINAL_PROMPT=0 git pull --ff-only" in vm_validation["results"][0]["command"]
+    assert "cd /home/gargantua1/projects/jorb && env GIT_TERMINAL_PROMPT=0 git pull --ff-only" in vm_validation["results"][0]["command"]
     assert "/System/Volumes/Data/home/gargantua1/projects/jorb" not in vm_validation["results"][0]["command"]
+
+
+def test_run_shell_passes_noninteractive_git_env(tmp_path: Path) -> None:
+    module = _load_script_module()
+
+    result = module.run_shell(
+        "python3 -c \"import os, sys; sys.exit(0 if os.environ.get('GIT_TERMINAL_PROMPT') == '0' else 1)\"",
+        tmp_path,
+        shell_executable="/bin/zsh",
+        env=module.NONINTERACTIVE_GIT_ENV,
+    )
+
+    assert result["passed"] is True
+
+
+def test_noninteractive_vm_ssh_options_add_batch_guards(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="discovery",
+        allowlist=["services/company_discovery.py"],
+    )
+    module = _load_script_module(builder_root)
+    options = module.noninteractive_vm_ssh_options({"ssh_target": "builder@example", "ssh_options": ["-o", "ConnectTimeout=1"]})
+
+    assert options.count("-o") >= 5
+    assert "ConnectTimeout=1" in options
+    assert "ControlMaster=auto" in options
+    assert "BatchMode=yes" in options
+    assert "StrictHostKeyChecking=accept-new" in options
 
 
 def test_retry_ready_product_task_recovers_vm_retry_from_stage_files(tmp_path: Path) -> None:

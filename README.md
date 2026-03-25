@@ -95,6 +95,41 @@ Important constraints:
 - the default executor mode is `codex_exec`, which runs `codex exec` non-interactively in the target repo with the packet on stdin and writes the final Codex message into the active run log
 - if you need the older bounded fallback, set `executor.mode` back to `human_gated`, run `python3 scripts/automate_task_loop.py`, complete the packet manually in the JORB Codex workspace, then continue with `python3 scripts/automate_task_loop.py --resume`
 
+## Non-Interactive Auth Setup
+
+The automated loop is designed to fail fast instead of waiting on password prompts. Set up both the product repo and the VM for SSH key auth before relying on unattended runs.
+
+Required local setup:
+- ensure the product repo origin uses SSH, not HTTPS:
+```bash
+cd ~/projects/jorb
+git remote set-url origin git@github.com:<org>/<repo>.git
+```
+- load your key into the local SSH agent:
+```bash
+ssh-add ~/.ssh/id_ed25519
+```
+
+Required VM setup:
+- make sure `config.yml` points at the correct VM user and host in `vm.ssh_target`
+- install the same GitHub-capable SSH key on the VM user that owns `vm.product_repo`
+- make sure the VM repo origin also uses SSH:
+```bash
+ssh <vm-user>@<vm-host> 'cd ~/projects/jorb && git remote set-url origin git@github.com:<org>/<repo>.git'
+```
+- preload the VM host key locally if needed:
+```bash
+ssh-keyscan -H <vm-host> >> ~/.ssh/known_hosts
+```
+
+Preflight check:
+```bash
+cd ~/projects/jorb-builder
+python3 scripts/automate_task_loop.py --check-auth
+```
+
+If auth is still wrong, the loop now exits with a failure instead of waiting for interactive Git or SSH input.
+
 ## Safe recovery
 If the builder is stuck on a stale task you want to clear safely:
 

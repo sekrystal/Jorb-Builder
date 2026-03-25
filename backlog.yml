@@ -984,7 +984,7 @@
       "area": "builder",
       "milestone": "M0",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-002"
@@ -1009,7 +1009,8 @@
       ],
       "notes": [
         "Builder repo is dirty before automated execution; refusing to continue.",
-        "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again."
+        "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again.",
+        "Automated loop completed with builder-side local validation success."
       ],
       "repo_path": "~/projects/jorb-builder",
       "description": "Add readable live progress output and elapsed timing to long-running builder loop steps.\n\nThe loop is now live and callable, so operator visibility during long executor, validation, git, and VM phases matters more than before.",
