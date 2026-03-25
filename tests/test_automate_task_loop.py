@@ -788,6 +788,52 @@ def test_accepted_task_with_no_ready_tasks_returns_no_active_task(tmp_path: Path
     assert active_after["task_id"] is None
 
 
+def test_accepted_task_history_links_evidence_and_diagnostics(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-1",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    fake_codex = tmp_path / "fake-codex-history"
+    _write_fake_codex(fake_codex, relative_output="worker.py", last_message="history codex ok\n")
+
+    config = _json(builder_root / "config.yml")
+    config["executor"]["mode"] = "codex_exec"
+    config["executor"]["codex_cli"] = str(fake_codex)
+    _write_json(builder_root / "config.yml", config)
+    _git(["add", "config.yml", "prompts/implement_feature.md"], builder_root)
+    _git(["commit", "-m", "prepare accepted history"], builder_root)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 0
+    history_path = next((builder_root / "task_history").glob("*.yml"))
+    history = _json(history_path)
+    run_dir = Path(history["run_log_dir"])
+    evidence_by_label = {item["label"]: item["path"] for item in history["evidence_artifacts"]}
+
+    assert history["status"] == "accepted"
+    assert history["prompt"].endswith("codex_prompt.md")
+    assert evidence_by_label["prompt"] == history["prompt"]
+    assert evidence_by_label["run_log_dir"] == str(run_dir)
+    assert evidence_by_label["automation_result"] == str(run_dir / "automation_result.json")
+    assert evidence_by_label["automation_summary"] == str(run_dir / "automation_summary.md")
+    assert evidence_by_label["progress_log"] == str(run_dir / "progress.jsonl")
+    assert evidence_by_label["executor_output"] == str(run_dir / "codex_last_message.md")
+    assert evidence_by_label["local_validation"] == str(run_dir / "local_validation.json")
+
+    diagnostics = history["operator_diagnostics"]
+    assert diagnostics["accepted"] is True
+    assert diagnostics["decision_summary"] == "Automated loop completed with builder-side local validation success."
+    assert diagnostics["acceptance_met"] == ["a"]
+    assert diagnostics["acceptance_unmet"] == []
+    assert diagnostics["changed_files_count"] == len(history["files_changed"])
+    assert diagnostics["changed_files"] == history["files_changed"]
+    assert diagnostics["unproven_runtime_gaps"] == []
+    assert any(step["name"] == "local_validation" and step["outcome"] == "passed" for step in diagnostics["step_outcomes"])
+
+
 def test_missing_packet(tmp_path: Path) -> None:
     builder_root, _, _, prompt_file = _setup_builder_fixture(tmp_path, task_id="TASK-1", area="builder", allowlist=["../jorb-builder/**"])
     prompt_file.unlink()

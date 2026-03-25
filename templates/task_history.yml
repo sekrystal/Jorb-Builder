@@ -6,6 +6,8 @@
   "started_at": "",
   "completed_at": "",
   "prompt": "",
+  "run_log_dir": "",
+  "evidence_artifacts": [],
   "files_changed": [],
   "commands_run": [],
   "results": [],
@@ -13,5 +15,15 @@
   "acceptance_unmet": [],
   "blocker_opened": null,
   "notes": [],
+  "operator_diagnostics": {
+    "decision_summary": "",
+    "accepted": false,
+    "acceptance_met": [],
+    "acceptance_unmet": [],
+    "step_outcomes": [],
+    "changed_files_count": 0,
+    "changed_files": [],
+    "unproven_runtime_gaps": []
+  },
   "unproven_runtime_gaps": []
 }

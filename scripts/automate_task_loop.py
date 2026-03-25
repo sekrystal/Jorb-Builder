@@ -121,6 +121,49 @@ def write_step(run_dir: Path, name: str, payload: dict[str, Any]) -> None:
     write_json(run_dir / f"{name}.json", payload)
 
 
+def history_evidence_artifacts(run_dir: Path | None, prompt_file: Path | None) -> list[dict[str, str]]:
+    candidates: list[tuple[str, Path]] = []
+    if prompt_file is not None:
+        candidates.append(("prompt", prompt_file))
+    if run_dir is not None:
+        candidates.extend(
+            [
+                ("run_log_dir", run_dir),
+                ("automation_result", run_dir / RESULT_FILE),
+                ("automation_summary", run_dir / SUMMARY_FILE),
+                ("progress_log", run_dir / PROGRESS_FILE),
+                ("executor_output", run_dir / "codex_last_message.md"),
+                ("local_validation", run_dir / "local_validation.json"),
+                ("vm_validation", run_dir / "vm_validation.json"),
+                ("git", run_dir / "git.json"),
+                ("executor", run_dir / "executor.json"),
+            ]
+        )
+    artifacts: list[dict[str, str]] = []
+    for label, path in candidates:
+        if path.exists():
+            artifacts.append({"label": label, "path": str(path)})
+    return artifacts
+
+
+def history_operator_diagnostics(task: dict[str, Any], automation_result: dict[str, Any]) -> dict[str, Any]:
+    accepted = automation_result.get("classification") == "accepted"
+    step_outcomes = [
+        {"name": step.get("name"), "outcome": step.get("outcome"), "detail": step.get("detail")}
+        for step in automation_result.get("steps", [])
+    ]
+    return {
+        "decision_summary": automation_result.get("summary"),
+        "accepted": accepted,
+        "acceptance_met": task.get("acceptance", []) if accepted else [],
+        "acceptance_unmet": [] if accepted else task.get("acceptance", []),
+        "step_outcomes": step_outcomes,
+        "changed_files_count": len(automation_result.get("changed_files", [])),
+        "changed_files": automation_result.get("changed_files", []),
+        "unproven_runtime_gaps": automation_result.get("unproven_runtime_gaps", []),
+    }
+
+
 def write_summary(run_dir: Path, payload: dict[str, Any]) -> None:
     lines = [
         f"# Automation Result: {payload['classification']}",
@@ -867,6 +910,9 @@ def ssh_command(
 def record_history(task: dict[str, Any], active: dict[str, Any], automation_result: dict[str, Any]) -> Path:
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H%M%SZ")
     path = TASK_HISTORY / f"{timestamp}-{task['id']}.yml"
+    run_dir = Path(str(active["run_log_dir"])).expanduser().resolve() if active.get("run_log_dir") else None
+    prompt_file = Path(str(active["prompt_file"])).expanduser().resolve() if active.get("prompt_file") else None
+    operator_diagnostics = history_operator_diagnostics(task, automation_result)
     payload = {
         "task_id": task["id"],
         "title": task["title"],
@@ -874,14 +920,17 @@ def record_history(task: dict[str, Any], active: dict[str, Any], automation_resu
         "attempt": active.get("attempt", 1),
         "started_at": active.get("started_at"),
         "completed_at": automation_result["finished_at"],
-        "prompt": active.get("prompt_file"),
+        "prompt": str(prompt_file) if prompt_file is not None else None,
+        "run_log_dir": str(run_dir) if run_dir is not None else None,
+        "evidence_artifacts": history_evidence_artifacts(run_dir, prompt_file),
         "files_changed": automation_result.get("changed_files", []),
         "commands_run": [step.get("command") for step in automation_result.get("steps", []) if step.get("command")],
         "results": [step["outcome"] for step in automation_result.get("steps", [])],
-        "acceptance_met": task.get("acceptance", []) if automation_result["classification"] == "accepted" else [],
-        "acceptance_unmet": [] if automation_result["classification"] == "accepted" else task.get("acceptance", []),
+        "acceptance_met": operator_diagnostics["acceptance_met"],
+        "acceptance_unmet": operator_diagnostics["acceptance_unmet"],
         "blocker_opened": None,
         "notes": [automation_result["summary"]],
+        "operator_diagnostics": operator_diagnostics,
         "unproven_runtime_gaps": automation_result.get("unproven_runtime_gaps", []),
     }
     write_data(path, payload)
