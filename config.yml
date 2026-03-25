@@ -33,7 +33,7 @@
   "vm": {
     "ssh_target": "gargantua1@192.168.64.3",
     "ssh_options": [],
-    "product_repo": "~/jorb",
+    "product_repo": "/home/gargantua1/projects/jorb",
     "pull_command": "git fetch origin && git pull --ff-only origin main",
     "validation_commands": [
       "source .venv/bin/activate && pytest tests/test_search_discovery.py tests/test_company_discovery.py tests/test_sync.py tests/test_workbench.py",

@@ -128,6 +128,49 @@ def _mark_retry_ready(builder_root: Path, *, handed_to_codex_at: str = "2026-03-
     _write_json(builder_root / "status.yml", status)
 
 
+def _write_prior_vm_refined_result(run_log_dir: Path, *, changed_files: list[str]) -> None:
+    _write_json(
+        run_log_dir / "automation_result.json",
+        {
+            "task_id": "TASK-PRODUCT",
+            "classification": "refined",
+            "finished_at": "2026-03-24T00:20:00+00:00",
+            "summary": "VM validation failed after local validation and git push succeeded.",
+            "steps": [
+                {"name": "retry_check", "outcome": "passed", "detail": "Continuing from existing product repo task changes."},
+                {"name": "local_validation", "outcome": "passed", "detail": "All local verification commands passed."},
+                {"name": "git", "outcome": "passed", "detail": "git ok"},
+                {"name": "vm_validation", "outcome": "refined", "detail": "At least one VM validation command failed."},
+            ],
+            "changed_files": changed_files,
+            "blocker_evidence": [],
+            "unproven_runtime_gaps": [
+                "VM validation failed after local validation and git push succeeded."
+            ],
+        },
+    )
+
+
+def _write_no_changes_refined_result(run_log_dir: Path) -> None:
+    _write_json(
+        run_log_dir / "automation_result.json",
+        {
+            "task_id": "TASK-PRODUCT",
+            "classification": "refined",
+            "finished_at": "2026-03-24T00:21:00+00:00",
+            "summary": "Retry-ready task has no product repo changes to continue from.",
+            "steps": [
+                {"name": "retry_check", "outcome": "refined", "detail": "No product repo changes were found for retry continuation."},
+            ],
+            "changed_files": [],
+            "blocker_evidence": [],
+            "unproven_runtime_gaps": [
+                "Retry-ready task has no product repo changes to continue from."
+            ],
+        },
+    )
+
+
 def _base_config(product_repo: Path, builder_root: Path) -> dict:
     return {
         "builder": {"name": "jorb-builder-v1", "version": 1},
@@ -449,6 +492,86 @@ def test_retry_ready_product_task_blocks_out_of_allowlist_dirty_files(tmp_path: 
     assert "retry_check" in step_names
     assert payload["classification"] == "blocked"
     assert "wrong.txt" in payload["blocker_evidence"]
+
+
+def test_retry_ready_product_task_retries_vm_without_dirty_files(tmp_path: Path) -> None:
+    builder_root, product_repo, run_log_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="discovery",
+        allowlist=["services/company_discovery.py"],
+    )
+    _mark_retry_ready(builder_root)
+    _write_prior_vm_refined_result(run_log_dir, changed_files=["services/company_discovery.py"])
+
+    config = _json(builder_root / "config.yml")
+    config["vm"]["ssh_target"] = "127.0.0.1"
+    config["vm"]["ssh_options"] = ["-o", "ConnectTimeout=1"]
+    _write_json(builder_root / "config.yml", config)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 1
+    assert "Retry-ready task has no product repo changes to continue from." not in result.stdout
+    payload = _json(run_log_dir / "automation_result.json")
+    step_names = [step["name"] for step in payload["steps"]]
+    assert "retry_check" in step_names
+    assert "vm_validation" in step_names
+    assert payload["summary"] == "VM validation failed after local validation and git push succeeded."
+
+
+def test_retry_ready_product_task_recovers_vm_retry_from_stage_files(tmp_path: Path) -> None:
+    builder_root, product_repo, run_log_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="discovery",
+        allowlist=["services/company_discovery.py"],
+    )
+    _mark_retry_ready(builder_root)
+    _write_prior_vm_refined_result(run_log_dir, changed_files=["services/company_discovery.py"])
+    _write_no_changes_refined_result(run_log_dir)
+    _write_json(
+        run_log_dir / "local_validation.json",
+        {
+            "results": [
+                {
+                    "stdout": "== git status --short ==\n M services/company_discovery.py\n\n== compileall ==\n",
+                    "passed": True,
+                }
+            ],
+            "passed": True,
+            "venv_path": str(product_repo / ".venv_validation"),
+        },
+    )
+    _write_json(
+        run_log_dir / "git.json",
+        {
+            "add": {"passed": True},
+            "commit": {"passed": True, "stdout": "[main abc123] test\n 1 file changed, 1 insertion(+)\n"},
+            "push": {"passed": True},
+        },
+    )
+    _write_json(
+        run_log_dir / "vm_validation.json",
+        {
+            "results": [{"passed": False, "stderr": "vm failed"}],
+            "passed": False,
+        },
+    )
+
+    config = _json(builder_root / "config.yml")
+    config["vm"]["ssh_target"] = "127.0.0.1"
+    config["vm"]["ssh_options"] = ["-o", "ConnectTimeout=1"]
+    _write_json(builder_root / "config.yml", config)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 1
+    assert "Retry-ready task has no product repo changes to continue from." not in result.stdout
+    payload = _json(run_log_dir / "automation_result.json")
+    step_names = [step["name"] for step in payload["steps"]]
+    assert "vm_validation" in step_names
+    assert payload["summary"] == "VM validation failed after local validation and git push succeeded."
 
 
 def test_fresh_product_execution_still_blocks_on_dirty_repo(tmp_path: Path) -> None:

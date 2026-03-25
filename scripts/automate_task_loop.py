@@ -378,6 +378,85 @@ def is_retry_continuation(active: dict[str, Any], status: dict[str, Any], *, res
     )
 
 
+def load_prior_automation_result(run_dir: Path) -> dict[str, Any] | None:
+    path = run_dir / RESULT_FILE
+    if not path.exists():
+        return None
+    return load_data(path)
+
+
+def prior_result_supports_vm_retry(run_dir: Path) -> dict[str, Any] | None:
+    prior = load_prior_automation_result(run_dir)
+    if prior:
+        steps = {step.get("name"): step for step in prior.get("steps", [])}
+        if (
+            steps.get("local_validation", {}).get("outcome") == "passed"
+            and steps.get("git", {}).get("outcome") == "passed"
+            and steps.get("vm_validation", {}).get("outcome") == "refined"
+            and prior.get("changed_files")
+        ):
+            return prior
+
+    local_validation_path = run_dir / "local_validation.json"
+    git_path = run_dir / "git.json"
+    vm_validation_path = run_dir / "vm_validation.json"
+    if not (local_validation_path.exists() and git_path.exists() and vm_validation_path.exists()):
+        return None
+
+    local_validation = load_data(local_validation_path)
+    git_result = load_data(git_path)
+    vm_validation = load_data(vm_validation_path)
+    if not local_validation.get("passed"):
+        return None
+    if not (
+        git_result.get("add", {}).get("passed")
+        and git_result.get("commit", {}).get("passed")
+        and git_result.get("push", {}).get("passed")
+    ):
+        return None
+    if vm_validation.get("passed") is not False:
+        return None
+
+    changed_files: list[str] = []
+    for result in local_validation.get("results", []):
+        stdout = str(result.get("stdout", ""))
+        if "== git status --short ==" not in stdout:
+            continue
+        capture = False
+        for line in stdout.splitlines():
+            if line.strip() == "== git status --short ==":
+                capture = True
+                continue
+            if capture and line.startswith("== "):
+                break
+            if not capture:
+                continue
+            if not line.strip():
+                continue
+            changed_files.append(line[3:] if len(line) > 3 else line.strip())
+        if changed_files:
+            break
+    if not changed_files:
+        previous = load_prior_automation_result(run_dir)
+        if previous and previous.get("changed_files"):
+            changed_files = list(previous.get("changed_files", []))
+    if not changed_files:
+        return None
+
+    return {
+        "task_id": None,
+        "classification": "refined",
+        "summary": "VM validation failed after local validation and git push succeeded.",
+        "steps": [
+            {"name": "local_validation", "outcome": "passed"},
+            {"name": "git", "outcome": "passed"},
+            {"name": "vm_validation", "outcome": "refined"},
+        ],
+        "changed_files": changed_files,
+    }
+    return None
+
+
 def classify_and_update_state(
     classification: str,
     summary: str,
@@ -544,6 +623,7 @@ def main() -> int:
 
     steps: list[dict[str, Any]] = []
     blocker_evidence: list[str] = []
+    continue_from_prior_vm_retry = False
 
     if plan["missing_configuration"]:
         summary = "Missing automation configuration: " + ", ".join(plan["missing_configuration"])
@@ -665,24 +745,29 @@ def main() -> int:
             "detail": f"Continuing from existing {target_kind} repo task changes." if after_executor.get("files") else f"No {target_kind} repo changes were found for retry continuation.",
         })
         if not after_executor.get("files"):
-            summary = f"Retry-ready task has no {target_kind} repo changes to continue from."
-            automation_result = {
-                "task_id": task["id"],
-                "classification": "refined",
-                "finished_at": now_iso(),
-                "summary": summary,
-                "steps": steps,
-                "changed_files": [],
-                "blocker_evidence": [],
-                "unproven_runtime_gaps": [summary],
-            }
-            write_json(run_dir / RESULT_FILE, automation_result)
-            write_summary(run_dir, automation_result)
-            classify_and_update_state("refined", summary, task, backlog, active, status, automation_result)
-            write_data(BACKLOG, backlog)
-            write_data(STATUS, status)
-            print_result("REFINED", summary, f"Reapply or restore the task changes in {target_repo}, then rerun python3 scripts/automate_task_loop.py.")
-            return 1
+            prior_vm_retry = prior_result_supports_vm_retry(run_dir)
+            if prior_vm_retry:
+                steps[-1]["outcome"] = "passed"
+                steps[-1]["detail"] = "No current dirty repo changes; continuing from prior post-push VM retry context."
+            else:
+                summary = f"Retry-ready task has no {target_kind} repo changes to continue from."
+                automation_result = {
+                    "task_id": task["id"],
+                    "classification": "refined",
+                    "finished_at": now_iso(),
+                    "summary": summary,
+                    "steps": steps,
+                    "changed_files": [],
+                    "blocker_evidence": [],
+                    "unproven_runtime_gaps": [summary],
+                }
+                write_json(run_dir / RESULT_FILE, automation_result)
+                write_summary(run_dir, automation_result)
+                classify_and_update_state("refined", summary, task, backlog, active, status, automation_result)
+                write_data(BACKLOG, backlog)
+                write_data(STATUS, status)
+                print_result("REFINED", summary, f"Reapply or restore the task changes in {target_repo}, then rerun python3 scripts/automate_task_loop.py.")
+                return 1
     else:
         executor_result = run_shell(
             plan["executor_command"],
@@ -721,6 +806,13 @@ def main() -> int:
         write_step(run_dir, "git_status_after_executor", after_executor)
 
     changed_files = after_executor.get("files", [])
+    if retry_continuation and not changed_files:
+        prior_vm_retry = prior_result_supports_vm_retry(run_dir)
+        if prior_vm_retry:
+            changed_files = list(prior_vm_retry.get("changed_files", []))
+            continue_from_prior_vm_retry = True
+            steps[-1]["detail"] = "No current dirty repo changes; continuing from prior post-push VM retry context."
+
     allowlisted, disallowed = changed_files_are_allowlisted(changed_files, active.get("allowlist", []))
     if not allowlisted:
         summary = "Executor changed files outside the task allowlist."
@@ -766,7 +858,7 @@ def main() -> int:
         print_result("REFINED", summary, next_action)
         return 1
 
-    if target_kind == "product" and local_validation_commands and validation_venv is None:
+    if target_kind == "product" and local_validation_commands and validation_venv is None and not continue_from_prior_vm_retry:
         summary = "No product validation virtualenv found. Expected one of: .venv_validation, .venv, .venv_j1."
         automation_result = {
             "task_id": task["id"],
@@ -786,89 +878,90 @@ def main() -> int:
         print_result("BLOCKED", summary, f"Create one of {target_repo}/.venv_validation, {target_repo}/.venv, or {target_repo}/.venv_j1, then rerun python3 scripts/automate_task_loop.py.")
         return 2
 
-    local_results: list[dict[str, Any]] = []
-    local_passed = True
-    for command in prepared_validation_commands:
-        result = run_shell(command, target_repo, shell_executable=shell_executable)
-        local_results.append(result)
-        if not result["passed"]:
-            local_passed = False
-    write_step(
-        run_dir,
-        "local_validation",
-        {
-            "results": local_results,
-            "passed": local_passed,
-            "venv_path": str(validation_venv) if validation_venv else None,
-        },
-    )
-    steps.append({
-        "name": "local_validation",
-        "outcome": "passed" if local_passed else "refined",
-        "detail": "All local verification commands passed." if local_passed else "At least one local verification command failed.",
-    })
-    if not local_passed:
-        summary = "Local validation failed after executor changes."
-        automation_result = {
-            "task_id": task["id"],
-            "classification": "refined",
-            "finished_at": now_iso(),
-            "summary": summary,
-            "steps": steps,
-            "changed_files": changed_files,
-            "blocker_evidence": [],
-            "unproven_runtime_gaps": [summary],
-        }
-        write_json(run_dir / RESULT_FILE, automation_result)
-        write_summary(run_dir, automation_result)
-        classify_and_update_state("refined", summary, task, backlog, active, status, automation_result)
-        write_data(BACKLOG, backlog)
-        write_data(STATUS, status)
-        if retry_continuation:
-            next_action = f"Inspect local validation output in {run_dir / RESULT_FILE}, fix the current task changes in {target_repo}, then rerun python3 scripts/automate_task_loop.py."
-        else:
-            next_action = f"Inspect local validation output in {run_dir / RESULT_FILE}, fix the issue, then rerun python3 scripts/automate_task_loop.py."
-        print_result("REFINED", summary, next_action)
-        return 1
+    if not continue_from_prior_vm_retry:
+        local_results: list[dict[str, Any]] = []
+        local_passed = True
+        for command in prepared_validation_commands:
+            result = run_shell(command, target_repo, shell_executable=shell_executable)
+            local_results.append(result)
+            if not result["passed"]:
+                local_passed = False
+        write_step(
+            run_dir,
+            "local_validation",
+            {
+                "results": local_results,
+                "passed": local_passed,
+                "venv_path": str(validation_venv) if validation_venv else None,
+            },
+        )
+        steps.append({
+            "name": "local_validation",
+            "outcome": "passed" if local_passed else "refined",
+            "detail": "All local verification commands passed." if local_passed else "At least one local verification command failed.",
+        })
+        if not local_passed:
+            summary = "Local validation failed after executor changes."
+            automation_result = {
+                "task_id": task["id"],
+                "classification": "refined",
+                "finished_at": now_iso(),
+                "summary": summary,
+                "steps": steps,
+                "changed_files": changed_files,
+                "blocker_evidence": [],
+                "unproven_runtime_gaps": [summary],
+            }
+            write_json(run_dir / RESULT_FILE, automation_result)
+            write_summary(run_dir, automation_result)
+            classify_and_update_state("refined", summary, task, backlog, active, status, automation_result)
+            write_data(BACKLOG, backlog)
+            write_data(STATUS, status)
+            if retry_continuation:
+                next_action = f"Inspect local validation output in {run_dir / RESULT_FILE}, fix the current task changes in {target_repo}, then rerun python3 scripts/automate_task_loop.py."
+            else:
+                next_action = f"Inspect local validation output in {run_dir / RESULT_FILE}, fix the issue, then rerun python3 scripts/automate_task_loop.py."
+            print_result("REFINED", summary, next_action)
+            return 1
 
-    git_add = run_argv(["git", "add", "-A"], target_repo)
-    commit_message = render_template(git_config.get("commit_message_template"), context) or f"{task['id']}: {task['title']}"
-    git_commit = run_argv(["git", "commit", "-m", commit_message], target_repo)
-    git_push = run_shell(
-        render_template(git_config.get("push_command"), context) or "git push",
-        target_repo,
-        shell_executable=shell_executable,
-    )
-    write_step(run_dir, "git", {"add": git_add, "commit": git_commit, "push": git_push})
-    steps.append({
-        "name": "git",
-        "outcome": "passed" if git_add["passed"] and git_commit["passed"] and git_push["passed"] else "blocked",
-        "detail": git_push["stderr"] or git_commit["stderr"] or git_add["stderr"],
-    })
-    if not (git_add["passed"] and git_commit["passed"] and git_push["passed"]):
-        summary = "Git add/commit/push failed after local validation passed."
-        blocker_evidence.extend([
-            git_add["stderr"] or git_add["stdout"],
-            git_commit["stderr"] or git_commit["stdout"],
-            git_push["stderr"] or git_push["stdout"],
-        ])
-        automation_result = {
-            "task_id": task["id"],
-            "classification": "blocked",
-            "finished_at": now_iso(),
-            "summary": summary,
-            "steps": steps,
-            "changed_files": changed_files,
-            "blocker_evidence": [item for item in blocker_evidence if item],
-            "unproven_runtime_gaps": [summary],
-        }
-        write_json(run_dir / RESULT_FILE, automation_result)
-        write_summary(run_dir, automation_result)
-        classify_and_update_state("blocked", summary, task, backlog, active, status, automation_result)
-        write_data(BACKLOG, backlog)
-        write_data(STATUS, status)
-        print_result("BLOCKED", summary, f"Inspect git output in {run_dir / RESULT_FILE} and repair repo/push state before rerunning python3 scripts/automate_task_loop.py.")
-        return 2
+        git_add = run_argv(["git", "add", "-A"], target_repo)
+        commit_message = render_template(git_config.get("commit_message_template"), context) or f"{task['id']}: {task['title']}"
+        git_commit = run_argv(["git", "commit", "-m", commit_message], target_repo)
+        git_push = run_shell(
+            render_template(git_config.get("push_command"), context) or "git push",
+            target_repo,
+            shell_executable=shell_executable,
+        )
+        write_step(run_dir, "git", {"add": git_add, "commit": git_commit, "push": git_push})
+        steps.append({
+            "name": "git",
+            "outcome": "passed" if git_add["passed"] and git_commit["passed"] and git_push["passed"] else "blocked",
+            "detail": git_push["stderr"] or git_commit["stderr"] or git_add["stderr"],
+        })
+        if not (git_add["passed"] and git_commit["passed"] and git_push["passed"]):
+            summary = "Git add/commit/push failed after local validation passed."
+            blocker_evidence.extend([
+                git_add["stderr"] or git_add["stdout"],
+                git_commit["stderr"] or git_commit["stdout"],
+                git_push["stderr"] or git_push["stdout"],
+            ])
+            automation_result = {
+                "task_id": task["id"],
+                "classification": "blocked",
+                "finished_at": now_iso(),
+                "summary": summary,
+                "steps": steps,
+                "changed_files": changed_files,
+                "blocker_evidence": [item for item in blocker_evidence if item],
+                "unproven_runtime_gaps": [summary],
+            }
+            write_json(run_dir / RESULT_FILE, automation_result)
+            write_summary(run_dir, automation_result)
+            classify_and_update_state("blocked", summary, task, backlog, active, status, automation_result)
+            write_data(BACKLOG, backlog)
+            write_data(STATUS, status)
+            print_result("BLOCKED", summary, f"Inspect git output in {run_dir / RESULT_FILE} and repair repo/push state before rerunning python3 scripts/automate_task_loop.py.")
+            return 2
 
     vm_passed = True
     if use_vm_flow:

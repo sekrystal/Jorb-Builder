@@ -133,7 +133,7 @@
       "milestone": "M2",
       "priority": 1,
       "status": "retry_ready",
-      "retries_used": 2,
+      "retries_used": 5,
       "depends_on": [
         "JORB-V1-001"
       ],
@@ -175,6 +175,9 @@
         "Local validation failed after executor changes.",
         "Product repo is dirty before automated execution; refusing to continue.",
         "Product repo is dirty before automated execution; refusing to continue.",
+        "VM validation failed after local validation and git push succeeded.",
+        "Retry-ready task has no product repo changes to continue from.",
+        "Retry-ready task has no product repo changes to continue from.",
         "VM validation failed after local validation and git push succeeded."
       ]
     },

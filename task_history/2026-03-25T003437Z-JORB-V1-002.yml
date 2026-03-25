@@ -1,0 +1,28 @@
+{
+  "task_id": "JORB-V1-002",
+  "title": "Persist and expose discovery query-family metrics end to end",
+  "status": "refined",
+  "attempt": 1,
+  "started_at": "2026-03-24T23:45:52+00:00",
+  "completed_at": "2026-03-25T00:34:37.086680+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-24T234552Z/codex_prompt.md",
+  "files_changed": [],
+  "commands_run": [],
+  "results": [
+    "refined"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [
+    "cycle_metrics contains query_family_metrics persisted from the latest cycle",
+    "discovery status exposes query family truth",
+    "UI can render query-family diagnostics without touching /leads",
+    "targeted tests and preflight pass"
+  ],
+  "blocker_opened": null,
+  "notes": [
+    "Retry-ready task has no product repo changes to continue from."
+  ],
+  "unproven_runtime_gaps": [
+    "Retry-ready task has no product repo changes to continue from."
+  ]
+}
