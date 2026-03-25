@@ -302,6 +302,592 @@
       "notes": [
         "Automated loop completed with VM validation success."
       ]
+    },
+    {
+      "id": "JORB-V1-006",
+      "title": "Build structured user profile schema for targeting and scoring",
+      "type": "feature",
+      "area": "profile",
+      "milestone": "M4",
+      "priority": 1,
+      "status": "ready",
+      "retries_used": 0,
+      "depends_on": [],
+      "prompt": "implement_feature",
+      "objective": "Create the core structured user profile schema that will drive targeting, ranking, and recommendation logic without drifting into generic coaching behavior.",
+      "why_it_matters": "Opportunity intelligence needs durable, explicit profile inputs before onboarding, scoring, and recommendation work can become reliable.",
+      "allowlist": [
+        "core/models.py",
+        "core/schemas.py",
+        "services/profile.py",
+        "ui/app.py",
+        "tests/test_profile.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_profile.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "a durable user profile schema exists in the product repo",
+        "profile fields are explicit, editable, and versionable",
+        "profile data can be used by downstream search and scoring logic",
+        "tests cover schema creation and update behavior"
+      ],
+      "notes": [
+        "Normalized from imported task batch; kept as the only newly ready product task so task selection remains deterministic."
+      ]
+    },
+    {
+      "id": "JORB-V1-007",
+      "title": "Add resume and PDF upload ingestion with structured extraction",
+      "type": "feature",
+      "area": "onboarding",
+      "milestone": "M4",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V1-006"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Add a working resume and PDF upload flow that parses documents into structured profile fields instead of storing opaque text blobs.",
+      "why_it_matters": "Structured extraction is the bridge between raw user documents and usable targeting inputs for profile-driven opportunity intelligence.",
+      "allowlist": [
+        "services/profile_ingest.py",
+        "services/document_ingest.py",
+        "ui/app.py",
+        "tests/test_profile.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_profile.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "user can upload a resume or PDF through the interface",
+        "extraction populates structured profile fields",
+        "extraction output is reviewable and editable",
+        "parsing failures degrade gracefully and do not break onboarding",
+        "tests cover successful and partial extraction behavior"
+      ],
+      "notes": []
+    },
+    {
+      "id": "JORB-V1-008",
+      "title": "Add skill, competency, and preference input fields to onboarding",
+      "type": "feature",
+      "area": "onboarding",
+      "milestone": "M4",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V1-007"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Add onboarding fields for confirmed skills, competencies, and explicit preferences that write into the structured profile layer.",
+      "why_it_matters": "Users need a clean way to confirm or correct extracted data before those inputs drive search parameters and recommendation logic.",
+      "allowlist": [
+        "core/schemas.py",
+        "services/profile.py",
+        "ui/app.py",
+        "tests/test_profile.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_profile.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "onboarding includes editable skill and competency inputs",
+        "preference fields persist correctly",
+        "profile updates affect downstream targeting inputs",
+        "interface remains simple and comprehensible",
+        "tests cover persistence and downstream usage"
+      ],
+      "notes": []
+    },
+    {
+      "id": "JORB-V1-009",
+      "title": "Build simple onboarding flow from resume to target role selection",
+      "type": "feature",
+      "area": "onboarding",
+      "milestone": "M4",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V1-008"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Build a minimal onboarding flow from resume upload through profile review into target role selection and discovery entry.",
+      "why_it_matters": "A clean onboarding path is required before profile-aware targeting can become a real product capability instead of scattered UI fields.",
+      "allowlist": [
+        "services/profile.py",
+        "ui/app.py",
+        "tests/test_profile.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_profile.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "onboarding is linear, simple, and understandable",
+        "user can complete onboarding without dead ends",
+        "output of onboarding becomes structured search and scoring input",
+        "tests cover onboarding state progression"
+      ],
+      "notes": []
+    },
+    {
+      "id": "JORB-V1-010",
+      "title": "Define recommendation score schema with researched component metrics",
+      "type": "feature",
+      "area": "intelligence",
+      "milestone": "M4",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V1-006"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Define a transparent recommendation score schema with explicit component metrics and traceable inputs.",
+      "why_it_matters": "JORB’s advantage depends on interpretable opportunity intelligence, not black-box ranking or generic advice.",
+      "allowlist": [
+        "core/schemas.py",
+        "services/pipeline.py",
+        "ui/app.py",
+        "tests/test_pipeline.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_pipeline.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "a structured recommendation score schema exists",
+        "each component has clear semantics and traceable inputs",
+        "final score and explanation can be surfaced in UI and API",
+        "tests cover score assembly and explanation structure"
+      ],
+      "notes": []
+    },
+    {
+      "id": "JORB-V1-011",
+      "title": "Add freshness and evergreen detection metrics to opportunity intelligence",
+      "type": "feature",
+      "area": "intelligence",
+      "milestone": "M4",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V1-010"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Add explicit freshness, staleness, and evergreen metrics to opportunity intelligence with inspectable logic.",
+      "why_it_matters": "Action guidance depends on whether a role is fresh, stale, or likely evergreen, not just whether it exists.",
+      "allowlist": [
+        "connectors/search_web.py",
+        "services/pipeline.py",
+        "tests/test_search_discovery.py",
+        "tests/test_pipeline.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_search_discovery.py tests/test_pipeline.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "listings are classified with freshness related metrics",
+        "evergreen likelihood is represented explicitly",
+        "recommendation explanations can cite freshness logic",
+        "tests cover fresh, stale, and evergreen edge cases"
+      ],
+      "notes": []
+    },
+    {
+      "id": "JORB-V1-012",
+      "title": "Add user supplied job link ingestion into the same evaluation pipeline",
+      "type": "feature",
+      "area": "ingestion",
+      "milestone": "M3",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V1-010"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Let users submit job links and run them through the same normalization and evaluation pipeline as discovered listings.",
+      "why_it_matters": "JORB should win on decision quality even when the listing source is user-supplied rather than system-discovered.",
+      "allowlist": [
+        "services/pipeline.py",
+        "ui/app.py",
+        "tests/test_pipeline.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_workbench.py tests/test_pipeline.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "user can submit a job link manually",
+        "the job is normalized and scored through the same pipeline",
+        "provenance shows user submitted versus system discovered",
+        "tests cover ingestion and evaluation behavior"
+      ],
+      "notes": []
+    },
+    {
+      "id": "JORB-V1-013",
+      "title": "Persist discovery lineage from query family to expansion outcome",
+      "type": "feature",
+      "area": "discovery",
+      "milestone": "M2",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V1-002"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Persist end-to-end discovery lineage from planner query family through expansion outcome and surfaced yield.",
+      "why_it_matters": "Discovery needs undeniable lineage so productive versus dead-weight families can be distinguished without guesswork.",
+      "allowlist": [
+        "connectors/search_web.py",
+        "services/company_discovery.py",
+        "services/sync.py",
+        "tests/test_search_discovery.py",
+        "tests/test_company_discovery.py",
+        "tests/test_sync.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_search_discovery.py tests/test_company_discovery.py tests/test_sync.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "lineage from query family to expansion outcome is persisted",
+        "zero yield outcomes remain visible",
+        "diagnostics can show dead weight versus productive families",
+        "tests cover lineage persistence and retrieval"
+      ],
+      "notes": []
+    },
+    {
+      "id": "JORB-V1-014",
+      "title": "Add recommendation action labels and explanations",
+      "type": "feature",
+      "area": "strategy",
+      "milestone": "M4",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V1-010",
+        "JORB-V1-011"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Add explicit action labels and compact explanations so surfaced roles come with decision-oriented guidance.",
+      "why_it_matters": "Users need to know whether to act now, wait, seek a referral, or skip, and why those recommendations were made.",
+      "allowlist": [
+        "core/schemas.py",
+        "services/pipeline.py",
+        "ui/app.py",
+        "tests/test_pipeline.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_pipeline.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "surfaced opportunities include action label and explanation",
+        "explanations use explicit score and signal components",
+        "UI renders action guidance clearly",
+        "tests cover label selection and explanation output"
+      ],
+      "notes": []
+    },
+    {
+      "id": "JORB-V1-015",
+      "title": "Expand tracker schema for outcomes and reasons",
+      "type": "feature",
+      "area": "tracking",
+      "milestone": "M3",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [],
+      "prompt": "implement_feature",
+      "objective": "Expand the application tracker into a durable outcome dataset with lifecycle states, reasons, and notes.",
+      "why_it_matters": "Real learning and recommendation quality depend on richer outcome data than simple applied/not-applied tracking.",
+      "allowlist": [
+        "core/models.py",
+        "core/schemas.py",
+        "services/applications.py",
+        "tests/test_applications.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_applications.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "tracker supports richer lifecycle states",
+        "outcomes and reasons persist cleanly",
+        "tests cover lifecycle transitions and stored reason codes"
+      ],
+      "notes": []
+    },
+    {
+      "id": "JORB-V1-016",
+      "title": "Add rejection feedback and improvement recommendation pipeline",
+      "type": "feature",
+      "area": "learning",
+      "milestone": "M4",
+      "priority": 2,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V1-015"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Add a feedback pipeline that maps structured rejection reasons into targeted, non-generic improvement recommendations.",
+      "why_it_matters": "Learning should be grounded in actual outcome data rather than generic coaching advice.",
+      "allowlist": [
+        "services/feedback_learning.py",
+        "ui/app.py",
+        "tests/test_feedback_learning.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_feedback_learning.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "user can record rejection feedback",
+        "feedback can be categorized into structured reason buckets",
+        "system can generate targeted improvement recommendations",
+        "tests cover parsing and recommendation mapping"
+      ],
+      "notes": []
+    },
+    {
+      "id": "JORB-V1-017",
+      "title": "Add LinkedIn or network data import for referral strategy",
+      "type": "feature",
+      "area": "strategy",
+      "milestone": "M4",
+      "priority": 2,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V1-006"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Add local network-data import so JORB can suggest referral paths and contact adjacency without automating outreach.",
+      "why_it_matters": "Referral strategy can improve decision quality, but it should stay local-first and non-automated.",
+      "allowlist": [
+        "services/profile.py",
+        "services/network_import.py",
+        "ui/app.py",
+        "tests/test_profile.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_profile.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "user can import network data locally",
+        "system can connect companies to possible referral paths",
+        "no outreach content or automation is produced",
+        "tests cover import and matching logic"
+      ],
+      "notes": []
+    },
+    {
+      "id": "JORB-V1-018",
+      "title": "Add privacy and local data inventory surface",
+      "type": "feature",
+      "area": "privacy",
+      "milestone": "M4",
+      "priority": 2,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V1-006"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Add a local data inventory surface so users can inspect stored data categories, provenance, and usage.",
+      "why_it_matters": "A local-first product needs clear privacy surfaces before broader profile and learning features can be trusted.",
+      "allowlist": [
+        "services/profile.py",
+        "ui/app.py",
+        "tests/test_profile.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_profile.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "user can inspect local stored data categories and provenance",
+        "system distinguishes local versus cloud assisted paths",
+        "tests cover inventory generation and basic export behavior"
+      ],
+      "notes": []
+    },
+    {
+      "id": "JORB-INFRA-003",
+      "title": "Add live progress output and elapsed timing to builder loop",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M0",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-002"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Add readable live progress output and elapsed timing to long-running builder loop steps.",
+      "why_it_matters": "The loop is now live and callable, so operator visibility during long executor, validation, git, and VM phases matters more than before.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance": [
+        "automate_task_loop.py emits readable step progress",
+        "long running runs show current phase and elapsed time",
+        "tests cover progress event emission where practical"
+      ],
+      "notes": []
+    },
+    {
+      "id": "JORB-INFRA-004",
+      "title": "Eliminate interactive auth prompts in the builder loop",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M0",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-002"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Remove repeated interactive password prompts from GitHub, SSH, and VM validation under normal builder operation.",
+      "why_it_matters": "A truly low-friction builder loop needs non-interactive auth so long live runs can complete unattended.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance": [
+        "builder loop can run without repeated GitHub password prompts",
+        "builder loop can SSH to the VM without interactive password entry",
+        "operator docs explain required key setup"
+      ],
+      "notes": []
+    },
+    {
+      "id": "JORB-INFRA-005",
+      "title": "Add accepted task evidence linking and operator diagnostics",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M0",
+      "priority": 2,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-002"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Improve accepted-task observability by linking task history to core evidence artifacts and operator diagnostics.",
+      "why_it_matters": "Acceptance should stay explainable as the builder takes on more autonomous work and longer-running product tasks.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance": [
+        "task history for accepted tasks links to core evidence artifacts",
+        "operator can quickly inspect why a task was accepted"
+      ],
+      "notes": []
     }
   ]
 }

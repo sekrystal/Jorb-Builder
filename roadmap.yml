@@ -1,8 +1,13 @@
 {
-  "version": 1,
+  "version": 2,
   "product": "Jorb",
-  "current_baseline": "Opportunity Scout successor with FastAPI, Streamlit, worker loop, ranking, critic, discovery, runtime control, and instrumentation.",
+  "current_baseline": "Opportunity Scout successor with FastAPI, Streamlit, worker loop, ranking, critic, discovery, runtime control, instrumentation, and an external builder loop with callable Codex execution.",
   "milestones": [
+    {
+      "id": "M0",
+      "name": "Builder reliability",
+      "goal": "Deterministic builder orchestration, observable execution, and low-friction operator flow"
+    },
     {
       "id": "M1",
       "name": "Stable operator core",
@@ -16,18 +21,118 @@
     {
       "id": "M3",
       "name": "Complete lead lifecycle",
-      "goal": "Saved/applied/follow-up/investigation workflow completeness"
+      "goal": "Manual ingestion, tracker durability, and lifecycle outcome quality"
     },
     {
       "id": "M4",
-      "name": "Career copilot foundation",
-      "goal": "Career direction, coaching, rejection learning, user-supplied listings"
+      "name": "Profile and intelligence foundation",
+      "goal": "Structured user profile, onboarding, recommendation scoring, and explainable action guidance"
     }
   ],
   "themes": [
-    {"id": "runtime", "milestone": "M1", "priority": 1},
-    {"id": "discovery", "milestone": "M2", "priority": 1},
-    {"id": "lifecycle", "milestone": "M3", "priority": 2},
-    {"id": "coaching", "milestone": "M4", "priority": 3}
+    {
+      "id": "builder",
+      "milestone": "M0",
+      "priority": 1
+    },
+    {
+      "id": "runtime",
+      "milestone": "M1",
+      "priority": 1
+    },
+    {
+      "id": "discovery",
+      "milestone": "M2",
+      "priority": 1
+    },
+    {
+      "id": "tracking",
+      "milestone": "M3",
+      "priority": 2
+    },
+    {
+      "id": "profile",
+      "milestone": "M4",
+      "priority": 1
+    },
+    {
+      "id": "onboarding",
+      "milestone": "M4",
+      "priority": 1
+    },
+    {
+      "id": "intelligence",
+      "milestone": "M4",
+      "priority": 1
+    },
+    {
+      "id": "strategy",
+      "milestone": "M4",
+      "priority": 2
+    },
+    {
+      "id": "learning",
+      "milestone": "M4",
+      "priority": 2
+    },
+    {
+      "id": "privacy",
+      "milestone": "M4",
+      "priority": 2
+    }
+  ],
+  "phase_1_wedge": {
+    "status": "active",
+    "goal": "Start the profile-first wedge without overloading task selection.",
+    "ready_task_ids": [
+      "JORB-V1-006"
+    ],
+    "pending_task_ids": [
+      "JORB-V1-007",
+      "JORB-V1-008",
+      "JORB-V1-009",
+      "JORB-V1-010",
+      "JORB-V1-011",
+      "JORB-V1-012",
+      "JORB-V1-013",
+      "JORB-V1-014",
+      "JORB-V1-015",
+      "JORB-INFRA-003",
+      "JORB-INFRA-004"
+    ]
+  },
+  "later_phases": [
+    {
+      "id": "phase_2_profile_to_intelligence",
+      "status": "pending",
+      "task_ids": [
+        "JORB-V1-007",
+        "JORB-V1-008",
+        "JORB-V1-009",
+        "JORB-V1-010",
+        "JORB-V1-011",
+        "JORB-V1-012",
+        "JORB-V1-014"
+      ]
+    },
+    {
+      "id": "phase_3_lifecycle_and_feedback",
+      "status": "pending",
+      "task_ids": [
+        "JORB-V1-015",
+        "JORB-V1-016"
+      ]
+    },
+    {
+      "id": "phase_4_network_privacy_and_builder_diagnostics",
+      "status": "pending",
+      "task_ids": [
+        "JORB-V1-017",
+        "JORB-V1-018",
+        "JORB-INFRA-003",
+        "JORB-INFRA-004",
+        "JORB-INFRA-005"
+      ]
+    }
   ]
 }
