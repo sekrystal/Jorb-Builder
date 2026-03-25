@@ -146,6 +146,35 @@ def _write_fake_codex_hung(path: Path) -> None:
     path.chmod(0o755)
 
 
+def _write_fake_codex_slow(path: Path, *, relative_output: str, sleep_seconds: int = 2, last_message: str = "slow codex ok\n") -> None:
+    path.write_text(
+        "\n".join(
+            [
+                "#!/usr/bin/env python3",
+                "from pathlib import Path",
+                "import sys",
+                "import time",
+                "",
+                "argv = sys.argv[1:]",
+                "output_file = None",
+                "for index, item in enumerate(argv):",
+                "    if item == '-o' and index + 1 < len(argv):",
+                "        output_file = Path(argv[index + 1])",
+                "prompt = sys.stdin.read()",
+                f"time.sleep({sleep_seconds})",
+                f"target = Path.cwd() / {relative_output!r}",
+                "target.parent.mkdir(parents=True, exist_ok=True)",
+                "target.write_text('applied by slow codex\\n' + prompt, encoding='utf-8')",
+                "if output_file is not None:",
+                f"    output_file.write_text({last_message!r}, encoding='utf-8')",
+                "sys.stdout.write('done')",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    path.chmod(0o755)
+
+
 def _ignore_path_in_git_status(repo: Path, pattern: str) -> None:
     exclude = repo / ".git" / "info" / "exclude"
     with exclude.open("a", encoding="utf-8") as handle:
@@ -519,6 +548,95 @@ def test_no_active_task_with_no_ready_tasks_stays_no_active_task(tmp_path: Path)
 
     assert result.returncode == 1
     assert "NO_READY_TASKS_REMAIN" in result.stdout
+
+
+def test_normal_run_does_not_start_when_selector_has_no_runnable_task(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    _seed_legacy_auth_preflight_blocked_state(builder_root, task_id="TASK-BUILDER")
+    active = _json(builder_root / "active_task.yml")
+    active["state"] = "implementing"
+    _write_json(builder_root / "active_task.yml", active)
+    status = _json(builder_root / "status.yml")
+    status["state"] = "implementing"
+    _write_json(builder_root / "status.yml", status)
+
+    inspect = _run([sys.executable, str(SCRIPT), "--inspect-backlog"], builder_root)
+    run = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert '"next_selected_task: null"' in inspect.stdout.lower() or 'next_selected_task: null' in inspect.stdout
+    assert run.returncode == 1
+    assert "SELECTOR_FILTERED_EVERYTHING" in run.stdout or "NO_READY_TASKS_REMAIN" in run.stdout
+    assert "[Task TASK-BUILDER] Step 1/9" not in run.stdout
+
+
+def test_blocked_backlog_task_is_never_auto_started(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "blocked"
+    _write_json(builder_root / "backlog.yml", backlog)
+    active = _json(builder_root / "active_task.yml")
+    active["state"] = "packet_rendered"
+    _write_json(builder_root / "active_task.yml", active)
+    status = _json(builder_root / "status.yml")
+    status["state"] = "packet_rendered"
+    _write_json(builder_root / "status.yml", status)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 1
+    assert "SELECTOR_FILTERED_EVERYTHING" in result.stdout or "NO_READY_TASKS_REMAIN" in result.stdout
+    assert "[Task TASK-BUILDER] Step 1/9" not in result.stdout
+
+
+def test_inspect_and_normal_run_agree_on_next_selected_task(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    active = _json(builder_root / "active_task.yml")
+    active.update(
+        {
+            "task_id": None,
+            "title": None,
+            "state": "idle",
+            "attempt": 0,
+            "started_at": None,
+            "handed_to_codex_at": None,
+            "prompt_file": None,
+            "run_log_dir": None,
+            "verification_commands": [],
+            "allowlist": [],
+            "failure_summary": None,
+            "notes": [],
+            "target_repo": None,
+            "target_kind": None,
+        }
+    )
+    _write_json(builder_root / "active_task.yml", active)
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "ready"
+    _write_json(builder_root / "backlog.yml", backlog)
+    _git(["add", "active_task.yml", "backlog.yml", "prompts/implement_feature.md"], builder_root)
+    _git(["commit", "-m", "prepare selector agreement"], builder_root)
+
+    inspect = _run([sys.executable, str(SCRIPT), "--inspect-backlog"], builder_root)
+    run = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert '"TASK-BUILDER"' in inspect.stdout
+    assert run.returncode == 0
+    assert "[Task TASK-BUILDER] Step 1/9" in run.stdout
 
 
 def test_accepted_task_autoselects_next_task(tmp_path: Path) -> None:
@@ -1021,6 +1139,35 @@ def test_codex_exec_builder_task_runs_in_builder_repo(tmp_path: Path) -> None:
     assert any('"stage_name": "Git commit and push"' in line for line in progress_events)
 
 
+def test_codex_exec_emits_heartbeat_progress_updates(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    fake_codex = tmp_path / "fake-codex-slow"
+    _write_fake_codex_slow(fake_codex, relative_output="worker.py", sleep_seconds=2, last_message="slow codex ok\n")
+
+    config = _json(builder_root / "config.yml")
+    config["executor"]["mode"] = "codex_exec"
+    config["executor"]["codex_cli"] = str(fake_codex)
+    config["executor"]["heartbeat_seconds"] = 1
+    config["executor"]["timeout_seconds"] = 10
+    _write_json(builder_root / "config.yml", config)
+    _git(["add", "config.yml"], builder_root)
+    _git(["commit", "-m", "configure codex heartbeat"], builder_root)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 0
+    assert "pid=" in result.stdout
+    assert "last_message_exists=" in result.stdout
+    run_dir = _active_run_dir(builder_root)
+    progress_events = (run_dir / "progress.jsonl").read_text(encoding="utf-8").splitlines()
+    assert any('"stage_name": "Codex execution running"' in line and 'last_message_exists' in line for line in progress_events)
+
+
 def test_codex_exec_product_task_runs_in_product_repo(tmp_path: Path) -> None:
     builder_root, product_repo, _, _ = _setup_builder_fixture(
         tmp_path,
@@ -1344,11 +1491,10 @@ def test_fresh_invocation_after_terminal_state_uses_new_run_dir(tmp_path: Path) 
     _git(["add", "config.yml"], builder_root)
     _git(["commit", "-m", "configure fresh run"], builder_root)
 
-    (builder_root / "dirty.txt").write_text("dirty\n", encoding="utf-8")
-    first = _run([sys.executable, str(SCRIPT)], builder_root)
-    assert first.returncode == 2
+    _seed_legacy_auth_preflight_blocked_state(builder_root, task_id="TASK-BUILDER")
     first_run_dir = _active_run_dir(builder_root)
-    (builder_root / "dirty.txt").unlink()
+    repair = _run([sys.executable, str(SCRIPT), "--repair-state"], builder_root)
+    assert repair.returncode == 0
 
     second = _run([sys.executable, str(SCRIPT)], builder_root)
     assert second.returncode == 0
@@ -1507,5 +1653,4 @@ def test_repair_state_does_not_introduce_false_resume_semantics(tmp_path: Path) 
     resume = _run([sys.executable, str(SCRIPT), "--resume"], builder_root)
 
     assert resume.returncode == 1
-    assert "INVALID_ACTIVE_TASK_STATE" in resume.stdout
-    assert "packet_rendered" in resume.stdout
+    assert "ACTIVE_TASK_MISSING_BUT_READY_TASKS_EXIST" in resume.stdout

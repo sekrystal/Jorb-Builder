@@ -10,7 +10,8 @@ import shlex
 import shutil
 import subprocess
 import sys
-from typing import Any
+import time
+from typing import Any, Callable
 
 from common import (
     builder_root,
@@ -472,6 +473,8 @@ def run_codex_exec(
     input_text: str,
     output_path: Path,
     timeout: int,
+    heartbeat_seconds: int = 15,
+    heartbeat: Callable[[dict[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     started_at = now_iso()
     command = " ".join(shlex.quote(part) for part in argv)
@@ -480,6 +483,7 @@ def run_codex_exec(
     stderr = ""
     timed_out = False
     cleanup = {"terminate_sent": False, "kill_sent": False}
+    pid = None
     try:
         process = subprocess.Popen(
             argv,
@@ -489,22 +493,50 @@ def run_codex_exec(
             stderr=subprocess.PIPE,
             text=True,
         )
+        pid = process.pid
+        deadline = time.monotonic() + timeout
+        next_heartbeat = time.monotonic() + max(1, heartbeat_seconds)
         try:
-            stdout, stderr = process.communicate(input=input_text, timeout=timeout)
-        except subprocess.TimeoutExpired:
-            timed_out = True
-            cleanup["terminate_sent"] = True
-            process.terminate()
-            try:
-                timeout_stdout, timeout_stderr = process.communicate(timeout=5)
-                stdout = timeout_stdout or stdout
-                stderr = timeout_stderr or stderr
-            except subprocess.TimeoutExpired:
-                cleanup["kill_sent"] = True
-                process.kill()
-                kill_stdout, kill_stderr = process.communicate()
-                stdout = kill_stdout or stdout
-                stderr = kill_stderr or stderr
+            stdout, stderr = process.communicate(input=input_text, timeout=max(1, min(timeout, heartbeat_seconds)))
+        except subprocess.TimeoutExpired as exc:
+            stdout = exc.stdout or ""
+            stderr = exc.stderr or ""
+            while True:
+                now = time.monotonic()
+                if heartbeat and now >= next_heartbeat:
+                    exists = output_path.exists()
+                    mtime = output_path.stat().st_mtime if exists else None
+                    heartbeat(
+                        {
+                            "pid": pid,
+                            "elapsed_seconds": int(now - (deadline - timeout)),
+                            "last_message_exists": exists,
+                            "last_message_mtime": datetime.fromtimestamp(mtime, timezone.utc).isoformat() if mtime else None,
+                        }
+                    )
+                    next_heartbeat = now + max(1, heartbeat_seconds)
+                if now >= deadline:
+                    timed_out = True
+                    cleanup["terminate_sent"] = True
+                    process.terminate()
+                    try:
+                        timeout_stdout, timeout_stderr = process.communicate(timeout=5)
+                        stdout = timeout_stdout or stdout
+                        stderr = timeout_stderr or stderr
+                    except subprocess.TimeoutExpired:
+                        cleanup["kill_sent"] = True
+                        process.kill()
+                        kill_stdout, kill_stderr = process.communicate()
+                        stdout = kill_stdout or stdout
+                        stderr = kill_stderr or stderr
+                    break
+                try:
+                    remaining = max(0.1, min(deadline - now, heartbeat_seconds))
+                    stdout, stderr = process.communicate(timeout=remaining)
+                    break
+                except subprocess.TimeoutExpired as loop_exc:
+                    stdout = loop_exc.stdout or stdout
+                    stderr = loop_exc.stderr or stderr
         returncode = process.returncode
     except FileNotFoundError as exc:
         return {
@@ -531,6 +563,7 @@ def run_codex_exec(
     result = {
         "command": command,
         "cwd": str(cwd),
+        "pid": pid,
         "started_at": started_at,
         "finished_at": now_iso(),
         "returncode": returncode,
@@ -918,6 +951,69 @@ def load_run_result_for(active: dict[str, Any]) -> dict[str, Any] | None:
     return load_data(result_path)
 
 
+def resolve_execution_candidate(
+    backlog: dict[str, Any],
+    active: dict[str, Any],
+    status: dict[str, Any],
+    *,
+    resume: bool,
+) -> dict[str, Any]:
+    diagnostics = compute_backlog_diagnostics(backlog) if not backlog.get("errors") else {
+        "total_tasks": len(backlog.get("tasks", [])),
+        "counts_by_status": {},
+        "ready_task_ids": [],
+        "pending_task_ids": [],
+        "retry_ready_task_ids": [],
+        "blocked_task_ids": [],
+        "open_blocked_task_ids": [],
+        "ordered_ready_queue": [],
+        "next_selected_task_id": None,
+        "selector_filtered_everything": False,
+        "roadmap_affected": False,
+        "skipped_reasons": {},
+    }
+    active_task_id = active.get("task_id")
+    active_reasons: list[str] = []
+    active_candidate_id: str | None = None
+    if active_task_id:
+        task = next((item for item in backlog.get("tasks", []) if item.get("id") == active_task_id), None)
+        if task is None:
+            active_reasons.append("missing_from_backlog")
+        else:
+            task_status = str(task.get("status"))
+            active_state = str(active.get("state"))
+            skipped = diagnostics.get("skipped_reasons", {}).get(active_task_id, [])
+            if task_status in {"blocked", "accepted", "done"}:
+                active_reasons.append(f"backlog_status:{task_status}")
+            elif "open_blocker" in skipped:
+                active_reasons.append("open_blocker")
+            elif resume:
+                if active_state != "implementing":
+                    active_reasons.append(f"resume_requires_implementing:{active_state}")
+                else:
+                    active_candidate_id = active_task_id
+            elif active_state == "blocked":
+                if task_status in {"selected", "packet_rendered", "implementing", "verifying", "ready", "retry_ready"} and status.get("last_result") == "refined":
+                    active_candidate_id = active_task_id
+                else:
+                    active_reasons.append(f"blocked_state_not_retry_ready:{task_status}")
+            elif active_state in {"selected", "packet_rendered", "implementing", "verifying"}:
+                active_candidate_id = active_task_id
+            else:
+                active_reasons.append(f"non_runnable_active_state:{active_state}")
+
+    effective_queue = list(diagnostics.get("ordered_ready_queue", []))
+    if active_candidate_id and active_candidate_id not in effective_queue:
+        effective_queue.insert(0, active_candidate_id)
+    return {
+        "diagnostics": diagnostics,
+        "active_candidate_id": active_candidate_id,
+        "active_reasons": active_reasons,
+        "effective_ready_queue": effective_queue,
+        "next_selected_task_id": active_candidate_id or diagnostics.get("next_selected_task_id"),
+    }
+
+
 def is_auth_preflight_only_block(active: dict[str, Any], status: dict[str, Any], run_result: dict[str, Any] | None) -> bool:
     if not run_result:
         return False
@@ -1018,19 +1114,15 @@ def repair_legacy_state() -> int:
 
 def inspect_backlog_payload() -> tuple[dict[str, Any], dict[str, Any]]:
     backlog = load_validated_backlog()
-    diagnostics = compute_backlog_diagnostics(backlog) if not backlog.get("errors") else {
-        "total_tasks": len(backlog.get("tasks", [])),
-        "counts_by_status": {},
-        "ready_task_ids": [],
-        "pending_task_ids": [],
-        "retry_ready_task_ids": [],
-        "blocked_task_ids": [],
-        "ordered_ready_queue": [],
-        "next_selected_task_id": None,
-        "selector_filtered_everything": False,
-        "roadmap_affected": False,
-        "skipped_reasons": {},
-    }
+    active = load_data(ACTIVE)
+    status = load_data(STATUS)
+    execution = resolve_execution_candidate(backlog, active, status, resume=False)
+    diagnostics = dict(execution["diagnostics"])
+    diagnostics["ordered_ready_queue"] = execution["effective_ready_queue"]
+    diagnostics["next_selected_task_id"] = execution["next_selected_task_id"]
+    diagnostics["active_task_id"] = active.get("task_id")
+    diagnostics["active_task_runnable"] = execution["active_candidate_id"] is not None
+    diagnostics["active_task_skip_reasons"] = execution["active_reasons"]
     return backlog, diagnostics
 
 
@@ -1050,6 +1142,10 @@ def print_backlog_inspection(backlog: dict[str, Any], diagnostics: dict[str, Any
     print("blocked_task_ids: " + json.dumps(diagnostics["blocked_task_ids"]))
     print("roadmap_affected: " + json.dumps(diagnostics["roadmap_affected"]))
     print("selector_filtered_everything: " + json.dumps(diagnostics["selector_filtered_everything"]))
+    print("active_task_id: " + json.dumps(diagnostics.get("active_task_id")))
+    print("active_task_runnable: " + json.dumps(diagnostics.get("active_task_runnable")))
+    if diagnostics.get("active_task_skip_reasons"):
+        print("active_task_skip_reasons: " + json.dumps(diagnostics["active_task_skip_reasons"]))
     if diagnostics.get("skipped_reasons"):
         print("skipped_reasons: " + json.dumps(diagnostics["skipped_reasons"], sort_keys=True))
     return 0
@@ -1196,6 +1292,9 @@ def try_bootstrap_active_task() -> tuple[dict[str, Any], dict[str, Any], dict[st
     if backlog.get("errors"):
         return backlog, active, status, False
 
+    execution = resolve_execution_candidate(backlog, active, status, resume=False)
+    if not execution.get("next_selected_task_id"):
+        return backlog, active, status, False
     select_result = run_argv([sys.executable, str(SELECT_TASK)], ROOT)
     if "NO_READY_TASK" in select_result.get("stdout", "") or "SELECTOR_FILTERED_EVERYTHING" in select_result.get("stdout", ""):
         return backlog, active, status, False
@@ -1250,11 +1349,35 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             task = find_task(backlog, active["task_id"])
         except KeyError:
             task = None
+    execution = resolve_execution_candidate(backlog, active, status, resume=args.resume)
+    diagnostics = execution["diagnostics"]
+    if active.get("task_id") and execution.get("active_candidate_id") is None and not backlog.get("errors"):
+        if execution.get("next_selected_task_id"):
+            print_result(
+                "ACTIVE_TASK_MISSING_BUT_READY_TASKS_EXIST",
+                "Persisted active task is not runnable under current backlog truth.",
+                "Run python3 scripts/automate_task_loop.py --repair-state or clear the stale active task before rerunning automation.",
+                extra=f"Next runnable task: {execution['next_selected_task_id']}",
+            )
+            return 1
+        if diagnostics.get("selector_filtered_everything"):
+            print_result(
+                "SELECTOR_FILTERED_EVERYTHING",
+                "No runnable task exists under current backlog truth, including the persisted active task.",
+                "Inspect backlog blockers/dependencies or run python3 scripts/automate_task_loop.py --inspect-backlog for details.",
+                extra=f"Active task skip reasons: {', '.join(execution.get('active_reasons', [])) or 'none'}",
+            )
+            return 1
+        print_result(
+            "NO_READY_TASKS_REMAIN",
+            "No runnable task exists under current backlog truth.",
+            "Inspect backlog.yml for the next task to mark ready, or run python3 scripts/automate_task_loop.py --inspect-backlog for details.",
+        )
+        return 1
     validation_error = validate_active_task_context(active, status, task, resume=args.resume)
     if validation_error:
         label, summary, next_action = validation_error
         if label == "NO_ACTIVE_TASK" and not auto_bootstrapped:
-            diagnostics = compute_backlog_diagnostics(backlog) if not backlog.get("errors") else None
             if backlog.get("errors"):
                 print("BACKLOG_INVALID")
                 for error in backlog["errors"]:
@@ -1553,12 +1676,29 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         emit_progress(run_dir, task_id=task["id"], stage_index=3, backlog=backlog, task_started_at=active.get("started_at"), detail=f"Running executor in {target_repo}.")
         prompt_text = Path(active["prompt_file"]).read_text(encoding="utf-8")
         if executor_mode == "codex_exec":
+            def emit_codex_heartbeat(payload: dict[str, Any]) -> None:
+                detail = (
+                    f"pid={payload.get('pid')} | elapsed={payload.get('elapsed_seconds')}s | "
+                    f"last_message_exists={str(payload.get('last_message_exists')).lower()} | "
+                    f"last_message_mtime={payload.get('last_message_mtime') or 'none'}"
+                )
+                emit_progress(
+                    run_dir,
+                    task_id=task["id"],
+                    stage_index=3,
+                    backlog=backlog,
+                    task_started_at=active.get("started_at"),
+                    detail=detail,
+                )
+
             executor_result = run_codex_exec(
                 codex_exec_argv(executor_config, run_dir=run_dir),
                 target_repo,
                 input_text=prompt_text,
                 output_path=codex_last_message_path,
                 timeout=int(executor_config.get("timeout_seconds", 300)),
+                heartbeat_seconds=int(executor_config.get("heartbeat_seconds", 15)),
+                heartbeat=emit_codex_heartbeat,
             )
         else:
             executor_result = run_shell(
