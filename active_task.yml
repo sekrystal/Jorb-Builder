@@ -1,29 +1,23 @@
 {
-  "task_id": "JORB-V2-008",
-  "title": "Add profile-driven search constraints for geography, work mode, and target roles",
+  "task_id": "JORB-INFRA-006",
+  "title": "Harden builder UX conformance gating for product-facing tasks",
   "state": "blocked",
   "attempt": 1,
-  "started_at": "2026-03-25T23:59:39.019073+00:00",
+  "started_at": "2026-03-26T20:00:06.780745+00:00",
   "handed_to_codex_at": null,
-  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T235936Z/codex_prompt.md",
-  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T235937Z-JORB-V2-008",
+  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200006Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200006Z-JORB-INFRA-006",
   "verification_commands": [
-    "pytest tests/test_profile.py tests/test_pipeline.py tests/test_ranking.py tests/test_workbench.py",
-    "./scripts/preflight_check.sh"
+    "python3 -m py_compile scripts/*.py",
+    "pytest tests/test_automate_task_loop.py",
+    "python3 scripts/automate_task_loop.py --inspect-backlog"
   ],
   "allowlist": [
-    "api/**",
-    "core/**",
-    "services/**",
-    "ui/**",
-    "tests/test_pipeline.py",
-    "tests/test_profile.py",
-    "tests/test_ranking.py",
-    "tests/test_workbench.py"
+    "../jorb-builder/**"
   ],
-  "failure_summary": "Product repo is dirty before automated execution; refusing to continue.",
+  "failure_summary": "Builder repo is dirty before automated execution; refusing to continue.",
   "notes": [],
-  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T235936Z",
-  "target_repo": "/Users/samuelkrystal/projects/jorb",
-  "target_kind": "product"
+  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200006Z",
+  "target_repo": "/Users/samuelkrystal/projects/jorb-builder",
+  "target_kind": "builder"
 }

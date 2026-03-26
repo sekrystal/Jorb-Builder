@@ -1,0 +1,118 @@
+{
+  "task_id": "JORB-V2-023",
+  "title": "Implement verification and deduplication pipeline",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-26T18:23:37.274910+00:00",
+  "completed_at": "2026-03-26T18:31:07.420386+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T182336Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T182337Z-JORB-V2-023",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T182336Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T182337Z-JORB-V2-023"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T182337Z-JORB-V2-023/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T182337Z-JORB-V2-023/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T182337Z-JORB-V2-023/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T182337Z-JORB-V2-023/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T182337Z-JORB-V2-023/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T182337Z-JORB-V2-023/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T182337Z-JORB-V2-023/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T182337Z-JORB-V2-023/executor.json"
+    }
+  ],
+  "files_changed": [
+    "services/freshness.py",
+    "services/pipeline.py",
+    "services/sync.py",
+    "tests/test_pipeline.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T182337Z-JORB-V2-023/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "Duplicate jobs removed",
+    "Invalid or dead links filtered",
+    "Stale jobs flagged or excluded"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [
+      "Duplicate jobs removed",
+      "Invalid or dead links filtered",
+      "Stale jobs flagged or excluded"
+    ],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\nAdded a shared listing verification path that canonicalizes ATS job URLs, annotates verification metadata, filters dead/expired listings, preserves stale listings as explicitly flagged, dedupes verified listing batches before upsert, and reuses canonical URL/internal job ID matching in listing upsert so duplicate jobs do not create duplicate listings or leads across sync and manual ingest.\n\n2. Exact files changed\n\n- [services/freshness.py](/Users/samuelkrystal/projects/jorb/services/freshness.py)\n- [services/pipeline.py](/Users/samuelkrystal/projects/jorb/services/pipeline.py)\n- [services/sync.py](/Users/samuelkrystal/projects/jorb/services/sync.py)\n- [tests/test_pipeline.py](/Users/samuelkrystal/projects/jorb/tests/test_pipeline.py)\n\n3. Exact tests added or updated\n\nUpdated [tests/test_pipeline.py](/Users/samuelkrystal/projects/jorb/tests/test_pipeline.py) with:\n- `test_ingest_user_job_link_canonicalizes_and_dedupes_manual_greenhouse_variants`\n- `test_ingest_user_job_link_rejects_dead_links_during_verification`\n- `test_ingest_user_job_link_flags_stale_records_in_verification_metadata`\n\nAlso updated the existing manual-ingest assertion in:\n- `test_ingest_user_job_link_routes_manual_submission_through_listing_pipeline`\n\n4. Exact commands run\n\n- `pytest tests/test_pipeline.py tests/test_search_discovery.py tests/test_workbench.py`\n- `./scripts/preflight_check.sh`\n- `python3 -m py_compile services/freshness.py services/pipeline.py services/sync.py tests/test_pipeline.py`\n- `/Users/samuelkrystal/projects/jorb/.venv_validation/bin/python scripts/reset_demo.py`\n- `/Users/samuelkrystal/projects/jorb/.venv_validation/bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8010`\n- `/Users/samuelkrystal/projects/jorb/.venv_validation/bin/python -m streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8510`\n\n5. Exact results\n\n- `pytest tests/test_pipeline.py tests/test_search_discovery.py tests/test_workbench.py`: passed, `61 passed in 2.56s`\n- `./scripts/preflight_check.sh`: passed, full preflight completed with `168 passed in 6.15s` and `Preflight checks passed.`\n- `python3 -m py_compile ...`: passed with exit code `0`\n- `scripts/reset_demo.py`: passed and returned `signals_ingested=4`, `listings_ingested=7`, `leads_updated=8`, `surfaced_count=5`\n- `uvicorn ... --port 8010`: import/startup reached application startup, then failed to bind local port with `[Errno 1] operation not permitted`\n- `streamlit run ... --port 8510`: startup attempted, then failed to bind local port with `PermissionError: [Errno 1] Operation not permitted`\n\n6. Honest note on what remains unproven\n\nLive FastAPI and Streamlit serving, plus end-to-end workflow verification against a running local server, remain unproven in this environment because sandbox restrictions blocked local port binding. The behavior is proven by targeted tests, full preflight, compile checks, and reset-demo execution, but not by a browser/API session against a listening app."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 24 vulnerabilities on sekrystal/Jorb's default branch (19 moderate, 5 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   aac6cd0..15747d0  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 4,
+    "changed_files": [
+      "services/freshness.py",
+      "services/pipeline.py",
+      "services/sync.py",
+      "tests/test_pipeline.py"
+    ],
+    "unproven_runtime_gaps": []
+  },
+  "unproven_runtime_gaps": []
+}

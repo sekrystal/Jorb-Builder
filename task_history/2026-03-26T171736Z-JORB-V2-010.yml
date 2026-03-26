@@ -1,0 +1,130 @@
+{
+  "task_id": "JORB-V2-010",
+  "title": "Expand discovery with a realistic first slice of broader job sources",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-26T17:08:21.535445+00:00",
+  "completed_at": "2026-03-26T17:17:36.153640+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T170821Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T170821Z-JORB-V2-010",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T170821Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T170821Z-JORB-V2-010"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T170821Z-JORB-V2-010/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T170821Z-JORB-V2-010/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T170821Z-JORB-V2-010/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T170821Z-JORB-V2-010/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T170821Z-JORB-V2-010/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T170821Z-JORB-V2-010/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T170821Z-JORB-V2-010/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T170821Z-JORB-V2-010/executor.json"
+    }
+  ],
+  "files_changed": [
+    "connectors/search_web.py",
+    "services/company_discovery.py",
+    "services/normalize.py",
+    "services/pipeline.py",
+    "services/ranking.py",
+    "services/sync.py",
+    "tests/test_company_discovery.py",
+    "tests/test_pipeline.py",
+    "tests/test_search_discovery.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T170821Z-JORB-V2-010/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "at least one broader non-ATS source such as YC Jobs or 80,000 Hours is supported end to end in a bounded, testable way",
+    "the product clearly stages or rejects additional sources it does not yet support instead of implying universal coverage",
+    "runtime discovery can surface useful jobs from the new slice without regressing existing ATS paths",
+    "targeted tests and preflight pass"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [
+      "at least one broader non-ATS source such as YC Jobs or 80,000 Hours is supported end to end in a bounded, testable way",
+      "the product clearly stages or rejects additional sources it does not yet support instead of implying universal coverage",
+      "runtime discovery can surface useful jobs from the new slice without regressing existing ATS paths",
+      "targeted tests and preflight pass"
+    ],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\nAdded a bounded first non-ATS discovery slice for YC Jobs via `workatastartup.com/jobs/*`. Search discovery now accepts those URLs, company discovery converts them into `yc_jobs` candidates, sync can fetch and normalize selected YC job pages into real listings/leads, user-submitted YC links get correct `yc_jobs` lineage, and the discovery source matrix now explicitly marks YC Jobs as supported while keeping broader web sources staged and unsupported.\n\n2. Exact files changed\n\n- `connectors/search_web.py`\n- `services/company_discovery.py`\n- `services/normalize.py`\n- `services/pipeline.py`\n- `services/ranking.py`\n- `services/sync.py`\n- `tests/test_company_discovery.py`\n- `tests/test_pipeline.py`\n- `tests/test_search_discovery.py`\n\n3. Exact tests added or updated\n\nAdded:\n- `tests/test_search_discovery.py::test_extract_direct_listing_from_yc_jobs_html`\n- `tests/test_company_discovery.py::test_candidate_conversion_accepts_yc_jobs_direct_listings`\n- `tests/test_pipeline.py::test_ingest_user_job_link_marks_yc_jobs_submission_with_source_lineage`\n- `tests/test_pipeline.py::test_sync_all_surfaces_yc_jobs_listing_from_search_discovery`\n\nUpdated:\n- `tests/test_search_discovery.py::test_supported_job_surface_accepts_careers_variants_and_blocks_aggregators`\n- `tests/test_company_discovery.py::test_discovery_source_matrix_classifies_live_truth_explicitly`\n- `tests/test_company_discovery.py::test_discovery_source_matrix_marks_disabled_sources_explicitly`\n\n4. Exact commands run\n\n- `pytest tests/test_search_discovery.py tests/test_company_discovery.py tests/test_pipeline.py tests/test_workbench.py`\n- `./scripts/preflight_check.sh`\n- `./.venv_j1/bin/python scripts/reset_demo.py`\n- `./.venv_j1/bin/python -V && ./.venv_j1/bin/uvicorn --version && ./.venv_j1/bin/streamlit version`\n- `./.venv_j1/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000`\n- `./.venv_j1/bin/streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500`\n\n5. Exact results\n\n- `pytest tests/test_search_discovery.py tests/test_company_discovery.py tests/test_pipeline.py tests/test_workbench.py`\n  Result: `66 passed in 2.72s`\n- `./scripts/preflight_check.sh`\n  Result: passed, including repo smoke checks and full test suite: `157 passed in 9.64s`\n- `./.venv_j1/bin/python scripts/reset_demo.py`\n  Result: succeeded; demo reset completed with `signals_ingested=4`, `listings_ingested=8`, `yc_jobs.verified=0` in seeded demo mode because search discovery is disabled there by default\n- `./.venv_j1/bin/python -V && ./.venv_j1/bin/uvicorn --version && ./.venv_j1/bin/streamlit version`\n  Result: `Python 3.9.6`, `uvicorn 0.34.0`, `Streamlit 1.44.1`\n- `./.venv_j1/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000`\n  Result: app imported and startup completed, then bind failed with `ERROR: [Errno 1] error while attempting to bind on address ('127.0.0.1', 8000): operation not permitted`\n- `./.venv_j1/bin/streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500`\n  Result: launch reached server startup path, then bind failed with `PermissionError: [Errno 1] Operation not permitted`\n\n6. Honest note on what remains unproven\n\nLive manual verification of the changed YC Jobs workflow in the running FastAPI/Streamlit app remains unproven in this environment because the sandbox does not permit binding local ports, so I could not complete the final browser/API runtime check even though tests, preflight, and demo reset passed."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 24 vulnerabilities on sekrystal/Jorb's default branch (19 moderate, 5 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   1b70eb0..970e143  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 9,
+    "changed_files": [
+      "connectors/search_web.py",
+      "services/company_discovery.py",
+      "services/normalize.py",
+      "services/pipeline.py",
+      "services/ranking.py",
+      "services/sync.py",
+      "tests/test_company_discovery.py",
+      "tests/test_pipeline.py",
+      "tests/test_search_discovery.py"
+    ],
+    "unproven_runtime_gaps": []
+  },
+  "unproven_runtime_gaps": []
+}

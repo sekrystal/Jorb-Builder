@@ -1,0 +1,128 @@
+{
+  "task_id": "JORB-V2-009",
+  "title": "Audit discovery source truth and make the live source matrix executable",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-26T00:11:44.186265+00:00",
+  "completed_at": "2026-03-26T00:19:29.583892+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T001143Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T001143Z-JORB-V2-009",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T001143Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T001143Z-JORB-V2-009"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T001143Z-JORB-V2-009/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T001143Z-JORB-V2-009/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T001143Z-JORB-V2-009/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T001143Z-JORB-V2-009/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T001143Z-JORB-V2-009/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T001143Z-JORB-V2-009/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T001143Z-JORB-V2-009/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T001143Z-JORB-V2-009/executor.json"
+    }
+  ],
+  "files_changed": [
+    "README.md",
+    "core/schemas.py",
+    "services/company_discovery.py",
+    "services/sync.py",
+    "tests/test_company_discovery.py",
+    "tests/test_workbench.py",
+    "ui/app.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T001143Z-JORB-V2-009/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "the product exposes a truthful source matrix covering greenhouse, ashby, search_web or scraping fallback, X search, user-supplied links, and relevant source toggles",
+    "each source in that matrix is explicitly classified as working, partially working, or not working",
+    "runtime behavior matches the declared source truth instead of silently implying unsupported coverage",
+    "unsupported or disabled sources are explicit rather than hidden behind generic zero-yield behavior",
+    "targeted tests and preflight pass"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [
+      "the product exposes a truthful source matrix covering greenhouse, ashby, search_web or scraping fallback, X search, user-supplied links, and relevant source toggles",
+      "each source in that matrix is explicitly classified as working, partially working, or not working",
+      "runtime behavior matches the declared source truth instead of silently implying unsupported coverage",
+      "unsupported or disabled sources are explicit rather than hidden behind generic zero-yield behavior",
+      "targeted tests and preflight pass"
+    ],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Added an executable discovery source matrix to [`services/company_discovery.py`](/Users/samuelkrystal/projects/jorb/services/company_discovery.py), exposed it in [`core/schemas.py`](/Users/samuelkrystal/projects/jorb/core/schemas.py), attached it to runtime discovery results in [`services/sync.py`](/Users/samuelkrystal/projects/jorb/services/sync.py), and rendered it in the workbench via [`ui/app.py`](/Users/samuelkrystal/projects/jorb/ui/app.py). The matrix now explicitly classifies `greenhouse`, `ashby`, `search_web`, search scraping fallback, `x_search`, and `user_submitted` as `working`, `partially_working`, or `not_working`, with toggle/runtime/trust details. I also made zero-yield summaries call out unavailable sources instead of implying silent coverage.\n\n2. Exact files changed: [`README.md`](/Users/samuelkrystal/projects/jorb/README.md), [`core/schemas.py`](/Users/samuelkrystal/projects/jorb/core/schemas.py), [`services/company_discovery.py`](/Users/samuelkrystal/projects/jorb/services/company_discovery.py), [`services/sync.py`](/Users/samuelkrystal/projects/jorb/services/sync.py), [`ui/app.py`](/Users/samuelkrystal/projects/jorb/ui/app.py), [`tests/test_company_discovery.py`](/Users/samuelkrystal/projects/jorb/tests/test_company_discovery.py), [`tests/test_workbench.py`](/Users/samuelkrystal/projects/jorb/tests/test_workbench.py).\n\n3. Exact tests added or updated: added `test_discovery_source_matrix_classifies_live_truth_explicitly` in [`tests/test_company_discovery.py`](/Users/samuelkrystal/projects/jorb/tests/test_company_discovery.py), added `test_discovery_source_matrix_marks_disabled_sources_explicitly` in [`tests/test_company_discovery.py`](/Users/samuelkrystal/projects/jorb/tests/test_company_discovery.py), added `test_discovery_source_matrix_frame_exposes_truth_columns` in [`tests/test_workbench.py`](/Users/samuelkrystal/projects/jorb/tests/test_workbench.py), and updated `test_discovery_status_returns_recent_items` in [`tests/test_company_discovery.py`](/Users/samuelkrystal/projects/jorb/tests/test_company_discovery.py) to assert the matrix is present.\n\n4. Exact commands run: `pytest tests/test_search_discovery.py tests/test_company_discovery.py tests/test_workbench.py` (run, then rerun after the final matrix fix), `./scripts/preflight_check.sh` (run, then rerun after the final matrix fix), `./.venv_validation/bin/python scripts/reset_demo.py`, `./.venv_validation/bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8000`, `./.venv_validation/bin/streamlit run ui/app.py --server.headless true --server.port 8501`.\n\n5. Exact results: final targeted pytest run passed, `53 passed in 1.26s`; final preflight passed, `150 passed in 4.15s` with `Preflight checks passed.`; `reset_demo.py` completed successfully and printed a sync result containing the new `source_matrix`; FastAPI startup reached application startup then failed to bind with `[Errno 1] error while attempting to bind on address ('127.0.0.1', 8000): operation not permitted`; Streamlit failed to bind with `PermissionError: [Errno 1] Operation not permitted`.\n\n6. Honest note on what remains unproven: I did not complete a live browser/API verification against a running FastAPI or Streamlit server because this sandbox blocks local port binding, and I did not prove any real external live-source coverage beyond the code/test path and the demo reset output."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 24 vulnerabilities on sekrystal/Jorb's default branch (19 moderate, 5 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   c3e8ab3..33cf83d  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 7,
+    "changed_files": [
+      "README.md",
+      "core/schemas.py",
+      "services/company_discovery.py",
+      "services/sync.py",
+      "tests/test_company_discovery.py",
+      "tests/test_workbench.py",
+      "ui/app.py"
+    ],
+    "unproven_runtime_gaps": []
+  },
+  "unproven_runtime_gaps": []
+}

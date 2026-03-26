@@ -1,0 +1,114 @@
+{
+  "task_id": "JORB-V2-027",
+  "title": "Add scrape fallback for zero-yield scenarios",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-26T18:43:30.172663+00:00",
+  "completed_at": "2026-03-26T18:54:11.501239+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T184329Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T184329Z-JORB-V2-027",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T184329Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T184329Z-JORB-V2-027"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T184329Z-JORB-V2-027/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T184329Z-JORB-V2-027/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T184329Z-JORB-V2-027/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T184329Z-JORB-V2-027/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T184329Z-JORB-V2-027/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T184329Z-JORB-V2-027/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T184329Z-JORB-V2-027/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T184329Z-JORB-V2-027/executor.json"
+    }
+  ],
+  "files_changed": [
+    "services/sync.py",
+    "tests/test_company_discovery.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T184329Z-JORB-V2-027/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "Fallback triggers when no jobs found",
+    "Fallback produces additional candidates",
+    "Integrated into normalization and verification pipeline"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [
+      "Fallback triggers when no jobs found",
+      "Fallback produces additional candidates",
+      "Integrated into normalization and verification pipeline"
+    ],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Added a bounded zero-yield fallback in `sync_all()` that, when selected Greenhouse/Ashby expansions return no jobs, scrapes the row\u2019s saved `careers_url`/`discovered_urls`, derives alternate ATS candidates, refetches only newly derived identifiers, and attributes recovered jobs back to the originating discovery row so the existing normalization/verification flow can surface them.\n\n2. Exact files changed\n- `services/sync.py`\n- `tests/test_company_discovery.py`\n\n3. Exact tests added or updated\n- Added `test_sync_all_runs_scrape_fallback_after_zero_yield_structured_expansion` in [`tests/test_company_discovery.py`](/Users/samuelkrystal/projects/jorb/tests/test_company_discovery.py)\n\n4. Exact commands run\n- `pytest tests/test_search_discovery.py tests/test_company_discovery.py tests/test_workbench.py`\n- `./scripts/preflight_check.sh`\n- `./.venv_validation/bin/python scripts/reset_demo.py`\n- `./.venv_j1/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000`\n- `./.venv_j1/bin/streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500`\n\n5. Exact results\n- `pytest tests/test_search_discovery.py tests/test_company_discovery.py tests/test_workbench.py` -> passed, `64 passed`\n- `./scripts/preflight_check.sh` -> passed, including repo-wide `pytest` with `170 passed`\n- `./.venv_validation/bin/python scripts/reset_demo.py` -> passed\n- `./.venv_j1/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000` -> app startup completed, then bind failed with `operation not permitted`\n- `./.venv_j1/bin/streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500` -> bind failed with `PermissionError: [Errno 1] Operation not permitted`\n\n6. Honest note on what remains unproven\n- Live FastAPI and Streamlit boot verification is unproven in this sandbox because local port binding is not permitted.\n- Live app/API walkthrough of the changed workflow is therefore also unproven here, although the targeted regression and full preflight test suite both passed."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 24 vulnerabilities on sekrystal/Jorb's default branch (19 moderate, 5 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   19cb31d..4e81aee  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 2,
+    "changed_files": [
+      "services/sync.py",
+      "tests/test_company_discovery.py"
+    ],
+    "unproven_runtime_gaps": []
+  },
+  "unproven_runtime_gaps": []
+}

@@ -1,0 +1,116 @@
+{
+  "task_id": "JORB-V2-022",
+  "title": "Implement canonical job normalization schema",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-26T18:16:53.640260+00:00",
+  "completed_at": "2026-03-26T18:22:28.644018+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T181653Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T181653Z-JORB-V2-022",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T181653Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T181653Z-JORB-V2-022"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T181653Z-JORB-V2-022/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T181653Z-JORB-V2-022/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T181653Z-JORB-V2-022/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T181653Z-JORB-V2-022/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T181653Z-JORB-V2-022/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T181653Z-JORB-V2-022/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T181653Z-JORB-V2-022/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T181653Z-JORB-V2-022/executor.json"
+    }
+  ],
+  "files_changed": [
+    "core/schemas.py",
+    "services/normalize.py",
+    "services/sync.py",
+    "tests/test_pipeline.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T181653Z-JORB-V2-022/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "All sources map to canonical schema",
+    "Required fields present: URL, company, title, location"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [
+      "All sources map to canonical schema",
+      "Required fields present: URL, company, title, location"
+    ],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Added a canonical listing schema by introducing `CanonicalJobRecord` on `ListingRecord`, auto-normalizing every listing to guaranteed `url`, `company`, `title`, and `location` fields, mirroring that snapshot into `metadata_json[\"canonical_job\"]`, routing source normalizers through one shared builder, and excluding the helper-only field before DB upsert.\n\n2. Exact files changed\n- `core/schemas.py`\n- `services/normalize.py`\n- `services/sync.py`\n- `tests/test_pipeline.py`\n\n3. Exact tests added or updated\n- Added `test_source_normalizers_map_into_shared_canonical_job_schema` in `tests/test_pipeline.py`\n- Updated `test_ingest_user_job_link_routes_manual_submission_through_listing_pipeline` in `tests/test_pipeline.py`\n\n4. Exact commands run\n- `pytest tests/test_pipeline.py tests/test_search_discovery.py tests/test_workbench.py`\n- `./scripts/preflight_check.sh`\n- `python scripts/reset_demo.py`\n- `python3 scripts/reset_demo.py`\n- `./.venv_validation/bin/python scripts/reset_demo.py`\n- `./.venv_validation/bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8000`\n- `./.venv_validation/bin/python -m streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500`\n\n5. Exact results\n- `pytest tests/test_pipeline.py tests/test_search_discovery.py tests/test_workbench.py` -> `58 passed in 3.33s`\n- `./scripts/preflight_check.sh` -> passed; embedded pytest run reported `165 passed in 8.14s`\n- `python scripts/reset_demo.py` -> failed: `python: command not found`\n- `python3 scripts/reset_demo.py` -> failed: `ModuleNotFoundError: No module named 'sqlalchemy'`\n- `./.venv_validation/bin/python scripts/reset_demo.py` -> succeeded; reset demo completed and returned sync summary JSON with `live_mode_used: false`\n- `./.venv_validation/bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8000` -> app startup completed, then bind failed: `operation not permitted`\n- `./.venv_validation/bin/python -m streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500` -> bind failed: `PermissionError: [Errno 1] Operation not permitted`\n\n6. Honest note on what remains unproven\n- I did not prove the changed workflow through a live FastAPI or Streamlit session because this sandbox does not permit binding local ports.\n- I did not verify the canonical schema through an actual browser or API round-trip; proof is limited to unit/integration tests, preflight, and successful demo reset."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 24 vulnerabilities on sekrystal/Jorb's default branch (19 moderate, 5 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   559f24b..aac6cd0  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 4,
+    "changed_files": [
+      "core/schemas.py",
+      "services/normalize.py",
+      "services/sync.py",
+      "tests/test_pipeline.py"
+    ],
+    "unproven_runtime_gaps": []
+  },
+  "unproven_runtime_gaps": []
+}

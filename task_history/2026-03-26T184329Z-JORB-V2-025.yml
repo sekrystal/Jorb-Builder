@@ -1,0 +1,120 @@
+{
+  "task_id": "JORB-V2-025",
+  "title": "Implement runtime observer and source health tracking",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-26T18:36:48.497605+00:00",
+  "completed_at": "2026-03-26T18:43:29.716192+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T183648Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T183648Z-JORB-V2-025",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T183648Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T183648Z-JORB-V2-025"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T183648Z-JORB-V2-025/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T183648Z-JORB-V2-025/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T183648Z-JORB-V2-025/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T183648Z-JORB-V2-025/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T183648Z-JORB-V2-025/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T183648Z-JORB-V2-025/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T183648Z-JORB-V2-025/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T183648Z-JORB-V2-025/executor.json"
+    }
+  ],
+  "files_changed": [
+    "core/schemas.py",
+    "services/company_discovery.py",
+    "services/sync.py",
+    "tests/test_company_discovery.py",
+    "tests/test_sync.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T183648Z-JORB-V2-025/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "Logs show sources attempted and results",
+    "Zero-yield scenarios explicitly logged",
+    "Source health status visible in logs or endpoint"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [
+      "Logs show sources attempted and results",
+      "Zero-yield scenarios explicitly logged",
+      "Source health status visible in logs or endpoint"
+    ],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Added a per-cycle `source_runtime_observer` in `services/sync.py` to record source attempts, zero-yield outcomes, failures, yielded result counts, surfaced job counts, fallback usage/order, and last status; logged it with `[DISCOVERY_SOURCE_RUNTIME]`; and surfaced those fields through discovery status/source health by extending `DiscoverySourceMatrixRow` and teaching `services/company_discovery.py` to prefer observer truth when present.\n\n2. Exact files changed:\n- [core/schemas.py](/Users/samuelkrystal/projects/jorb/core/schemas.py)\n- [services/company_discovery.py](/Users/samuelkrystal/projects/jorb/services/company_discovery.py)\n- [services/sync.py](/Users/samuelkrystal/projects/jorb/services/sync.py)\n- [tests/test_company_discovery.py](/Users/samuelkrystal/projects/jorb/tests/test_company_discovery.py)\n- [tests/test_sync.py](/Users/samuelkrystal/projects/jorb/tests/test_sync.py)\n\n3. Exact tests added or updated:\n- Updated `tests/test_company_discovery.py::test_discovery_status_uses_latest_relevant_runs_beyond_recent_window`\n- Updated `tests/test_sync.py::test_sync_all_persists_query_family_metrics`\n- Updated `tests/test_sync.py::test_sync_all_persists_productive_query_family_lineage`\n\n4. Exact commands run:\n- `pytest tests/test_search_discovery.py tests/test_company_discovery.py tests/test_sync.py tests/test_production_runtime.py tests/test_workbench.py`\n- `./scripts/preflight_check.sh`\n\n5. Exact results:\n- `pytest tests/test_search_discovery.py tests/test_company_discovery.py tests/test_sync.py tests/test_production_runtime.py tests/test_workbench.py`\n  Result: `88 passed in 2.38s`\n- `./scripts/preflight_check.sh`\n  Result: `Preflight checks passed.` and repo-wide pytest inside the script finished `169 passed in 5.97s`\n\n6. Honest note on what remains unproven:\n- I did not run `python scripts/reset_demo.py`.\n- I did not boot FastAPI locally.\n- I did not boot Streamlit locally.\n- I did not verify the changed workflow in the live app or API beyond automated tests and preflight."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 24 vulnerabilities on sekrystal/Jorb's default branch (19 moderate, 5 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   6d64621..19cb31d  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 5,
+    "changed_files": [
+      "core/schemas.py",
+      "services/company_discovery.py",
+      "services/sync.py",
+      "tests/test_company_discovery.py",
+      "tests/test_sync.py"
+    ],
+    "unproven_runtime_gaps": []
+  },
+  "unproven_runtime_gaps": []
+}

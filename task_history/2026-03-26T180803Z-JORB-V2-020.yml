@@ -1,0 +1,114 @@
+{
+  "task_id": "JORB-V2-020",
+  "title": "Build structured discovery planners (ATS, search, weak signal)",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-26T18:03:25.351052+00:00",
+  "completed_at": "2026-03-26T18:08:03.866956+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T180325Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T180325Z-JORB-V2-020",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T180325Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T180325Z-JORB-V2-020"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T180325Z-JORB-V2-020/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T180325Z-JORB-V2-020/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T180325Z-JORB-V2-020/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T180325Z-JORB-V2-020/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T180325Z-JORB-V2-020/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T180325Z-JORB-V2-020/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T180325Z-JORB-V2-020/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T180325Z-JORB-V2-020/executor.json"
+    }
+  ],
+  "files_changed": [
+    "services/discovery_agents.py",
+    "tests/test_company_discovery.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T180325Z-JORB-V2-020/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "Planners output structured query plans",
+    "No direct job extraction in planner layer",
+    "Plans include role + location combinations"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [
+      "Planners output structured query plans",
+      "No direct job extraction in planner layer",
+      "Plans include role + location combinations"
+    ],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Added structured planner output in [`services/discovery_agents.py`](/Users/samuelkrystal/projects/jorb/services/discovery_agents.py) so `planner_agent` now returns explicit `structured_query_plans` for `ats`, `search`, and `weak_signal`, plus a `query_plan_summary`, while preserving the existing flat `queries` list used by sync. The new plan entries are query-only metadata with explicit `role`, `location`, `work_mode`, `query_text`, `execution_target`, and `executable` fields; they do not perform or encode direct job extraction.\n\n2. Exact files changed:\n- [`services/discovery_agents.py`](/Users/samuelkrystal/projects/jorb/services/discovery_agents.py)\n- [`tests/test_company_discovery.py`](/Users/samuelkrystal/projects/jorb/tests/test_company_discovery.py)\n\n3. Exact tests added or updated:\n- Added `test_planner_agent_returns_structured_discovery_query_plans` in [`tests/test_company_discovery.py`](/Users/samuelkrystal/projects/jorb/tests/test_company_discovery.py)\n- Added `test_planner_agent_structured_plans_include_role_location_combinations_without_extraction_fields` in [`tests/test_company_discovery.py`](/Users/samuelkrystal/projects/jorb/tests/test_company_discovery.py)\n\n4. Exact commands run:\n- `pytest tests/test_company_discovery.py -q`\n- `python3 -m py_compile services/discovery_agents.py tests/test_company_discovery.py`\n- `pytest tests/test_search_discovery.py tests/test_company_discovery.py tests/test_workbench.py`\n- `./scripts/preflight_check.sh`\n\n5. Exact results:\n- `pytest tests/test_company_discovery.py -q`: `14 passed in 0.81s`\n- `python3 -m py_compile services/discovery_agents.py tests/test_company_discovery.py`: success, no output\n- `pytest tests/test_search_discovery.py tests/test_company_discovery.py tests/test_workbench.py`: `60 passed in 1.90s`\n- `./scripts/preflight_check.sh`: passed; compile/import smoke passed; embedded pytest run passed with `161 passed in 7.23s`; final line `Preflight checks passed.`\n\n6. Honest note on what remains unproven:\n- I did not run `python scripts/reset_demo.py`, boot FastAPI locally, boot Streamlit locally, or verify the changed workflow in the live app/API.\n- I did not update README/docs because this change is an internal planner contract addition and no user-facing workflow/run step changed in this pass."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 24 vulnerabilities on sekrystal/Jorb's default branch (19 moderate, 5 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   de28f81..18f56f4  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 2,
+    "changed_files": [
+      "services/discovery_agents.py",
+      "tests/test_company_discovery.py"
+    ],
+    "unproven_runtime_gaps": []
+  },
+  "unproven_runtime_gaps": []
+}

@@ -1,0 +1,80 @@
+{
+  "task_id": "JORB-V2-019",
+  "title": "Implement canonical SearchIntent from user profile",
+  "status": "blocked",
+  "attempt": 1,
+  "started_at": "2026-03-26T17:53:32.350406+00:00",
+  "completed_at": "2026-03-26T17:53:32.461061+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T175331Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T175331Z-JORB-V2-019",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T175331Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T175331Z-JORB-V2-019"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T175331Z-JORB-V2-019/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T175331Z-JORB-V2-019/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T175331Z-JORB-V2-019/progress.jsonl"
+    }
+  ],
+  "files_changed": [
+    "tests/test_workbench.py",
+    "ui/components/job_card.py",
+    "ui/screens/jobs.py"
+  ],
+  "commands_run": [],
+  "results": [
+    "blocked"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [
+    "SearchIntent structure exists and is persisted or constructed consistently",
+    "Discovery logic consumes SearchIntent",
+    "Changing profile inputs changes discovery queries or filtering behavior"
+  ],
+  "blocker_opened": null,
+  "notes": [
+    "Product repo is dirty before automated execution; refusing to continue."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Product repo is dirty before automated execution; refusing to continue.",
+    "accepted": false,
+    "acceptance_met": [],
+    "acceptance_unmet": [
+      "SearchIntent structure exists and is persisted or constructed consistently",
+      "Discovery logic consumes SearchIntent",
+      "Changing profile inputs changes discovery queries or filtering behavior"
+    ],
+    "step_outcomes": [
+      {
+        "name": "git_status_before",
+        "outcome": "blocked",
+        "detail": "tests/test_workbench.py\nui/components/job_card.py\nui/screens/jobs.py"
+      }
+    ],
+    "changed_files_count": 3,
+    "changed_files": [
+      "tests/test_workbench.py",
+      "ui/components/job_card.py",
+      "ui/screens/jobs.py"
+    ],
+    "unproven_runtime_gaps": [
+      "Product repo is dirty before automated execution; refusing to continue."
+    ]
+  },
+  "unproven_runtime_gaps": [
+    "Product repo is dirty before automated execution; refusing to continue."
+  ]
+}

@@ -1,0 +1,106 @@
+{
+  "task_id": "JORB-V2-026",
+  "title": "Deliver real end-to-end discovery vertical slice (strict)",
+  "status": "refined",
+  "attempt": 1,
+  "started_at": "2026-03-26T19:04:24.979689+00:00",
+  "completed_at": "2026-03-26T19:10:01.532228+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T190423Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T190423Z-JORB-V2-026",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T190423Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T190423Z-JORB-V2-026"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T190423Z-JORB-V2-026/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T190423Z-JORB-V2-026/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T190423Z-JORB-V2-026/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T190423Z-JORB-V2-026/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T190423Z-JORB-V2-026/local_validation.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T190423Z-JORB-V2-026/executor.json"
+    }
+  ],
+  "files_changed": [
+    "core/schemas.py",
+    "services/company_discovery.py",
+    "tests/test_pipeline.py",
+    "tests/test_workbench.py",
+    "ui/app.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T190423Z-JORB-V2-026/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "refined"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [
+    "At least one real job appears in UI",
+    "Jobs are verified (no dead links)",
+    "Jobs are ranked and include explanations",
+    "Zero-yield case handled explicitly if it occurs"
+  ],
+  "blocker_opened": null,
+  "notes": [
+    "Local validation failed after executor changes."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Local validation failed after executor changes.",
+    "accepted": false,
+    "acceptance_met": [],
+    "acceptance_unmet": [
+      "At least one real job appears in UI",
+      "Jobs are verified (no dead links)",
+      "Jobs are ranked and include explanations",
+      "Zero-yield case handled explicitly if it occurs"
+    ],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\nAdded a strict end-to-end discovery slice that only surfaces verified, search-discovered listing leads in discovery status, includes ranking and explanation fields for each job, and exposes an explicit zero-yield state when no verified jobs are available. Updated the Streamlit discovery tab to render that ranked verified slice instead of a raw lead dump, and added tests for both the service payload and the UI frame.\n\n2. Exact files changed\n\n- [core/schemas.py](/Users/samuelkrystal/projects/jorb/core/schemas.py)\n- [services/company_discovery.py](/Users/samuelkrystal/projects/jorb/services/company_discovery.py)\n- [ui/app.py](/Users/samuelkrystal/projects/jorb/ui/app.py)\n- [tests/test_pipeline.py](/Users/samuelkrystal/projects/jorb/tests/test_pipeline.py)\n- [tests/test_workbench.py](/Users/samuelkrystal/projects/jorb/tests/test_workbench.py)\n\n3. Exact tests added or updated\n\nAdded in [tests/test_pipeline.py](/Users/samuelkrystal/projects/jorb/tests/test_pipeline.py):\n- `test_build_discovery_status_surfaces_verified_ranked_agentic_jobs`\n- `test_build_discovery_status_reports_zero_yield_when_no_verified_agentic_jobs_exist`\n\nAdded in [tests/test_workbench.py](/Users/samuelkrystal/projects/jorb/tests/test_workbench.py):\n- `test_agentic_leads_frame_exposes_verified_ranked_slice_columns`\n\n4. Exact commands run\n\n- `pytest tests/test_search_discovery.py tests/test_pipeline.py tests/test_production_runtime.py tests/test_workbench.py`\n- `./scripts/preflight_check.sh`\n- `./scripts/runtime_self_check.sh`\n- `bash ./scripts/runtime_self_check.sh`\n- `python scripts/reset_demo.py`\n- `python3 scripts/reset_demo.py`\n- `./.venv_validation/bin/python scripts/reset_demo.py`\n- `./.venv_validation/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000`\n- `./.venv_validation/bin/streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500`\n\n5. Exact results\n\n- `pytest tests/test_search_discovery.py tests/test_pipeline.py tests/test_production_runtime.py tests/test_workbench.py`\n  Result: `72 passed in 2.58s`\n\n- `./scripts/preflight_check.sh`\n  Result: passed, including full repo pytest sweep with `173 passed in 6.10s`\n\n- `./scripts/runtime_self_check.sh`\n  Result: failed immediately with `zsh:1: permission denied: ./scripts/runtime_self_check.sh`\n\n- `bash ./scripts/runtime_self_check.sh`\n  Result: script executed, but all curl checks failed because no local API was running yet; process scan also could not enumerate processes in this sandbox\n\n- `python scripts/reset_demo.py`\n  Result: failed with `command not found: python`\n\n- `python3 scripts/reset_demo.py`\n  Result: failed with `ModuleNotFoundError: No module named 'sqlalchemy'`\n\n- `./.venv_validation/bin/python scripts/reset_demo.py`\n  Result: succeeded; demo reset completed and printed a sync summary with `surfaced_count: 5`\n\n- `./.venv_validation/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000`\n  Result: app imported and startup began, but bind failed with `operation not permitted`\n\n- `./.venv_validation/bin/streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500`\n  Result: startup attempted, but bind failed with `PermissionError: [Errno 1] Operation not permitted`\n\n6. Honest note on what remains unproven\n\nThe code path is covered by tests and preflight, but live verification of the changed workflow in a running FastAPI + Streamlit app is still unproven in this environment because the sandbox would not allow binding to `127.0.0.1` ports, and the exact `./scripts/runtime_self_check.sh` command is not executable in this checkout. As a result, I did not directly prove a real verified search-discovered job rendering in the live UI here."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "refined",
+        "detail": "At least one local verification command failed."
+      }
+    ],
+    "changed_files_count": 5,
+    "changed_files": [
+      "core/schemas.py",
+      "services/company_discovery.py",
+      "tests/test_pipeline.py",
+      "tests/test_workbench.py",
+      "ui/app.py"
+    ],
+    "unproven_runtime_gaps": [
+      "Local validation failed after executor changes."
+    ]
+  },
+  "unproven_runtime_gaps": [
+    "Local validation failed after executor changes."
+  ]
+}

@@ -1578,6 +1578,24 @@ def repair_legacy_state() -> int:
             print(f"- {line}")
         return 0
 
+    if task is not None and task.get("status") in {"pending", "accepted"} and active.get("task_id"):
+        repaired_active = reset_active()
+        repaired_active["previous_run_log_dir"] = active.get("run_log_dir")
+        write_data(ACTIVE, repaired_active)
+        status["state"] = "idle"
+        status["active_task_id"] = None
+        status["last_task_id"] = task_id
+        status["last_result"] = status.get("last_result")
+        status["last_run_at"] = now_iso()
+        write_data(STATUS, status)
+        repaired.append(
+            f"stale active task {task_id} cleared because backlog truth is {task.get('status')}"
+        )
+        print("STATE_REPAIRED")
+        for line in repaired:
+            print(f"- {line}")
+        return 0
+
     sync_run_state(
         active,
         status,

@@ -1226,7 +1226,7 @@
       "status": "pending",
       "retries_used": 0,
       "depends_on": [
-        "JORB-V2-012"
+        "JORB-V2-018"
       ],
       "prompt": "implement_feature",
       "objective": "Keep the temporary Streamlit validation harness skippable enough for runtime proof without treating it as the long-term product onboarding architecture.",
@@ -1277,7 +1277,7 @@
       "status": "pending",
       "retries_used": 0,
       "depends_on": [
-        "JORB-V2-012"
+        "JORB-V2-018"
       ],
       "prompt": "implement_feature",
       "objective": "Reduce internal or operator-facing clutter in the temporary Streamlit harness without treating Streamlit as the final product IA.",
@@ -1325,7 +1325,7 @@
       "area": "discovery",
       "milestone": "M5",
       "priority": 1,
-      "status": "pending",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V2-009"
@@ -1360,7 +1360,8 @@
         "targeted tests and preflight pass"
       ],
       "notes": [
-        "Phase 2A task refined from VM runtime findings: repeated duckduckgo connect timeout, pages_crawled 0, derived_ats_results 0, raw_results 0, verified 0."
+        "Phase 2A task refined from VM runtime findings: repeated duckduckgo connect timeout, pages_crawled 0, derived_ats_results 0, raw_results 0, verified 0.",
+        "Automated loop completed with VM validation success."
       ],
       "repo_path": "~/projects/jorb",
       "description": "Make discovery resilient when ATS and search-driven discovery yield nothing useful.\n\nDefine an explicit fallback order, attempt scrape or parse fallback where justified, and expose whether the failure was provider timeout, extraction failure, verification failure, or a genuine zero-yield search space.",
@@ -1382,7 +1383,7 @@
       "status": "pending",
       "retries_used": 0,
       "depends_on": [
-        "JORB-V2-012",
+        "JORB-V2-018",
         "JORB-V2-014",
         "JORB-V2-015",
         "JORB-V2-016"
@@ -1481,7 +1482,7 @@
       "area": "profile",
       "milestone": "M5",
       "priority": 0,
-      "status": "blocked",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [],
       "prompt": "implement_feature",
@@ -1514,7 +1515,9 @@
       ],
       "notes": [
         "Phase 2A task created from product review concern that geolocation and work-mode preferences do not yet clearly constrain search.",
-        "Product repo is dirty before automated execution; refusing to continue."
+        "Product repo is dirty before automated execution; refusing to continue.",
+        "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again.",
+        "Automated loop completed with VM validation success."
       ],
       "repo_path": "~/projects/jorb",
       "description": "Add real profile-driven search constraints for geography, work mode, and target roles before the larger UX pass.\n\nThis is intentionally backend and runtime focused: the resulting constraints must influence agentic search and ranking even if UI polish comes later.",
@@ -1533,7 +1536,7 @@
       "area": "discovery",
       "milestone": "M5",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V2-008"
@@ -1569,7 +1572,8 @@
         "targeted tests and preflight pass"
       ],
       "notes": [
-        "Phase 2A task created from product review concern that Greenhouse, Ashby, search-driven scraping, X search, and user-link ingestion are not yet truthfully represented."
+        "Phase 2A task created from product review concern that Greenhouse, Ashby, search-driven scraping, X search, and user-link ingestion are not yet truthfully represented.",
+        "Automated loop completed with VM validation success."
       ],
       "repo_path": "~/projects/jorb",
       "description": "Audit which discovery sources are truly live today and make that source matrix executable in runtime behavior.\n\nThe result should make it obvious which sources are supported, degraded, disabled, or only staged, so product behavior matches reality.",
@@ -1588,7 +1592,7 @@
       "area": "discovery",
       "milestone": "M5",
       "priority": 1,
-      "status": "pending",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V2-009",
@@ -1623,7 +1627,8 @@
         "targeted tests and preflight pass"
       ],
       "notes": [
-        "Phase 2A task created from product review concern that general board and posting discovery remains incomplete."
+        "Phase 2A task created from product review concern that general board and posting discovery remains incomplete.",
+        "Automated loop completed with VM validation success."
       ],
       "repo_path": "~/projects/jorb",
       "description": "Expand discovery with a bounded first slice of broader job sources beyond current ATS assumptions.\n\nThis should be realistic and testable: ship one meaningful slice well, then make unsupported sources explicit rather than implying they already work.",
@@ -1641,7 +1646,7 @@
       "area": "discovery",
       "milestone": "M5",
       "priority": 1,
-      "status": "pending",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V2-009",
@@ -1677,7 +1682,8 @@
         "targeted tests and preflight pass"
       ],
       "notes": [
-        "Phase 2A task created from product review concern that source health and yield are not visible enough to support trustworthy runtime or UX decisions."
+        "Phase 2A task created from product review concern that source health and yield are not visible enough to support trustworthy runtime or UX decisions.",
+        "Automated loop completed with VM validation success."
       ],
       "repo_path": "~/projects/jorb",
       "description": "Expose truthful source health and yield across runtime and product surfaces.\n\nThe goal is to show, per source, whether it ran, failed, yielded nothing, or produced surfaced jobs, so later UX work sits on visible discovery truth rather than hidden assumptions.",
@@ -1696,13 +1702,9 @@
       "milestone": "M5",
       "priority": 0,
       "status": "pending",
-      "retries_used": 0,
+      "retries_used": 1,
       "depends_on": [
-        "JORB-V2-008",
-        "JORB-V2-009",
-        "JORB-V2-005",
-        "JORB-V2-010",
-        "JORB-V2-011"
+        "JORB-V2-026"
       ],
       "prompt": "implement_feature",
       "objective": "Force product reality by proving that at least one truly working discovery source can surface real jobs in the VM UI with score, explanation, and source provenance.",
@@ -1736,7 +1738,8 @@
         "the product must surface real jobs in the UI as the basis for acceptance"
       ],
       "notes": [
-        "This vertical slice exists specifically to stop the builder from declaring victory on architecture or UX work before the product visibly delivers jobs."
+        "This vertical slice exists specifically to stop the builder from declaring victory on architecture or UX work before the product visibly delivers jobs.",
+        "Local validation failed after executor changes."
       ],
       "repo_path": "~/projects/jorb",
       "description": "Deliver one real end-to-end job discovery vertical slice in the VM.\n\nThis task must prove that the product can surface real jobs from at least one actually working source, with score, explanation, and source provenance visible in the UI. It is not acceptable to pass this task on tests alone or on a crash-free empty state.",
@@ -1758,7 +1761,8 @@
       "status": "pending",
       "retries_used": 0,
       "depends_on": [
-        "JORB-V2-012"
+        "JORB-V2-012",
+        "JORB-INFRA-006"
       ],
       "prompt": "implement_feature",
       "objective": "Introduce the production JS front end shell, routing, API integration pattern, and local development flow grounded in the current repo and backend.",
@@ -1808,7 +1812,8 @@
       "status": "pending",
       "retries_used": 0,
       "depends_on": [
-        "JORB-V2-013"
+        "JORB-V2-013",
+        "JORB-INFRA-006"
       ],
       "prompt": "implement_feature",
       "objective": "Implement the real Jobs screen in the JS front end using the Figma design as source of truth and wiring it to real backend data.",
@@ -1860,6 +1865,7 @@
       "retries_used": 0,
       "depends_on": [
         "JORB-V2-013",
+        "JORB-INFRA-006",
         "JORB-V2-008",
         "JORB-V2-012"
       ],
@@ -1912,7 +1918,8 @@
       "retries_used": 0,
       "depends_on": [
         "JORB-V2-013",
-        "JORB-V2-014"
+        "JORB-V2-014",
+        "JORB-INFRA-006"
       ],
       "prompt": "implement_feature",
       "objective": "Make Saved and Applied flows first-class surfaces in the JS front end instead of leaving tracker behavior stranded in backend or temporary harness views.",
@@ -2001,6 +2008,566 @@
         "Streamlit is demoted to internal validation, debugging, or operator use rather than the default product shell",
         "docs and runtime guidance make the transition explicit",
         "targeted tests and preflight pass"
+      ]
+    },
+    {
+      "id": "JORB-INFRA-006",
+      "title": "Harden builder UX conformance gating for product-facing tasks",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M0",
+      "priority": 1,
+      "status": "blocked",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V2-026"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Prevent future product-facing UX tasks from being accepted on backend wiring alone by adding explicit structure, hierarchy, and prohibited-surface guardrails to builder planning and acceptance flow.",
+      "why_it_matters": "A recent jobs-first UI pass claimed success while still surfacing irrelevant forms, internal concepts, and source-matrix diagnostics in the main UX. The builder needs stronger UX conformance gates before more user-facing work proceeds.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py",
+        "python3 scripts/automate_task_loop.py --inspect-backlog"
+      ],
+      "acceptance": [
+        "product-facing UX tasks must map implemented sections to design sections explicitly",
+        "product-facing UX tasks must list intentional deviations from design explicitly",
+        "builder acceptance for UX work includes a product-first checklist covering hierarchy and prohibited surfaces, not only backend data wiring",
+        "builder planning can mark primary-UX-prohibited surfaces such as source matrix, discovery internals, learning, autonomy ops, agent activity, investigations, diagnostics, and operator controls",
+        "future product-facing UX tasks cannot be accepted solely because they exist or are wired to real data"
+      ],
+      "notes": [
+        "This builder task exists to stop another structurally wrong UX pass from being accepted just because some backend integration is real.",
+        "Builder repo is dirty before automated execution; refusing to continue."
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Harden builder-side UX conformance gating for product-facing tasks.\n\nThe builder should require explicit design-to-implementation section mapping, explicit deviation lists, a product-first acceptance checklist, and a prohibited-surfaces policy so future UX work cannot pass on wiring alone.",
+      "acceptance_criteria": [
+        "product-facing UX tasks must map implemented sections to design sections explicitly",
+        "product-facing UX tasks must list intentional deviations from design explicitly",
+        "builder acceptance for UX work includes a product-first checklist covering hierarchy and prohibited surfaces, not only backend data wiring",
+        "builder planning can mark primary-UX-prohibited surfaces such as source matrix, discovery internals, learning, autonomy ops, agent activity, investigations, diagnostics, and operator controls",
+        "future product-facing UX tasks cannot be accepted solely because they exist or are wired to real data"
+      ]
+    },
+    {
+      "id": "JORB-V2-018",
+      "title": "Clean the temporary Streamlit harness into a jobs-first validation shell",
+      "type": "feature",
+      "area": "ux",
+      "milestone": "M5",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V2-026",
+        "JORB-INFRA-006"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Make the temporary Streamlit harness minimally suitable for product validation by keeping jobs clearly primary and moving internal or diagnostic surfaces out of the main user-facing shell.",
+      "why_it_matters": "The current temporary harness still lets non-core forms and debug surfaces dominate the main jobs experience, which makes live review misleading and undermines trust in future UX implementation passes.",
+      "allowlist": [
+        "api/**",
+        "core/**",
+        "services/**",
+        "ui/**",
+        "README.md",
+        "OPERATIONS.md",
+        "tests/test_autonomy.py",
+        "tests/test_production_runtime.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_autonomy.py tests/test_production_runtime.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh",
+        "./scripts/runtime_self_check.sh"
+      ],
+      "acceptance": [
+        "the temporary Streamlit harness keeps the jobs list clearly primary on the main screen",
+        "Add job link is removed from the dominant top-of-screen position or otherwise demoted so it does not overshadow jobs",
+        "operator or debug surfaces such as discovery source matrix, discovery internals, learning, autonomy ops, agent activity, investigations, diagnostics, and admin controls are absent from the primary user-facing shell",
+        "lightweight user-facing status remains available without turning the main shell into an operator console",
+        "Saved, Applied, and Profile remain understandable in the temporary harness",
+        "acceptance requires live runtime review of the jobs-first shell and not tests alone"
+      ],
+      "notes": [
+        "This is temporary harness cleanup only. It is not the final production UX implementation, which belongs to the later JS frontend phase."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Clean the temporary Streamlit harness into a jobs-first validation shell.\n\nThe goal is not to perfect Streamlit; it is to keep it usable for runtime validation by centering jobs, demoting Add job link and other secondary tools, and moving diagnostic or operator surfaces out of the main user-facing shell.",
+      "acceptance_criteria": [
+        "the temporary Streamlit harness keeps the jobs list clearly primary on the main screen",
+        "Add job link is removed from the dominant top-of-screen position or otherwise demoted so it does not overshadow jobs",
+        "operator or debug surfaces such as discovery source matrix, discovery internals, learning, autonomy ops, agent activity, investigations, diagnostics, and admin controls are absent from the primary user-facing shell",
+        "lightweight user-facing status remains available without turning the main shell into an operator console",
+        "Saved, Applied, and Profile remain understandable in the temporary harness",
+        "acceptance requires live runtime review of the jobs-first shell and not tests alone"
+      ]
+    },
+    {
+      "id": "JORB-V2-019",
+      "title": "Implement canonical SearchIntent from user profile",
+      "type": "feature",
+      "area": "backend",
+      "milestone": "M5",
+      "priority": 0,
+      "status": "accepted",
+      "retries_used": 0,
+      "depends_on": [],
+      "prompt": "implement_feature",
+      "objective": "Create a canonical SearchIntent derived from user profile inputs and pass it into all discovery planning and ranking stages.",
+      "why_it_matters": "Discovery remains brittle until roles, locations, work modes, and seniority are represented once and consumed consistently across the pipeline.",
+      "allowlist": [
+        "api/**",
+        "core/**",
+        "services/**",
+        "tests/test_pipeline.py",
+        "tests/test_profile.py",
+        "tests/test_ranking.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_profile.py tests/test_pipeline.py tests/test_ranking.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "SearchIntent structure exists and is persisted or constructed consistently",
+        "Discovery logic consumes SearchIntent",
+        "Changing profile inputs changes discovery queries or filtering behavior"
+      ],
+      "notes": [
+        "Phase 2B begins with canonical search intent so every later discovery stage shares one structured contract.",
+        "Product repo is dirty before automated execution; refusing to continue.",
+        "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again.",
+        "Automated loop completed with VM validation success."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Create a canonical SearchIntent object derived from user profile inputs such as roles, locations, work modes, and seniority. This object must be passed into all discovery planning and ranking stages.",
+      "acceptance_criteria": [
+        "SearchIntent structure exists and is persisted or constructed consistently",
+        "Discovery logic consumes SearchIntent",
+        "Changing profile inputs changes discovery queries or filtering behavior"
+      ]
+    },
+    {
+      "id": "JORB-V2-020",
+      "title": "Build structured discovery planners (ATS, search, weak signal)",
+      "type": "feature",
+      "area": "backend",
+      "milestone": "M5",
+      "priority": 1,
+      "status": "accepted",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V2-019"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Implement planners that generate structured discovery plans instead of directly fetching jobs.",
+      "why_it_matters": "The system needs explicit ATS, search, and weak-signal planning layers before acquisition, fallback, and verification can be made robust.",
+      "allowlist": [
+        "api/**",
+        "connectors/**",
+        "core/**",
+        "services/**",
+        "tests/test_company_discovery.py",
+        "tests/test_search_discovery.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_search_discovery.py tests/test_company_discovery.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "Planners output structured query plans",
+        "No direct job extraction in planner layer",
+        "Plans include role + location combinations"
+      ],
+      "notes": [
+        "Planner output should be visible in logs before acquisition begins.",
+        "Automated loop completed with VM validation success."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Implement planners that generate structured discovery plans instead of directly fetching jobs. Include ATS planner, search planner, and weak signal planner.",
+      "acceptance_criteria": [
+        "Planners output structured query plans",
+        "No direct job extraction in planner layer",
+        "Plans include role + location combinations"
+      ]
+    },
+    {
+      "id": "JORB-V2-021",
+      "title": "Implement acquisition workers (ATS resolver, search, parser)",
+      "type": "feature",
+      "area": "backend",
+      "milestone": "M5",
+      "priority": 1,
+      "status": "accepted",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V2-020"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Implement workers that execute discovery plans across ATS resolution, search-based URL discovery, and page parsing.",
+      "why_it_matters": "Robust discovery needs dedicated acquisition workers rather than one brittle fetch path.",
+      "allowlist": [
+        "api/**",
+        "connectors/**",
+        "core/**",
+        "services/**",
+        "tests/test_company_discovery.py",
+        "tests/test_search_discovery.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_search_discovery.py tests/test_company_discovery.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "At least one ATS source returns real job listings",
+        "Search produces candidate URLs",
+        "Parser extracts job links from at least one page type"
+      ],
+      "notes": [
+        "Runtime logs should show extracted candidate jobs before verification.",
+        "Automated loop completed with VM validation success."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Implement workers that execute discovery plans, including ATS resolver (Greenhouse, Ashby detection), search-based URL discovery, and page parsing for job extraction.",
+      "acceptance_criteria": [
+        "At least one ATS source returns real job listings",
+        "Search produces candidate URLs",
+        "Parser extracts job links from at least one page type"
+      ]
+    },
+    {
+      "id": "JORB-V2-022",
+      "title": "Implement canonical job normalization schema",
+      "type": "feature",
+      "area": "backend",
+      "milestone": "M5",
+      "priority": 1,
+      "status": "accepted",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V2-021"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Normalize all raw job candidates into a single canonical schema.",
+      "why_it_matters": "Verification, ranking, and product surfacing all depend on normalized job records across sources.",
+      "allowlist": [
+        "api/**",
+        "core/**",
+        "services/**",
+        "tests/test_pipeline.py",
+        "tests/test_search_discovery.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_pipeline.py tests/test_search_discovery.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "All sources map to canonical schema",
+        "Required fields present: URL, company, title, location"
+      ],
+      "notes": [
+        "Runtime checks should confirm all candidates conform to the canonical schema before verification.",
+        "Automated loop completed with VM validation success."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Normalize all raw job candidates into a single canonical schema.",
+      "acceptance_criteria": [
+        "All sources map to canonical schema",
+        "Required fields present: URL, company, title, location"
+      ]
+    },
+    {
+      "id": "JORB-V2-023",
+      "title": "Implement verification and deduplication pipeline",
+      "type": "feature",
+      "area": "backend",
+      "milestone": "M5",
+      "priority": 1,
+      "status": "accepted",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V2-022"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Add verification steps including liveness, freshness, canonical URL resolution, and duplicate detection.",
+      "why_it_matters": "The system cannot claim real discovery value if it surfaces duplicate or dead jobs.",
+      "allowlist": [
+        "api/**",
+        "core/**",
+        "services/**",
+        "tests/test_pipeline.py",
+        "tests/test_search_discovery.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_pipeline.py tests/test_search_discovery.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "Duplicate jobs removed",
+        "Invalid or dead links filtered",
+        "Stale jobs flagged or excluded"
+      ],
+      "notes": [
+        "Runtime validation should confirm there are no duplicate URLs in the final set.",
+        "Automated loop completed with VM validation success."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Add verification steps including liveness, freshness, canonical URL resolution, and duplicate detection.",
+      "acceptance_criteria": [
+        "Duplicate jobs removed",
+        "Invalid or dead links filtered",
+        "Stale jobs flagged or excluded"
+      ]
+    },
+    {
+      "id": "JORB-V2-024",
+      "title": "Implement ranking and explanation layer",
+      "type": "feature",
+      "area": "backend",
+      "milestone": "M5",
+      "priority": 1,
+      "status": "accepted",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V2-023"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Score jobs based on profile fit and generate explanation fragments.",
+      "why_it_matters": "A robust discovery system still needs ranking and explanation to turn verified jobs into useful product output.",
+      "allowlist": [
+        "api/**",
+        "core/**",
+        "services/**",
+        "tests/test_pipeline.py",
+        "tests/test_ranking.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_pipeline.py tests/test_ranking.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "Jobs receive numeric score",
+        "Explanations include at least role match and location fit",
+        "Ranking changes when profile changes"
+      ],
+      "notes": [
+        "Runtime checks should confirm explanation fields are present on ranked jobs.",
+        "Automated loop completed with VM validation success."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Score jobs based on profile fit and generate explanation fragments.",
+      "acceptance_criteria": [
+        "Jobs receive numeric score",
+        "Explanations include at least role match and location fit",
+        "Ranking changes when profile changes"
+      ]
+    },
+    {
+      "id": "JORB-V2-025",
+      "title": "Implement runtime observer and source health tracking",
+      "type": "feature",
+      "area": "backend",
+      "milestone": "M5",
+      "priority": 1,
+      "status": "accepted",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V2-024"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Track source usage, yield, failures, and fallback behavior.",
+      "why_it_matters": "The product needs runtime truth about which sources ran, failed, or yielded jobs before later UX work can be trusted.",
+      "allowlist": [
+        "api/**",
+        "core/**",
+        "services/**",
+        "tests/test_company_discovery.py",
+        "tests/test_production_runtime.py",
+        "tests/test_search_discovery.py",
+        "tests/test_sync.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_search_discovery.py tests/test_company_discovery.py tests/test_sync.py tests/test_production_runtime.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "Logs show sources attempted and results",
+        "Zero-yield scenarios explicitly logged",
+        "Source health status visible in logs or endpoint"
+      ],
+      "notes": [
+        "Manual inspection of runtime logs should confirm source metrics and fallback visibility.",
+        "Automated loop completed with VM validation success."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Track source usage, yield, failures, and fallback behavior.",
+      "acceptance_criteria": [
+        "Logs show sources attempted and results",
+        "Zero-yield scenarios explicitly logged",
+        "Source health status visible in logs or endpoint"
+      ]
+    },
+    {
+      "id": "JORB-V2-026",
+      "title": "Deliver real end-to-end discovery vertical slice (strict)",
+      "type": "feature",
+      "area": "product",
+      "milestone": "M5",
+      "priority": 1,
+      "status": "accepted",
+      "retries_used": 4,
+      "depends_on": [
+        "JORB-V2-019",
+        "JORB-V2-020",
+        "JORB-V2-021",
+        "JORB-V2-022",
+        "JORB-V2-023",
+        "JORB-V2-024",
+        "JORB-V2-025",
+        "JORB-V2-027"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Deliver a full pipeline from profile to discovery to verification to ranking to UI with real jobs.",
+      "why_it_matters": "Future work must not pass without producing real, verified jobs in product.",
+      "allowlist": [
+        "api/**",
+        "connectors/**",
+        "core/**",
+        "services/**",
+        "ui/**",
+        "scripts/**",
+        "tests/test_pipeline.py",
+        "tests/test_production_runtime.py",
+        "tests/test_search_discovery.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_search_discovery.py tests/test_pipeline.py tests/test_production_runtime.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh",
+        "./scripts/runtime_self_check.sh"
+      ],
+      "acceptance": [
+        "At least one real job appears in UI",
+        "Jobs are verified (no dead links)",
+        "Jobs are ranked and include explanations",
+        "Zero-yield case handled explicitly if it occurs"
+      ],
+      "notes": [
+        "This strict vertical slice is the proof gate that discovery is functionally correct, not just instrumented.",
+        "Local validation failed after executor changes.",
+        "Local validation failed after executor changes.",
+        "Local validation failed after executor changes.",
+        "Local validation failed after executor changes.",
+        "Automated loop completed with VM validation success."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Deliver a full pipeline from profile \u2192 discovery \u2192 verification \u2192 ranking \u2192 UI with real jobs.",
+      "acceptance_criteria": [
+        "At least one real job appears in UI",
+        "Jobs are verified (no dead links)",
+        "Jobs are ranked and include explanations",
+        "Zero-yield case handled explicitly if it occurs"
+      ]
+    },
+    {
+      "id": "JORB-V2-027",
+      "title": "Add scrape fallback for zero-yield scenarios",
+      "type": "feature",
+      "area": "backend",
+      "milestone": "M5",
+      "priority": 1,
+      "status": "accepted",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V2-021",
+        "JORB-V2-022"
+      ],
+      "prompt": "implement_feature",
+      "objective": "When structured discovery yields no jobs, trigger fallback scraping and search-based extraction.",
+      "why_it_matters": "The discovery system needs a resilient escape hatch for zero-yield scenarios instead of silently failing.",
+      "allowlist": [
+        "api/**",
+        "connectors/**",
+        "core/**",
+        "services/**",
+        "tests/test_company_discovery.py",
+        "tests/test_search_discovery.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_search_discovery.py tests/test_company_discovery.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "Fallback triggers when no jobs found",
+        "Fallback produces additional candidates",
+        "Integrated into normalization and verification pipeline"
+      ],
+      "notes": [
+        "Simulated zero-yield scenarios should confirm fallback execution in logs.",
+        "Automated loop completed with VM validation success."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "When structured discovery yields no jobs, trigger fallback scraping and search-based extraction.",
+      "acceptance_criteria": [
+        "Fallback triggers when no jobs found",
+        "Fallback produces additional candidates",
+        "Integrated into normalization and verification pipeline"
       ]
     }
   ],

@@ -1,0 +1,136 @@
+{
+  "task_id": "JORB-V2-008",
+  "title": "Add profile-driven search constraints for geography, work mode, and target roles",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-26T00:01:54.019587+00:00",
+  "completed_at": "2026-03-26T00:11:43.745072+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T000153Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T000153Z-JORB-V2-008",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T000153Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T000153Z-JORB-V2-008"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T000153Z-JORB-V2-008/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T000153Z-JORB-V2-008/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T000153Z-JORB-V2-008/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T000153Z-JORB-V2-008/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T000153Z-JORB-V2-008/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T000153Z-JORB-V2-008/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T000153Z-JORB-V2-008/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T000153Z-JORB-V2-008/executor.json"
+    }
+  ],
+  "files_changed": [
+    "core/schemas.py",
+    "services/discovery_agents.py",
+    "services/profile.py",
+    "services/profile_ingest.py",
+    "services/ranking.py",
+    "services/sync.py",
+    "tests/test_pipeline.py",
+    "tests/test_profile.py",
+    "tests/test_ranking.py",
+    "tests/test_workbench.py",
+    "ui/app.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T000153Z-JORB-V2-008/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "backend profile state explicitly supports preferred geographies or locations, remote or hybrid or onsite preference, and target roles",
+    "search and ranking materially use those constraints when present, with graceful defaults when profile data is missing",
+    "changing profile preferences changes the returned or ranked jobs in a provable runtime path",
+    "runtime behavior makes it clear which profile constraints were applied versus defaulted",
+    "targeted tests and preflight pass"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [
+      "backend profile state explicitly supports preferred geographies or locations, remote or hybrid or onsite preference, and target roles",
+      "search and ranking materially use those constraints when present, with graceful defaults when profile data is missing",
+      "changing profile preferences changes the returned or ranked jobs in a provable runtime path",
+      "runtime behavior makes it clear which profile constraints were applied versus defaulted",
+      "targeted tests and preflight pass"
+    ],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed  \nAdded backend profile support for `target_roles_json` and `work_mode_preference`, kept `preferred_locations_json` as the geography constraint, and persisted all three through the structured profile schema. Search planning now prioritizes profile-constrained queries and reports which constraints were explicitly applied vs defaulted. Ranking now uses explicit target-role, geography, and work-mode preferences in deterministic scoring and traces those constraints into lead evidence/score payloads. UI payload helpers and profile review rows were updated so these fields round-trip instead of being dropped.\n\n2. Exact files changed  \n[core/schemas.py](/Users/samuelkrystal/projects/jorb/core/schemas.py)  \n[services/profile.py](/Users/samuelkrystal/projects/jorb/services/profile.py)  \n[services/discovery_agents.py](/Users/samuelkrystal/projects/jorb/services/discovery_agents.py)  \n[services/ranking.py](/Users/samuelkrystal/projects/jorb/services/ranking.py)  \n[services/sync.py](/Users/samuelkrystal/projects/jorb/services/sync.py)  \n[services/profile_ingest.py](/Users/samuelkrystal/projects/jorb/services/profile_ingest.py)  \n[ui/app.py](/Users/samuelkrystal/projects/jorb/ui/app.py)  \n[tests/test_profile.py](/Users/samuelkrystal/projects/jorb/tests/test_profile.py)  \n[tests/test_pipeline.py](/Users/samuelkrystal/projects/jorb/tests/test_pipeline.py)  \n[tests/test_ranking.py](/Users/samuelkrystal/projects/jorb/tests/test_ranking.py)  \n[tests/test_workbench.py](/Users/samuelkrystal/projects/jorb/tests/test_workbench.py)\n\n3. Exact tests added or updated  \nUpdated `test_resume_ingestion_populates_candidate_profile`  \nUpdated `test_candidate_profile_payload_builds_structured_schema_from_flat_fields`  \nUpdated `test_update_candidate_profile_syncs_structured_schema_back_to_flat_fields`  \nAdded `test_profile_search_constraints_report_applied_vs_defaulted_fields`  \nUpdated `test_strong_rank_threshold_now_requires_more_than_73`  \nAdded `test_explicit_target_role_changes_title_fit_and_score`  \nAdded `test_explicit_work_mode_preference_penalizes_mismatch`  \nAdded `test_planner_agent_applies_profile_driven_role_geography_and_work_mode_constraints`  \nUpdated `test_build_profile_review_rows_flattens_structured_profile_for_ui`  \nUpdated `test_apply_target_role_selection_prioritizes_selected_role_in_structured_inputs`  \nUpdated `test_build_profile_update_payload_preserves_extracted_resume_draft_fields`\n\n4. Exact commands run  \n`pytest tests/test_profile.py tests/test_ranking.py`  \n`pytest tests/test_pipeline.py tests/test_workbench.py`  \n`pytest tests/test_profile.py tests/test_pipeline.py tests/test_ranking.py tests/test_workbench.py`  \n`./scripts/preflight_check.sh`\n\n5. Exact results  \n`pytest tests/test_profile.py tests/test_ranking.py`: `18 passed in 0.56s`  \n`pytest tests/test_pipeline.py tests/test_workbench.py`: `34 passed in 1.77s`  \n`pytest tests/test_profile.py tests/test_pipeline.py tests/test_ranking.py tests/test_workbench.py`: `52 passed in 1.56s`  \n`./scripts/preflight_check.sh`: passed, including compile/import smoke and full pytest run `147 passed in 6.41s`\n\n6. Honest note on what remains unproven  \nI did not run `python scripts/reset_demo.py`, boot FastAPI locally, boot Streamlit locally, or verify the changed workflow in the live app/API. The task-required verification passed, but live runtime behavior outside tests and preflight was not directly proven."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 24 vulnerabilities on sekrystal/Jorb's default branch (19 moderate, 5 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   b27acb0..c3e8ab3  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 11,
+    "changed_files": [
+      "core/schemas.py",
+      "services/discovery_agents.py",
+      "services/profile.py",
+      "services/profile_ingest.py",
+      "services/ranking.py",
+      "services/sync.py",
+      "tests/test_pipeline.py",
+      "tests/test_profile.py",
+      "tests/test_ranking.py",
+      "tests/test_workbench.py",
+      "ui/app.py"
+    ],
+    "unproven_runtime_gaps": []
+  },
+  "unproven_runtime_gaps": []
+}

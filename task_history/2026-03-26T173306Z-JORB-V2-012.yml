@@ -1,0 +1,104 @@
+{
+  "task_id": "JORB-V2-012",
+  "title": "Deliver a real end to end job discovery vertical slice",
+  "status": "refined",
+  "attempt": 1,
+  "started_at": "2026-03-26T17:29:32.400524+00:00",
+  "completed_at": "2026-03-26T17:33:06.571050+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T172932Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T172932Z-JORB-V2-012",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T172932Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T172932Z-JORB-V2-012"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T172932Z-JORB-V2-012/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T172932Z-JORB-V2-012/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T172932Z-JORB-V2-012/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T172932Z-JORB-V2-012/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T172932Z-JORB-V2-012/local_validation.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T172932Z-JORB-V2-012/executor.json"
+    }
+  ],
+  "files_changed": [
+    "tests/test_workbench.py",
+    "ui/components/job_card.py",
+    "ui/screens/jobs.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T172932Z-JORB-V2-012/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "refined"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [
+    "at least one truly working source produces real, non-mocked jobs that appear in the product UI in the VM runtime environment",
+    "each visible job in the validated slice includes title, company, match score, explanation, and source or source provenance where feasible",
+    "passing tests alone is not sufficient for acceptance",
+    "running without crashing is not sufficient for acceptance",
+    "the product must surface real jobs in the UI as the basis for acceptance"
+  ],
+  "blocker_opened": null,
+  "notes": [
+    "Local validation failed after executor changes."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Local validation failed after executor changes.",
+    "accepted": false,
+    "acceptance_met": [],
+    "acceptance_unmet": [
+      "at least one truly working source produces real, non-mocked jobs that appear in the product UI in the VM runtime environment",
+      "each visible job in the validated slice includes title, company, match score, explanation, and source or source provenance where feasible",
+      "passing tests alone is not sufficient for acceptance",
+      "running without crashing is not sufficient for acceptance",
+      "the product must surface real jobs in the UI as the basis for acceptance"
+    ],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\nMade the jobs UI show source and source provenance as separate explicit fields for each visible job. `build_job_view_model` now derives `source` from the actual source type and `source_provenance` from lineage, the job card renders both, and the detail panel shows both. Added/updated workbench tests to lock that contract, including a `yc_jobs+search_web` case.\n\n2. Exact files changed\n\n- `ui/screens/jobs.py`\n- `ui/components/job_card.py`\n- `tests/test_workbench.py`\n\n3. Exact tests added or updated\n\nUpdated:\n- `tests/test_workbench.py::test_build_job_view_model_uses_real_fields_and_explicit_placeholders`\n\nAdded:\n- `tests/test_workbench.py::test_build_job_view_model_exposes_explicit_source_and_provenance_fields`\n\n4. Exact commands run\n\n- `python3 -m pytest tests/test_search_discovery.py tests/test_pipeline.py tests/test_production_runtime.py tests/test_workbench.py`\n- `./.venv_validation/bin/python -m pytest tests/test_search_discovery.py tests/test_pipeline.py tests/test_production_runtime.py tests/test_workbench.py`\n- `./scripts/preflight_check.sh`\n- `./.venv_validation/bin/python scripts/reset_demo.py`\n- `ENABLE_SCHEDULER=false ./.venv_validation/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000`\n- `./.venv_validation/bin/streamlit run ui/app.py --server.headless true --server.port 8501`\n- `bash ./scripts/runtime_self_check.sh`\n- `git diff --name-only`\n- `git diff -- ui/screens/jobs.py ui/components/job_card.py tests/test_workbench.py`\n\n5. Exact results\n\n- `python3 -m pytest ...`: failed, `No module named pytest`\n- `./.venv_validation/bin/python -m pytest tests/test_search_discovery.py tests/test_pipeline.py tests/test_production_runtime.py tests/test_workbench.py`: passed, `62 passed in 1.95s`\n- `./scripts/preflight_check.sh`: passed, full suite `158 passed in 5.82s`\n- `./.venv_validation/bin/python scripts/reset_demo.py`: passed; demo reset completed, but `search_web` and `yc_jobs` remained disabled in the reset runtime state\n- `ENABLE_SCHEDULER=false ./.venv_validation/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000`: failed, bind denied, `[Errno 1] ... operation not permitted`\n- `./.venv_validation/bin/streamlit run ui/app.py --server.headless true --server.port 8501`: failed, bind denied, `PermissionError: [Errno 1] Operation not permitted`\n- `bash ./scripts/runtime_self_check.sh`: ran, but all curls failed because no local server could bind in this sandbox\n- `git diff --name-only`: showed exactly `tests/test_workbench.py`, `ui/components/job_card.py`, `ui/screens/jobs.py`\n\n6. Honest note on what remains unproven\n\nThe requested real end-to-end VM proof is still unproven from this environment. Two separate blockers remain: `reset_demo.py` leaves `SEARCH_DISCOVERY_ENABLED=false`, so the real `search_web -> yc_jobs` slice is not active in the local runtime state, and this sandbox forbids binding local ports, so I could not boot FastAPI or Streamlit to verify the live UI/API path. The backend path for `yc_jobs+search_web` is already covered by tests, and the UI now exposes source plus provenance explicitly, but I did not directly prove a real non-mocked job appearing in the VM UI runtime."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "refined",
+        "detail": "At least one local verification command failed."
+      }
+    ],
+    "changed_files_count": 3,
+    "changed_files": [
+      "tests/test_workbench.py",
+      "ui/components/job_card.py",
+      "ui/screens/jobs.py"
+    ],
+    "unproven_runtime_gaps": [
+      "Local validation failed after executor changes."
+    ]
+  },
+  "unproven_runtime_gaps": [
+    "Local validation failed after executor changes."
+  ]
+}

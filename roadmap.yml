@@ -1,7 +1,7 @@
 {
-  "version": 5,
+  "version": 7,
   "product": "Jorb",
-  "current_baseline": "Phase 1 is complete, and early Phase 2 work restored runtime schema compatibility plus a jobs-first landing foundation. Streamlit remains a temporary validation harness rather than the long-term product shell. The next product risk is still search truth: profile constraints, source reality, fallback behavior, and real visible job yield must be made real before the JS front end phase can be trusted.",
+  "current_baseline": "Phase 1 is complete, and early Phase 2 work restored runtime schema compatibility plus a jobs-first landing foundation. Streamlit remains a temporary validation harness rather than the long-term product shell. The next product risk is that discovery is still incomplete and brittle, so the product must pass through a structured multi-source discovery phase before later builder hardening and JS product UX work can be trusted.",
   "milestones": [
     {
       "id": "M0",
@@ -149,25 +149,82 @@
       "runtime visibility into which sources ran, failed, or produced surfaced jobs is still too weak to support a trustworthy UX phase",
       "the product still needs one real end-to-end vertical slice that proves actual jobs surface in the UI rather than only instrumentation"
     ],
-    "ready_task_ids": [
+    "accepted_task_ids": [
       "JORB-V2-008",
       "JORB-V2-009"
     ],
-    "pending_task_ids": [
+    "completed_task_ids": [
       "JORB-V2-005",
       "JORB-V2-010",
-      "JORB-V2-011",
+      "JORB-V2-011"
+    ],
+    "pending_task_ids": [
       "JORB-V2-012"
     ]
   },
-  "phase_2b_vertical_slice": {
-    "status": "pending",
-    "goal": "Force the product to deliver a real end-to-end job discovery slice in the VM before larger UX implementation is accepted.",
+  "phase_2b_robust_discovery_and_verification": {
+    "status": "active",
+    "goal": "Implement a structured, multi-source, resilient discovery system that normalizes, verifies, ranks, observes, and proves real jobs appear in product.",
     "task_ids": [
-      "JORB-V2-012"
+      "JORB-V2-019",
+      "JORB-V2-020",
+      "JORB-V2-021",
+      "JORB-V2-022",
+      "JORB-V2-023",
+      "JORB-V2-024",
+      "JORB-V2-025",
+      "JORB-V2-026",
+      "JORB-V2-027"
+    ],
+    "ready_task_ids": [
+      "JORB-V2-019"
+    ],
+    "pending_task_ids": [
+      "JORB-V2-020",
+      "JORB-V2-021",
+      "JORB-V2-022",
+      "JORB-V2-023",
+      "JORB-V2-024",
+      "JORB-V2-025",
+      "JORB-V2-026",
+      "JORB-V2-027"
+    ],
+    "architecture_layers": [
+      "canonical SearchIntent from profile",
+      "discovery planners (ATS, search, weak signal)",
+      "acquisition workers (ATS resolver, search, parser)",
+      "normalization layer",
+      "verification and deduplication",
+      "ranking and explanation",
+      "runtime observer",
+      "strict end-to-end vertical slice proving real jobs appear",
+      "scrape fallback"
     ]
   },
-  "phase_2c_js_frontend": {
+  "phase_2c_builder_hardening_and_streamlit_cleanup": {
+    "status": "pending",
+    "goal": "Harden builder UX acceptance rules and keep the temporary Streamlit harness minimally jobs-first without letting it become the final product shell.",
+    "primary_ux_prohibited_surfaces": [
+      "discovery source matrix",
+      "discovery internals",
+      "learning",
+      "autonomy ops",
+      "agent activity",
+      "investigations",
+      "source diagnostics",
+      "operator or admin controls"
+    ],
+    "task_ids": [
+      "JORB-V2-012",
+      "JORB-INFRA-006",
+      "JORB-V2-018",
+      "JORB-V2-003",
+      "JORB-V2-004",
+      "JORB-V2-006",
+      "JORB-V2-007"
+    ]
+  },
+  "phase_3_js_frontend": {
     "status": "pending",
     "goal": "Build the production JS front end on top of a truthful search substrate and a proven real-job vertical slice, while Streamlit remains a temporary validation and operator harness.",
     "task_ids": [
@@ -176,16 +233,6 @@
       "JORB-V2-015",
       "JORB-V2-016",
       "JORB-V2-017"
-    ]
-  },
-  "phase_2d_validation_and_transition": {
-    "status": "pending",
-    "goal": "Keep interim Streamlit surfaces bounded, validate the real product path in live runtime, and transition Streamlit out of the primary product path.",
-    "task_ids": [
-      "JORB-V2-003",
-      "JORB-V2-004",
-      "JORB-V2-006",
-      "JORB-V2-007"
     ]
   },
   "later_phases": []

@@ -1,0 +1,122 @@
+{
+  "task_id": "JORB-V2-005",
+  "title": "Add resilient search fallback and scrape degradation when discovery yields nothing",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-26T17:01:00.255502+00:00",
+  "completed_at": "2026-03-26T17:08:21.071956+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T170058Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T170058Z-JORB-V2-005",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T170058Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T170058Z-JORB-V2-005"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T170058Z-JORB-V2-005/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T170058Z-JORB-V2-005/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T170058Z-JORB-V2-005/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T170058Z-JORB-V2-005/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T170058Z-JORB-V2-005/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T170058Z-JORB-V2-005/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T170058Z-JORB-V2-005/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T170058Z-JORB-V2-005/executor.json"
+    }
+  ],
+  "files_changed": [
+    "connectors/search_web.py",
+    "services/sync.py",
+    "tests/test_search_discovery.py",
+    "tests/test_sync.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T170058Z-JORB-V2-005/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "search timeout and zero-yield conditions are classified clearly and surfaced in operator-visible diagnostics",
+    "discovery follows an explicit retry or fallback order rather than silently ending in zero results",
+    "scrape or parse fallback is attempted where appropriate when ATS or search discovery produces no usable jobs",
+    "the product can distinguish between no-jobs-found reality and upstream provider failure clearly",
+    "targeted tests and preflight pass"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [
+      "search timeout and zero-yield conditions are classified clearly and surfaced in operator-visible diagnostics",
+      "discovery follows an explicit retry or fallback order rather than silently ending in zero results",
+      "scrape or parse fallback is attempted where appropriate when ATS or search discovery produces no usable jobs",
+      "the product can distinguish between no-jobs-found reality and upstream provider failure clearly",
+      "targeted tests and preflight pass"
+    ],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\nAdded structured search discovery degradation diagnostics and persisted fallback order through sync. `SearchDiscoveryConnector` now classifies timeout, HTTP, transport, provider-failure, and zero-yield outcomes, keeps per-attempt fallback metadata, and preserves failed provider attempts even when a rewritten query recovers. `sync_all` now persists operator-visible search fetch diagnostics plus explicit expansion fallback metadata, including when scrape/parse fallback was attempted or not applicable, and records careers-page zero-yield as a distinct scrape/parse failure boundary instead of collapsing it into a generic empty result.\n\n2. Exact files changed\n\n- `connectors/search_web.py`\n- `services/sync.py`\n- `tests/test_search_discovery.py`\n- `tests/test_sync.py`\n\n3. Exact tests added or updated\n\nUpdated in `tests/test_search_discovery.py`:\n- `test_fetch_retries_once_with_rewritten_query_after_provider_self_link_only_results`\n- `test_fetch_classifies_zero_yield_provider_failure_when_no_results_survive`\n- `test_fetch_classifies_timeout_without_raising_in_demo_mode`\n\nUpdated in `tests/test_sync.py`:\n- `test_sync_all_persists_productive_query_family_lineage` unchanged\n- `test_sync_all_persists_ashby_invalid_surface_diagnostics`\n- `test_sync_all_records_scrape_parse_fallback_for_careers_page_zero_yield`\n- `test_sync_all_persists_productive_query_family_lineage` unchanged\n- `test_sync_all_persists_ashby_invalid_surface_diagnostics` and `test_sync_all_persists_productive_query_family_lineage` still pass with the new diagnostics shape\n- `test_sync_all_persists_ashby_invalid_surface_diagnostics` and `test_sync_all_persists_productive_query_family_lineage` were not renamed\n\n4. Exact commands run\n\n- `pytest tests/test_search_discovery.py tests/test_sync.py`\n- `pytest tests/test_search_discovery.py tests/test_company_discovery.py tests/test_sync.py tests/test_workbench.py`\n- `./scripts/preflight_check.sh`\n- `python scripts/reset_demo.py`\n- `grep -RIn \"streamlit run|uvicorn api.main:app|API_BASE_URL\" README* scripts ui api | head -n 50`\n- `/Users/samuelkrystal/projects/jorb/.venv_validation/bin/python scripts/reset_demo.py`\n- `ls /Users/samuelkrystal/projects/jorb/.venv_validation/bin | grep -E '^(uvicorn|streamlit)$'`\n- `/Users/samuelkrystal/projects/jorb/.venv_validation/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000`\n- `/Users/samuelkrystal/projects/jorb/.venv_validation/bin/streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500`\n- `curl -sf http://127.0.0.1:8000/health`\n\n5. Exact results\n\n- `pytest tests/test_search_discovery.py tests/test_sync.py`: passed, `34 passed in 0.73s`\n- `pytest tests/test_search_discovery.py tests/test_company_discovery.py tests/test_sync.py tests/test_workbench.py`: passed, `73 passed in 3.24s`\n- `./scripts/preflight_check.sh`: passed, including compile/import smoke and full pytest suite, `153 passed in 6.38s`\n- `python scripts/reset_demo.py`: failed because `python` is not on PATH in this sandbox\n- `/Users/samuelkrystal/projects/jorb/.venv_validation/bin/python scripts/reset_demo.py`: succeeded; demo reset output showed seeded demo sync completing with `search_web` disabled in demo and no runtime errors\n- `uvicorn api.main:app --host 127.0.0.1 --port 8000`: app imported and reached startup, then failed to bind with `[Errno 1] operation not permitted`\n- `streamlit run ui/app.py ... --port 8500`: failed to bind with `PermissionError: [Errno 1] Operation not permitted`\n- `curl -sf http://127.0.0.1:8000/health`: failed because the server could not bind locally in this sandbox\n\n6. Honest note on what remains unproven\n\nLive FastAPI and Streamlit boot, plus end-to-end verification of the changed workflow in a running local app, remain unproven here because this sandbox denied binding to `127.0.0.1` ports `8000` and `8500`. Live upstream search-provider behavior is also unproven; coverage is via deterministic tests and preflight only."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 24 vulnerabilities on sekrystal/Jorb's default branch (19 moderate, 5 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   33cf83d..1b70eb0  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 4,
+    "changed_files": [
+      "connectors/search_web.py",
+      "services/sync.py",
+      "tests/test_search_discovery.py",
+      "tests/test_sync.py"
+    ],
+    "unproven_runtime_gaps": []
+  },
+  "unproven_runtime_gaps": []
+}

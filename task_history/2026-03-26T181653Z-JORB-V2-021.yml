@@ -1,0 +1,118 @@
+{
+  "task_id": "JORB-V2-021",
+  "title": "Implement acquisition workers (ATS resolver, search, parser)",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-26T18:10:20.411582+00:00",
+  "completed_at": "2026-03-26T18:16:53.169055+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T181020Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T181020Z-JORB-V2-021",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T181020Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T181020Z-JORB-V2-021"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T181020Z-JORB-V2-021/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T181020Z-JORB-V2-021/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T181020Z-JORB-V2-021/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T181020Z-JORB-V2-021/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T181020Z-JORB-V2-021/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T181020Z-JORB-V2-021/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T181020Z-JORB-V2-021/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T181020Z-JORB-V2-021/executor.json"
+    }
+  ],
+  "files_changed": [
+    "services/discovery_agents.py",
+    "services/sync.py",
+    "tests/test_company_discovery.py",
+    "tests/test_search_discovery.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T181020Z-JORB-V2-021/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "At least one ATS source returns real job listings",
+    "Search produces candidate URLs",
+    "Parser extracts job links from at least one page type"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [
+      "At least one ATS source returns real job listings",
+      "Search produces candidate URLs",
+      "Parser extracts job links from at least one page type"
+    ],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Added bounded acquisition worker support for ATS resolution, search, and parser execution in `services/discovery_agents.py`, then wired `services/sync.py` to use those workers, dedupe ATS+search candidate URLs before parsing, and log explicit `Discovery` runs for each acquisition stage.\n\n2. Exact files changed:\n- [services/discovery_agents.py](/Users/samuelkrystal/projects/jorb/services/discovery_agents.py)\n- [services/sync.py](/Users/samuelkrystal/projects/jorb/services/sync.py)\n- [tests/test_company_discovery.py](/Users/samuelkrystal/projects/jorb/tests/test_company_discovery.py)\n- [tests/test_search_discovery.py](/Users/samuelkrystal/projects/jorb/tests/test_search_discovery.py)\n\n3. Exact tests added or updated:\n- Added `test_build_acquisition_plan_reserves_bounded_budget_for_ats_queries` in [tests/test_company_discovery.py](/Users/samuelkrystal/projects/jorb/tests/test_company_discovery.py)\n- Added `test_acquisition_workers_split_ats_and_search_execution_with_candidate_urls` in [tests/test_search_discovery.py](/Users/samuelkrystal/projects/jorb/tests/test_search_discovery.py)\n- Added `test_parser_acquisition_worker_extracts_job_links_from_careers_page` in [tests/test_search_discovery.py](/Users/samuelkrystal/projects/jorb/tests/test_search_discovery.py)\n\n4. Exact commands run:\n- `pytest tests/test_search_discovery.py tests/test_company_discovery.py tests/test_workbench.py`\n- `python3 -m py_compile services/discovery_agents.py services/sync.py connectors/search_web.py`\n- `./scripts/preflight_check.sh`\n- `pytest tests/test_sync.py -k 'query_family_metrics or ashby_invalid_surface_diagnostics or scrape_parse_fallback_for_careers_page_zero_yield or productive_query_family_lineage'`\n- `python3 -m py_compile services/discovery_agents.py services/sync.py`\n- `./.venv_validation/bin/python scripts/reset_demo.py`\n- `./.venv_validation/bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8000`\n- `./.venv_validation/bin/streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500`\n\n5. Exact results:\n- `pytest tests/test_search_discovery.py tests/test_company_discovery.py tests/test_workbench.py`: passed, `63 passed in 2.28s`\n- `python3 -m py_compile services/discovery_agents.py services/sync.py connectors/search_web.py`: passed\n- `./scripts/preflight_check.sh`: passed, including `164 passed in 6.43s`\n- `pytest tests/test_sync.py -k 'query_family_metrics or ashby_invalid_surface_diagnostics or scrape_parse_fallback_for_careers_page_zero_yield or productive_query_family_lineage'`: passed, `4 passed, 14 deselected in 0.65s`\n- `python3 -m py_compile services/discovery_agents.py services/sync.py`: passed\n- `./.venv_validation/bin/python scripts/reset_demo.py`: passed; seeded demo reset completed with `signals_ingested=4`, `listings_ingested=8`, `surfaced_count=5`\n- `./.venv_validation/bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8000`: failed; startup completed but bind failed with `[Errno 1] operation not permitted`\n- `./.venv_validation/bin/streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500`: failed; bind failed with `PermissionError: [Errno 1] Operation not permitted`\n\n6. Honest note on what remains unproven:\n- Live FastAPI and Streamlit boot could not be fully proven in this sandbox because localhost port binding is blocked.\n- The changed ATS/search/parser acquisition path is covered by unit/integration tests, but not verified end-to-end through a live app or live web search in this environment.\n- \u201cAt least one ATS source returns real job listings\u201d is proven for existing seeded/demo connectors and test fixtures, not for a live internet-backed acquisition run from this sandbox."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 24 vulnerabilities on sekrystal/Jorb's default branch (19 moderate, 5 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   18f56f4..559f24b  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 4,
+    "changed_files": [
+      "services/discovery_agents.py",
+      "services/sync.py",
+      "tests/test_company_discovery.py",
+      "tests/test_search_discovery.py"
+    ],
+    "unproven_runtime_gaps": []
+  },
+  "unproven_runtime_gaps": []
+}

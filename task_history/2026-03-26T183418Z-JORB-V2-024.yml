@@ -1,0 +1,120 @@
+{
+  "task_id": "JORB-V2-024",
+  "title": "Implement ranking and explanation layer",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-26T18:31:07.883385+00:00",
+  "completed_at": "2026-03-26T18:34:18.078774+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T183107Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T183107Z-JORB-V2-024",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T183107Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T183107Z-JORB-V2-024"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T183107Z-JORB-V2-024/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T183107Z-JORB-V2-024/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T183107Z-JORB-V2-024/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T183107Z-JORB-V2-024/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T183107Z-JORB-V2-024/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T183107Z-JORB-V2-024/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T183107Z-JORB-V2-024/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T183107Z-JORB-V2-024/executor.json"
+    }
+  ],
+  "files_changed": [
+    "services/explain.py",
+    "services/ranking.py",
+    "services/sync.py",
+    "tests/test_pipeline.py",
+    "tests/test_ranking.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T183107Z-JORB-V2-024/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "Jobs receive numeric score",
+    "Explanations include at least role match and location fit",
+    "Ranking changes when profile changes"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [
+      "Jobs receive numeric score",
+      "Explanations include at least role match and location fit",
+      "Ranking changes when profile changes"
+    ],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Added deterministic ranking outputs in `services/ranking.py` by emitting `final_score`, `role_match_explanation`, and `location_fit_explanation`, then threaded those fragments through `services/sync.py` into the surfaced lead explanation via `services/explain.py`. Updated tests to prove numeric scoring, required role/location explanation fragments, and profile-sensitive rank changes.\n\n2. `services/explain.py`\n`services/ranking.py`\n`services/sync.py`\n`tests/test_pipeline.py`\n`tests/test_ranking.py`\n\n3. Updated `tests/test_ranking.py` and `tests/test_pipeline.py`.\nAdded/updated assertions for:\n`final_score` being present and numeric\nrole-match and location-fit explanation fragments\nranking changing when the profile changes\n\n4. `pytest tests/test_pipeline.py tests/test_ranking.py tests/test_workbench.py`\n`./scripts/preflight_check.sh`\n\n5. `pytest tests/test_pipeline.py tests/test_ranking.py tests/test_workbench.py` -> 50 passed in 4.38s\n`./scripts/preflight_check.sh` -> passed, including compile/import smoke and full pytest suite `169 passed in 6.12s`\n\n6. Unproven: I did not run `python scripts/reset_demo.py`, boot FastAPI locally, boot Streamlit locally, or verify the changed workflow in the live app/API, so end-to-end runtime behavior is not directly proven in this pass."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 24 vulnerabilities on sekrystal/Jorb's default branch (19 moderate, 5 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   15747d0..6d64621  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 5,
+    "changed_files": [
+      "services/explain.py",
+      "services/ranking.py",
+      "services/sync.py",
+      "tests/test_pipeline.py",
+      "tests/test_ranking.py"
+    ],
+    "unproven_runtime_gaps": []
+  },
+  "unproven_runtime_gaps": []
+}

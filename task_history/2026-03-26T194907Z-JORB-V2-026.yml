@@ -1,0 +1,114 @@
+{
+  "task_id": "JORB-V2-026",
+  "title": "Deliver real end-to-end discovery vertical slice (strict)",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-26T19:48:21.337703+00:00",
+  "completed_at": "2026-03-26T19:49:07.827335+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T190423Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T194820Z-JORB-V2-026",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T190423Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T194820Z-JORB-V2-026"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T194820Z-JORB-V2-026/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T194820Z-JORB-V2-026/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T194820Z-JORB-V2-026/progress.jsonl"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T194820Z-JORB-V2-026/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T194820Z-JORB-V2-026/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T194820Z-JORB-V2-026/git.json"
+    }
+  ],
+  "files_changed": [
+    "core/schemas.py",
+    "scripts/runtime_self_check.sh",
+    "services/company_discovery.py",
+    "tests/test_pipeline.py",
+    "tests/test_workbench.py",
+    "ui/app.py"
+  ],
+  "commands_run": [],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "At least one real job appears in UI",
+    "Jobs are verified (no dead links)",
+    "Jobs are ranked and include explanations",
+    "Zero-yield case handled explicitly if it occurs"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [
+      "At least one real job appears in UI",
+      "Jobs are verified (no dead links)",
+      "Jobs are ranked and include explanations",
+      "Zero-yield case handled explicitly if it occurs"
+    ],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "retry_check",
+        "outcome": "passed",
+        "detail": "Continuing from existing product repo task changes."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 24 vulnerabilities on sekrystal/Jorb's default branch (19 moderate, 5 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   4e81aee..cedb5c8  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 6,
+    "changed_files": [
+      "core/schemas.py",
+      "scripts/runtime_self_check.sh",
+      "services/company_discovery.py",
+      "tests/test_pipeline.py",
+      "tests/test_workbench.py",
+      "ui/app.py"
+    ],
+    "unproven_runtime_gaps": []
+  },
+  "unproven_runtime_gaps": []
+}

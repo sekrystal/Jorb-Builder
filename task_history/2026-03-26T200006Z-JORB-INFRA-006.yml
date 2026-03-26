@@ -1,0 +1,84 @@
+{
+  "task_id": "JORB-INFRA-006",
+  "title": "Harden builder UX conformance gating for product-facing tasks",
+  "status": "blocked",
+  "attempt": 1,
+  "started_at": "2026-03-26T20:00:06.780745+00:00",
+  "completed_at": "2026-03-26T20:00:06.890948+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200006Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200006Z-JORB-INFRA-006",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200006Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200006Z-JORB-INFRA-006"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200006Z-JORB-INFRA-006/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200006Z-JORB-INFRA-006/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200006Z-JORB-INFRA-006/progress.jsonl"
+    }
+  ],
+  "files_changed": [
+    "roadmap.yml",
+    "scripts/automate_task_loop.py",
+    "tests/test_automate_task_loop.py"
+  ],
+  "commands_run": [],
+  "results": [
+    "blocked"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [
+    "product-facing UX tasks must map implemented sections to design sections explicitly",
+    "product-facing UX tasks must list intentional deviations from design explicitly",
+    "builder acceptance for UX work includes a product-first checklist covering hierarchy and prohibited surfaces, not only backend data wiring",
+    "builder planning can mark primary-UX-prohibited surfaces such as source matrix, discovery internals, learning, autonomy ops, agent activity, investigations, diagnostics, and operator controls",
+    "future product-facing UX tasks cannot be accepted solely because they exist or are wired to real data"
+  ],
+  "blocker_opened": null,
+  "notes": [
+    "Builder repo is dirty before automated execution; refusing to continue."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Builder repo is dirty before automated execution; refusing to continue.",
+    "accepted": false,
+    "acceptance_met": [],
+    "acceptance_unmet": [
+      "product-facing UX tasks must map implemented sections to design sections explicitly",
+      "product-facing UX tasks must list intentional deviations from design explicitly",
+      "builder acceptance for UX work includes a product-first checklist covering hierarchy and prohibited surfaces, not only backend data wiring",
+      "builder planning can mark primary-UX-prohibited surfaces such as source matrix, discovery internals, learning, autonomy ops, agent activity, investigations, diagnostics, and operator controls",
+      "future product-facing UX tasks cannot be accepted solely because they exist or are wired to real data"
+    ],
+    "step_outcomes": [
+      {
+        "name": "git_status_before",
+        "outcome": "blocked",
+        "detail": "roadmap.yml\nscripts/automate_task_loop.py\ntests/test_automate_task_loop.py"
+      }
+    ],
+    "changed_files_count": 3,
+    "changed_files": [
+      "roadmap.yml",
+      "scripts/automate_task_loop.py",
+      "tests/test_automate_task_loop.py"
+    ],
+    "unproven_runtime_gaps": [
+      "Builder repo is dirty before automated execution; refusing to continue."
+    ]
+  },
+  "unproven_runtime_gaps": [
+    "Builder repo is dirty before automated execution; refusing to continue."
+  ]
+}

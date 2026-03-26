@@ -1,0 +1,124 @@
+{
+  "task_id": "JORB-V2-019",
+  "title": "Implement canonical SearchIntent from user profile",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-26T17:56:46.434844+00:00",
+  "completed_at": "2026-03-26T18:01:03.073248+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T175646Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T175646Z-JORB-V2-019",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T175646Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T175646Z-JORB-V2-019"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T175646Z-JORB-V2-019/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T175646Z-JORB-V2-019/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T175646Z-JORB-V2-019/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T175646Z-JORB-V2-019/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T175646Z-JORB-V2-019/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T175646Z-JORB-V2-019/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T175646Z-JORB-V2-019/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T175646Z-JORB-V2-019/executor.json"
+    }
+  ],
+  "files_changed": [
+    "core/schemas.py",
+    "services/discovery_agents.py",
+    "services/profile.py",
+    "services/ranking.py",
+    "tests/test_pipeline.py",
+    "tests/test_profile.py",
+    "tests/test_ranking.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T175646Z-JORB-V2-019/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "SearchIntent structure exists and is persisted or constructed consistently",
+    "Discovery logic consumes SearchIntent",
+    "Changing profile inputs changes discovery queries or filtering behavior"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [
+      "SearchIntent structure exists and is persisted or constructed consistently",
+      "Discovery logic consumes SearchIntent",
+      "Changing profile inputs changes discovery queries or filtering behavior"
+    ],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\nAdded a typed canonical `SearchIntent` to the structured candidate profile, populated it from profile inputs in `services/profile.py`, persisted it with the saved profile payload, and switched discovery planning and ranking to consume that canonical intent instead of rebuilding separate ad hoc constraint dicts. Updated tests to verify `search_intent` persistence/construction and to prove profile changes alter planner queries and ranking behavior.\n\n2. Exact files changed\n\n- `core/schemas.py`\n- `services/profile.py`\n- `services/discovery_agents.py`\n- `services/ranking.py`\n- `tests/test_profile.py`\n- `tests/test_pipeline.py`\n- `tests/test_ranking.py`\n\n3. Exact tests added or updated\n\nUpdated in `tests/test_profile.py`:\n- `test_candidate_profile_payload_builds_structured_schema_from_flat_fields`\n- `test_update_candidate_profile_syncs_structured_schema_back_to_flat_fields`\n- `test_profile_search_constraints_report_applied_vs_defaulted_fields`\n- `test_profile_search_constraints_construct_search_intent_when_not_persisted`\n\nUpdated in `tests/test_pipeline.py`:\n- `test_planner_agent_applies_profile_driven_role_geography_and_work_mode_constraints`\n\nUpdated in `tests/test_ranking.py`:\n- `test_explicit_target_role_changes_title_fit_and_score`\n- `test_explicit_work_mode_preference_penalizes_mismatch`\n\n4. Exact commands run\n\n- `pytest tests/test_profile.py tests/test_pipeline.py tests/test_ranking.py tests/test_workbench.py`\n- `./scripts/preflight_check.sh`\n\n5. Exact results\n\n- `pytest tests/test_profile.py tests/test_pipeline.py tests/test_ranking.py tests/test_workbench.py`\n  Result: `57 passed in 2.96s`\n- `./scripts/preflight_check.sh`\n  Result: `159 passed in 6.38s` and `Preflight checks passed.`\n\n6. Honest note on what remains unproven\n\nDid not run `python scripts/reset_demo.py`, did not boot FastAPI locally, did not boot Streamlit locally, and did not manually verify the changed workflow in the live app/API. The required task verification commands passed, but live runtime behavior beyond preflight smoke remains unproven."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 24 vulnerabilities on sekrystal/Jorb's default branch (19 moderate, 5 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   6cabdd9..de28f81  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 7,
+    "changed_files": [
+      "core/schemas.py",
+      "services/discovery_agents.py",
+      "services/profile.py",
+      "services/ranking.py",
+      "tests/test_pipeline.py",
+      "tests/test_profile.py",
+      "tests/test_ranking.py"
+    ],
+    "unproven_runtime_gaps": []
+  },
+  "unproven_runtime_gaps": []
+}

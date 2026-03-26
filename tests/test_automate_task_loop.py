@@ -2299,3 +2299,65 @@ def test_repair_state_clears_stale_dry_run_active_state(tmp_path: Path) -> None:
     assert active_after["task_id"] is None
     assert status_after["state"] == "idle"
     assert backlog_after["tasks"][0]["status"] == "ready"
+
+
+def test_repair_state_clears_stale_blocked_active_task_when_backlog_truth_is_pending(tmp_path: Path) -> None:
+    builder_root, _, run_log_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="discovery",
+        allowlist=["services/company_discovery.py"],
+    )
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "pending"
+    backlog["tasks"].append(
+        {
+            "id": "TASK-NEXT",
+            "title": "Next runnable task",
+            "status": "ready",
+            "priority": 1,
+            "type": "infrastructure",
+            "area": "builder",
+            "description": "A valid next runnable task.",
+            "verification": ["python3 -m py_compile scripts/*.py"],
+            "allowlist": ["../jorb-builder/**"],
+            "repo_path": "~/projects/jorb-builder",
+        }
+    )
+    _write_json(builder_root / "backlog.yml", backlog)
+    active = _json(builder_root / "active_task.yml")
+    active["state"] = "blocked"
+    active["failure_summary"] = "Local validation failed after executor changes."
+    _write_json(builder_root / "active_task.yml", active)
+    status = _json(builder_root / "status.yml")
+    status["state"] = "blocked"
+    status["last_result"] = "refined"
+    _write_json(builder_root / "status.yml", status)
+    _write_json(
+        run_log_dir / "automation_result.json",
+        {
+            "task_id": "TASK-PRODUCT",
+            "classification": "blocked",
+            "finished_at": "2026-03-26T17:49:14+00:00",
+            "summary": "Local validation failed after executor changes.",
+            "steps": [{"name": "local_validation", "outcome": "failed", "detail": "validation failed"}],
+            "changed_files": [],
+            "blocker_evidence": [],
+            "unproven_runtime_gaps": [],
+        },
+    )
+
+    repair = _run([sys.executable, str(SCRIPT), "--repair-state"], builder_root)
+    active_after = _json(builder_root / "active_task.yml")
+    status_after = _json(builder_root / "status.yml")
+    inspect = _run([sys.executable, str(SCRIPT), "--inspect-backlog"], builder_root)
+    rerun = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert repair.returncode == 0
+    assert "stale active task TASK-PRODUCT cleared because backlog truth is pending" in repair.stdout
+    assert active_after["task_id"] is None
+    assert active_after["state"] == "idle"
+    assert status_after["state"] == "idle"
+    assert status_after["active_task_id"] is None
+    assert 'next_selected_task: "TASK-NEXT"' in inspect.stdout
+    assert "ACTIVE_TASK_MISSING_BUT_READY_TASKS_EXIST" not in rerun.stdout
