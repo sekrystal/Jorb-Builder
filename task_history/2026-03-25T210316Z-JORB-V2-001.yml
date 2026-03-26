@@ -1,0 +1,116 @@
+{
+  "task_id": "JORB-V2-001",
+  "title": "Restore live SQLite compatibility for evolving applications schema",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-25T20:59:27.105237+00:00",
+  "completed_at": "2026-03-25T21:03:16.052333+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T205926Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T205926Z-JORB-V2-001",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T205926Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T205926Z-JORB-V2-001"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T205926Z-JORB-V2-001/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T205926Z-JORB-V2-001/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T205926Z-JORB-V2-001/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T205926Z-JORB-V2-001/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T205926Z-JORB-V2-001/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T205926Z-JORB-V2-001/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T205926Z-JORB-V2-001/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T205926Z-JORB-V2-001/executor.json"
+    }
+  ],
+  "files_changed": [
+    "core/db.py",
+    "tests/test_applications.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T205926Z-JORB-V2-001/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "existing SQLite databases without applications.status_reason_code, applications.outcome_code, or applications.outcome_reason_code no longer crash worker or UI runtime paths",
+    "there is a compatibility or migration path that safely upgrades or tolerates older databases",
+    "generate_follow_up_tasks and other application-querying runtime flows behave safely on both old and current schemas",
+    "targeted tests and preflight pass"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [
+      "existing SQLite databases without applications.status_reason_code, applications.outcome_code, or applications.outcome_reason_code no longer crash worker or UI runtime paths",
+      "there is a compatibility or migration path that safely upgrades or tolerates older databases",
+      "generate_follow_up_tasks and other application-querying runtime flows behave safely on both old and current schemas",
+      "targeted tests and preflight pass"
+    ],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed  \nAdded a non-destructive SQLite compatibility migration in `init_db()` that `ALTER TABLE`s legacy `applications` tables to add missing `status_reason_code`, `outcome_code`, and `outcome_reason_code` columns before ORM reads occur. Added a regression test that starts from an on-disk legacy `applications` schema, runs `init_db()`, then verifies `generate_follow_up_tasks()` and `update_application_status()` both work without rebuilding the database.\n\n2. Exact files changed  \n[core/db.py](/Users/samuelkrystal/projects/jorb/core/db.py)  \n[tests/test_applications.py](/Users/samuelkrystal/projects/jorb/tests/test_applications.py)\n\n3. Exact tests added or updated  \nUpdated [tests/test_applications.py](/Users/samuelkrystal/projects/jorb/tests/test_applications.py) with `test_init_db_upgrades_legacy_sqlite_applications_schema_without_rebuild`.\n\n4. Exact commands run  \n`pytest tests/test_applications.py`  \n`pytest tests/test_applications.py tests/test_autonomy.py tests/test_hybrid_runtime.py tests/test_production_runtime.py tests/test_workbench.py`  \n`./scripts/preflight_check.sh`  \n`/Users/samuelkrystal/projects/jorb/.venv_validation/bin/python scripts/reset_demo.py`  \n`/Users/samuelkrystal/projects/jorb/.venv_validation/bin/python - <<'PY'\nimport ui.app\nprint('ui import ok')\nPY`  \n`/Users/samuelkrystal/projects/jorb/.venv_validation/bin/python - <<'PY'\nfrom api.main import app\nprint('api import ok', len(app.router.routes))\nPY`  \nAttempted but blocked/unsuitable here:  \n`python3 scripts/reset_demo.py`  \n`python3 -m uvicorn api.main:app --host 127.0.0.1 --port 8011`  \n`streamlit run ui/app.py --server.headless true --server.port 8511`\n\n5. Exact results  \n`pytest tests/test_applications.py`: passed, `3 passed in 0.42s`  \n`pytest tests/test_applications.py tests/test_autonomy.py tests/test_hybrid_runtime.py tests/test_production_runtime.py tests/test_workbench.py`: passed, `57 passed in 2.08s`  \n`./scripts/preflight_check.sh`: passed, including compileall, `init_db` smoke, API route smoke, worker import smoke, and full test suite `138 passed in 4.86s`  \n`/Users/samuelkrystal/projects/jorb/.venv_validation/bin/python scripts/reset_demo.py`: passed and reseeded demo data successfully  \n`ui.app` import smoke: passed  \n`api.main` import smoke: passed (`api import ok 26`)  \n`python3 scripts/reset_demo.py`: failed because that interpreter lacked `sqlalchemy`  \n`python3 -m uvicorn ...`: failed because that interpreter lacked `uvicorn`  \n`streamlit run ...`: failed with sandbox `PermissionError: [Errno 1] Operation not permitted` when binding a local port\n\n6. Honest note on what remains unproven  \nActual FastAPI and Streamlit server boot, plus live manual workflow verification through HTTP/UI, were not directly proven because this sandbox blocks local port binding. The compatibility fix itself was proven through the new on-disk legacy SQLite regression test, the targeted test suite, preflight, and demo reset."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 19 vulnerabilities on sekrystal/Jorb's default branch (16 moderate, 3 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   8042366..791d020  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 2,
+    "changed_files": [
+      "core/db.py",
+      "tests/test_applications.py"
+    ],
+    "unproven_runtime_gaps": []
+  },
+  "unproven_runtime_gaps": []
+}

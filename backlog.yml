@@ -1117,7 +1117,7 @@
       "area": "runtime",
       "milestone": "M5",
       "priority": 0,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [],
       "prompt": "implement_feature",
@@ -1153,7 +1153,8 @@
       ],
       "notes": [
         "Phase 2 task created from authoritative VM finding: sqlite3.OperationalError no such column applications.status_reason_code during generate_follow_up_tasks(session).",
-        "This is the first product blocker because the live runtime is currently broken before the UX can be trusted."
+        "This is the first product blocker because the live runtime is currently broken before the UX can be trusted.",
+        "Automated loop completed with VM validation success."
       ],
       "repo_path": "~/projects/jorb",
       "description": "Restore runtime compatibility between the current application model and existing SQLite databases in the VM.\n\nSpecifically address missing applications columns such as status_reason_code, outcome_code, and outcome_reason_code so worker and UI runtime paths stop crashing on older databases.",
@@ -1171,7 +1172,7 @@
       "area": "ux",
       "milestone": "M5",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [],
       "prompt": "implement_feature",
@@ -1203,7 +1204,8 @@
         "targeted tests and preflight pass"
       ],
       "notes": [
-        "Phase 2 task created from authoritative VM manual review: the app feels like an internal control panel instead of a job discovery and ranking product."
+        "Phase 2 task created from authoritative VM manual review: the app feels like an internal control panel instead of a job discovery and ranking product.",
+        "Automated loop completed with VM validation success."
       ],
       "repo_path": "~/projects/jorb",
       "description": "Rework the first-run and main-screen experience so the product opens on ranked jobs with concise explanation of why they matter.\n\nThe jobs list should be clearly primary, with internal runtime or diagnostic concepts either hidden, renamed, or pushed behind secondary surfaces.",
@@ -1216,7 +1218,7 @@
     },
     {
       "id": "JORB-V2-003",
-      "title": "Make onboarding optional and skippable before job exploration",
+      "title": "Keep onboarding skippable in the temporary Streamlit validation harness",
       "type": "feature",
       "area": "onboarding",
       "milestone": "M5",
@@ -1224,11 +1226,11 @@
       "status": "pending",
       "retries_used": 0,
       "depends_on": [
-        "JORB-V2-002"
+        "JORB-V2-012"
       ],
       "prompt": "implement_feature",
-      "objective": "Let users reach job discovery quickly without being forced through resume upload or LinkedIn import before first value.",
-      "why_it_matters": "Manual review shows the product appears to demand resume and LinkedIn setup too early, which hides the core job-finding value.",
+      "objective": "Keep the temporary Streamlit validation harness skippable enough for runtime proof without treating it as the long-term product onboarding architecture.",
+      "why_it_matters": "Streamlit is still useful for interim runtime validation, but it should not force resume or LinkedIn flows before the product proves it can surface real jobs.",
       "allowlist": [
         "api/**",
         "core/**",
@@ -1248,26 +1250,26 @@
         "./scripts/preflight_check.sh"
       ],
       "acceptance": [
-        "resume upload and LinkedIn import are clearly optional or skippable before exploring jobs",
-        "users can reach the jobs-first main experience without dead ends or mandatory profile ingestion",
+        "the temporary Streamlit validation harness does not force resume upload or LinkedIn import before users can reach the real-job validation path",
+        "streamlit-side onboarding remains clearly secondary to the underlying search-truth and real-job vertical slice work",
         "optional onboarding still writes into the structured profile layer cleanly when used",
         "targeted tests and preflight pass"
       ],
       "notes": [
-        "Phase 2 task created from authoritative VM manual review: onboarding wrongly appears to force resume and LinkedIn upload before value."
+        "Updated during planning to clarify that Streamlit remains a temporary validation harness rather than the intended long-term product onboarding shell."
       ],
       "repo_path": "~/projects/jorb",
-      "description": "Make onboarding explicitly optional so users can explore ranked jobs before importing a resume or LinkedIn data.\n\nThe flow should still support later profile enrichment, but the initial path to value must be shorter and clearer.",
+      "description": "Keep onboarding optional inside the temporary Streamlit validation harness so it does not block runtime proof or real-job validation.\n\nThis is intentionally not the long-term frontend solution; it is only interim usability work while the JS frontend phase is still pending.",
       "acceptance_criteria": [
-        "resume upload and LinkedIn import are clearly optional or skippable before exploring jobs",
-        "users can reach the jobs-first main experience without dead ends or mandatory profile ingestion",
+        "the temporary Streamlit validation harness does not force resume upload or LinkedIn import before users can reach the real-job validation path",
+        "streamlit-side onboarding remains clearly secondary to the underlying search-truth and real-job vertical slice work",
         "optional onboarding still writes into the structured profile layer cleanly when used",
         "targeted tests and preflight pass"
       ]
     },
     {
       "id": "JORB-V2-004",
-      "title": "Simplify information architecture and replace internal tab language",
+      "title": "Demote internal operator IA in the temporary Streamlit validation harness",
       "type": "feature",
       "area": "ux",
       "milestone": "M5",
@@ -1275,12 +1277,11 @@
       "status": "pending",
       "retries_used": 0,
       "depends_on": [
-        "JORB-V2-002",
-        "JORB-V2-003"
+        "JORB-V2-012"
       ],
       "prompt": "implement_feature",
-      "objective": "Collapse or rename confusing internal-facing sections so the product reads like a user-facing job tool rather than an operator console.",
-      "why_it_matters": "Manual review found that Discovery, Learning, Autonomy Ops, and Agent Activity are not meaningful user-facing concepts in the current product.",
+      "objective": "Reduce internal or operator-facing clutter in the temporary Streamlit harness without treating Streamlit as the final product IA.",
+      "why_it_matters": "Operator surfaces still leak into the Streamlit harness, but major IA investment should wait for the real JS front end after search truth and real-job yield are proven.",
       "allowlist": [
         "api/**",
         "core/**",
@@ -1300,26 +1301,26 @@
         "./scripts/preflight_check.sh"
       ],
       "acceptance": [
-        "confusing internal tab labels are renamed, collapsed, or moved behind clearly secondary surfaces",
-        "user-facing navigation uses understandable product language tied to jobs, applications, profile, and settings",
-        "internal operator or diagnostic surfaces remain available where necessary without dominating the default UX",
+        "the temporary Streamlit harness keeps operator or diagnostic surfaces secondary to the real-job validation path",
+        "internal labels and navigation that are only meaningful to operators are demoted, collapsed, or clearly separated from user-facing validation flows",
+        "the task does not broaden into treating Streamlit as the final production IA",
         "targeted tests and preflight pass"
       ],
       "notes": [
-        "Phase 2 task created from authoritative VM manual review: Discovery, Learning, Autonomy Ops, and Agent Activity read as internal concepts rather than useful product IA."
+        "Updated during planning to make Streamlit demotion explicit and to avoid repeating Phase 1 UX-over-product-truth mistakes."
       ],
       "repo_path": "~/projects/jorb",
-      "description": "Simplify the app information architecture so the visible navigation speaks in product terms instead of internal subsystem labels.\n\nThe result should feel like a job discovery and ranking product, not an internal control panel.",
+      "description": "Demote internal operator IA in the temporary Streamlit validation harness so it better supports runtime validation without pretending to be the long-term product shell.\n\nThe real product IA should be implemented in the later JS frontend phase.",
       "acceptance_criteria": [
-        "confusing internal tab labels are renamed, collapsed, or moved behind clearly secondary surfaces",
-        "user-facing navigation uses understandable product language tied to jobs, applications, profile, and settings",
-        "internal operator or diagnostic surfaces remain available where necessary without dominating the default UX",
+        "the temporary Streamlit harness keeps operator or diagnostic surfaces secondary to the real-job validation path",
+        "internal labels and navigation that are only meaningful to operators are demoted, collapsed, or clearly separated from user-facing validation flows",
+        "the task does not broaden into treating Streamlit as the final production IA",
         "targeted tests and preflight pass"
       ]
     },
     {
       "id": "JORB-V2-005",
-      "title": "Harden discovery against search timeouts and zero-yield runtime reality",
+      "title": "Add resilient search fallback and scrape degradation when discovery yields nothing",
       "type": "debugging",
       "area": "discovery",
       "milestone": "M5",
@@ -1327,11 +1328,11 @@
       "status": "pending",
       "retries_used": 0,
       "depends_on": [
-        "JORB-V2-001"
+        "JORB-V2-009"
       ],
       "prompt": "implement_feature",
-      "objective": "Handle repeated search_web timeout reality more gracefully and expose actionable diagnostics when discovery produces no ATS, companies, or verified results.",
-      "why_it_matters": "VM runtime logs show repeated DuckDuckGo timeouts and zero yielded value, which means the discovery path is not resilient enough to support a usable product.",
+      "objective": "Make discovery degrade gracefully when ATS queries or search discovery produce nothing, with a clear fallback order and scrape or parse fallback where appropriate.",
+      "why_it_matters": "The product cannot honestly power a jobs-first UX if search failure still collapses into zero-yield black boxes instead of bounded fallback behavior and visible diagnostics.",
       "allowlist": [
         "api/**",
         "connectors/**",
@@ -1353,18 +1354,20 @@
       ],
       "acceptance": [
         "search timeout and zero-yield conditions are classified clearly and surfaced in operator-visible diagnostics",
-        "discovery attempts a bounded fallback or degradation path when search_web produces nothing useful",
+        "discovery follows an explicit retry or fallback order rather than silently ending in zero results",
+        "scrape or parse fallback is attempted where appropriate when ATS or search discovery produces no usable jobs",
         "the product can distinguish between no-jobs-found reality and upstream provider failure clearly",
         "targeted tests and preflight pass"
       ],
       "notes": [
-        "Phase 2 task created from authoritative VM runtime findings: repeated duckduckgo connect timeout, pages_crawled 0, derived_ats_results 0, raw_results 0, verified 0."
+        "Phase 2A task refined from VM runtime findings: repeated duckduckgo connect timeout, pages_crawled 0, derived_ats_results 0, raw_results 0, verified 0."
       ],
       "repo_path": "~/projects/jorb",
-      "description": "Make discovery more resilient when real-world search providers time out or return nothing useful.\n\nThe product should expose whether the problem is upstream timeout, extraction failure, verification failure, or a genuine zero-yield search space, and should attempt a bounded fallback when appropriate.",
+      "description": "Make discovery resilient when ATS and search-driven discovery yield nothing useful.\n\nDefine an explicit fallback order, attempt scrape or parse fallback where justified, and expose whether the failure was provider timeout, extraction failure, verification failure, or a genuine zero-yield search space.",
       "acceptance_criteria": [
         "search timeout and zero-yield conditions are classified clearly and surfaced in operator-visible diagnostics",
-        "discovery attempts a bounded fallback or degradation path when search_web produces nothing useful",
+        "discovery follows an explicit retry or fallback order rather than silently ending in zero results",
+        "scrape or parse fallback is attempted where appropriate when ATS or search discovery produces no usable jobs",
         "the product can distinguish between no-jobs-found reality and upstream provider failure clearly",
         "targeted tests and preflight pass"
       ]
@@ -1379,15 +1382,14 @@
       "status": "pending",
       "retries_used": 0,
       "depends_on": [
-        "JORB-V2-001",
-        "JORB-V2-002",
-        "JORB-V2-003",
-        "JORB-V2-004",
-        "JORB-V2-005"
+        "JORB-V2-012",
+        "JORB-V2-014",
+        "JORB-V2-015",
+        "JORB-V2-016"
       ],
       "prompt": "implement_feature",
       "objective": "Strengthen acceptance for product work so critical tickets require live runtime smoke proof, not only isolated local tests.",
-      "why_it_matters": "The previous backlog was fully accepted even though the VM product remained broken and confusing, so Phase 2 needs stronger runtime-proof gates.",
+      "why_it_matters": "The previous backlog was fully accepted even though the VM product remained broken and confusing, so later search and frontend work must require real product-path smoke proof.",
       "allowlist": [
         "README.md",
         "OPERATIONS.md",
@@ -1469,6 +1471,535 @@
       "acceptance_criteria": [
         "datetime.utcnow deprecation warnings are removed from the targeted active UI and runtime paths touched by Phase 2 work",
         "warning cleanup does not regress runtime behavior or broaden into unrelated refactors",
+        "targeted tests and preflight pass"
+      ]
+    },
+    {
+      "id": "JORB-V2-008",
+      "title": "Add profile-driven search constraints for geography, work mode, and target roles",
+      "type": "feature",
+      "area": "profile",
+      "milestone": "M5",
+      "priority": 0,
+      "status": "blocked",
+      "retries_used": 0,
+      "depends_on": [],
+      "prompt": "implement_feature",
+      "objective": "Add backend profile support for preferred geographies, remote or hybrid or onsite preference, and target roles so search and ranking can be materially constrained even when the UI is still evolving.",
+      "why_it_matters": "The product cannot honestly claim a jobs-first experience until location, work-mode, and role intent actually influence discovery and ranking with graceful defaults.",
+      "allowlist": [
+        "api/**",
+        "core/**",
+        "services/**",
+        "ui/**",
+        "tests/test_pipeline.py",
+        "tests/test_profile.py",
+        "tests/test_ranking.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_profile.py tests/test_pipeline.py tests/test_ranking.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "backend profile state explicitly supports preferred geographies or locations, remote or hybrid or onsite preference, and target roles",
+        "search and ranking materially use those constraints when present, with graceful defaults when profile data is missing",
+        "changing profile preferences changes the returned or ranked jobs in a provable runtime path",
+        "runtime behavior makes it clear which profile constraints were applied versus defaulted",
+        "targeted tests and preflight pass"
+      ],
+      "notes": [
+        "Phase 2A task created from product review concern that geolocation and work-mode preferences do not yet clearly constrain search.",
+        "Product repo is dirty before automated execution; refusing to continue."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Add real profile-driven search constraints for geography, work mode, and target roles before the larger UX pass.\n\nThis is intentionally backend and runtime focused: the resulting constraints must influence agentic search and ranking even if UI polish comes later.",
+      "acceptance_criteria": [
+        "backend profile state explicitly supports preferred geographies or locations, remote or hybrid or onsite preference, and target roles",
+        "search and ranking materially use those constraints when present, with graceful defaults when profile data is missing",
+        "changing profile preferences changes the returned or ranked jobs in a provable runtime path",
+        "runtime behavior makes it clear which profile constraints were applied versus defaulted",
+        "targeted tests and preflight pass"
+      ]
+    },
+    {
+      "id": "JORB-V2-009",
+      "title": "Audit discovery source truth and make the live source matrix executable",
+      "type": "debugging",
+      "area": "discovery",
+      "milestone": "M5",
+      "priority": 1,
+      "status": "ready",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V2-008"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Make it explicit in code and runtime behavior which discovery sources are truly live and trustworthy today, including Greenhouse, Ashby, search-driven scraping, X search, user-supplied links, and existing source toggles.",
+      "why_it_matters": "The current architecture implies source coverage that may not be real, so the product needs a truthful source matrix before a deeper UX pass can be trusted.",
+      "allowlist": [
+        "api/**",
+        "connectors/**",
+        "core/**",
+        "services/**",
+        "ui/**",
+        "README.md",
+        "OPERATIONS.md",
+        "tests/test_company_discovery.py",
+        "tests/test_search_discovery.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_search_discovery.py tests/test_company_discovery.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "the product exposes a truthful source matrix covering greenhouse, ashby, search_web or scraping fallback, X search, user-supplied links, and relevant source toggles",
+        "each source in that matrix is explicitly classified as working, partially working, or not working",
+        "runtime behavior matches the declared source truth instead of silently implying unsupported coverage",
+        "unsupported or disabled sources are explicit rather than hidden behind generic zero-yield behavior",
+        "targeted tests and preflight pass"
+      ],
+      "notes": [
+        "Phase 2A task created from product review concern that Greenhouse, Ashby, search-driven scraping, X search, and user-link ingestion are not yet truthfully represented."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Audit which discovery sources are truly live today and make that source matrix executable in runtime behavior.\n\nThe result should make it obvious which sources are supported, degraded, disabled, or only staged, so product behavior matches reality.",
+      "acceptance_criteria": [
+        "the product exposes a truthful source matrix covering greenhouse, ashby, search_web or scraping fallback, X search, user-supplied links, and relevant source toggles",
+        "each source in that matrix is explicitly classified as working, partially working, or not working",
+        "runtime behavior matches the declared source truth instead of silently implying unsupported coverage",
+        "unsupported or disabled sources are explicit rather than hidden behind generic zero-yield behavior",
+        "targeted tests and preflight pass"
+      ]
+    },
+    {
+      "id": "JORB-V2-010",
+      "title": "Expand discovery with a realistic first slice of broader job sources",
+      "type": "feature",
+      "area": "discovery",
+      "milestone": "M5",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V2-009",
+        "JORB-V2-005"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Add a realistic first implementation slice of broader discovery sources beyond the current ATS assumptions, such as YC Jobs, 80,000 Hours, or general posting-page discovery where feasible.",
+      "why_it_matters": "The product needs broader job-finding value than the current ATS-centric assumptions, but it should expand in a bounded, truthful slice instead of overpromising universal coverage.",
+      "allowlist": [
+        "api/**",
+        "connectors/**",
+        "core/**",
+        "services/**",
+        "ui/**",
+        "tests/test_company_discovery.py",
+        "tests/test_pipeline.py",
+        "tests/test_search_discovery.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_search_discovery.py tests/test_company_discovery.py tests/test_pipeline.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "at least one broader non-ATS source such as YC Jobs or 80,000 Hours is supported end to end in a bounded, testable way",
+        "the product clearly stages or rejects additional sources it does not yet support instead of implying universal coverage",
+        "runtime discovery can surface useful jobs from the new slice without regressing existing ATS paths",
+        "targeted tests and preflight pass"
+      ],
+      "notes": [
+        "Phase 2A task created from product review concern that general board and posting discovery remains incomplete."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Expand discovery with a bounded first slice of broader job sources beyond current ATS assumptions.\n\nThis should be realistic and testable: ship one meaningful slice well, then make unsupported sources explicit rather than implying they already work.",
+      "acceptance_criteria": [
+        "at least one broader non-ATS source such as YC Jobs or 80,000 Hours is supported end to end in a bounded, testable way",
+        "the product clearly stages or rejects additional sources it does not yet support instead of implying universal coverage",
+        "runtime discovery can surface useful jobs from the new slice without regressing existing ATS paths",
+        "targeted tests and preflight pass"
+      ]
+    },
+    {
+      "id": "JORB-V2-011",
+      "title": "Expose source health and yield truth across runtime and product surfaces",
+      "type": "instrumentation",
+      "area": "discovery",
+      "milestone": "M5",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V2-009",
+        "JORB-V2-005",
+        "JORB-V2-010"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Expose which sources ran, failed, returned zero results, and produced surfaced jobs so both runtime debugging and later UX work can rely on truthful source-yield visibility.",
+      "why_it_matters": "Without source-health visibility, the product will keep looking architecturally elaborate while hiding whether any specific source is actually delivering job discovery value.",
+      "allowlist": [
+        "api/**",
+        "core/**",
+        "services/**",
+        "ui/**",
+        "tests/test_company_discovery.py",
+        "tests/test_production_runtime.py",
+        "tests/test_search_discovery.py",
+        "tests/test_sync.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_search_discovery.py tests/test_company_discovery.py tests/test_sync.py tests/test_production_runtime.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "runtime and product surfaces can show which sources ran, failed, returned zero results, or produced surfaced jobs",
+        "source-health visibility is usable both for debugging and for the eventual user-facing jobs experience",
+        "zero-yield outcomes stay visible instead of disappearing into aggregate counts alone",
+        "targeted tests and preflight pass"
+      ],
+      "notes": [
+        "Phase 2A task created from product review concern that source health and yield are not visible enough to support trustworthy runtime or UX decisions."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Expose truthful source health and yield across runtime and product surfaces.\n\nThe goal is to show, per source, whether it ran, failed, yielded nothing, or produced surfaced jobs, so later UX work sits on visible discovery truth rather than hidden assumptions.",
+      "acceptance_criteria": [
+        "runtime and product surfaces can show which sources ran, failed, returned zero results, or produced surfaced jobs",
+        "source-health visibility is usable both for debugging and for the eventual user-facing jobs experience",
+        "zero-yield outcomes stay visible instead of disappearing into aggregate counts alone",
+        "targeted tests and preflight pass"
+      ]
+    },
+    {
+      "id": "JORB-V2-012",
+      "title": "Deliver a real end to end job discovery vertical slice",
+      "type": "feature",
+      "area": "validation",
+      "milestone": "M5",
+      "priority": 0,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V2-008",
+        "JORB-V2-009",
+        "JORB-V2-005",
+        "JORB-V2-010",
+        "JORB-V2-011"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Force product reality by proving that at least one truly working discovery source can surface real jobs in the VM UI with score, explanation, and source provenance.",
+      "why_it_matters": "Search truth is not enough unless the product can actually show real jobs to a user in the VM runtime rather than only instrumenting empty discovery paths.",
+      "allowlist": [
+        "api/**",
+        "connectors/**",
+        "core/**",
+        "services/**",
+        "ui/**",
+        "scripts/**",
+        "tests/test_pipeline.py",
+        "tests/test_production_runtime.py",
+        "tests/test_search_discovery.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_search_discovery.py tests/test_pipeline.py tests/test_production_runtime.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh",
+        "./scripts/runtime_self_check.sh"
+      ],
+      "acceptance": [
+        "at least one truly working source produces real, non-mocked jobs that appear in the product UI in the VM runtime environment",
+        "each visible job in the validated slice includes title, company, match score, explanation, and source or source provenance where feasible",
+        "passing tests alone is not sufficient for acceptance",
+        "running without crashing is not sufficient for acceptance",
+        "the product must surface real jobs in the UI as the basis for acceptance"
+      ],
+      "notes": [
+        "This vertical slice exists specifically to stop the builder from declaring victory on architecture or UX work before the product visibly delivers jobs."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Deliver one real end-to-end job discovery vertical slice in the VM.\n\nThis task must prove that the product can surface real jobs from at least one actually working source, with score, explanation, and source provenance visible in the UI. It is not acceptable to pass this task on tests alone or on a crash-free empty state.",
+      "acceptance_criteria": [
+        "at least one truly working source produces real, non-mocked jobs that appear in the product UI in the VM runtime environment",
+        "each visible job in the validated slice includes title, company, match score, explanation, and source or source provenance where feasible",
+        "passing tests alone is not sufficient for acceptance",
+        "running without crashing is not sufficient for acceptance",
+        "the product must surface real jobs in the UI as the basis for acceptance"
+      ]
+    },
+    {
+      "id": "JORB-V2-013",
+      "title": "Bootstrap the production JS front end shell for JORB",
+      "type": "feature",
+      "area": "frontend",
+      "milestone": "M5",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V2-012"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Introduce the production JS front end shell, routing, API integration pattern, and local development flow grounded in the current repo and backend.",
+      "why_it_matters": "Streamlit is a temporary validation harness; the long-term product needs a proper JS front end suitable for the Figma interaction model.",
+      "allowlist": [
+        "README.md",
+        "OPERATIONS.md",
+        "frontend/**",
+        "ui/**",
+        "api/**",
+        "tests/**",
+        "scripts/**"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_workbench.py tests/test_production_runtime.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "a production JS front end shell exists with a realistic framework choice, routing or page structure, and backend API integration approach",
+        "local development setup is documented and wired to the existing backend",
+        "the relationship between the JS front end and the existing Streamlit harness is explicit",
+        "targeted tests and preflight pass"
+      ],
+      "notes": [
+        "The framework choice should be grounded in the actual repo and integration path rather than abstract preference alone."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Bootstrap the production JS front end shell for JORB, likely using a realistic React or Next.js path that integrates with the current backend.\n\nThis task should define routing, API integration, local development setup, and the temporary coexistence story with Streamlit.",
+      "acceptance_criteria": [
+        "a production JS front end shell exists with a realistic framework choice, routing or page structure, and backend API integration approach",
+        "local development setup is documented and wired to the existing backend",
+        "the relationship between the JS front end and the existing Streamlit harness is explicit",
+        "targeted tests and preflight pass"
+      ]
+    },
+    {
+      "id": "JORB-V2-014",
+      "title": "Implement the Jobs screen from Figma in the JS front end",
+      "type": "feature",
+      "area": "frontend",
+      "milestone": "M5",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V2-013"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Implement the real Jobs screen in the JS front end using the Figma design as source of truth and wiring it to real backend data.",
+      "why_it_matters": "The main product experience needs a production-grade jobs screen rather than continued compromise inside the Streamlit harness.",
+      "allowlist": [
+        "frontend/**",
+        "api/**",
+        "core/**",
+        "services/**",
+        "README.md",
+        "tests/test_pipeline.py",
+        "tests/test_production_runtime.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_pipeline.py tests/test_production_runtime.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "the JS front end implements the Figma jobs screen including sidebar, jobs top bar, job list, job cards, detail panel or drawer, and loading and empty states",
+        "the jobs screen is wired to real backend data rather than mocked cards",
+        "job cards and detail state preserve title, company, score, explanation, and source provenance where available",
+        "targeted tests and preflight pass"
+      ],
+      "notes": [
+        "Use the Figma design assets as the interaction and layout source of truth."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Implement the production Jobs screen in the JS front end using the Figma design as source of truth.\n\nThis task should cover the primary jobs browsing flow end to end, wired to real backend data and not to Streamlit-era interaction compromises.",
+      "acceptance_criteria": [
+        "the JS front end implements the Figma jobs screen including sidebar, jobs top bar, job list, job cards, detail panel or drawer, and loading and empty states",
+        "the jobs screen is wired to real backend data rather than mocked cards",
+        "job cards and detail state preserve title, company, score, explanation, and source provenance where available",
+        "targeted tests and preflight pass"
+      ]
+    },
+    {
+      "id": "JORB-V2-015",
+      "title": "Implement lightweight profile and skippable onboarding in the JS front end",
+      "type": "feature",
+      "area": "frontend",
+      "milestone": "M5",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V2-013",
+        "JORB-V2-008",
+        "JORB-V2-012"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Implement lightweight profile and skippable onboarding in the JS front end so profile preferences materially help search without blocking first value.",
+      "why_it_matters": "The real product should make profile preferences useful to search while keeping onboarding lightweight and optional.",
+      "allowlist": [
+        "frontend/**",
+        "api/**",
+        "core/**",
+        "services/**",
+        "README.md",
+        "tests/test_profile.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_profile.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "the JS front end supports lightweight, skippable onboarding and profile editing",
+        "profile preferences for geography, work mode, and target roles are clearly useful to search and ranking",
+        "users can reach the jobs flow quickly without being forced through heavyweight setup",
+        "targeted tests and preflight pass"
+      ],
+      "notes": [
+        "This is the production frontend version of onboarding, distinct from the temporary Streamlit harness."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Implement lightweight profile and skippable onboarding in the JS front end so profile preferences actually help search without blocking the path to first value.\n\nThis is the real product path, not further investment in Streamlit.",
+      "acceptance_criteria": [
+        "the JS front end supports lightweight, skippable onboarding and profile editing",
+        "profile preferences for geography, work mode, and target roles are clearly useful to search and ranking",
+        "users can reach the jobs flow quickly without being forced through heavyweight setup",
+        "targeted tests and preflight pass"
+      ]
+    },
+    {
+      "id": "JORB-V2-016",
+      "title": "Implement Saved and Applied tracker surfaces in the JS front end",
+      "type": "feature",
+      "area": "frontend",
+      "milestone": "M5",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V2-013",
+        "JORB-V2-014"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Make Saved and Applied flows first-class surfaces in the JS front end instead of leaving tracker behavior stranded in backend or temporary harness views.",
+      "why_it_matters": "A real jobs product needs first-class tracker surfaces, not only discovery and profile flows.",
+      "allowlist": [
+        "frontend/**",
+        "api/**",
+        "core/**",
+        "services/**",
+        "README.md",
+        "tests/test_applications.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_applications.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "the JS front end exposes Saved and Applied surfaces as first-class product flows",
+        "tracker state changes are wired to real backend data rather than static UI placeholders",
+        "the tracker surfaces integrate coherently with the real jobs flow",
+        "targeted tests and preflight pass"
+      ],
+      "notes": [
+        "This task creates the real tracker surfaces in the production frontend rather than extending Streamlit."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Implement Saved and Applied tracker surfaces in the JS front end so the product can support end-to-end job workflows beyond discovery.\n\nThis should use real backend data and sit inside the production frontend architecture.",
+      "acceptance_criteria": [
+        "the JS front end exposes Saved and Applied surfaces as first-class product flows",
+        "tracker state changes are wired to real backend data rather than static UI placeholders",
+        "the tracker surfaces integrate coherently with the real jobs flow",
+        "targeted tests and preflight pass"
+      ]
+    },
+    {
+      "id": "JORB-V2-017",
+      "title": "Demote Streamlit to an internal validation and operator harness",
+      "type": "infrastructure",
+      "area": "frontend",
+      "milestone": "M5",
+      "priority": 2,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V2-014",
+        "JORB-V2-015",
+        "JORB-V2-016"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Make the JS front end the primary product path and demote Streamlit to internal validation, debugging, or operator use only.",
+      "why_it_matters": "The builder should stop treating Streamlit as the final product shell once the real JS frontend path exists.",
+      "allowlist": [
+        "frontend/**",
+        "ui/**",
+        "README.md",
+        "OPERATIONS.md",
+        "tests/test_production_runtime.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_production_runtime.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance": [
+        "the JS front end is the explicit primary product path",
+        "Streamlit is demoted to internal validation, debugging, or operator use rather than the default product shell",
+        "docs and runtime guidance make the transition explicit",
+        "targeted tests and preflight pass"
+      ],
+      "notes": [
+        "This transition task exists so Streamlit stays bounded and the product path becomes explicit."
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Demote Streamlit to an internal validation and operator harness once the JS front end provides the real product path.\n\nThis task should make the transition explicit in runtime behavior and documentation rather than leaving both shells ambiguous.",
+      "acceptance_criteria": [
+        "the JS front end is the explicit primary product path",
+        "Streamlit is demoted to internal validation, debugging, or operator use rather than the default product shell",
+        "docs and runtime guidance make the transition explicit",
         "targeted tests and preflight pass"
       ]
     }

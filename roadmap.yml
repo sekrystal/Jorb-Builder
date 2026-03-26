@@ -1,7 +1,7 @@
 {
-  "version": 3,
+  "version": 5,
   "product": "Jorb",
-  "current_baseline": "Phase 1 builder backlog is complete, but VM product review shows the live product still has runtime schema breakage, weak discovery yield, and a confusing control-panel-first UX.",
+  "current_baseline": "Phase 1 is complete, and early Phase 2 work restored runtime schema compatibility plus a jobs-first landing foundation. Streamlit remains a temporary validation harness rather than the long-term product shell. The next product risk is still search truth: profile constraints, source reality, fallback behavior, and real visible job yield must be made real before the JS front end phase can be trusted.",
   "milestones": [
     {
       "id": "M0",
@@ -94,6 +94,11 @@
       "id": "validation",
       "milestone": "M5",
       "priority": 1
+    },
+    {
+      "id": "frontend",
+      "milestone": "M5",
+      "priority": 1
     }
   ],
   "phase_1_wedge": {
@@ -125,25 +130,60 @@
       "JORB-INFRA-005"
     ]
   },
-  "phase_2_wedge": {
-    "status": "active",
-    "goal": "Translate VM product review into a usable jobs-first product with live runtime truth and resilient discovery.",
-    "vm_findings": [
-      "live worker/runtime fails against existing SQLite databases because applications table columns like status_reason_code are missing",
-      "search discovery repeatedly times out and yields zero discovered value in VM runtime",
-      "the current UI feels like an internal control panel instead of a jobs-first product",
-      "onboarding appears mandatory too early and obscures the path to first value",
-      "acceptance needs stronger live runtime proof, not only isolated tests",
-      "datetime.utcnow deprecation noise should be cleaned up after critical runtime and UX work"
-    ],
-    "ready_task_ids": [
+  "phase_2_foundation": {
+    "status": "completed",
+    "goal": "Clear the immediate VM runtime crash and prove the product can open on a jobs-first landing experience.",
+    "accepted_task_ids": [
       "JORB-V2-001",
       "JORB-V2-002"
+    ]
+  },
+  "phase_2a_search_truth": {
+    "status": "active",
+    "goal": "Make search and profile truth real enough that later UX and frontend work rests on working constraints, truthful source coverage, and visible runtime yield.",
+    "vm_findings": [
+      "profile search constraints for geography, work mode, and target roles are not yet clearly real in backend search and ranking",
+      "source truth for Greenhouse, Ashby, search-driven scraping, X search, and user-supplied links is not yet explicit enough",
+      "search fallback behavior is still too weak when ATS or search discovery yields nothing",
+      "broader discovery surfaces such as YC Jobs, 80,000 Hours, and general posting pages are not yet covered clearly enough",
+      "runtime visibility into which sources ran, failed, or produced surfaced jobs is still too weak to support a trustworthy UX phase",
+      "the product still needs one real end-to-end vertical slice that proves actual jobs surface in the UI rather than only instrumentation"
+    ],
+    "ready_task_ids": [
+      "JORB-V2-008",
+      "JORB-V2-009"
     ],
     "pending_task_ids": [
+      "JORB-V2-005",
+      "JORB-V2-010",
+      "JORB-V2-011",
+      "JORB-V2-012"
+    ]
+  },
+  "phase_2b_vertical_slice": {
+    "status": "pending",
+    "goal": "Force the product to deliver a real end-to-end job discovery slice in the VM before larger UX implementation is accepted.",
+    "task_ids": [
+      "JORB-V2-012"
+    ]
+  },
+  "phase_2c_js_frontend": {
+    "status": "pending",
+    "goal": "Build the production JS front end on top of a truthful search substrate and a proven real-job vertical slice, while Streamlit remains a temporary validation and operator harness.",
+    "task_ids": [
+      "JORB-V2-013",
+      "JORB-V2-014",
+      "JORB-V2-015",
+      "JORB-V2-016",
+      "JORB-V2-017"
+    ]
+  },
+  "phase_2d_validation_and_transition": {
+    "status": "pending",
+    "goal": "Keep interim Streamlit surfaces bounded, validate the real product path in live runtime, and transition Streamlit out of the primary product path.",
+    "task_ids": [
       "JORB-V2-003",
       "JORB-V2-004",
-      "JORB-V2-005",
       "JORB-V2-006",
       "JORB-V2-007"
     ]

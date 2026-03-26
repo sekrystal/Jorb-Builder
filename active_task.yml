@@ -1,25 +1,29 @@
 {
-  "task_id": null,
-  "title": null,
-  "state": "completed",
+  "task_id": "JORB-V2-008",
+  "title": "Add profile-driven search constraints for geography, work mode, and target roles",
+  "state": "blocked",
   "attempt": 1,
-  "started_at": "2026-03-25T19:19:59.771738+00:00",
+  "started_at": "2026-03-25T23:59:39.019073+00:00",
   "handed_to_codex_at": null,
-  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191959Z/codex_prompt.md",
-  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191959Z-JORB-V1-018",
+  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T235936Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T235937Z-JORB-V2-008",
   "verification_commands": [
-    "pytest tests/test_profile.py tests/test_workbench.py",
+    "pytest tests/test_profile.py tests/test_pipeline.py tests/test_ranking.py tests/test_workbench.py",
     "./scripts/preflight_check.sh"
   ],
   "allowlist": [
-    "services/profile.py",
-    "ui/app.py",
+    "api/**",
+    "core/**",
+    "services/**",
+    "ui/**",
+    "tests/test_pipeline.py",
     "tests/test_profile.py",
+    "tests/test_ranking.py",
     "tests/test_workbench.py"
   ],
-  "failure_summary": null,
+  "failure_summary": "Product repo is dirty before automated execution; refusing to continue.",
   "notes": [],
-  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T191959Z",
+  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T235936Z",
   "target_repo": "/Users/samuelkrystal/projects/jorb",
   "target_kind": "product"
 }

@@ -133,3 +133,9 @@ Does this directly improve:
 - JORB-V1-017 accepted by automated loop. History: 2026-03-25T191959Z-JORB-V1-017.yml
 
 - JORB-V1-018 accepted by automated loop. History: 2026-03-25T192410Z-JORB-V1-018.yml
+
+- JORB-V2-001 accepted by automated loop. History: 2026-03-25T210316Z-JORB-V2-001.yml
+
+- JORB-V2-002 accepted by automated loop. History: 2026-03-25T210740Z-JORB-V2-002.yml
+
+- JORB-V2-008 blocked by automated loop via BLK-JORB-V2-008.yml. History: 2026-03-25T235939Z-JORB-V2-008.yml

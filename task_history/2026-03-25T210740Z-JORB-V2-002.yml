@@ -1,0 +1,116 @@
+{
+  "task_id": "JORB-V2-002",
+  "title": "Make the main product experience jobs-first with ranking and explanation up front",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-25T21:03:16.629032+00:00",
+  "completed_at": "2026-03-25T21:07:40.026771+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T210316Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T210316Z-JORB-V2-002",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T210316Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T210316Z-JORB-V2-002"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T210316Z-JORB-V2-002/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T210316Z-JORB-V2-002/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T210316Z-JORB-V2-002/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T210316Z-JORB-V2-002/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T210316Z-JORB-V2-002/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T210316Z-JORB-V2-002/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T210316Z-JORB-V2-002/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T210316Z-JORB-V2-002/executor.json"
+    }
+  ],
+  "files_changed": [
+    "tests/test_workbench.py",
+    "ui/app.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-25T210316Z-JORB-V2-002/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "the default UI path shows jobs or opportunities first rather than internal diagnostic tabs",
+    "ranking signals and concise explanation are visible in the primary opportunity flow",
+    "the main screen is understandable without needing to understand builder, autonomy, or discovery internals",
+    "targeted tests and preflight pass"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [
+      "the default UI path shows jobs or opportunities first rather than internal diagnostic tabs",
+      "ranking signals and concise explanation are visible in the primary opportunity flow",
+      "the main screen is understandable without needing to understand builder, autonomy, or discovery internals",
+      "targeted tests and preflight pass"
+    ],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\nThe main Streamlit path is now more jobs-first. I changed the default leads view to sort by highest recommendation score, surfaced recommendation score/action plus a concise \u201cwhy it surfaced\u201d summary directly in the main table, and rewrote the landing copy and lead detail header so ranked opportunities and explanation are visible before operator/internal context.\n\n2. Exact files changed\n\n- `/Users/samuelkrystal/projects/jorb/ui/app.py`\n- `/Users/samuelkrystal/projects/jorb/tests/test_workbench.py`\n\n3. Exact tests added or updated\n\nUpdated in `/Users/samuelkrystal/projects/jorb/tests/test_workbench.py`:\n- `test_filter_and_sort_table_sorts_by_highest_recommendation_first`\n- `test_lead_frame_includes_recommendation_action_label`\n- `test_recommendation_table_explanation_prefers_structured_score_headline`\n\n4. Exact commands run\n\n- `pytest tests/test_pipeline.py tests/test_ranking.py tests/test_workbench.py`\n- `./scripts/preflight_check.sh`\n- `python scripts/reset_demo.py`\n- `python3 scripts/reset_demo.py`\n- `python3 -m uvicorn api.main:app --host 127.0.0.1 --port 8000`\n- `python3 -m streamlit run ui/app.py --server.headless true --server.port 8501`\n- `./.venv_validation/bin/python scripts/reset_demo.py`\n- `./.venv_validation/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000`\n- `./.venv_validation/bin/streamlit run ui/app.py --server.headless true --server.port 8501`\n\n5. Exact results\n\n- `pytest tests/test_pipeline.py tests/test_ranking.py tests/test_workbench.py`: passed, `35 passed in 1.62s`\n- `./scripts/preflight_check.sh`: passed, `140 passed in 4.89s`, `Preflight checks passed.`\n- `python scripts/reset_demo.py`: failed, `python: command not found`\n- `python3 scripts/reset_demo.py`: failed, `ModuleNotFoundError: No module named 'sqlalchemy'`\n- `python3 -m uvicorn api.main:app --host 127.0.0.1 --port 8000`: failed, `No module named uvicorn`\n- `python3 -m streamlit run ui/app.py --server.headless true --server.port 8501`: failed, `No module named streamlit`\n- `./.venv_validation/bin/python scripts/reset_demo.py`: passed and reset demo data successfully\n- `./.venv_validation/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000`: app imported and startup began, but bind failed with `operation not permitted`\n- `./.venv_validation/bin/streamlit run ui/app.py --server.headless true --server.port 8501`: app launched far enough to hit Streamlit startup, but bind failed with `PermissionError: [Errno 1] Operation not permitted`\n\n6. Honest note on what remains unproven\n\nLive FastAPI and Streamlit boot, plus in-browser verification of the changed jobs-first workflow, remain unproven in this environment because the sandbox denied binding local ports."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 19 vulnerabilities on sekrystal/Jorb's default branch (16 moderate, 3 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   791d020..94f297b  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 2,
+    "changed_files": [
+      "tests/test_workbench.py",
+      "ui/app.py"
+    ],
+    "unproven_runtime_gaps": []
+  },
+  "unproven_runtime_gaps": []
+}
