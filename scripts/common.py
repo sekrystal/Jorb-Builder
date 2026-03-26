@@ -32,6 +32,21 @@ REQUIRED_TASK_FIELDS = (
     "acceptance_criteria",
     "verification",
 )
+DEFAULT_PRIMARY_UX_PROHIBITED_SURFACES = [
+    "source matrix",
+    "discovery internals",
+    "learning",
+    "autonomy ops",
+    "agent activity",
+    "investigations",
+    "diagnostics",
+    "operator controls",
+]
+DEFAULT_PRODUCT_FIRST_UX_CHECKLIST = [
+    "confirm the primary hierarchy keeps jobs or core user value ahead of secondary controls",
+    "confirm prohibited surfaces stay out of the primary user-facing shell",
+    "confirm backend wiring or real data alone is not treated as sufficient UX acceptance evidence",
+]
 
 
 def expand_path(value: str) -> Path:
@@ -80,6 +95,40 @@ def infer_task_repo_path(task: dict, config: dict) -> str:
     return str(config["paths"]["product_repo"])
 
 
+def is_product_facing_ux_task(task: dict) -> bool:
+    if bool(task.get("product_facing_ux")):
+        return True
+    area = str(task.get("area", "")).strip().lower()
+    return area in {"ux", "frontend"}
+
+
+def ux_conformance_planning_issues(task: dict) -> list[str]:
+    if not is_product_facing_ux_task(task):
+        return []
+    issues: list[str] = []
+    section_mapping = task.get("design_section_mapping", [])
+    if not isinstance(section_mapping, list) or not [item for item in section_mapping if str(item).strip()]:
+        issues.append("design_section_mapping")
+    deviations = task.get("intentional_design_deviations", [])
+    if not isinstance(deviations, list):
+        issues.append("intentional_design_deviations")
+    checklist = task.get("product_first_acceptance_checks", [])
+    if not isinstance(checklist, list) or not checklist:
+        issues.append("product_first_acceptance_checks")
+    else:
+        checklist_text = " ".join(str(item).lower() for item in checklist)
+        if "hierarchy" not in checklist_text:
+            issues.append("product_first_acceptance_checks.hierarchy")
+        if "prohibited" not in checklist_text:
+            issues.append("product_first_acceptance_checks.prohibited_surfaces")
+        if "backend wiring" not in checklist_text and "real data alone" not in checklist_text:
+            issues.append("product_first_acceptance_checks.backend_wiring_only")
+    prohibited = task.get("primary_ux_prohibited_surfaces", [])
+    if not isinstance(prohibited, list) or not [item for item in prohibited if str(item).strip()]:
+        issues.append("primary_ux_prohibited_surfaces")
+    return issues
+
+
 def canonicalize_task(task: dict, config: dict) -> dict:
     normalized = dict(task)
     normalized["repo_path"] = infer_task_repo_path(task, config)
@@ -90,6 +139,12 @@ def canonicalize_task(task: dict, config: dict) -> dict:
         normalized["description"] = "\n\n".join(description_parts)
     if "acceptance_criteria" not in normalized:
         normalized["acceptance_criteria"] = list(task.get("acceptance", []))
+    if is_product_facing_ux_task(normalized):
+        normalized.setdefault("product_facing_ux", True)
+        normalized.setdefault("design_section_mapping", list(task.get("design_section_mapping", [])))
+        normalized.setdefault("intentional_design_deviations", list(task.get("intentional_design_deviations", [])))
+        normalized.setdefault("product_first_acceptance_checks", list(task.get("product_first_acceptance_checks", DEFAULT_PRODUCT_FIRST_UX_CHECKLIST)))
+        normalized.setdefault("primary_ux_prohibited_surfaces", list(task.get("primary_ux_prohibited_surfaces", DEFAULT_PRIMARY_UX_PROHIBITED_SURFACES)))
     return normalized
 
 
@@ -123,6 +178,15 @@ def validate_backlog_payload(payload: dict, config: dict) -> dict:
             errors.append({"code": "invalid_verification", "task_id": task_id, "detail": "verification must be a list"})
         if not isinstance(task.get("acceptance_criteria", []), list):
             errors.append({"code": "invalid_acceptance_criteria", "task_id": task_id, "detail": "acceptance_criteria must be a list"})
+        ux_issues = ux_conformance_planning_issues(task)
+        if ux_issues:
+            errors.append(
+                {
+                    "code": "invalid_product_facing_ux_task",
+                    "task_id": task_id,
+                    "detail": "missing UX conformance planning fields: " + ", ".join(ux_issues),
+                }
+            )
         tasks.append(task)
     return {"tasks": tasks, "errors": errors}
 
@@ -160,11 +224,18 @@ def compute_backlog_diagnostics(validated_backlog: dict) -> dict:
     blocked_status_ids: list[str] = []
     skipped_reasons: dict[str, list[str]] = {}
     candidates: list[dict] = []
+    product_facing_ux_task_ids: list[str] = []
+    product_facing_ux_missing_requirements: dict[str, list[str]] = {}
 
     for task in tasks:
         status = str(task.get("status"))
         counts_by_status[status] = counts_by_status.get(status, 0) + 1
         task_id = str(task.get("id"))
+        ux_issues = ux_conformance_planning_issues(task)
+        if is_product_facing_ux_task(task):
+            product_facing_ux_task_ids.append(task_id)
+        if ux_issues:
+            product_facing_ux_missing_requirements[task_id] = ux_issues
         if status in READY_TASK_STATUSES:
             ready_status_ids.append(task_id)
         elif status == "pending":
@@ -202,4 +273,6 @@ def compute_backlog_diagnostics(validated_backlog: dict) -> dict:
         "selector_filtered_everything": bool(ready_status_ids) and not bool(candidates),
         "roadmap_affected": False,
         "skipped_reasons": skipped_reasons,
+        "product_facing_ux_task_ids": product_facing_ux_task_ids,
+        "product_facing_ux_missing_requirements": product_facing_ux_missing_requirements,
     }

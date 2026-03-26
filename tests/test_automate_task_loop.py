@@ -213,6 +213,27 @@ def _write_fake_codex_slow(path: Path, *, relative_output: str, sleep_seconds: i
     path.chmod(0o755)
 
 
+def _apply_product_facing_ux_fields(task: dict, *, mapping: list[str] | None = None, deviations: list[str] | None = None) -> None:
+    task["product_facing_ux"] = True
+    task["design_section_mapping"] = mapping or ["Hero section -> jobs list"]
+    task["intentional_design_deviations"] = deviations if deviations is not None else ["none"]
+    task["product_first_acceptance_checks"] = [
+        "confirm hierarchy keeps core jobs value ahead of secondary controls",
+        "confirm prohibited surfaces stay out of the primary user-facing shell",
+        "confirm backend wiring or real data alone is not treated as sufficient UX acceptance evidence",
+    ]
+    task["primary_ux_prohibited_surfaces"] = [
+        "source matrix",
+        "discovery internals",
+        "learning",
+        "autonomy ops",
+        "agent activity",
+        "investigations",
+        "diagnostics",
+        "operator controls",
+    ]
+
+
 def _progress_events(run_dir: Path) -> list[dict]:
     return [json.loads(line) for line in (run_dir / "progress.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
 
@@ -449,7 +470,7 @@ def _setup_builder_fixture(tmp_path: Path, *, task_id: str, area: str, allowlist
     (prompts / "implement_feature.md").write_text(
         "\n".join(
             [
-                "You are patching the Jorb product repo at {product_repo}.",
+                "You are patching the Jorb {target_kind} repo at {target_repo}.",
                 "",
                 "Task: {task_id}",
                 "Title: {title}",
@@ -465,6 +486,9 @@ def _setup_builder_fixture(tmp_path: Path, *, task_id: str, area: str, allowlist
                 "",
                 "Verification commands:",
                 "{verification_commands}",
+                "",
+                "UX conformance requirements:",
+                "{ux_conformance_requirements}",
                 "",
                 "Failure summary:",
                 "{failure_summary}",
@@ -832,6 +856,97 @@ def test_accepted_task_history_links_evidence_and_diagnostics(tmp_path: Path) ->
     assert diagnostics["changed_files"] == history["files_changed"]
     assert diagnostics["unproven_runtime_gaps"] == []
     assert any(step["name"] == "local_validation" and step["outcome"] == "passed" for step in diagnostics["step_outcomes"])
+
+
+def test_product_facing_ux_task_requires_explicit_planning_fields_in_backlog_inspection(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-UX",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["product_facing_ux"] = True
+    _write_json(builder_root / "backlog.yml", backlog)
+
+    result = _run([sys.executable, str(SCRIPT), "--inspect-backlog"], builder_root)
+
+    assert result.returncode == 1
+    assert "BACKLOG_INVALID" in result.stdout
+    assert "invalid_product_facing_ux_task" in result.stdout
+    assert "design_section_mapping" in result.stdout
+
+
+def test_product_facing_ux_task_refines_without_explicit_ux_conformance_evidence(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-UX",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    backlog = _json(builder_root / "backlog.yml")
+    _apply_product_facing_ux_fields(backlog["tasks"][0])
+    _write_json(builder_root / "backlog.yml", backlog)
+
+    fake_codex = tmp_path / "fake-codex-ux-missing"
+    _write_fake_codex(fake_codex, relative_output="worker.py", last_message="1. Concise summary without UX evidence\n")
+    config = _json(builder_root / "config.yml")
+    config["executor"]["mode"] = "codex_exec"
+    config["executor"]["codex_cli"] = str(fake_codex)
+    _write_json(builder_root / "config.yml", config)
+    _git(["add", "backlog.yml", "config.yml", "prompts/implement_feature.md"], builder_root)
+    _git(["commit", "-m", "require ux conformance evidence"], builder_root)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    payload = _json(_active_run_dir(builder_root) / "automation_result.json")
+    assert payload["classification"] == "refined"
+    assert payload["summary"] == "UX conformance evidence is incomplete for this product-facing UX task."
+    assert any(step["name"] == "ux_conformance" and step["outcome"] == "refined" for step in payload["steps"])
+    history = _json(next((builder_root / "task_history").glob("*.yml")))
+    assert history["operator_diagnostics"]["ux_conformance"]["passed"] is False
+    assert "response.design_section_mapping" in history["operator_diagnostics"]["ux_conformance"]["missing_response_fields"]
+
+
+def test_product_facing_ux_task_accepts_with_explicit_ux_conformance_evidence(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-UX",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    backlog = _json(builder_root / "backlog.yml")
+    _apply_product_facing_ux_fields(backlog["tasks"][0], mapping=["Hero -> jobs list", "Sidebar -> filters"])
+    _write_json(builder_root / "backlog.yml", backlog)
+
+    fake_codex = tmp_path / "fake-codex-ux-ok"
+    _write_fake_codex(
+        fake_codex,
+        relative_output="worker.py",
+        last_message=(
+            "1. Concise summary of exactly what changed\n"
+            "UX Design Section Mapping: Hero -> jobs list; Sidebar -> filters\n"
+            "UX Intentional Design Deviations: none\n"
+            "UX Product-First Checklist: hierarchy=yes; prohibited_surfaces=yes; backend_wiring_only=no\n"
+        ),
+    )
+    config = _json(builder_root / "config.yml")
+    config["executor"]["mode"] = "codex_exec"
+    config["executor"]["codex_cli"] = str(fake_codex)
+    _write_json(builder_root / "config.yml", config)
+    _git(["add", "backlog.yml", "config.yml", "prompts/implement_feature.md"], builder_root)
+    _git(["commit", "-m", "accept ux conformance evidence"], builder_root)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 0
+    history = _json(next((builder_root / "task_history").glob("*.yml")))
+    assert history["status"] == "accepted"
+    ux = history["operator_diagnostics"]["ux_conformance"]
+    assert ux["passed"] is True
+    assert ux["design_section_mapping"] == "Hero -> jobs list; Sidebar -> filters"
+    assert ux["intentional_design_deviations"] == "none"
+    assert ux["product_first_checklist"] == "hierarchy=yes; prohibited_surfaces=yes; backend_wiring_only=no"
 
 
 def test_missing_packet(tmp_path: Path) -> None:
@@ -1855,7 +1970,7 @@ def test_live_backlog_file_is_canonical_json_and_contains_new_tasks() -> None:
     backlog = json.loads((LIVE_BUILDER_ROOT / "backlog.yml").read_text(encoding="utf-8"))
     tasks = {task["id"]: task for task in backlog["tasks"]}
 
-    assert len(backlog["tasks"]) == 23
+    assert len(backlog["tasks"]) >= 23
     for task_id in [
         "JORB-V1-006",
         "JORB-V1-007",

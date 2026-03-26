@@ -1203,6 +1203,30 @@
         "the main screen is understandable without needing to understand builder, autonomy, or discovery internals",
         "targeted tests and preflight pass"
       ],
+      "product_facing_ux": true,
+      "design_section_mapping": [
+        "Primary landing section -> jobs or opportunities list as the first visible product surface",
+        "Ranking and explanation section -> concise explanation attached to the primary opportunity flow",
+        "Secondary navigation and controls -> internal tabs or controls demoted behind non-primary surfaces"
+      ],
+      "intentional_design_deviations": [
+        "none recorded in planning; any deviation should be called out explicitly at implementation time"
+      ],
+      "product_first_acceptance_checks": [
+        "confirm hierarchy keeps jobs and explanations ahead of operator controls or diagnostics",
+        "confirm prohibited surfaces stay out of the primary user-facing shell",
+        "confirm backend wiring or real data alone is not treated as sufficient UX acceptance evidence"
+      ],
+      "primary_ux_prohibited_surfaces": [
+        "source matrix",
+        "discovery internals",
+        "learning",
+        "autonomy ops",
+        "agent activity",
+        "investigations",
+        "diagnostics",
+        "operator controls"
+      ],
       "notes": [
         "Phase 2 task created from authoritative VM manual review: the app feels like an internal control panel instead of a job discovery and ranking product.",
         "Automated loop completed with VM validation success."
@@ -1305,6 +1329,30 @@
         "internal labels and navigation that are only meaningful to operators are demoted, collapsed, or clearly separated from user-facing validation flows",
         "the task does not broaden into treating Streamlit as the final production IA",
         "targeted tests and preflight pass"
+      ],
+      "product_facing_ux": true,
+      "design_section_mapping": [
+        "Primary jobs validation path -> clearly dominant route through the temporary harness",
+        "Secondary operator surfaces -> collapsed, demoted, or clearly separated from user-facing flows",
+        "Navigation labels -> user-facing wording distinct from internal operator terminology"
+      ],
+      "intentional_design_deviations": [
+        "none planned; any retained operator affordance in the user-facing shell must be justified explicitly"
+      ],
+      "product_first_acceptance_checks": [
+        "confirm hierarchy keeps the real-job validation path primary",
+        "confirm prohibited surfaces stay out of the primary user-facing shell",
+        "confirm backend wiring or real data alone is not treated as sufficient UX acceptance evidence"
+      ],
+      "primary_ux_prohibited_surfaces": [
+        "source matrix",
+        "discovery internals",
+        "learning",
+        "autonomy ops",
+        "agent activity",
+        "investigations",
+        "diagnostics",
+        "operator controls"
       ],
       "notes": [
         "Updated during planning to make Streamlit demotion explicit and to avoid repeating Phase 1 UX-over-product-truth mistakes."
@@ -1790,6 +1838,30 @@
         "the relationship between the JS front end and the existing Streamlit harness is explicit",
         "targeted tests and preflight pass"
       ],
+      "product_facing_ux": true,
+      "design_section_mapping": [
+        "App shell and routing -> production entry shell aligned to the intended product structure",
+        "Jobs-first primary route -> default path reserved for the main jobs experience rather than builder or debug surfaces",
+        "Streamlit coexistence guidance -> explicit secondary relationship between Streamlit and the JS shell"
+      ],
+      "intentional_design_deviations": [
+        "bootstrap scope may use placeholder styling while preserving the intended shell structure; any such deviation must be listed explicitly"
+      ],
+      "product_first_acceptance_checks": [
+        "confirm hierarchy preserves a product-first shell with a clear primary jobs route",
+        "confirm prohibited surfaces stay out of the primary user-facing shell",
+        "confirm backend wiring or real data alone is not treated as sufficient UX acceptance evidence"
+      ],
+      "primary_ux_prohibited_surfaces": [
+        "source matrix",
+        "discovery internals",
+        "learning",
+        "autonomy ops",
+        "agent activity",
+        "investigations",
+        "diagnostics",
+        "operator controls"
+      ],
       "notes": [
         "The framework choice should be grounded in the actual repo and integration path rather than abstract preference alone."
       ],
@@ -1841,6 +1913,32 @@
         "the jobs screen is wired to real backend data rather than mocked cards",
         "job cards and detail state preserve title, company, score, explanation, and source provenance where available",
         "targeted tests and preflight pass"
+      ],
+      "product_facing_ux": true,
+      "design_section_mapping": [
+        "Sidebar -> implemented app navigation or filters section matching the design hierarchy",
+        "Jobs top bar -> implemented jobs header controls matching the design intent",
+        "Job list and job cards -> implemented list surface mapped to the Figma collection layout",
+        "Detail panel or drawer -> implemented detail surface mapped to the design secondary pane",
+        "Loading and empty states -> implemented empty/loading treatments mapped to the design states"
+      ],
+      "intentional_design_deviations": [
+        "none planned; any deviation from the Figma structure, hierarchy, or interaction model must be listed explicitly"
+      ],
+      "product_first_acceptance_checks": [
+        "confirm hierarchy keeps the jobs list and detail flow primary",
+        "confirm prohibited surfaces stay out of the primary user-facing shell",
+        "confirm backend wiring or real data alone is not treated as sufficient UX acceptance evidence"
+      ],
+      "primary_ux_prohibited_surfaces": [
+        "source matrix",
+        "discovery internals",
+        "learning",
+        "autonomy ops",
+        "agent activity",
+        "investigations",
+        "diagnostics",
+        "operator controls"
       ],
       "notes": [
         "Use the Figma design assets as the interaction and layout source of truth."
@@ -1895,6 +1993,30 @@
         "users can reach the jobs flow quickly without being forced through heavyweight setup",
         "targeted tests and preflight pass"
       ],
+      "product_facing_ux": true,
+      "design_section_mapping": [
+        "Entry onboarding flow -> skippable first-run surface mapped to the intended lightweight design",
+        "Profile editing surface -> profile controls mapped to the designed preference sections",
+        "Jobs handoff -> clear path from onboarding or profile into the primary jobs experience"
+      ],
+      "intentional_design_deviations": [
+        "none planned; any deviation from lightweight or skippable behavior must be listed explicitly"
+      ],
+      "product_first_acceptance_checks": [
+        "confirm hierarchy keeps users moving quickly toward the jobs flow",
+        "confirm prohibited surfaces stay out of the primary user-facing shell",
+        "confirm backend wiring or real data alone is not treated as sufficient UX acceptance evidence"
+      ],
+      "primary_ux_prohibited_surfaces": [
+        "source matrix",
+        "discovery internals",
+        "learning",
+        "autonomy ops",
+        "agent activity",
+        "investigations",
+        "diagnostics",
+        "operator controls"
+      ],
       "notes": [
         "This is the production frontend version of onboarding, distinct from the temporary Streamlit harness."
       ],
@@ -1947,6 +2069,30 @@
         "the tracker surfaces integrate coherently with the real jobs flow",
         "targeted tests and preflight pass"
       ],
+      "product_facing_ux": true,
+      "design_section_mapping": [
+        "Saved jobs surface -> implemented list or collection section for saved items",
+        "Applied jobs surface -> implemented tracker section for applied items",
+        "Jobs-flow integration -> navigation and state transitions connecting jobs, saved, and applied surfaces"
+      ],
+      "intentional_design_deviations": [
+        "none planned; any structural deviation from the intended tracker flow must be listed explicitly"
+      ],
+      "product_first_acceptance_checks": [
+        "confirm hierarchy keeps saved and applied flows understandable within the main product path",
+        "confirm prohibited surfaces stay out of the primary user-facing shell",
+        "confirm backend wiring or real data alone is not treated as sufficient UX acceptance evidence"
+      ],
+      "primary_ux_prohibited_surfaces": [
+        "source matrix",
+        "discovery internals",
+        "learning",
+        "autonomy ops",
+        "agent activity",
+        "investigations",
+        "diagnostics",
+        "operator controls"
+      ],
       "notes": [
         "This task creates the real tracker surfaces in the production frontend rather than extending Streamlit."
       ],
@@ -1998,6 +2144,30 @@
         "docs and runtime guidance make the transition explicit",
         "targeted tests and preflight pass"
       ],
+      "product_facing_ux": true,
+      "design_section_mapping": [
+        "Primary product entry path -> JS front end shell made explicit as the main user-facing route",
+        "Secondary Streamlit path -> Streamlit repositioned as internal validation or operator tooling",
+        "Runtime and docs guidance -> explicit language separating user-facing and operator-facing surfaces"
+      ],
+      "intentional_design_deviations": [
+        "none planned; any temporary coexistence compromise must be listed explicitly"
+      ],
+      "product_first_acceptance_checks": [
+        "confirm hierarchy makes the JS front end primary and Streamlit secondary",
+        "confirm prohibited surfaces stay out of the primary user-facing shell",
+        "confirm backend wiring or real data alone is not treated as sufficient UX acceptance evidence"
+      ],
+      "primary_ux_prohibited_surfaces": [
+        "source matrix",
+        "discovery internals",
+        "learning",
+        "autonomy ops",
+        "agent activity",
+        "investigations",
+        "diagnostics",
+        "operator controls"
+      ],
       "notes": [
         "This transition task exists so Streamlit stays bounded and the product path becomes explicit."
       ],
@@ -2017,7 +2187,7 @@
       "area": "builder",
       "milestone": "M0",
       "priority": 1,
-      "status": "blocked",
+      "status": "ready",
       "retries_used": 0,
       "depends_on": [
         "JORB-V2-026"
@@ -2045,7 +2215,8 @@
       ],
       "notes": [
         "This builder task exists to stop another structurally wrong UX pass from being accepted just because some backend integration is real.",
-        "Builder repo is dirty before automated execution; refusing to continue."
+        "Builder repo is dirty before automated execution; refusing to continue.",
+        "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again."
       ],
       "repo_path": "~/projects/jorb-builder",
       "description": "Harden builder-side UX conformance gating for product-facing tasks.\n\nThe builder should require explicit design-to-implementation section mapping, explicit deviation lists, a product-first acceptance checklist, and a prohibited-surfaces policy so future UX work cannot pass on wiring alone.",
@@ -2100,6 +2271,31 @@
         "lightweight user-facing status remains available without turning the main shell into an operator console",
         "Saved, Applied, and Profile remain understandable in the temporary harness",
         "acceptance requires live runtime review of the jobs-first shell and not tests alone"
+      ],
+      "product_facing_ux": true,
+      "design_section_mapping": [
+        "Main shell top area -> jobs list and jobs-first context remain dominant",
+        "Secondary links and forms -> Add job link and similar controls demoted from primary prominence",
+        "Navigation and supporting surfaces -> Saved, Applied, and Profile remain understandable without becoming the main shell",
+        "Status surface -> lightweight user-facing status remains available without becoming an operator console"
+      ],
+      "intentional_design_deviations": [
+        "temporary Streamlit harness compromises are allowed only if they are listed explicitly and do not break jobs-first hierarchy"
+      ],
+      "product_first_acceptance_checks": [
+        "confirm hierarchy keeps jobs and the real validation path primary",
+        "confirm prohibited surfaces stay out of the primary user-facing shell",
+        "confirm backend wiring or real data alone is not treated as sufficient UX acceptance evidence"
+      ],
+      "primary_ux_prohibited_surfaces": [
+        "source matrix",
+        "discovery internals",
+        "learning",
+        "autonomy ops",
+        "agent activity",
+        "investigations",
+        "diagnostics",
+        "operator controls"
       ],
       "notes": [
         "This is temporary harness cleanup only. It is not the final production UX implementation, which belongs to the later JS frontend phase."

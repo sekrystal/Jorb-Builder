@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "state": "blocked",
+  "state": "verifying",
   "state_legend": {
     "idle": "No active task is currently in flight.",
     "task_selected": "A task has been selected and the current run has been initialized.",
@@ -14,7 +14,7 @@
   "active_task_id": "JORB-INFRA-006",
   "last_task_id": "JORB-INFRA-006",
   "last_result": "blocked",
-  "last_run_at": "2026-03-26T20:00:06.892117+00:00",
+  "last_run_at": "2026-03-26T20:18:05.176220+00:00",
   "roadmap_focus": {
     "milestone": "M2",
     "theme": "discovery"

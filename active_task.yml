@@ -1,12 +1,12 @@
 {
   "task_id": "JORB-INFRA-006",
   "title": "Harden builder UX conformance gating for product-facing tasks",
-  "state": "blocked",
+  "state": "verifying",
   "attempt": 1,
-  "started_at": "2026-03-26T20:00:06.780745+00:00",
+  "started_at": "2026-03-26T20:01:39.472010+00:00",
   "handed_to_codex_at": null,
-  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200006Z/codex_prompt.md",
-  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200006Z-JORB-INFRA-006",
+  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200139Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200139Z-JORB-INFRA-006",
   "verification_commands": [
     "python3 -m py_compile scripts/*.py",
     "pytest tests/test_automate_task_loop.py",
@@ -15,9 +15,9 @@
   "allowlist": [
     "../jorb-builder/**"
   ],
-  "failure_summary": "Builder repo is dirty before automated execution; refusing to continue.",
+  "failure_summary": null,
   "notes": [],
-  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200006Z",
+  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200139Z",
   "target_repo": "/Users/samuelkrystal/projects/jorb-builder",
   "target_kind": "builder"
 }

@@ -3,7 +3,14 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import textwrap
-from common import builder_root, load_config, load_data, write_data, product_repo_path
+from common import (
+    builder_root,
+    is_product_facing_ux_task,
+    load_config,
+    load_data,
+    write_data,
+    product_repo_path,
+)
 
 ROOT = builder_root()
 BACKLOG = ROOT / "backlog.yml"
@@ -24,6 +31,38 @@ def fmt_list(values: list[str]) -> str:
     return "\n".join(f"- {value}" for value in values) if values else "- none"
 
 
+def ux_requirements_block(task: dict) -> str:
+    if not is_product_facing_ux_task(task):
+        return "- none"
+    deviations = task.get("intentional_design_deviations", [])
+    deviation_lines = [f"  - {item}" for item in deviations] if deviations else ["  - none"]
+    lines = [
+        "Design section mapping:",
+        *[f"  - {item}" for item in task.get("design_section_mapping", [])],
+        "Intentional design deviations:",
+        *deviation_lines,
+        "Product-first acceptance checklist:",
+        *[f"  - {item}" for item in task.get("product_first_acceptance_checks", [])],
+        "Primary UX prohibited surfaces:",
+        *[f"  - {item}" for item in task.get("primary_ux_prohibited_surfaces", [])],
+        "For product-facing UX tasks, section 1 of the final response must include labeled lines for:",
+        "  - UX Design Section Mapping:",
+        "  - UX Intentional Design Deviations:",
+        "  - UX Product-First Checklist:",
+        "Set the checklist line to include hierarchy=yes, prohibited_surfaces=yes, and backend_wiring_only=no when justified by the work.",
+    ]
+    return "\n".join(lines)
+
+
+def target_kind_for_task(task: dict, builder_label: str) -> str:
+    allowlist = list(task.get("allowlist", []))
+    if task.get("repo_path") == builder_label or task.get("area") == "builder":
+        return "builder"
+    if any(str(entry).startswith("../jorb-builder") for entry in allowlist):
+        return "builder"
+    return "product"
+
+
 def main() -> int:
     config = load_config()
     backlog = load_data(BACKLOG)
@@ -41,6 +80,8 @@ def main() -> int:
         return 2
 
     task = find_task(backlog, task_id)
+    target_kind_label = target_kind_for_task(task, builder_label)
+    target_repo_label = builder_label if target_kind_label == "builder" else product_label
     prompt_name = task.get("prompt") or config["execution"]["default_prompt"]
     prompt_template = (PROMPTS / f"{prompt_name}.md").read_text(encoding="utf-8")
 
@@ -62,6 +103,8 @@ def main() -> int:
 
     rendered = prompt_template.format(
         product_repo=product_label,
+        target_repo=target_repo_label,
+        target_kind=target_kind_label,
         task_id=task["id"],
         title=task["title"],
         objective=task.get("objective", task["title"]),
@@ -71,6 +114,8 @@ def main() -> int:
         acceptance=fmt_list(task.get("acceptance", [])),
         verification_commands=fmt_list(task.get("verification", [])),
         failure_summary=active.get("failure_summary") or "No failure summary recorded.",
+        builder_edit_constraint="- Do not edit product files." if target_kind_label == "builder" else "- Do not edit builder files.",
+        ux_conformance_requirements=ux_requirements_block(task),
     )
 
     header = textwrap.dedent(
@@ -80,7 +125,7 @@ task_id: {task['id']}
 title: {task['title']}
 type: {task.get('type', 'task')}
 area: {task.get('area', 'unknown')}
-repo_path: {product_label}
+repo_path: {target_repo_label}
 attempt: {active.get('attempt', 1)}
 allowlist:
 {fmt_list(task.get('allowlist', []))}

@@ -1,4 +1,4 @@
-You are patching the Jorb product repo at {product_repo}.
+You are patching the Jorb {target_kind} repo at {target_repo}.
 
 Task: {task_id}
 Title: {title}
@@ -20,10 +20,13 @@ Implementation constraints:
 - Preserve existing working behavior unless this task explicitly changes it.
 - Keep hot paths deterministic and bounded.
 - Do not broaden scope.
-- Do not edit anything outside the Jorb repo.
-- Do not edit builder files.
+- Do not edit anything outside the target repo.
+{builder_edit_constraint}
 - If a test fails, fix it and rerun until green.
 - Do not claim live runtime success unless directly proven.
+
+UX conformance requirements:
+{ux_conformance_requirements}
 
 Deterministic acceptance criteria:
 {acceptance}

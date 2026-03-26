@@ -19,10 +19,12 @@ from common import (
     builder_path_from_config,
     compute_backlog_diagnostics,
     expand_path,
+    is_product_facing_ux_task,
     load_config,
     load_data,
     load_validated_backlog,
     product_repo_path,
+    ux_conformance_planning_issues,
     write_data,
 )
 
@@ -75,6 +77,9 @@ CANONICAL_STATE_LEGEND = {
 NONINTERACTIVE_GIT_ENV = {
     "GIT_TERMINAL_PROMPT": "0",
 }
+UX_MAPPING_LABEL = "UX Design Section Mapping:"
+UX_DEVIATIONS_LABEL = "UX Intentional Design Deviations:"
+UX_CHECKLIST_LABEL = "UX Product-First Checklist:"
 
 
 def now_iso() -> str:
@@ -146,8 +151,59 @@ def history_evidence_artifacts(run_dir: Path | None, prompt_file: Path | None) -
     return artifacts
 
 
+def extract_labeled_line(text: str, label: str) -> str | None:
+    for line in text.splitlines():
+        if line.startswith(label):
+            return line[len(label):].strip()
+    return None
+
+
+def ux_conformance_result(task: dict[str, Any], executor_output: str) -> dict[str, Any]:
+    required = is_product_facing_ux_task(task)
+    planning_issues = ux_conformance_planning_issues(task)
+    result = {
+        "required": required,
+        "passed": True,
+        "planning_issues": planning_issues,
+        "missing_response_fields": [],
+        "design_section_mapping": extract_labeled_line(executor_output, UX_MAPPING_LABEL),
+        "intentional_design_deviations": extract_labeled_line(executor_output, UX_DEVIATIONS_LABEL),
+        "product_first_checklist": extract_labeled_line(executor_output, UX_CHECKLIST_LABEL),
+        "primary_ux_prohibited_surfaces": task.get("primary_ux_prohibited_surfaces", []),
+    }
+    if not required:
+        return result
+
+    missing: list[str] = []
+    if planning_issues:
+        missing.extend(planning_issues)
+    if not result["design_section_mapping"]:
+        missing.append("response.design_section_mapping")
+    if result["intentional_design_deviations"] is None:
+        missing.append("response.intentional_design_deviations")
+    checklist = str(result["product_first_checklist"] or "").lower()
+    if not checklist:
+        missing.append("response.product_first_checklist")
+    else:
+        if "hierarchy=yes" not in checklist:
+            missing.append("response.product_first_checklist.hierarchy")
+        if "prohibited_surfaces=yes" not in checklist:
+            missing.append("response.product_first_checklist.prohibited_surfaces")
+        if "backend_wiring_only=no" not in checklist:
+            missing.append("response.product_first_checklist.backend_wiring_only")
+    result["missing_response_fields"] = missing
+    result["passed"] = not missing
+    return result
+
+
 def history_operator_diagnostics(task: dict[str, Any], automation_result: dict[str, Any]) -> dict[str, Any]:
     accepted = automation_result.get("classification") == "accepted"
+    executor_output = ""
+    for step in automation_result.get("steps", []):
+        if step.get("name") == "executor":
+            executor_output = str(step.get("detail") or "")
+            break
+    ux_conformance = ux_conformance_result(task, executor_output)
     step_outcomes = [
         {"name": step.get("name"), "outcome": step.get("outcome"), "detail": step.get("detail")}
         for step in automation_result.get("steps", [])
@@ -161,6 +217,7 @@ def history_operator_diagnostics(task: dict[str, Any], automation_result: dict[s
         "changed_files_count": len(automation_result.get("changed_files", [])),
         "changed_files": automation_result.get("changed_files", []),
         "unproven_runtime_gaps": automation_result.get("unproven_runtime_gaps", []),
+        "ux_conformance": ux_conformance,
     }
 
 
@@ -1641,6 +1698,9 @@ def print_backlog_inspection(backlog: dict[str, Any], diagnostics: dict[str, Any
     print("pending_task_ids: " + json.dumps(diagnostics["pending_task_ids"]))
     print("retry_ready_task_ids: " + json.dumps(diagnostics["retry_ready_task_ids"]))
     print("blocked_task_ids: " + json.dumps(diagnostics["blocked_task_ids"]))
+    print("product_facing_ux_task_ids: " + json.dumps(diagnostics.get("product_facing_ux_task_ids", [])))
+    if diagnostics.get("product_facing_ux_missing_requirements"):
+        print("product_facing_ux_missing_requirements: " + json.dumps(diagnostics["product_facing_ux_missing_requirements"], sort_keys=True))
     print("roadmap_affected: " + json.dumps(diagnostics["roadmap_affected"]))
     print("selector_filtered_everything: " + json.dumps(diagnostics["selector_filtered_everything"]))
     print("active_task_id: " + json.dumps(diagnostics.get("active_task_id")))
@@ -1975,6 +2035,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         "missing_configuration": [],
         "retry_continuation": retry_continuation,
     }
+    executor_result: dict[str, Any] = {}
     if executor_mode != "human_gated" and not executor_config.get("command"):
         if executor_mode == "codex_exec":
             if shutil.which(codex_cli) is None and not Path(codex_cli).expanduser().exists():
@@ -2584,6 +2645,18 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
     else:
         classification = "accepted"
         summary = "Automated loop completed with builder-side local validation success."
+    executor_output = str(executor_result.get("last_message") or "")
+    ux_conformance = ux_conformance_result(task, executor_output)
+    if classification == "accepted" and not ux_conformance["passed"]:
+        classification = "refined"
+        summary = "UX conformance evidence is incomplete for this product-facing UX task."
+        steps.append(
+            {
+                "name": "ux_conformance",
+                "outcome": "refined",
+                "detail": "Missing UX conformance evidence: " + ", ".join(ux_conformance["missing_response_fields"]),
+            }
+        )
     automation_result = {
         "task_id": task["id"],
         "classification": classification,
