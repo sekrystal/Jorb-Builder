@@ -523,6 +523,7 @@ def _setup_builder_fixture(tmp_path: Path, *, task_id: str, area: str, allowlist
                 "allowlist": allowlist,
                 "forbid": [],
                 "verification": [],
+                "vm_bootstrap": ["echo bootstrap-default"],
                 "acceptance": ["a"],
                 "notes": [],
             }
@@ -1623,7 +1624,7 @@ def test_vm_bootstrap_failure_surfaces_clear_summary(tmp_path: Path) -> None:
     assert any(step["name"] == "vm_validation" and step["detail"] == "VM bootstrap commands failed." for step in payload["steps"])
 
 
-def test_vm_smoke_failure_surfaces_clear_summary_without_bootstrap(tmp_path: Path) -> None:
+def test_product_task_blocks_when_vm_bootstrap_is_not_configured(tmp_path: Path) -> None:
     builder_root, _, run_log_dir, _ = _setup_builder_fixture(
         tmp_path,
         task_id="TASK-PRODUCT",
@@ -1634,6 +1635,7 @@ def test_vm_smoke_failure_surfaces_clear_summary_without_bootstrap(tmp_path: Pat
     _write_prior_vm_refined_result(run_log_dir, changed_files=["services/company_discovery.py"])
 
     backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["vm_bootstrap"] = []
     backlog["tasks"][0]["vm_verification"] = ["echo smoke-check"]
     _write_json(builder_root / "backlog.yml", backlog)
 
@@ -1649,16 +1651,16 @@ def test_vm_smoke_failure_surfaces_clear_summary_without_bootstrap(tmp_path: Pat
     _write_fake_ssh(fake_ssh)
     env = {
         "PATH": f"{fake_bin}:{os.environ['PATH']}",
-        "FAKE_SSH_FAIL_MATCH": "echo smoke-check",
     }
 
     result = _run([sys.executable, str(SCRIPT)], builder_root, extra_env=env)
 
-    assert result.returncode == 1
-    assert "VM smoke validation failed after local validation and git push succeeded." in result.stdout
+    assert result.returncode == 2
+    assert "Missing automation configuration: task.vm_bootstrap" in result.stdout
     payload = _json(_active_run_dir(builder_root) / "automation_result.json")
-    assert payload["summary"] == "VM smoke validation failed after local validation and git push succeeded."
-    assert any(step["name"] == "vm_validation" and step["detail"] == "VM smoke commands failed." for step in payload["steps"])
+    assert payload["classification"] == "blocked"
+    assert payload["summary"] == "Missing automation configuration: task.vm_bootstrap"
+    assert payload["unproven_runtime_gaps"] == ["Missing automation configuration: task.vm_bootstrap"]
 
 
 def test_vm_cleanup_does_not_override_prior_bootstrap_failure(tmp_path: Path) -> None:

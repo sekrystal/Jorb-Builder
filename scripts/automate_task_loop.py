@@ -2217,6 +2217,8 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         plan["missing_configuration"].append("vm.ssh_target")
     if use_vm_flow and not vm_smoke_commands:
         plan["missing_configuration"].append("vm.runtime_validation_commands or task.vm_verification")
+    if use_vm_flow and vm_smoke_commands and not vm_bootstrap_commands:
+        plan["missing_configuration"].append("task.vm_bootstrap")
 
     if args.dry_run:
         payload = {

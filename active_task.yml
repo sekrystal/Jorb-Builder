@@ -1,12 +1,12 @@
 {
-  "task_id": "JORB-INFRA-008",
-  "title": "Enforce runtime proof",
+  "task_id": "JORB-INFRA-009",
+  "title": "Enforce VM bootstrap",
   "state": "verifying",
   "attempt": 1,
-  "started_at": "2026-03-29T21:41:59.216666+00:00",
+  "started_at": "2026-03-29T21:52:05.173185+00:00",
   "handed_to_codex_at": null,
-  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T214159Z/codex_prompt.md",
-  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T214159Z-JORB-INFRA-008",
+  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T215204Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T215205Z-JORB-INFRA-009",
   "verification_commands": [
     "python3 -m py_compile scripts/*.py",
     "pytest tests/test_automate_task_loop.py"
@@ -19,7 +19,7 @@
   ],
   "failure_summary": null,
   "notes": [],
-  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T214159Z",
+  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T215204Z",
   "target_repo": "/Users/samuelkrystal/projects/jorb-builder",
   "target_kind": "builder"
 }

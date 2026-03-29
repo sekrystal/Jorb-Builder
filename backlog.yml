@@ -3537,7 +3537,7 @@
       "area": "builder",
       "milestone": "M6",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [],
       "prompt": "implement_feature",
@@ -3563,7 +3563,8 @@
       "allow_noop_completion": false,
       "notes": [
         "Builder repo is dirty before automated execution; refusing to continue.",
-        "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again."
+        "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again.",
+        "Automated loop completed with builder-side local validation success."
       ]
     },
     {

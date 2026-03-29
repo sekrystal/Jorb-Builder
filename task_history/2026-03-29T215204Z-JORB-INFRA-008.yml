@@ -1,0 +1,106 @@
+{
+  "task_id": "JORB-INFRA-008",
+  "title": "Enforce runtime proof",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-29T21:41:59.216666+00:00",
+  "completed_at": "2026-03-29T21:52:04.817135+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T214159Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T214159Z-JORB-INFRA-008",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T214159Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T214159Z-JORB-INFRA-008"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T214159Z-JORB-INFRA-008/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T214159Z-JORB-INFRA-008/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T214159Z-JORB-INFRA-008/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T214159Z-JORB-INFRA-008/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T214159Z-JORB-INFRA-008/local_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T214159Z-JORB-INFRA-008/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T214159Z-JORB-INFRA-008/executor.json"
+    }
+  ],
+  "files_changed": [
+    "scripts/automate_task_loop.py",
+    "tests/test_automate_task_loop.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.325.31654-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T214159Z-JORB-INFRA-008/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with builder-side local validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with builder-side local validation success.",
+    "accepted": true,
+    "acceptance_met": [],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed  \nProduct-task acceptance in [`scripts/automate_task_loop.py`](/Users/samuelkrystal/projects/jorb-builder/scripts/automate_task_loop.py) now requires VM runtime-proof commands, not just VM preflight commands. I changed the missing-config gate to block product tasks unless `vm.runtime_validation_commands` or `task.vm_verification` is present. I also updated [`tests/test_automate_task_loop.py`](/Users/samuelkrystal/projects/jorb-builder/tests/test_automate_task_loop.py) to seed product fixtures with a default runtime-proof command, added a regression test for the blocked-without-runtime-proof case, and adjusted one VM cleanup test to include an explicit smoke command.\n\n2. Exact files changed  \n[`scripts/automate_task_loop.py`](/Users/samuelkrystal/projects/jorb-builder/scripts/automate_task_loop.py)  \n[`tests/test_automate_task_loop.py`](/Users/samuelkrystal/projects/jorb-builder/tests/test_automate_task_loop.py)\n\n3. Exact tests added or updated  \nAdded `test_product_task_blocks_when_vm_runtime_proof_is_not_configured` in [`tests/test_automate_task_loop.py`](/Users/samuelkrystal/projects/jorb-builder/tests/test_automate_task_loop.py)  \nUpdated `_base_config` in [`tests/test_automate_task_loop.py`](/Users/samuelkrystal/projects/jorb-builder/tests/test_automate_task_loop.py) to include default `vm.runtime_validation_commands`  \nUpdated `test_vm_cleanup_does_not_override_prior_bootstrap_failure` in [`tests/test_automate_task_loop.py`](/Users/samuelkrystal/projects/jorb-builder/tests/test_automate_task_loop.py)\n\n4. Exact commands run  \n`python3 -m py_compile scripts/*.py`  \n`pytest tests/test_automate_task_loop.py`\n\n5. Exact results  \n`python3 -m py_compile scripts/*.py` -> passed  \n`pytest tests/test_automate_task_loop.py` -> `82 passed in 126.68s (0:02:06)`\n\n6. Honest note on what remains unproven  \nThis change only enforces that product tasks cannot be accepted without configured VM runtime-proof commands and covered test behavior. It does not itself prove live VM runtime success in this workspace run."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "To github.com:sekrystal/Jorb-Builder.git\n   1ea5094..6bc908e  main -> main\n"
+      }
+    ],
+    "changed_files_count": 2,
+    "changed_files": [
+      "scripts/automate_task_loop.py",
+      "tests/test_automate_task_loop.py"
+    ],
+    "unproven_runtime_gaps": [],
+    "ux_conformance": {
+      "required": false,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": null,
+      "intentional_design_deviations": null,
+      "product_first_checklist": null,
+      "primary_ux_prohibited_surfaces": []
+    }
+  },
+  "unproven_runtime_gaps": []
+}
