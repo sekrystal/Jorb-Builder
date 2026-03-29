@@ -235,6 +235,24 @@ def _write_fake_codex_hung(path: Path) -> None:
     path.chmod(0o755)
 
 
+def _write_fake_codex_transport_failure(path: Path) -> None:
+    path.write_text(
+        "\n".join(
+            [
+                "#!/usr/bin/env python3",
+                "import sys",
+                "sys.stdin.read()",
+                "sys.stderr.write('to read backfill state at /Users/test/.codex: error returned from database: (code: 8) attempt to write a readonly database\\n')",
+                "sys.stderr.write('ERROR: stream disconnected before completion: error sending request for url (https://chatgpt.com/backend-api/codex/responses)\\n')",
+                "sys.stderr.write('channel closed\\n')",
+                "sys.exit(1)",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    path.chmod(0o755)
+
+
 def _write_fake_codex_slow(path: Path, *, relative_output: str, sleep_seconds: int = 2, last_message: str = "slow codex ok\n") -> None:
     path.write_text(
         "\n".join(
@@ -1694,6 +1712,62 @@ def test_fresh_product_execution_still_blocks_on_dirty_repo(tmp_path: Path) -> N
     assert "Product repo is dirty before automated execution" in payload["summary"]
 
 
+def test_product_dirty_repo_ignores_configured_scratch_paths(tmp_path: Path) -> None:
+    builder_root, product_repo, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="discovery",
+        allowlist=["services/company_discovery.py"],
+    )
+    fake_codex = tmp_path / "fake-codex-product-ignore"
+    _write_fake_codex(fake_codex, relative_output="services/company_discovery.py", last_message="product ignore ok\n")
+
+    active = _json(builder_root / "active_task.yml")
+    active.update(
+        {
+            "task_id": None,
+            "title": None,
+            "state": "idle",
+            "attempt": 0,
+            "started_at": None,
+            "handed_to_codex_at": None,
+            "prompt_file": None,
+            "run_log_dir": None,
+            "verification_commands": [],
+            "allowlist": [],
+            "failure_summary": None,
+            "notes": [],
+            "target_repo": None,
+            "target_kind": None,
+        }
+    )
+    _write_json(builder_root / "active_task.yml", active)
+
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "ready"
+    _write_json(builder_root / "backlog.yml", backlog)
+
+    config = _json(builder_root / "config.yml")
+    config["executor"]["mode"] = "codex_exec"
+    config["executor"]["codex_cli"] = str(fake_codex)
+    config["git"]["ignored_dirty_paths"] = {"product": ["design/figma_old/"]}
+    _write_json(builder_root / "config.yml", config)
+
+    scratch = product_repo / "design" / "figma_old"
+    scratch.mkdir(parents=True, exist_ok=True)
+    (scratch / "backup.txt").write_text("scratch\n", encoding="utf-8")
+
+    _git(["add", "active_task.yml", "backlog.yml", "config.yml", "prompts/implement_feature.md"], builder_root)
+    _git(["commit", "-m", "prepare product ignore test"], builder_root)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode in {0, 1}
+    assert "dirty before automated execution" not in result.stdout
+    payload = _json(_active_run_dir(builder_root) / "automation_result.json")
+    assert "dirty before automated execution" not in payload["summary"]
+
+
 def test_dirty_repo_blocks_and_preserves_active_task(tmp_path: Path) -> None:
     builder_root, _, run_log_dir, _ = _setup_builder_fixture(tmp_path, task_id="TASK-DIRTY", area="builder", allowlist=["../jorb-builder/**"])
     (builder_root / "dirty.txt").write_text("dirty\n", encoding="utf-8")
@@ -2429,6 +2503,100 @@ def test_missing_codex_last_message_triggers_executor_failure(tmp_path: Path) ->
     assert payload["summary"] == "executor_failure"
     assert "did not create codex_last_message.md" in payload["steps"][0]["detail"]
     assert "executor_failure" in payload["blocker_evidence"]
+
+
+def test_transient_codex_transport_failure_reopens_task(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    fake_codex = tmp_path / "fake-codex-transport-failure"
+    _write_fake_codex_transport_failure(fake_codex)
+
+    config = _json(builder_root / "config.yml")
+    config["executor"]["mode"] = "codex_exec"
+    config["executor"]["codex_cli"] = str(fake_codex)
+    _write_json(builder_root / "config.yml", config)
+    _git(["add", "config.yml"], builder_root)
+    _git(["commit", "-m", "configure transport failure"], builder_root)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 1
+    assert "INTERRUPTED" in result.stdout
+    assert "executor_transport_failure" in result.stdout
+    backlog = _json(builder_root / "backlog.yml")
+    assert backlog["tasks"][0]["status"] == "ready"
+    active = _json(builder_root / "active_task.yml")
+    assert active["task_id"] is None
+    status = _json(builder_root / "status.yml")
+    assert status["active_task_id"] is None
+    assert status["last_result"] == "interrupted"
+    run_dir = sorted(
+        (path for path in (builder_root / "run_logs").glob("*") if (path / "automation_result.json").exists()),
+        key=lambda item: item.name,
+    )[-1]
+    payload = _json(run_dir / "automation_result.json")
+    assert payload["classification"] == "interrupted"
+    assert payload["summary"] == "executor_transport_failure"
+
+
+def test_repair_state_reopens_transient_executor_failure(tmp_path: Path) -> None:
+    builder_root, _, run_log_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "blocked"
+    _write_json(builder_root / "backlog.yml", backlog)
+
+    active = _json(builder_root / "active_task.yml")
+    active["state"] = "blocked"
+    active["failure_summary"] = "executor_failure"
+    _write_json(builder_root / "active_task.yml", active)
+
+    status = _json(builder_root / "status.yml")
+    status["state"] = "blocked"
+    status["active_task_id"] = "TASK-BUILDER"
+    status["last_task_id"] = "TASK-BUILDER"
+    status["last_result"] = "blocked"
+    _write_json(builder_root / "status.yml", status)
+
+    _write_json(
+        run_log_dir / "executor.json",
+        {
+            "passed": False,
+            "failure_reason": "executor_failure",
+            "stderr": "ERROR: stream disconnected before completion: error sending request for url (https://chatgpt.com/backend-api/codex/responses)\nchannel closed\n",
+            "stdout": "",
+        },
+    )
+    _write_json(
+        builder_root / "blockers" / "BLK-TASK-BUILDER.yml",
+        {
+            "id": "BLK-TASK-BUILDER",
+            "title": "Task TASK-BUILDER blocked during automated execution",
+            "related_tasks": ["TASK-BUILDER"],
+            "status": "open",
+            "diagnosis": "executor_failure",
+        },
+    )
+
+    result = _run([sys.executable, str(SCRIPT), "--repair-state"], builder_root)
+
+    assert result.returncode == 0
+    assert "blocked -> ready" in result.stdout
+    backlog = _json(builder_root / "backlog.yml")
+    assert backlog["tasks"][0]["status"] == "ready"
+    active = _json(builder_root / "active_task.yml")
+    assert active["task_id"] is None
+    status = _json(builder_root / "status.yml")
+    assert status["active_task_id"] is None
+    assert status["last_result"] == "interrupted"
 
 
 def test_hung_codex_subprocess_times_out_and_is_blocked(tmp_path: Path) -> None:

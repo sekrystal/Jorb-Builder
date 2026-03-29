@@ -1,0 +1,24 @@
+{
+  "id": "BLK-JORB-V3-001",
+  "title": "Task JORB-V3-001 blocked during automated execution",
+  "severity": "high",
+  "opened_at": "2026-03-29T19:42:36.863793+00:00",
+  "related_tasks": [
+    "JORB-V3-001"
+  ],
+  "status": "resolved",
+  "symptoms": [
+    "executor_failure"
+  ],
+  "diagnosis": "executor_failure",
+  "evidence": [
+    "executor_failure",
+    "to read backfill state at /Users/samuelkrystal/.codex: error returned from database: (code: 8) attempt to write a readonly database\n2026-03-29T19:42:36.771322Z  WARN codex_exec: thread/read failed while backfilling turn items for turn completion: thread/read: thread/read failed: thread 019d3b1e-2a96-77f0-82b5-0f24d314818c is not materialized yet; includeTurns is unavailable before first user message\nERROR: stream disconnected before completion: error sending request for url (https://chatgpt.com/backend-api/codex/responses)\n2026-03-29T19:42:36.771844Z  WARN codex_rollout::recorder: failed to send rollout shutdown command: channel closed\n2026-03-29T19:42:36.771856Z  WARN codex_core::codex::handlers: failed to shutdown rollout recorder: failed to send rollout shutdown command: channel closed\n"
+  ],
+  "next_actions": [
+    "Inspect automation_result.json and narrow the next bounded refinement."
+  ],
+  "human_needed": true,
+  "resolved_at": "2026-03-29T21:13:17.957050+00:00",
+  "resolution": "Resolved by state repair: prior executor failure matched a transient Codex transport error and the task is ready for a fresh rerun."
+}

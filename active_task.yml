@@ -1,30 +1,25 @@
 {
-  "task_id": null,
-  "title": null,
-  "state": "completed",
+  "task_id": "JORB-INFRA-007",
+  "title": "Enforce Figma compliance",
+  "state": "blocked",
   "attempt": 1,
-  "started_at": "2026-03-27T16:56:46.891948+00:00",
+  "started_at": "2026-03-29T21:24:06.126135+00:00",
   "handed_to_codex_at": null,
-  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T165646Z/codex_prompt.md",
-  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T165646Z-JORB-V2-007",
+  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T212405Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T212406Z-JORB-INFRA-007",
   "verification_commands": [
-    "pytest tests/test_production_runtime.py tests/test_workbench.py",
-    "./scripts/preflight_check.sh"
+    "python3 -m py_compile scripts/*.py",
+    "pytest tests/test_automate_task_loop.py"
   ],
   "vm_verification_commands": [],
   "vm_bootstrap_commands": [],
   "vm_cleanup_commands": [],
   "allowlist": [
-    "api/**",
-    "core/**",
-    "services/**",
-    "ui/**",
-    "tests/test_production_runtime.py",
-    "tests/test_workbench.py"
+    "../jorb-builder/**"
   ],
-  "failure_summary": null,
+  "failure_summary": "Builder repo is dirty before automated execution; refusing to continue.",
   "notes": [],
-  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T165646Z",
-  "target_repo": "/Users/samuelkrystal/projects/jorb",
-  "target_kind": "product"
+  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T212405Z",
+  "target_repo": "/Users/samuelkrystal/projects/jorb-builder",
+  "target_kind": "builder"
 }

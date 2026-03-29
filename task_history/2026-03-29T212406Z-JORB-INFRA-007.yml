@@ -1,0 +1,84 @@
+{
+  "task_id": "JORB-INFRA-007",
+  "title": "Enforce Figma compliance",
+  "status": "blocked",
+  "attempt": 1,
+  "started_at": "2026-03-29T21:24:06.126135+00:00",
+  "completed_at": "2026-03-29T21:24:06.238645+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T212405Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T212406Z-JORB-INFRA-007",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T212405Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T212406Z-JORB-INFRA-007"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T212406Z-JORB-INFRA-007/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T212406Z-JORB-INFRA-007/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T212406Z-JORB-INFRA-007/progress.jsonl"
+    }
+  ],
+  "files_changed": [
+    "config.yml",
+    "roadmap.yml",
+    "scripts/automate_task_loop.py",
+    "tests/test_automate_task_loop.py"
+  ],
+  "commands_run": [],
+  "results": [
+    "blocked"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Builder repo is dirty before automated execution; refusing to continue."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Builder repo is dirty before automated execution; refusing to continue.",
+    "accepted": false,
+    "acceptance_met": [],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "git_status_before",
+        "outcome": "blocked",
+        "detail": "config.yml\nroadmap.yml\nscripts/automate_task_loop.py\ntests/test_automate_task_loop.py"
+      }
+    ],
+    "changed_files_count": 4,
+    "changed_files": [
+      "config.yml",
+      "roadmap.yml",
+      "scripts/automate_task_loop.py",
+      "tests/test_automate_task_loop.py"
+    ],
+    "unproven_runtime_gaps": [
+      "Builder repo is dirty before automated execution; refusing to continue."
+    ],
+    "ux_conformance": {
+      "required": false,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": null,
+      "intentional_design_deviations": null,
+      "product_first_checklist": null,
+      "primary_ux_prohibited_surfaces": []
+    }
+  },
+  "unproven_runtime_gaps": [
+    "Builder repo is dirty before automated execution; refusing to continue."
+  ]
+}

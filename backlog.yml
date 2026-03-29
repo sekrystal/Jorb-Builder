@@ -2877,6 +2877,710 @@
         "Integrated into normalization and verification pipeline"
       ],
       "allow_noop_completion": false
+    },
+    {
+      "id": "JORB-V3-001",
+      "title": "Implement SearchRun model",
+      "type": "feature",
+      "area": "backend",
+      "milestone": "M6",
+      "priority": 1,
+      "status": "accepted",
+      "retries_used": 0,
+      "depends_on": [],
+      "prompt": "implement_feature",
+      "objective": "Add a persisted SearchRun model that records every search attempt as an observable runtime object.",
+      "why_it_matters": "Search cannot be trusted until the system stores and exposes whether a run actually happened, what it tried, and how many results it produced.",
+      "allowlist": [
+        "api/**",
+        "core/**",
+        "models/**",
+        "services/**",
+        "scripts/**",
+        "tests/test_production_runtime.py",
+        "tests/test_search_discovery.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_search_discovery.py tests/test_production_runtime.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance_criteria": [
+        "A persisted SearchRun record exists with status, started_at, completed_at, sources_attempted, results_found, and errors fields",
+        "Each search execution creates or updates a SearchRun row instead of relying on implicit logs alone",
+        "VM runtime evidence shows at least one real SearchRun row being persisted during a search-triggering flow"
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Create a SearchRun model and persistence path so every search attempt records observable truth. The model must include status, timestamps, sources_attempted, results_found, and errors, and it must be written by real runtime search behavior rather than only test fixtures.",
+      "allow_noop_completion": false,
+      "notes": [
+        "Automation was previously blocked on missing executor.codex_cli configuration.",
+        "The config value is now present, so this task should rerun fresh under Strict Product Reality Mode.",
+        "Product repo is dirty before automated execution; refusing to continue.",
+        "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again.",
+        "executor_failure",
+        "Repaired from transient executor transport failure; task restored to ready for a fresh rerun.",
+        "executor_transport_failure",
+        "Automated loop completed with VM validation success."
+      ]
+    },
+    {
+      "id": "JORB-V3-002",
+      "title": "Expose SearchRun via API",
+      "type": "feature",
+      "area": "backend",
+      "milestone": "M6",
+      "priority": 1,
+      "status": "ready",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V3-001"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Expose the latest SearchRun over an API surface that the UI and runtime checks can consume.",
+      "why_it_matters": "Observable search state cannot drive product truth unless the latest run can be read directly instead of inferred.",
+      "allowlist": [
+        "api/**",
+        "core/**",
+        "services/**",
+        "tests/test_production_runtime.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_production_runtime.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance_criteria": [
+        "GET /search-runs/latest returns the latest SearchRun with status, timestamps, sources_attempted, results_found, and errors",
+        "The endpoint truthfully differentiates idle, running, success, zero_results, and failed states",
+        "VM validation can fetch the latest SearchRun through the API after a real search-triggering flow"
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Add GET /search-runs/latest so the current search state is directly observable. The response must reflect the latest persisted SearchRun and must not fake a zero-results state when no search has actually run.",
+      "allow_noop_completion": false
+    },
+    {
+      "id": "JORB-V3-003",
+      "title": "Display search state in UI",
+      "type": "feature",
+      "area": "ux",
+      "milestone": "M6",
+      "priority": 1,
+      "status": "ready",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V3-002"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Render the latest SearchRun state in the primary jobs experience.",
+      "why_it_matters": "Users need to see whether search is running, succeeded, failed, or returned zero results instead of guessing from an empty screen.",
+      "allowlist": [
+        "api/**",
+        "ui/**",
+        "tests/test_production_runtime.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_production_runtime.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance_criteria": [
+        "The Jobs screen visibly shows Searching while a run is active",
+        "The Jobs screen shows result count or explicit failed or zero-results state plus last run timestamp after completion",
+        "VM runtime proof shows the UI search-state surface changing in response to a real SearchRun"
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Show SearchRun status directly in the primary Jobs screen so runtime truth is visible. The UI must display searching, success, zero_results, or failed states with result count or explicit failure messaging and last-run timing.",
+      "design_section_mapping": [
+        "Use /Users/samuelkrystal/projects/jorb/design/figma Jobs screen hierarchy for the primary jobs surface and its status messaging region."
+      ],
+      "intentional_design_deviations": [],
+      "product_first_acceptance_checks": [
+        "Hierarchy: jobs remain primary and search state is supportive rather than dominant.",
+        "Prohibited surfaces: no discovery, autonomy, connectors, or source matrix language appears in the primary shell.",
+        "Backend wiring only: real data alone is not sufficient unless the visible UI state matches the intended Jobs screen structure."
+      ],
+      "primary_ux_prohibited_surfaces": [
+        "discovery",
+        "autonomy",
+        "connectors",
+        "source matrix"
+      ],
+      "allow_noop_completion": false,
+      "product_facing_ux": true
+    },
+    {
+      "id": "JORB-V3-004",
+      "title": "Replace empty state logic",
+      "type": "feature",
+      "area": "ux",
+      "milestone": "M6",
+      "priority": 1,
+      "status": "ready",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V3-003"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Replace any fake or premature empty state with SearchRun-driven truth.",
+      "why_it_matters": "No jobs found is only valid after a real search run completes with zero results.",
+      "allowlist": [
+        "api/**",
+        "ui/**",
+        "tests/test_production_runtime.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_production_runtime.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance_criteria": [
+        "The product does not show no jobs found unless SearchRun completed with zero_results and results_found equals 0",
+        "Idle and failed states render distinct messaging rather than collapsing into the same empty state",
+        "VM runtime proof demonstrates an actual zero-results state and an actual failed state without fake empty-state leakage"
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Replace the primary empty-state logic with SearchRun-driven truth. Idle, running, zero_results, and failed must be visually distinct, and no jobs found must only appear after a completed zero-results run.",
+      "design_section_mapping": [
+        "Use /Users/samuelkrystal/projects/jorb/design/figma Jobs empty and loading states as the source of truth."
+      ],
+      "intentional_design_deviations": [],
+      "product_first_acceptance_checks": [
+        "Hierarchy: empty-state messaging does not displace the jobs-first structure when results exist.",
+        "Prohibited surfaces: no internal diagnostics leak into the empty-state copy.",
+        "Backend wiring only: a connected API is not enough unless the visible empty-state logic matches product truth."
+      ],
+      "primary_ux_prohibited_surfaces": [
+        "discovery",
+        "autonomy",
+        "connectors",
+        "source matrix"
+      ],
+      "allow_noop_completion": false,
+      "product_facing_ux": true
+    },
+    {
+      "id": "JORB-V3-005",
+      "title": "Manual search mode",
+      "type": "feature",
+      "area": "product",
+      "milestone": "M6",
+      "priority": 1,
+      "status": "ready",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V3-004"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Add an explicit manual search trigger so the system can be validated end to end without hidden automation assumptions.",
+      "why_it_matters": "Search must be triggerable on demand if runtime observability and vertical-slice proof are going to be trustworthy.",
+      "allowlist": [
+        "api/**",
+        "services/**",
+        "ui/**",
+        "scripts/**",
+        "tests/test_production_runtime.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_production_runtime.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance_criteria": [
+        "A user-visible or operator-visible manual search trigger starts a SearchRun",
+        "Manual trigger updates SearchRun status through running to success, zero_results, or failed",
+        "VM runtime proof shows a manual trigger causing observable search behavior rather than relying on hidden background state"
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Introduce a manual search mode that can be triggered intentionally and observed through SearchRun state. This is a validation-first capability so real runtime search can be exercised on demand before later UX polish.",
+      "allow_noop_completion": false
+    },
+    {
+      "id": "JORB-V3-006",
+      "title": "Deliver working vertical slice",
+      "type": "feature",
+      "area": "product",
+      "milestone": "M6",
+      "priority": 1,
+      "status": "ready",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V3-005",
+        "JORB-V3-011",
+        "JORB-V3-012",
+        "JORB-INFRA-008",
+        "JORB-INFRA-009"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Prove SearchIntent to fetch to parse to normalize to store to display with real jobs in the VM.",
+      "why_it_matters": "No downstream UX task is trustworthy unless the product can surface real jobs through the full runtime stack.",
+      "allowlist": [
+        "api/**",
+        "connectors/**",
+        "core/**",
+        "scripts/**",
+        "services/**",
+        "ui/**",
+        "tests/test_pipeline.py",
+        "tests/test_production_runtime.py",
+        "tests/test_search_discovery.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_search_discovery.py tests/test_pipeline.py tests/test_production_runtime.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "vm_bootstrap": [
+        "cd /home/gargantua1/projects/jorb && pkill -f uvicorn || true",
+        "cd /home/gargantua1/projects/jorb && pkill -f streamlit || true",
+        "cd /home/gargantua1/projects/jorb && pkill -f run_worker.py || true",
+        "cd /home/gargantua1/projects/jorb && nohup bash -lc 'if [ -d \".venv_j1\" ]; then source .venv_j1/bin/activate; elif [ -d \".venv\" ]; then source .venv/bin/activate; fi; uvicorn api.main:app --host 0.0.0.0 --port 8000' >/tmp/jorb_api.log 2>&1 &",
+        "cd /home/gargantua1/projects/jorb && nohup bash -lc 'if [ -d \".venv_j1\" ]; then source .venv_j1/bin/activate; elif [ -d \".venv\" ]; then source .venv/bin/activate; fi; python scripts/run_worker.py' >/tmp/jorb_worker.log 2>&1 &",
+        "cd /home/gargantua1/projects/jorb && nohup bash -lc 'if [ -d \".venv_j1\" ]; then source .venv_j1/bin/activate; elif [ -d \".venv\" ]; then source .venv/bin/activate; fi; streamlit run ui/app.py --server.port 8501 --server.address 0.0.0.0' >/tmp/jorb_ui.log 2>&1 &",
+        "cd /home/gargantua1/projects/jorb && lsof -i :8000",
+        "cd /home/gargantua1/projects/jorb && lsof -i :8501"
+      ],
+      "vm_verification": [
+        "cd /home/gargantua1/projects/jorb && bash scripts/runtime_self_check.sh",
+        "curl -s http://127.0.0.1:8000/health",
+        "curl -s http://127.0.0.1:8000/autonomy-status",
+        "curl -s http://127.0.0.1:8000/discovery-status"
+      ],
+      "acceptance_criteria": [
+        "The VM proves SearchIntent to fetch to parse to normalize to store to display with at least one real job or an explicit observable failure state",
+        "Jobs shown in the UI are real and not mocked, and each visible job includes title, company, location, explanation, and ranking context",
+        "Passing tests or a crash-free run alone is not sufficient; the runtime behavior must be visible in logs or UI and match task intent"
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Deliver a strict end-to-end vertical slice that proves the runtime can fetch real jobs and display them. The task fails unless the VM shows observable search execution, live stack startup, and real jobs or an explicit truthful failure state.",
+      "allow_noop_completion": false
+    },
+    {
+      "id": "JORB-V3-007",
+      "title": "Jobs-first UI rewrite",
+      "type": "feature",
+      "area": "ux",
+      "milestone": "M6",
+      "priority": 1,
+      "status": "ready",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V3-006",
+        "JORB-INFRA-007"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Rewrite the primary jobs experience to match the Figma jobs-first hierarchy exactly.",
+      "why_it_matters": "The product cannot regain trust if the primary screen keeps drifting away from the canonical design.",
+      "allowlist": [
+        "api/**",
+        "ui/**",
+        "tests/test_production_runtime.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_production_runtime.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance_criteria": [
+        "The primary screen is Jobs and its layout, hierarchy, and component arrangement match /Users/samuelkrystal/projects/jorb/design/figma",
+        "Jobs appear above secondary controls, and no dominant non-core form sits above the fold",
+        "VM runtime proof shows the jobs-first shell with real data or truthful empty/failure state in the intended structure"
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Implement the Jobs-first rewrite strictly from the Figma source of truth. Do not reinterpret layout or hierarchy; the delivered shell must follow the canonical Jobs screen structure.",
+      "design_section_mapping": [
+        "Match the canonical Jobs shell in /Users/samuelkrystal/projects/jorb/design/figma, including sidebar, top bar, list, and detail hierarchy."
+      ],
+      "intentional_design_deviations": [],
+      "product_first_acceptance_checks": [
+        "Hierarchy: jobs list and core results remain primary over tools and controls.",
+        "Prohibited surfaces: no discovery, autonomy, connectors, or source matrix concepts appear in the product shell.",
+        "Backend wiring only: wiring to real data is not sufficient unless the visible structure matches the Figma hierarchy."
+      ],
+      "primary_ux_prohibited_surfaces": [
+        "discovery",
+        "autonomy",
+        "connectors",
+        "source matrix"
+      ],
+      "allow_noop_completion": false,
+      "product_facing_ux": true
+    },
+    {
+      "id": "JORB-V3-008",
+      "title": "Implement correct job cards",
+      "type": "feature",
+      "area": "ux",
+      "milestone": "M6",
+      "priority": 1,
+      "status": "ready",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V3-007",
+        "JORB-INFRA-007"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Implement the exact job card content and hierarchy from Figma.",
+      "why_it_matters": "The jobs list is the core product surface, so card fidelity and observability are central to product trust.",
+      "allowlist": [
+        "api/**",
+        "ui/**",
+        "tests/test_production_runtime.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_production_runtime.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance_criteria": [
+        "Each job card shows title, company, location, short description, prominent match score, tags, explanation, and save/apply/dismiss actions",
+        "Card structure and prominence match the Figma Jobs design rather than a generic list rendering",
+        "VM runtime proof shows real rendered cards with the required fields populated from live data or truthful placeholders"
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Implement the canonical job cards from Figma. The cards must visibly contain title, company, location, short description, match score, tags, why-this-matches explanation, and actions without collapsing into a generic admin table or debug list.",
+      "design_section_mapping": [
+        "Match the job card component and card list structure in /Users/samuelkrystal/projects/jorb/design/figma."
+      ],
+      "intentional_design_deviations": [],
+      "product_first_acceptance_checks": [
+        "Hierarchy: score, title, company, and why-this-matches remain prominent in the card layout.",
+        "Prohibited surfaces: no diagnostics or source-matrix surfaces leak into cards.",
+        "Backend wiring only: real job data is not sufficient unless the card hierarchy matches design intent."
+      ],
+      "primary_ux_prohibited_surfaces": [
+        "discovery",
+        "autonomy",
+        "connectors",
+        "source matrix"
+      ],
+      "allow_noop_completion": false,
+      "product_facing_ux": true
+    },
+    {
+      "id": "JORB-V3-009",
+      "title": "Filters panel",
+      "type": "feature",
+      "area": "ux",
+      "milestone": "M6",
+      "priority": 1,
+      "status": "ready",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V3-007",
+        "JORB-V3-008"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Implement the user-facing filters panel aligned with the Figma jobs flow.",
+      "why_it_matters": "Search and results only become controllable if the filters are visible, understandable, and grounded in the actual jobs-first layout.",
+      "allowlist": [
+        "api/**",
+        "ui/**",
+        "tests/test_production_runtime.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_production_runtime.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance_criteria": [
+        "The filters panel matches the Figma structure and uses product language such as search, results, and filters",
+        "Changing filters visibly affects the jobs list or active search state",
+        "VM runtime proof shows filters operating within the jobs-first shell without exposing internal system concepts"
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Implement the Jobs filters panel from the Figma source of truth. The panel must feel like product search controls rather than admin instrumentation and must visibly affect results or the active SearchRun state.",
+      "design_section_mapping": [
+        "Match the filters panel and its relationship to the jobs list in /Users/samuelkrystal/projects/jorb/design/figma."
+      ],
+      "intentional_design_deviations": [],
+      "product_first_acceptance_checks": [
+        "Hierarchy: filters support the jobs list instead of displacing it.",
+        "Prohibited surfaces: no discovery, connectors, or source-matrix diagnostics appear in the filters UI.",
+        "Backend wiring only: connected filters are not sufficient unless the visible panel structure matches Figma."
+      ],
+      "primary_ux_prohibited_surfaces": [
+        "discovery",
+        "autonomy",
+        "connectors",
+        "source matrix"
+      ],
+      "allow_noop_completion": false,
+      "product_facing_ux": true
+    },
+    {
+      "id": "JORB-V3-010",
+      "title": "Remove internal UX leakage",
+      "type": "feature",
+      "area": "ux",
+      "milestone": "M6",
+      "priority": 1,
+      "status": "ready",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V3-007",
+        "JORB-V3-008",
+        "JORB-V3-009",
+        "JORB-INFRA-007"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Purge internal system language and diagnostics from the primary user-facing UX.",
+      "why_it_matters": "The product cannot present a trustworthy jobs-first experience while leaking internal operating concepts into the user shell.",
+      "allowlist": [
+        "api/**",
+        "ui/**",
+        "tests/test_production_runtime.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_production_runtime.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance_criteria": [
+        "Discovery, autonomy, connectors, and source matrix language no longer appear in the primary user-facing UX",
+        "Any remaining internal diagnostics are limited to logs or admin-only surfaces outside the main jobs flow",
+        "VM runtime proof shows the primary shell using user-facing language only"
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Remove internal UX leakage from the product shell so the primary experience speaks in jobs, search, results, and filters rather than internal operating concepts.",
+      "design_section_mapping": [
+        "Conform all visible primary-shell copy and labels to the Jobs-focused product language in /Users/samuelkrystal/projects/jorb/design/figma."
+      ],
+      "intentional_design_deviations": [],
+      "product_first_acceptance_checks": [
+        "Hierarchy: copy cleanup preserves the jobs-first structure.",
+        "Prohibited surfaces: prohibited internal labels are removed from the primary UX.",
+        "Backend wiring only: hidden internal labels are still a failure even if the data flow is correct."
+      ],
+      "primary_ux_prohibited_surfaces": [
+        "discovery",
+        "autonomy",
+        "connectors",
+        "source matrix"
+      ],
+      "allow_noop_completion": false,
+      "product_facing_ux": true
+    },
+    {
+      "id": "JORB-V3-011",
+      "title": "Multi-source acquisition",
+      "type": "feature",
+      "area": "backend",
+      "milestone": "M6",
+      "priority": 1,
+      "status": "ready",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V3-005"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Make discovery truly multi-source so real job yield does not hinge on one brittle path.",
+      "why_it_matters": "A single fragile source path cannot support trustworthy search behavior or the required vertical slice.",
+      "allowlist": [
+        "api/**",
+        "connectors/**",
+        "core/**",
+        "services/**",
+        "tests/test_pipeline.py",
+        "tests/test_search_discovery.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_search_discovery.py tests/test_pipeline.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance_criteria": [
+        "At least two real acquisition paths can contribute candidates to a search run",
+        "SearchRun sources_attempted truthfully records which sources actually ran and what they returned",
+        "VM runtime proof shows multi-source behavior in logs or SearchRun records"
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Implement multi-source acquisition so search can pull candidates from more than one real path and SearchRun records exactly which sources were attempted and what they yielded.",
+      "allow_noop_completion": false
+    },
+    {
+      "id": "JORB-V3-012",
+      "title": "Scrape fallback",
+      "type": "feature",
+      "area": "backend",
+      "milestone": "M6",
+      "priority": 1,
+      "status": "ready",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-V3-011"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Fall back to scraping when primary acquisition paths return zero useful jobs.",
+      "why_it_matters": "Zero-result scenarios are only trustworthy if the system either exhausts fallback behavior or reports that it could not.",
+      "allowlist": [
+        "api/**",
+        "connectors/**",
+        "core/**",
+        "services/**",
+        "tests/test_pipeline.py",
+        "tests/test_search_discovery.py",
+        "tests/test_workbench.py"
+      ],
+      "forbid": [
+        "../jorb-builder/**",
+        "builder/**"
+      ],
+      "verification": [
+        "pytest tests/test_search_discovery.py tests/test_pipeline.py tests/test_workbench.py",
+        "./scripts/preflight_check.sh"
+      ],
+      "acceptance_criteria": [
+        "Scrape fallback triggers only after structured acquisition yields zero useful jobs",
+        "Fallback results are normalized and counted in SearchRun results_found or errors",
+        "VM runtime proof shows fallback execution or an explicit fallback failure path in logs"
+      ],
+      "repo_path": "~/projects/jorb",
+      "description": "Add scrape fallback to zero-yield scenarios so the product can either produce additional candidates or truthfully report that fallback also failed.",
+      "allow_noop_completion": false
+    },
+    {
+      "id": "JORB-INFRA-007",
+      "title": "Enforce Figma compliance",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M6",
+      "priority": 1,
+      "status": "blocked",
+      "retries_used": 0,
+      "depends_on": [],
+      "prompt": "implement_feature",
+      "objective": "Make product-facing UX acceptance fail unless the implementation maps cleanly to the canonical Figma source of truth.",
+      "why_it_matters": "The builder has already accepted UX work that did not match the intended structure, so design conformance must become enforceable.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "Product-facing UX tasks must declare design section mapping against /Users/samuelkrystal/projects/jorb/design/figma",
+        "Builder acceptance fails when required card content or hierarchy evidence is missing",
+        "Builder evidence explicitly rejects internal-language leakage in the primary UX"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Harden the builder so product-facing UX tasks cannot pass without explicit Figma mapping, card-content compliance, hierarchy evidence, and prohibited-surface checks.",
+      "allow_noop_completion": false,
+      "notes": [
+        "Builder repo is dirty before automated execution; refusing to continue."
+      ]
+    },
+    {
+      "id": "JORB-INFRA-008",
+      "title": "Enforce runtime proof",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M6",
+      "priority": 1,
+      "status": "ready",
+      "retries_used": 0,
+      "depends_on": [],
+      "prompt": "implement_feature",
+      "objective": "Require observable VM runtime proof before product tasks can be accepted.",
+      "why_it_matters": "Fake success is possible unless the builder insists on visible runtime evidence rather than tests alone.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "Builder can fail a task when VM behavior is not visible in UI or logs even if tests pass",
+        "Runtime proof requirements are configurable per task and survive retry or repair flows",
+        "Failure summaries clearly distinguish missing runtime proof from ordinary local test failures"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Teach the builder to require concrete VM runtime proof for product tasks, including visible UI or log evidence that matches task intent.",
+      "allow_noop_completion": false
+    },
+    {
+      "id": "JORB-INFRA-009",
+      "title": "Enforce VM bootstrap",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M6",
+      "priority": 1,
+      "status": "ready",
+      "retries_used": 0,
+      "depends_on": [],
+      "prompt": "implement_feature",
+      "objective": "Require VM validation flows to start the runtime stack before smoke checks run.",
+      "why_it_matters": "VM validation is invalid when smoke checks run against a stack that was never started.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "Builder can require API, worker, and UI bootstrap before VM runtime_self_check.sh",
+        "VM bootstrap failures are distinguished from smoke failures and surfaced with useful diagnostics",
+        "Task metadata can declare bootstrap, smoke, and cleanup behavior without hardcoding one product task"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Harden VM validation sequencing so runtime smoke checks only run after the required stack is actually started and verified.",
+      "allow_noop_completion": false
     }
   ],
   "errors": [],

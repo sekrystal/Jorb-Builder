@@ -1,0 +1,74 @@
+{
+  "task_id": "JORB-V3-001",
+  "title": "Implement SearchRun model",
+  "status": "blocked",
+  "attempt": 1,
+  "started_at": "2026-03-29T19:02:00.101011+00:00",
+  "completed_at": "2026-03-29T19:02:00.105221+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T190159Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T190159Z-JORB-V3-001",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T190159Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T190159Z-JORB-V3-001"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T190159Z-JORB-V3-001/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T190159Z-JORB-V3-001/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T190159Z-JORB-V3-001/progress.jsonl"
+    }
+  ],
+  "files_changed": [],
+  "commands_run": [],
+  "results": [
+    "blocked"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Missing automation configuration: executor.codex_cli"
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Missing automation configuration: executor.codex_cli",
+    "accepted": false,
+    "acceptance_met": [],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "configuration",
+        "outcome": "blocked",
+        "detail": "Missing automation configuration: executor.codex_cli"
+      }
+    ],
+    "changed_files_count": 0,
+    "changed_files": [],
+    "unproven_runtime_gaps": [
+      "Missing automation configuration: executor.codex_cli"
+    ],
+    "ux_conformance": {
+      "required": false,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": null,
+      "intentional_design_deviations": null,
+      "product_first_checklist": null,
+      "primary_ux_prohibited_surfaces": []
+    }
+  },
+  "unproven_runtime_gaps": [
+    "Missing automation configuration: executor.codex_cli"
+  ]
+}

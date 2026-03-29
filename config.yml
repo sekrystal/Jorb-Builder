@@ -22,7 +22,7 @@
   "executor": {
     "mode": "codex_exec",
     "command": null,
-    "codex_cli": "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex",
+    "codex_cli": "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.325.31654-darwin-arm64/bin/macos-aarch64/codex",
     "sandbox": "workspace-write",
     "full_auto": true,
     "last_message_file": "codex_last_message.md",
@@ -31,6 +31,11 @@
   },
   "git": {
     "require_clean_worktree": true,
+    "ignored_dirty_paths": {
+      "product": [
+        "design/figma_old/"
+      ]
+    },
     "commit_message_template": "{task_id}: {title}",
     "push_command": "git push origin main"
   },
@@ -47,7 +52,9 @@
   },
   "verification": {
     "default_check_group": "targeted",
-    "required_on_completion": ["preflight"]
+    "required_on_completion": [
+      "preflight"
+    ]
   },
   "rules": {
     "forbid_builder_code_in_product_repo": true,

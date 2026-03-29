@@ -81,6 +81,14 @@ NONINTERACTIVE_GIT_ENV = {
 UX_MAPPING_LABEL = "UX Design Section Mapping:"
 UX_DEVIATIONS_LABEL = "UX Intentional Design Deviations:"
 UX_CHECKLIST_LABEL = "UX Product-First Checklist:"
+TRANSIENT_EXECUTOR_FAILURE_PATTERNS = (
+    "stream disconnected before completion",
+    "error sending request for url",
+    "attempt to write a readonly database",
+    "channel closed",
+    "thread/read failed",
+    "not materialized yet",
+)
 
 
 def now_iso() -> str:
@@ -171,6 +179,15 @@ def extract_labeled_line(text: str, label: str) -> str | None:
             if stripped.startswith(label):
                 return stripped[len(label):].strip()
     return None
+
+
+def is_retryable_executor_failure(executor_result: dict[str, Any]) -> bool:
+    if str(executor_result.get("failure_reason") or "") != "executor_failure":
+        return False
+    text = "\n".join(
+        part for part in (str(executor_result.get("stderr") or ""), str(executor_result.get("stdout") or "")) if part
+    ).lower()
+    return any(pattern in text for pattern in TRANSIENT_EXECUTOR_FAILURE_PATTERNS)
 
 
 def ux_conformance_result(task: dict[str, Any], executor_output: str) -> dict[str, Any]:
@@ -885,22 +902,30 @@ def run_codex_exec(
     return result
 
 
-def ignored_git_paths_for_target(target_kind: str) -> tuple[str, ...]:
-    if target_kind != "builder":
-        return ()
-    return (
-        "active_task.yml",
-        "backlog.yml",
-        "status.yml",
-        "builder_memory.md",
-        "task_history/",
-        "blockers/",
-        "run_logs/",
-    )
+def ignored_git_paths_for_target(target_kind: str, git_config: dict[str, Any] | None = None) -> tuple[str, ...]:
+    defaults: tuple[str, ...] = ()
+    if target_kind == "builder":
+        defaults = (
+            "active_task.yml",
+            "backlog.yml",
+            "status.yml",
+            "builder_memory.md",
+            "task_history/",
+            "blockers/",
+            "run_logs/",
+        )
+    config = git_config if isinstance(git_config, dict) else load_config().get("git", {})
+    extra: list[str] = []
+    ignored_dirty_paths = config.get("ignored_dirty_paths", {})
+    if isinstance(ignored_dirty_paths, dict):
+        raw_entries = ignored_dirty_paths.get(target_kind, [])
+        if isinstance(raw_entries, list):
+            extra = [str(entry).strip() for entry in raw_entries if str(entry).strip()]
+    return defaults + tuple(extra)
 
 
 def git_status_porcelain(repo: Path, *, ignored_prefixes: tuple[str, ...] = ()) -> dict[str, Any]:
-    result = run_argv(["git", "status", "--porcelain"], repo)
+    result = run_argv(["git", "status", "--porcelain", "--untracked-files=all"], repo)
     files: list[str] = []
     for line in result.get("stdout", "").splitlines():
         if not line.strip():
@@ -1155,6 +1180,15 @@ def prior_result_supports_vm_retry(run_dir: Path | None) -> dict[str, Any] | Non
         "changed_files": changed_files,
     }
     return None
+
+
+def prior_result_supports_executor_retry(run_dir: Path | None) -> bool:
+    if run_dir is None:
+        return False
+    executor_path = run_dir / "executor.json"
+    if not executor_path.exists():
+        return False
+    return is_retryable_executor_failure(load_data(executor_path))
 
 
 def classify_and_update_state(
@@ -1558,6 +1592,35 @@ def repair_legacy_state() -> int:
         for line in repaired:
             print(f"- {line}")
         return 0
+
+    if task is not None and task.get("status") == "blocked":
+        terminal_run_dir = latest_terminal_run_dir(active) or (Path(str(active["run_log_dir"])).expanduser().resolve() if active.get("run_log_dir") else None)
+        if prior_result_supports_executor_retry(terminal_run_dir):
+            task["status"] = "ready"
+            task.setdefault("notes", []).append(
+                "Repaired from transient executor transport failure; task restored to ready for a fresh rerun."
+            )
+            write_data(BACKLOG, backlog)
+            repaired_active = reset_active()
+            repaired_active["previous_run_log_dir"] = str(terminal_run_dir) if terminal_run_dir is not None else active.get("run_log_dir")
+            write_data(ACTIVE, repaired_active)
+            status["state"] = "idle"
+            status["active_task_id"] = None
+            status["last_task_id"] = task_id
+            status["last_result"] = "interrupted"
+            status["last_run_at"] = now_iso()
+            write_data(STATUS, status)
+            repaired.append(f"backlog task {task_id} blocked -> ready")
+            resolved = resolve_blocker_for_task(
+                str(task_id),
+                resolution="Resolved by state repair: prior executor failure matched a transient Codex transport error and the task is ready for a fresh rerun.",
+            )
+            if resolved is not None:
+                repaired.append(f"{resolved.name} resolved")
+            print("STATE_REPAIRED")
+            for line in repaired:
+                print(f"- {line}")
+            return 0
 
     if task is not None and task.get("status") == "blocked" and is_executor_interrupted_only_block(active, status, run_result):
         target_kind, target_repo, dirty_files = blocked_dirty_repo_truth(task, active)
@@ -2107,7 +2170,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
     )
     use_vm_flow = target_kind == "product"
     effective_vm_ssh_options = noninteractive_vm_ssh_options(vm_config) if use_vm_flow else []
-    ignored_git_paths = ignored_git_paths_for_target(target_kind)
+    ignored_git_paths = ignored_git_paths_for_target(target_kind, git_config)
     plan = {
         "task_id": task["id"],
         "prompt_file": active["prompt_file"],
@@ -2471,10 +2534,13 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         })
         if not executor_result["passed"]:
             failure_reason = executor_result.get("failure_reason") or "executor_failure"
+            retryable_executor_failure = is_retryable_executor_failure(executor_result)
             if failure_reason == "executor_timeout":
                 summary = "executor_timeout"
             elif failure_reason == "executor_interrupted":
                 summary = "executor_interrupted"
+            elif retryable_executor_failure:
+                summary = "executor_transport_failure"
             else:
                 summary = "executor_failure"
             emit_progress(run_dir, task_id=task["id"], stage_index=3, backlog=backlog, task_started_at=progress_started_at, state="failed", detail=summary)
@@ -2487,7 +2553,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             )
             automation_result = {
                 "task_id": task["id"],
-                "classification": "interrupted" if failure_reason == "executor_interrupted" else "blocked",
+                "classification": "interrupted" if failure_reason == "executor_interrupted" or retryable_executor_failure else "blocked",
                 "finished_at": now_iso(),
                 "summary": summary,
                 "steps": steps,
@@ -2497,11 +2563,15 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             }
             write_json(run_dir / RESULT_FILE, automation_result)
             write_summary(run_dir, automation_result)
-            classify_and_update_state("interrupted" if failure_reason == "executor_interrupted" else "blocked", summary, task, backlog, active, status, automation_result)
+            classify_and_update_state("interrupted" if failure_reason == "executor_interrupted" or retryable_executor_failure else "blocked", summary, task, backlog, active, status, automation_result)
             write_data(BACKLOG, backlog)
             if failure_reason == "executor_interrupted":
                 print_result("INTERRUPTED", "Executor interrupted by user.", "Rerun python3 scripts/automate_task_loop.py when you are ready to try again.")
                 return 130
+            if retryable_executor_failure:
+                write_data(STATUS, status)
+                print_result("INTERRUPTED", summary, "Transient Codex executor failure; rerun python3 scripts/automate_task_loop.py.")
+                return 1
             write_data(STATUS, status)
             print_result("BLOCKED", summary, "Fix the executor integration or switch back to human_gated mode before rerunning python3 scripts/automate_task_loop.py.")
             return 2

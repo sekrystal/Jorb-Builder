@@ -231,3 +231,15 @@ Does this directly improve:
 - JORB-V2-006 accepted by automated loop. History: 2026-03-27T165646Z-JORB-V2-006.yml
 
 - JORB-V2-007 accepted by automated loop. History: 2026-03-27T170330Z-JORB-V2-007.yml
+
+- JORB-V3-001 blocked by automated loop via BLK-JORB-V3-001.yml. History: 2026-03-29T190200Z-JORB-V3-001.yml
+
+- JORB-V3-001 blocked by automated loop via BLK-JORB-V3-001.yml. History: 2026-03-29T193807Z-JORB-V3-001.yml
+
+- JORB-V3-001 blocked by automated loop via BLK-JORB-V3-001.yml. History: 2026-03-29T194236Z-JORB-V3-001.yml
+
+- JORB-V3-001 interrupted by operator. History: 2026-03-29T211401Z-JORB-V3-001.yml
+
+- JORB-V3-001 accepted by automated loop. History: 2026-03-29T212218Z-JORB-V3-001.yml
+
+- JORB-INFRA-007 blocked by automated loop via BLK-JORB-INFRA-007.yml. History: 2026-03-29T212406Z-JORB-INFRA-007.yml

@@ -1,0 +1,24 @@
+{
+  "id": "BLK-JORB-INFRA-007",
+  "title": "Task JORB-INFRA-007 blocked during automated execution",
+  "severity": "high",
+  "opened_at": "2026-03-29T21:24:06.239312+00:00",
+  "related_tasks": [
+    "JORB-INFRA-007"
+  ],
+  "status": "open",
+  "symptoms": [
+    "Builder repo is dirty before automated execution; refusing to continue."
+  ],
+  "diagnosis": "Builder repo is dirty before automated execution; refusing to continue.",
+  "evidence": [
+    "config.yml",
+    "roadmap.yml",
+    "scripts/automate_task_loop.py",
+    "tests/test_automate_task_loop.py"
+  ],
+  "next_actions": [
+    "Inspect automation_result.json and narrow the next bounded refinement."
+  ],
+  "human_needed": true
+}

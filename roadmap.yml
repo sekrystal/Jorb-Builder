@@ -1,7 +1,7 @@
 {
-  "version": 7,
+  "version": 8,
   "product": "Jorb",
-  "current_baseline": "Phase 1 is complete, and early Phase 2 work restored runtime schema compatibility plus a jobs-first landing foundation. Streamlit remains a temporary validation harness rather than the long-term product shell. The next product risk is that discovery is still incomplete and brittle, so the product must pass through a structured multi-source discovery phase before later builder hardening and JS product UX work can be trusted.",
+  "current_baseline": "Phases 1 and 2 are historically complete, but they did not establish trustworthy product reality. Strict Product Reality Mode now treats the product as unproven until the VM shows observable search behavior, real jobs or explicit failure states, and Figma-aligned jobs-first UX structure from the canonical design source at /Users/samuelkrystal/projects/jorb/design/figma.",
   "milestones": [
     {
       "id": "M0",
@@ -32,6 +32,11 @@
       "id": "M5",
       "name": "Usable product runtime and UX",
       "goal": "A functioning live runtime, jobs-first experience, optional onboarding, understandable IA, and resilient discovery on the VM"
+    },
+    {
+      "id": "M6",
+      "name": "Strict product reality",
+      "goal": "Observable search runs, truthful zero-result states, real-job vertical slices, and Figma-aligned jobs-first UX proven in the VM"
     }
   ],
   "themes": [
@@ -139,7 +144,7 @@
     ]
   },
   "phase_2a_search_truth": {
-    "status": "active",
+    "status": "completed",
     "goal": "Make search and profile truth real enough that later UX and frontend work rests on working constraints, truthful source coverage, and visible runtime yield.",
     "vm_findings": [
       "profile search constraints for geography, work mode, and target roles are not yet clearly real in backend search and ranking",
@@ -163,7 +168,7 @@
     ]
   },
   "phase_2b_robust_discovery_and_verification": {
-    "status": "active",
+    "status": "completed",
     "goal": "Implement a structured, multi-source, resilient discovery system that normalizes, verifies, ranks, observes, and proves real jobs appear in product.",
     "task_ids": [
       "JORB-V2-019",
@@ -202,7 +207,7 @@
     ]
   },
   "phase_2c_builder_hardening_and_streamlit_cleanup": {
-    "status": "pending",
+    "status": "completed",
     "goal": "Harden builder UX acceptance rules and keep the temporary Streamlit harness minimally jobs-first without letting it become the final product shell.",
     "primary_ux_prohibited_surfaces": [
       "discovery source matrix",
@@ -224,9 +229,57 @@
       "JORB-V2-007"
     ]
   },
-  "phase_3_js_frontend": {
+  "phase_3_strict_product_reality": {
+    "status": "active",
+    "goal": "Rebuild trustworthy runtime observability and jobs-first product truth before any further UI polish counts as success.",
+    "figma_source_of_truth": "/Users/samuelkrystal/projects/jorb/design/figma",
+    "product_rules": [
+      "a task is not accepted unless it works in the VM and the intended behavior is visible in UI or logs",
+      "jobs must remain the primary screen and match the Figma hierarchy",
+      "internal language such as discovery, autonomy, connectors, and source matrix must stay out of the primary product UX",
+      "empty states are valid only after a real observable search run completes with zero results",
+      "runtime validation must start the API, worker, and UI stack before runtime_self_check.sh runs"
+    ],
+    "task_ids": [
+      "JORB-V3-001",
+      "JORB-V3-002",
+      "JORB-V3-003",
+      "JORB-V3-004",
+      "JORB-V3-005",
+      "JORB-V3-011",
+      "JORB-V3-012",
+      "JORB-INFRA-007",
+      "JORB-INFRA-008",
+      "JORB-INFRA-009",
+      "JORB-V3-006",
+      "JORB-V3-007",
+      "JORB-V3-008",
+      "JORB-V3-009",
+      "JORB-V3-010"
+    ],
+    "ready_task_ids": [
+      "JORB-V3-001"
+    ],
+    "pending_task_ids": [
+      "JORB-V3-002",
+      "JORB-V3-003",
+      "JORB-V3-004",
+      "JORB-V3-005",
+      "JORB-V3-011",
+      "JORB-V3-012",
+      "JORB-INFRA-007",
+      "JORB-INFRA-008",
+      "JORB-INFRA-009",
+      "JORB-V3-006",
+      "JORB-V3-007",
+      "JORB-V3-008",
+      "JORB-V3-009",
+      "JORB-V3-010"
+    ]
+  },
+  "phase_4_js_frontend": {
     "status": "pending",
-    "goal": "Build the production JS front end on top of a truthful search substrate and a proven real-job vertical slice, while Streamlit remains a temporary validation and operator harness.",
+    "goal": "Any later JS product UX work must happen only after Phase 3 proves trustworthy search behavior, real jobs in the VM, and Figma-aligned jobs-first structure.",
     "task_ids": [
       "JORB-V2-013",
       "JORB-V2-014",
