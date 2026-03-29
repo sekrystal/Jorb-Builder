@@ -1,0 +1,136 @@
+{
+  "task_id": "JORB-V2-006",
+  "title": "Require live runtime smoke validation for acceptance-critical product work",
+  "status": "refined",
+  "attempt": 8,
+  "started_at": "2026-03-27T16:43:14.829082+00:00",
+  "completed_at": "2026-03-27T16:48:59.407031+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T164312Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T164312Z-JORB-V2-006",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T164312Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T164312Z-JORB-V2-006"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T164312Z-JORB-V2-006/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T164312Z-JORB-V2-006/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T164312Z-JORB-V2-006/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T164312Z-JORB-V2-006/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T164312Z-JORB-V2-006/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T164312Z-JORB-V2-006/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T164312Z-JORB-V2-006/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T164312Z-JORB-V2-006/executor.json"
+    }
+  ],
+  "files_changed": [
+    "OPERATIONS.md",
+    "README.md",
+    "scripts/runtime_self_check.sh",
+    "tests/test_production_runtime.py",
+    "tests/test_workbench.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T164312Z-JORB-V2-006/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "refined"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [
+    "acceptance-critical product tasks define explicit live smoke checks covering API, worker, and primary UI path where relevant",
+    "runtime validation distinguishes local test success from actual live product proof",
+    "docs and smoke tooling reflect the minimum evidence required before future product acceptance",
+    "targeted tests, preflight, and smoke checks pass"
+  ],
+  "blocker_opened": null,
+  "notes": [
+    "VM bootstrap failed after local validation and git push succeeded."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "VM bootstrap failed after local validation and git push succeeded.",
+    "accepted": false,
+    "acceptance_met": [],
+    "acceptance_unmet": [
+      "acceptance-critical product tasks define explicit live smoke checks covering API, worker, and primary UI path where relevant",
+      "runtime validation distinguishes local test success from actual live product proof",
+      "docs and smoke tooling reflect the minimum evidence required before future product acceptance",
+      "targeted tests, preflight, and smoke checks pass"
+    ],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\nAdded an explicit optional primary-product-shell smoke path to [`scripts/runtime_self_check.sh`](/Users/samuelkrystal/projects/jorb/scripts/runtime_self_check.sh) via `PRIMARY_UI_URL`, so acceptance-critical work can record live proof for the JS shell (`/` and `/jobs`) when the task touches the user-facing product path. Tightened [`README.md`](/Users/samuelkrystal/projects/jorb/README.md) and [`OPERATIONS.md`](/Users/samuelkrystal/projects/jorb/OPERATIONS.md) to require that extra proof where relevant, and updated the guardrail tests to enforce the new contract.\n\n2. Exact files changed\n\n- [`README.md`](/Users/samuelkrystal/projects/jorb/README.md)\n- [`OPERATIONS.md`](/Users/samuelkrystal/projects/jorb/OPERATIONS.md)\n- [`scripts/runtime_self_check.sh`](/Users/samuelkrystal/projects/jorb/scripts/runtime_self_check.sh)\n- [`tests/test_production_runtime.py`](/Users/samuelkrystal/projects/jorb/tests/test_production_runtime.py)\n- [`tests/test_workbench.py`](/Users/samuelkrystal/projects/jorb/tests/test_workbench.py)\n\n3. Exact tests added or updated\n\nUpdated existing tests only:\n\n- [`tests/test_production_runtime.py`](/Users/samuelkrystal/projects/jorb/tests/test_production_runtime.py)\n  - `test_runtime_self_check_requires_live_stack_evidence`\n- [`tests/test_workbench.py`](/Users/samuelkrystal/projects/jorb/tests/test_workbench.py)\n  - `test_acceptance_docs_require_live_runtime_smoke_for_product_work`\n\n4. Exact commands run\n\n```bash\ngit status --short\ngrep -RInE \"runtime_self_check|preflight_check|acceptance|smoke|live runtime|production runtime|workbench\" README.md OPERATIONS.md scripts tests api core services\nfind scripts tests -type f | grep -E \"runtime_self_check|preflight_check|test_production_runtime|test_workbench\"\nsed -n '1,240p' scripts/runtime_self_check.sh\nsed -n '1,260p' tests/test_production_runtime.py\nsed -n '230,320p' tests/test_workbench.py\nsed -n '580,640p' README.md\nsed -n '40,80p' OPERATIONS.md\nsed -n '1,220p' frontend/index.html\nsed -n '1,240p' frontend/src/shell/AppShell.tsx\nsed -n '1,220p' frontend/src/router.tsx\npytest tests/test_production_runtime.py tests/test_workbench.py\n./scripts/preflight_check.sh\npython scripts/reset_demo.py\n.venv/bin/python scripts/reset_demo.py\nfind . -maxdepth 2 -type f \\( -path './.venv*/bin/python' -o -path './.venv*/bin/python3' \\) | sort\nls -la\ncommand -v python3 || true; command -v uvicorn || true; command -v streamlit || true; command -v pytest || true\ngrep -n \"venv_validation\\|Using Python\" -n scripts/preflight_check.sh\nsed -n '1,80p' scripts/preflight_check.sh\n.venv_validation/bin/python scripts/reset_demo.py\npkill -f \".venv_validation/bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8000\" || true; nohup env DATABASE_URL=sqlite:///./opportunity_scout.db OPENAI_ENABLED=false ENABLE_SCHEDULER=false AUTONOMY_ENABLED=false GREENHOUSE_ENABLED=false .venv_validation/bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8000 >/tmp/jorb-api.log 2>&1 </dev/null & for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8000/health >/dev/null && exit 0; sleep 1; done; tail -n 80 /tmp/jorb-api.log >&2 || true; exit 1\npkill -f \".venv_validation/bin/python scripts/run_worker.py\" || true; nohup env DATABASE_URL=sqlite:///./opportunity_scout.db OPENAI_ENABLED=false ENABLE_SCHEDULER=false AUTONOMY_ENABLED=false GREENHOUSE_ENABLED=false .venv_validation/bin/python scripts/run_worker.py >/tmp/jorb-worker.log 2>&1 </dev/null & sleep 3; pgrep -af \"scripts/run_worker.py\" >/dev/null || { tail -n 80 /tmp/jorb-worker.log >&2 || true; exit 1; }\npkill -f \".venv_validation/bin/python -m streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500\" || true; nohup env DATABASE_URL=sqlite:///./opportunity_scout.db OPENAI_ENABLED=false ENABLE_SCHEDULER=false AUTONOMY_ENABLED=false GREENHOUSE_ENABLED=false .venv_validation/bin/python -m streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500 >/tmp/jorb-ui.log 2>&1 </dev/null & for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8500 >/dev/null && exit 0; sleep 1; done; tail -n 80 /tmp/jorb-ui.log >&2 || true; exit 1\ntail -n 120 /tmp/jorb-api.log; printf '\\n---UI---\\n'; tail -n 120 /tmp/jorb-ui.log\n.venv_validation/bin/python - <<'PY'\nfrom sqlalchemy import create_engine, inspect\nengine = create_engine('sqlite:///./opportunity_scout.db')\ninspector = inspect(engine)\nprint('runtime_control' in inspector.get_table_names())\nprint(sorted(name for name in inspector.get_table_names() if name in {'runtime_control','listings','leads'}))\nPY\nbash scripts/runtime_self_check.sh\npkill -f \".venv_validation/bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8000\" || true\npkill -f \".venv_validation/bin/python scripts/run_worker.py\" || true\npkill -f \".venv_validation/bin/python -m streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500\" || true\ngit diff -- README.md OPERATIONS.md scripts/runtime_self_check.sh tests/test_production_runtime.py tests/test_workbench.py\n```\n\n5. Exact results\n\n- `pytest tests/test_production_runtime.py tests/test_workbench.py`: passed, `47 passed in 1.50s`\n- `./scripts/preflight_check.sh`: passed, including full repo pytest run, `184 passed in 7.83s`\n- `.venv_validation/bin/python scripts/reset_demo.py`: passed and reseeded demo data\n- DB inspection: confirmed `runtime_control`, `listings`, and `leads` tables exist in `opportunity_scout.db`\n- Live API bootstrap: failed to bind `127.0.0.1:8000` with `ERROR: [Errno 1] error while attempting to bind on address ('127.0.0.1', 8000): operation not permitted`\n- Live worker bootstrap: failed in the earlier race before reset completed with `sqlite3.OperationalError: no such table: runtime_control`; after confirming DB state, the main blocker remained the environment\u2019s local runtime restrictions\n- Live Streamlit bootstrap: failed to bind `127.0.0.1:8500` with `PermissionError: [Errno 1] Operation not permitted`\n- `bash scripts/runtime_self_check.sh`: failed immediately because no live processes could be started; exact failure was `ERROR: missing required process: api (uvicorn api.main:app)`\n\n6. Honest note on what remains unproven\n\nLive runtime smoke proof is not proven in this environment. I could not start the local API or Streamlit servers because the sandbox rejected binding to `127.0.0.1` ports, so I could not truthfully claim success for `bash scripts/runtime_self_check.sh`, the VM bootstrap flow, or the optional `PRIMARY_UI_URL` primary-shell proof."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 24 vulnerabilities on sekrystal/Jorb's default branch (19 moderate, 5 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   68d4a4d..3e37f2c  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "refined",
+        "detail": "VM bootstrap commands failed."
+      }
+    ],
+    "changed_files_count": 5,
+    "changed_files": [
+      "OPERATIONS.md",
+      "README.md",
+      "scripts/runtime_self_check.sh",
+      "tests/test_production_runtime.py",
+      "tests/test_workbench.py"
+    ],
+    "unproven_runtime_gaps": [
+      "VM bootstrap failed after local validation and git push succeeded."
+    ],
+    "ux_conformance": {
+      "required": false,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": null,
+      "intentional_design_deviations": null,
+      "product_first_checklist": null,
+      "primary_ux_prohibited_surfaces": []
+    }
+  },
+  "unproven_runtime_gaps": [
+    "VM bootstrap failed after local validation and git push succeeded."
+  ]
+}

@@ -1,0 +1,118 @@
+{
+  "task_id": "JORB-V2-006",
+  "title": "Require live runtime smoke validation for acceptance-critical product work",
+  "status": "refined",
+  "attempt": 1,
+  "started_at": "2026-03-27T00:06:43.974824+00:00",
+  "completed_at": "2026-03-27T00:10:05.356455+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T000642Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T000643Z-JORB-V2-006",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T000642Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T000643Z-JORB-V2-006"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T000643Z-JORB-V2-006/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T000643Z-JORB-V2-006/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T000643Z-JORB-V2-006/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T000643Z-JORB-V2-006/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T000643Z-JORB-V2-006/local_validation.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T000643Z-JORB-V2-006/executor.json"
+    }
+  ],
+  "files_changed": [
+    "OPERATIONS.md",
+    "README.md",
+    "scripts/preflight_check.sh",
+    "scripts/runtime_self_check.sh",
+    "tests/test_production_runtime.py",
+    "tests/test_workbench.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T000643Z-JORB-V2-006/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "refined"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [
+    "acceptance-critical product tasks define explicit live smoke checks covering API, worker, and primary UI path where relevant",
+    "runtime validation distinguishes local test success from actual live product proof",
+    "docs and smoke tooling reflect the minimum evidence required before future product acceptance",
+    "targeted tests, preflight, and smoke checks pass"
+  ],
+  "blocker_opened": null,
+  "notes": [
+    "Local validation failed after executor changes."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Local validation failed after executor changes.",
+    "accepted": false,
+    "acceptance_met": [],
+    "acceptance_unmet": [
+      "acceptance-critical product tasks define explicit live smoke checks covering API, worker, and primary UI path where relevant",
+      "runtime validation distinguishes local test success from actual live product proof",
+      "docs and smoke tooling reflect the minimum evidence required before future product acceptance",
+      "targeted tests, preflight, and smoke checks pass"
+    ],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\nStrengthened acceptance-critical validation by making [`scripts/runtime_self_check.sh`](/Users/samuelkrystal/projects/jorb/scripts/runtime_self_check.sh) require direct live proof of API, worker, and primary UI availability, updated [`scripts/preflight_check.sh`](/Users/samuelkrystal/projects/jorb/scripts/preflight_check.sh) to explicitly say preflight is not live runtime proof, and added test/doc coverage so future product acceptance distinguishes local test success from real running-stack smoke validation.\n\n2. Exact files changed\n\n- [`/Users/samuelkrystal/projects/jorb/scripts/runtime_self_check.sh`](/Users/samuelkrystal/projects/jorb/scripts/runtime_self_check.sh)\n- [`/Users/samuelkrystal/projects/jorb/scripts/preflight_check.sh`](/Users/samuelkrystal/projects/jorb/scripts/preflight_check.sh)\n- [`/Users/samuelkrystal/projects/jorb/tests/test_production_runtime.py`](/Users/samuelkrystal/projects/jorb/tests/test_production_runtime.py)\n- [`/Users/samuelkrystal/projects/jorb/tests/test_workbench.py`](/Users/samuelkrystal/projects/jorb/tests/test_workbench.py)\n- [`/Users/samuelkrystal/projects/jorb/README.md`](/Users/samuelkrystal/projects/jorb/README.md)\n- [`/Users/samuelkrystal/projects/jorb/OPERATIONS.md`](/Users/samuelkrystal/projects/jorb/OPERATIONS.md)\n\n3. Exact tests added or updated\n\n- Updated [`tests/test_production_runtime.py`](/Users/samuelkrystal/projects/jorb/tests/test_production_runtime.py) with:\n  - `test_runtime_self_check_requires_live_stack_evidence`\n  - `test_preflight_check_declares_it_is_not_live_runtime_proof`\n- Updated [`tests/test_workbench.py`](/Users/samuelkrystal/projects/jorb/tests/test_workbench.py) with:\n  - `test_acceptance_docs_require_live_runtime_smoke_for_product_work`\n\n4. Exact commands run\n\n- `pytest tests/test_production_runtime.py tests/test_workbench.py`\n- `python3 scripts/reset_demo.py`\n- `ls -1a`\n- `ls -l .venv_j1/bin/python .venv_validation/bin/python .venv_validation_tmp/bin/python`\n- `.venv_j1/bin/python -V && .venv_validation/bin/python -V`\n- `.venv_j1/bin/python scripts/reset_demo.py`\n- `./scripts/preflight_check.sh`\n- `env DATABASE_URL=sqlite:///./opportunity_scout.db OPENAI_ENABLED=false ENABLE_SCHEDULER=false AUTONOMY_ENABLED=false GREENHOUSE_ENABLED=false .venv_j1/bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8000`\n- `env DATABASE_URL=sqlite:///./opportunity_scout.db OPENAI_ENABLED=false ENABLE_SCHEDULER=false AUTONOMY_ENABLED=false GREENHOUSE_ENABLED=false .venv_j1/bin/python scripts/run_worker.py`\n- `env DATABASE_URL=sqlite:///./opportunity_scout.db OPENAI_ENABLED=false ENABLE_SCHEDULER=false AUTONOMY_ENABLED=false GREENHOUSE_ENABLED=false .venv_j1/bin/python -m streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500`\n- `./scripts/runtime_self_check.sh`\n\n5. Exact results\n\n- `pytest tests/test_production_runtime.py tests/test_workbench.py`\n  - Passed: `47 passed in 1.54s`\n- `python3 scripts/reset_demo.py`\n  - Failed: `ModuleNotFoundError: No module named 'sqlalchemy'`\n- `.venv_j1/bin/python scripts/reset_demo.py`\n  - Passed and reseeded demo data\n- `./scripts/preflight_check.sh`\n  - Passed: `184 passed in 6.28s`\n  - Printed the new non-live-proof warning text\n- `uvicorn ... --port 8000`\n  - Failed: `[Errno 1] error while attempting to bind on address ('127.0.0.1', 8000): operation not permitted`\n- `streamlit run ... --server.port 8500`\n  - Failed: `PermissionError: [Errno 1] Operation not permitted`\n- `scripts/run_worker.py`\n  - Started successfully, then exited cleanly on `SIGINT`\n- `./scripts/runtime_self_check.sh`\n  - Failed with exit code `1`\n  - Exact failing reason: `ERROR: missing required process: api (uvicorn api.main:app)`\n\n6. Honest note on what remains unproven\n\nLive runtime smoke is still unproven in this environment. I could not boot the FastAPI or Streamlit servers because the sandbox blocks local port binding, so I could not produce real API/UI runtime proof or a passing `./scripts/runtime_self_check.sh` result here."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "refined",
+        "detail": "At least one local verification command failed."
+      }
+    ],
+    "changed_files_count": 6,
+    "changed_files": [
+      "OPERATIONS.md",
+      "README.md",
+      "scripts/preflight_check.sh",
+      "scripts/runtime_self_check.sh",
+      "tests/test_production_runtime.py",
+      "tests/test_workbench.py"
+    ],
+    "unproven_runtime_gaps": [
+      "Local validation failed after executor changes."
+    ],
+    "ux_conformance": {
+      "required": false,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": null,
+      "intentional_design_deviations": null,
+      "product_first_checklist": null,
+      "primary_ux_prohibited_surfaces": []
+    }
+  },
+  "unproven_runtime_gaps": [
+    "Local validation failed after executor changes."
+  ]
+}

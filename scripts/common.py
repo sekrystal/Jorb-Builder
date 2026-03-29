@@ -139,6 +139,7 @@ def canonicalize_task(task: dict, config: dict) -> dict:
         normalized["description"] = "\n\n".join(description_parts)
     if "acceptance_criteria" not in normalized:
         normalized["acceptance_criteria"] = list(task.get("acceptance", []))
+    normalized.setdefault("allow_noop_completion", bool(task.get("allow_noop_completion", False)))
     if is_product_facing_ux_task(normalized):
         normalized.setdefault("product_facing_ux", True)
         normalized.setdefault("design_section_mapping", list(task.get("design_section_mapping", [])))
@@ -176,8 +177,16 @@ def validate_backlog_payload(payload: dict, config: dict) -> dict:
             errors.append({"code": "invalid_status", "task_id": task_id, "detail": f"status must be one of {sorted(VALID_TASK_STATUSES)}, got {task.get('status')!r}"})
         if not isinstance(task.get("verification", []), list):
             errors.append({"code": "invalid_verification", "task_id": task_id, "detail": "verification must be a list"})
+        if "vm_verification" in task and not isinstance(task.get("vm_verification", []), list):
+            errors.append({"code": "invalid_vm_verification", "task_id": task_id, "detail": "vm_verification must be a list"})
+        if "vm_bootstrap" in task and not isinstance(task.get("vm_bootstrap", []), list):
+            errors.append({"code": "invalid_vm_bootstrap", "task_id": task_id, "detail": "vm_bootstrap must be a list"})
+        if "vm_cleanup" in task and not isinstance(task.get("vm_cleanup", []), list):
+            errors.append({"code": "invalid_vm_cleanup", "task_id": task_id, "detail": "vm_cleanup must be a list"})
         if not isinstance(task.get("acceptance_criteria", []), list):
             errors.append({"code": "invalid_acceptance_criteria", "task_id": task_id, "detail": "acceptance_criteria must be a list"})
+        if "allow_noop_completion" in task and not isinstance(task.get("allow_noop_completion"), bool):
+            errors.append({"code": "invalid_allow_noop_completion", "task_id": task_id, "detail": "allow_noop_completion must be a boolean"})
         ux_issues = ux_conformance_planning_issues(task)
         if ux_issues:
             errors.append(

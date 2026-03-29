@@ -1,0 +1,102 @@
+{
+  "task_id": "JORB-V2-006",
+  "title": "Require live runtime smoke validation for acceptance-critical product work",
+  "status": "accepted",
+  "attempt": 8,
+  "started_at": "2026-03-27T16:56:03.039719+00:00",
+  "completed_at": "2026-03-27T16:56:46.409378+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T164312Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T165602Z-JORB-V2-006",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T164312Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T165602Z-JORB-V2-006"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T165602Z-JORB-V2-006/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T165602Z-JORB-V2-006/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T165602Z-JORB-V2-006/progress.jsonl"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T165602Z-JORB-V2-006/vm_validation.json"
+    }
+  ],
+  "files_changed": [
+    "OPERATIONS.md",
+    "README.md",
+    "scripts/runtime_self_check.sh",
+    "tests/test_production_runtime.py",
+    "tests/test_workbench.py"
+  ],
+  "commands_run": [],
+  "results": [
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "acceptance-critical product tasks define explicit live smoke checks covering API, worker, and primary UI path where relevant",
+    "runtime validation distinguishes local test success from actual live product proof",
+    "docs and smoke tooling reflect the minimum evidence required before future product acceptance",
+    "targeted tests, preflight, and smoke checks pass"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [
+      "acceptance-critical product tasks define explicit live smoke checks covering API, worker, and primary UI path where relevant",
+      "runtime validation distinguishes local test success from actual live product proof",
+      "docs and smoke tooling reflect the minimum evidence required before future product acceptance",
+      "targeted tests, preflight, and smoke checks pass"
+    ],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "retry_check",
+        "outcome": "passed",
+        "detail": "No current dirty repo changes; continuing from prior post-push VM retry context."
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 5,
+    "changed_files": [
+      "OPERATIONS.md",
+      "README.md",
+      "scripts/runtime_self_check.sh",
+      "tests/test_production_runtime.py",
+      "tests/test_workbench.py"
+    ],
+    "unproven_runtime_gaps": [],
+    "ux_conformance": {
+      "required": false,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": null,
+      "intentional_design_deviations": null,
+      "product_first_checklist": null,
+      "primary_ux_prohibited_surfaces": []
+    }
+  },
+  "unproven_runtime_gaps": []
+}

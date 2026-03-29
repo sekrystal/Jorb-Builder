@@ -6,6 +6,7 @@ from pathlib import Path
 import argparse
 import json
 import os
+import re
 import shlex
 import shutil
 import subprocess
@@ -104,6 +105,9 @@ def reset_active() -> dict[str, Any]:
         "prompt_file": None,
         "run_log_dir": None,
         "verification_commands": [],
+        "vm_verification_commands": [],
+        "vm_bootstrap_commands": [],
+        "vm_cleanup_commands": [],
         "allowlist": [],
         "failure_summary": None,
         "notes": [],
@@ -153,8 +157,19 @@ def history_evidence_artifacts(run_dir: Path | None, prompt_file: Path | None) -
 
 def extract_labeled_line(text: str, label: str) -> str | None:
     for line in text.splitlines():
-        if line.startswith(label):
-            return line[len(label):].strip()
+        normalized_line = line.lstrip()
+        if normalized_line.startswith(label):
+            return normalized_line[len(label):].strip()
+        # Accept executor responses that prefix sections with ordered-list markers
+        # like "1. UX Design Section Mapping: ..." without losing the label.
+        stripped = normalized_line
+        while True:
+            prefix, sep, remainder = stripped.partition(". ")
+            if not sep or not prefix.isdigit():
+                break
+            stripped = remainder.lstrip()
+            if stripped.startswith(label):
+                return stripped[len(label):].strip()
     return None
 
 
@@ -407,7 +422,11 @@ def prepare_invocation_run_dir(active: dict[str, Any], task_id: str) -> tuple[Pa
 def render_template(template: str | None, context: dict[str, str]) -> str | None:
     if template is None:
         return None
-    return template.format(**context)
+    return re.sub(
+        r"\{([A-Za-z_][A-Za-z0-9_]*)\}",
+        lambda match: str(context.get(match.group(1), match.group(0))),
+        template,
+    )
 
 
 def task_targets_builder_repo(task: dict[str, Any], active: dict[str, Any]) -> bool:
@@ -1456,6 +1475,7 @@ def repair_legacy_state() -> int:
             if item.get("id") == task_id:
                 task = item
                 break
+    backlog_diagnostics = compute_backlog_diagnostics({"tasks": backlog.get("tasks", [])})
 
     if is_auth_preflight_only_block(active, status, run_result):
         repaired_active = reset_active()
@@ -1513,6 +1533,32 @@ def repair_legacy_state() -> int:
             print(f"- {line}")
         return 0
 
+    if (
+        task is not None
+        and task.get("status") in {"ready", "retry_ready"}
+        and active.get("state") == "blocked"
+        and str(active.get("failure_summary") or run_result.get("summary") or "")
+        == "Retry-ready task has no product repo changes to continue from."
+    ):
+        repaired_active = reset_active()
+        repaired_active["previous_run_log_dir"] = active.get("run_log_dir")
+        write_data(ACTIVE, repaired_active)
+        status["state"] = "idle"
+        status["active_task_id"] = None
+        status["last_task_id"] = task_id
+        status["last_result"] = "refined"
+        status["last_run_at"] = now_iso()
+        write_data(STATUS, status)
+        task.setdefault("notes", []).append(
+            "Repaired from stale retry-without-changes state; no in-flight repo edits remain, so the task should rerun fresh from ready."
+        )
+        write_data(BACKLOG, backlog)
+        repaired.append(f"stale retry-ready continuation for {task_id} cleared -> fresh ready rerun")
+        print("STATE_REPAIRED")
+        for line in repaired:
+            print(f"- {line}")
+        return 0
+
     if task is not None and task.get("status") == "blocked" and is_executor_interrupted_only_block(active, status, run_result):
         target_kind, target_repo, dirty_files = blocked_dirty_repo_truth(task, active)
         if dirty_files:
@@ -1530,6 +1576,25 @@ def repair_legacy_state() -> int:
             terminal_run_dir = latest_terminal_run_dir(active) or (Path(str(active["run_log_dir"])).expanduser().resolve() if active.get("run_log_dir") else None)
             if terminal_run_dir and active.get("run_log_dir") and str(terminal_run_dir) != str(Path(str(active["run_log_dir"])).expanduser().resolve()):
                 active["previous_run_log_dir"] = active.get("run_log_dir")
+            next_runnable = backlog_diagnostics.get("next_selected_task_id")
+            if next_runnable and str(next_runnable) != str(task_id):
+                repaired_active = reset_active()
+                repaired_active["previous_run_log_dir"] = str(terminal_run_dir) if terminal_run_dir is not None else active.get("run_log_dir")
+                write_data(ACTIVE, repaired_active)
+                status["state"] = "idle"
+                status["active_task_id"] = None
+                status["last_task_id"] = task_id
+                status["last_result"] = "blocked"
+                status["last_run_at"] = now_iso()
+                write_data(STATUS, status)
+                write_data(BACKLOG, backlog)
+                repaired.append(f"{task_id} remains blocked: current dirty files still exist in {target_repo}")
+                repaired.append(f"{blocker_path.name} evidence refreshed")
+                repaired.append(f"cleared stale blocked active task so runnable task {next_runnable} can proceed")
+                print("STATE_REPAIRED")
+                for line in repaired:
+                    print(f"- {line}")
+                return 0
             sync_run_state(
                 active,
                 status,
@@ -1591,6 +1656,25 @@ def repair_legacy_state() -> int:
             terminal_run_dir = latest_terminal_run_dir(active) or (Path(str(active["run_log_dir"])).expanduser().resolve() if active.get("run_log_dir") else None)
             if terminal_run_dir and active.get("run_log_dir") and str(terminal_run_dir) != str(Path(str(active["run_log_dir"])).expanduser().resolve()):
                 active["previous_run_log_dir"] = active.get("run_log_dir")
+            next_runnable = backlog_diagnostics.get("next_selected_task_id")
+            if next_runnable and str(next_runnable) != str(task_id):
+                repaired_active = reset_active()
+                repaired_active["previous_run_log_dir"] = str(terminal_run_dir) if terminal_run_dir is not None else active.get("run_log_dir")
+                write_data(ACTIVE, repaired_active)
+                status["state"] = "idle"
+                status["active_task_id"] = None
+                status["last_task_id"] = task_id
+                status["last_result"] = "blocked"
+                status["last_run_at"] = now_iso()
+                write_data(STATUS, status)
+                write_data(BACKLOG, backlog)
+                repaired.append(f"{task_id} remains blocked: current dirty files still exist in {target_repo}")
+                repaired.append(f"{blocker_path.name} evidence refreshed")
+                repaired.append(f"cleared stale blocked active task so runnable task {next_runnable} can proceed")
+                print("STATE_REPAIRED")
+                for line in repaired:
+                    print(f"- {line}")
+                return 0
             sync_run_state(
                 active,
                 status,
@@ -1923,6 +2007,11 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             task = find_task(backlog, active["task_id"])
         except KeyError:
             task = None
+    if task is not None:
+        active["verification_commands"] = list(task.get("verification", []))
+        active["vm_verification_commands"] = list(task.get("vm_verification", []))
+        active["vm_bootstrap_commands"] = list(task.get("vm_bootstrap", []))
+        active["vm_cleanup_commands"] = list(task.get("vm_cleanup", []))
     execution = resolve_execution_candidate(backlog, active, status, resume=args.resume)
     diagnostics = execution["diagnostics"]
     if active.get("task_id") and execution.get("active_candidate_id") is None and not backlog.get("errors"):
@@ -2006,7 +2095,10 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
     vm_repo = str(vm_config.get("product_repo", "~/projects/jorb"))
     context["vm_product_repo"] = vm_repo
 
-    vm_commands = list(vm_config.get("validation_commands", [])) + list(vm_config.get("runtime_validation_commands", []))
+    vm_validation_commands = list(vm_config.get("validation_commands", []))
+    vm_bootstrap_commands = list(active.get("vm_bootstrap_commands", []))
+    vm_smoke_commands = list(vm_config.get("runtime_validation_commands", [])) + list(active.get("vm_verification_commands", []))
+    vm_cleanup_commands = list(active.get("vm_cleanup_commands", []))
     local_validation_commands = list(active.get("verification_commands", []))
     prepared_validation_commands, validation_venv = validation_commands_for_target(
         local_validation_commands,
@@ -2029,7 +2121,16 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         "prepared_local_validation_commands": prepared_validation_commands,
         "git_push_command": render_template(git_config.get("push_command"), context),
         "vm_pull_command": render_template(vm_config.get("pull_command"), context) if use_vm_flow else None,
-        "vm_commands": [render_template(command, context) for command in vm_commands] if use_vm_flow else [],
+        "vm_validation_commands": [render_template(command, context) for command in vm_validation_commands] if use_vm_flow else [],
+        "vm_bootstrap_commands": [render_template(command, context) for command in vm_bootstrap_commands] if use_vm_flow else [],
+        "vm_smoke_commands": [render_template(command, context) for command in vm_smoke_commands] if use_vm_flow else [],
+        "vm_cleanup_commands": [render_template(command, context) for command in vm_cleanup_commands] if use_vm_flow else [],
+        "vm_commands": (
+            [render_template(command, context) for command in vm_validation_commands]
+            + [render_template(command, context) for command in vm_bootstrap_commands]
+            + [render_template(command, context) for command in vm_smoke_commands]
+            + [render_template(command, context) for command in vm_cleanup_commands]
+        ) if use_vm_flow else [],
         "ssh_target": vm_config.get("ssh_target") if use_vm_flow else None,
         "ssh_options": effective_vm_ssh_options if use_vm_flow else [],
         "missing_configuration": [],
@@ -2044,8 +2145,8 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             plan["missing_configuration"].append("executor.command")
     if use_vm_flow and not vm_config.get("ssh_target"):
         plan["missing_configuration"].append("vm.ssh_target")
-    if use_vm_flow and not vm_commands:
-        plan["missing_configuration"].append("vm.validation_commands or vm.runtime_validation_commands")
+    if use_vm_flow and not (vm_validation_commands or vm_smoke_commands):
+        plan["missing_configuration"].append("vm.validation_commands or vm.runtime_validation_commands or task.vm_verification")
 
     if args.dry_run:
         payload = {
@@ -2153,6 +2254,13 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         return 2
 
     baseline = git_status_porcelain(target_repo, ignored_prefixes=ignored_git_paths)
+    if retry_continuation and bool(task.get("allow_noop_completion")) and not baseline.get("files"):
+        prior_vm_retry = prior_result_supports_vm_retry(previous_run_dir)
+        if not prior_vm_retry:
+            retry_continuation = False
+            active.setdefault("notes", []).append(
+                "Retry-ready continuation cleared for allow_noop_completion task because no in-flight repo changes remained; rerunning fresh."
+            )
     write_step(run_dir, "git_status_before", baseline)
     if not args.resume and not retry_continuation and git_config.get("require_clean_worktree", True) and baseline.get("files"):
         summary = f"{target_kind.title()} repo is dirty before automated execution; refusing to continue."
@@ -2402,6 +2510,8 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         emit_progress(run_dir, task_id=task["id"], stage_index=4, backlog=backlog, task_started_at=progress_started_at, detail=f"Detected {len(after_executor.get('files', []))} changed file(s).")
 
     changed_files = after_executor.get("files", [])
+    noop_completion = False
+    allow_noop_completion = bool(task.get("allow_noop_completion"))
     if retry_continuation and not changed_files:
         prior_vm_retry = prior_result_supports_vm_retry(previous_run_dir)
         if prior_vm_retry:
@@ -2433,28 +2543,46 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
 
     if not changed_files:
         summary = f"Executor completed but no {target_kind} repo changes were detected."
-        emit_progress(run_dir, task_id=task["id"], stage_index=4, backlog=backlog, task_started_at=progress_started_at, state="failed", detail=summary)
-        automation_result = {
-            "task_id": task["id"],
-            "classification": "refined",
-            "finished_at": now_iso(),
-            "summary": summary,
-            "steps": steps + [{"name": "change_detection", "outcome": "refined", "detail": summary}],
-            "changed_files": [],
-            "blocker_evidence": [],
-            "unproven_runtime_gaps": [summary],
-        }
-        write_json(run_dir / RESULT_FILE, automation_result)
-        write_summary(run_dir, automation_result)
-        classify_and_update_state("refined", summary, task, backlog, active, status, automation_result)
-        write_data(BACKLOG, backlog)
-        write_data(STATUS, status)
-        if retry_continuation:
-            next_action = f"Fix the task changes already present in {target_repo}, then rerun python3 scripts/automate_task_loop.py."
+        if allow_noop_completion:
+            noop_completion = True
+            steps.append(
+                {
+                    "name": "change_detection",
+                    "outcome": "passed",
+                    "detail": f"No {target_kind} repo changes detected; continuing because this task allows verified no-op completion.",
+                }
+            )
+            emit_progress(
+                run_dir,
+                task_id=task["id"],
+                stage_index=4,
+                backlog=backlog,
+                task_started_at=progress_started_at,
+                detail=f"No {target_kind} repo changes detected; continuing with verification-only completion.",
+            )
         else:
-            next_action = f"Apply the packet in {target_repo} and rerun python3 scripts/automate_task_loop.py --resume if using human-gated execution."
-        print_result("REFINED", summary, next_action)
-        return 1
+            emit_progress(run_dir, task_id=task["id"], stage_index=4, backlog=backlog, task_started_at=progress_started_at, state="failed", detail=summary)
+            automation_result = {
+                "task_id": task["id"],
+                "classification": "refined",
+                "finished_at": now_iso(),
+                "summary": summary,
+                "steps": steps + [{"name": "change_detection", "outcome": "refined", "detail": summary}],
+                "changed_files": [],
+                "blocker_evidence": [],
+                "unproven_runtime_gaps": [summary],
+            }
+            write_json(run_dir / RESULT_FILE, automation_result)
+            write_summary(run_dir, automation_result)
+            classify_and_update_state("refined", summary, task, backlog, active, status, automation_result)
+            write_data(BACKLOG, backlog)
+            write_data(STATUS, status)
+            if retry_continuation:
+                next_action = f"Fix the task changes already present in {target_repo}, then rerun python3 scripts/automate_task_loop.py."
+            else:
+                next_action = f"Apply the packet in {target_repo} and rerun python3 scripts/automate_task_loop.py --resume if using human-gated execution."
+            print_result("REFINED", summary, next_action)
+            return 1
 
     if target_kind == "product" and local_validation_commands and validation_venv is None and not continue_from_prior_vm_retry:
         summary = "No product validation virtualenv found. Expected one of: .venv_validation, .venv, .venv_j1."
@@ -2540,64 +2668,82 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             print_result("REFINED", summary, next_action)
             return 1
 
-        emit_progress(run_dir, task_id=task["id"], stage_index=7, backlog=backlog, task_started_at=progress_started_at, detail="Running git add/commit/push.")
-        git_add_command = "git add -A"
-        git_add = run_argv(
-            ["git", "add", "-A"],
-            target_repo,
-            env=NONINTERACTIVE_GIT_ENV,
-            heartbeat_seconds=progress_heartbeat_seconds,
-            heartbeat=emit_live_phase_progress(7, "git_add", git_add_command),
-        )
-        commit_message = render_template(git_config.get("commit_message_template"), context) or f"{task['id']}: {task['title']}"
-        git_commit_command = " ".join(shlex.quote(part) for part in ["git", "commit", "-m", commit_message])
-        git_commit = run_argv(
-            ["git", "commit", "-m", commit_message],
-            target_repo,
-            env=NONINTERACTIVE_GIT_ENV,
-            heartbeat_seconds=progress_heartbeat_seconds,
-            heartbeat=emit_live_phase_progress(7, "git_commit", git_commit_command),
-        )
-        git_push_command = render_template(git_config.get("push_command"), context) or "git push"
-        git_push = run_shell(
-            git_push_command,
-            target_repo,
-            shell_executable=shell_executable,
-            env=NONINTERACTIVE_GIT_ENV,
-            heartbeat_seconds=progress_heartbeat_seconds,
-            heartbeat=emit_live_phase_progress(7, "git_push", git_push_command),
-        )
-        write_step(run_dir, "git", {"add": git_add, "commit": git_commit, "push": git_push})
-        steps.append({
-            "name": "git",
-            "outcome": "passed" if git_add["passed"] and git_commit["passed"] and git_push["passed"] else "blocked",
-            "detail": git_push["stderr"] or git_commit["stderr"] or git_add["stderr"],
-        })
-        if not (git_add["passed"] and git_commit["passed"] and git_push["passed"]):
-            summary = "Git add/commit/push failed after local validation passed."
-            emit_progress(run_dir, task_id=task["id"], stage_index=7, backlog=backlog, task_started_at=progress_started_at, state="failed", detail=summary)
-            blocker_evidence.extend([
-                git_add["stderr"] or git_add["stdout"],
-                git_commit["stderr"] or git_commit["stdout"],
-                git_push["stderr"] or git_push["stdout"],
-            ])
-            automation_result = {
-                "task_id": task["id"],
-                "classification": "blocked",
-                "finished_at": now_iso(),
-                "summary": summary,
-                "steps": steps,
-                "changed_files": changed_files,
-                "blocker_evidence": [item for item in blocker_evidence if item],
-                "unproven_runtime_gaps": [summary],
-            }
-            write_json(run_dir / RESULT_FILE, automation_result)
-            write_summary(run_dir, automation_result)
-            classify_and_update_state("blocked", summary, task, backlog, active, status, automation_result)
-            write_data(BACKLOG, backlog)
-            write_data(STATUS, status)
-            print_result("BLOCKED", summary, f"Inspect git output in {run_dir / RESULT_FILE} and repair repo/push state before rerunning python3 scripts/automate_task_loop.py.")
-            return 2
+        if noop_completion:
+            emit_progress(
+                run_dir,
+                task_id=task["id"],
+                stage_index=7,
+                backlog=backlog,
+                task_started_at=progress_started_at,
+                detail="No repo changes to commit; skipping git add/commit/push for verified no-op completion.",
+            )
+            write_step(run_dir, "git", {"skipped": True, "reason": "verified no-op completion"})
+            steps.append(
+                {
+                    "name": "git",
+                    "outcome": "passed",
+                    "detail": "No repo changes detected; skipped git add/commit/push for verified no-op completion.",
+                }
+            )
+        else:
+            emit_progress(run_dir, task_id=task["id"], stage_index=7, backlog=backlog, task_started_at=progress_started_at, detail="Running git add/commit/push.")
+            git_add_command = "git add -A"
+            git_add = run_argv(
+                ["git", "add", "-A"],
+                target_repo,
+                env=NONINTERACTIVE_GIT_ENV,
+                heartbeat_seconds=progress_heartbeat_seconds,
+                heartbeat=emit_live_phase_progress(7, "git_add", git_add_command),
+            )
+            commit_message = render_template(git_config.get("commit_message_template"), context) or f"{task['id']}: {task['title']}"
+            git_commit_command = " ".join(shlex.quote(part) for part in ["git", "commit", "-m", commit_message])
+            git_commit = run_argv(
+                ["git", "commit", "-m", commit_message],
+                target_repo,
+                env=NONINTERACTIVE_GIT_ENV,
+                heartbeat_seconds=progress_heartbeat_seconds,
+                heartbeat=emit_live_phase_progress(7, "git_commit", git_commit_command),
+            )
+            git_push_command = render_template(git_config.get("push_command"), context) or "git push"
+            git_push = run_shell(
+                git_push_command,
+                target_repo,
+                shell_executable=shell_executable,
+                env=NONINTERACTIVE_GIT_ENV,
+                heartbeat_seconds=progress_heartbeat_seconds,
+                heartbeat=emit_live_phase_progress(7, "git_push", git_push_command),
+            )
+            write_step(run_dir, "git", {"add": git_add, "commit": git_commit, "push": git_push})
+            steps.append({
+                "name": "git",
+                "outcome": "passed" if git_add["passed"] and git_commit["passed"] and git_push["passed"] else "blocked",
+                "detail": git_push["stderr"] or git_commit["stderr"] or git_add["stderr"],
+            })
+            if not (git_add["passed"] and git_commit["passed"] and git_push["passed"]):
+                summary = "Git add/commit/push failed after local validation passed."
+                emit_progress(run_dir, task_id=task["id"], stage_index=7, backlog=backlog, task_started_at=progress_started_at, state="failed", detail=summary)
+                blocker_evidence.extend([
+                    git_add["stderr"] or git_add["stdout"],
+                    git_commit["stderr"] or git_commit["stdout"],
+                    git_push["stderr"] or git_push["stdout"],
+                ])
+                automation_result = {
+                    "task_id": task["id"],
+                    "classification": "blocked",
+                    "finished_at": now_iso(),
+                    "summary": summary,
+                    "steps": steps,
+                    "changed_files": changed_files,
+                    "blocker_evidence": [item for item in blocker_evidence if item],
+                    "unproven_runtime_gaps": [summary],
+                }
+                write_json(run_dir / RESULT_FILE, automation_result)
+                write_summary(run_dir, automation_result)
+                classify_and_update_state("blocked", summary, task, backlog, active, status, automation_result)
+                write_data(BACKLOG, backlog)
+                write_data(STATUS, status)
+                print_result("BLOCKED", summary, f"Inspect git output in {run_dir / RESULT_FILE} and repair repo/push state before rerunning python3 scripts/automate_task_loop.py.")
+                return 2
 
     vm_passed = True
     if use_vm_flow:
@@ -2615,8 +2761,17 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         )
         vm_results = [vm_pull]
         vm_passed = vm_pull["passed"]
-        if vm_passed:
-            for command in plan["vm_commands"]:
+        vm_failure_phase: str | None = None
+        vm_failure_summary = "VM validation failed after local validation and git push succeeded."
+        vm_bootstrap_attempted = False
+
+        def run_vm_phase(commands: list[str], phase_label: str, *, ignore_prior_failure: bool = False) -> bool:
+            nonlocal vm_passed, vm_failure_phase, vm_failure_summary, vm_bootstrap_attempted
+            if not vm_passed and not ignore_prior_failure:
+                return False
+            if phase_label == "vm_bootstrap" and commands:
+                vm_bootstrap_attempted = True
+            for command in commands:
                 remote = f"cd {shlex.quote(vm_repo)} && {command}"
                 result = ssh_command(
                     ssh_target,
@@ -2624,24 +2779,49 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
                     remote,
                     ROOT,
                     heartbeat_seconds=progress_heartbeat_seconds,
-                    heartbeat=emit_live_phase_progress(8, "vm_validation", remote),
+                    heartbeat=emit_live_phase_progress(8, phase_label, remote),
                 )
+                result["phase"] = phase_label
                 vm_results.append(result)
                 if not result["passed"]:
                     vm_passed = False
-                    break
+                    if vm_failure_phase is None:
+                        vm_failure_phase = phase_label
+                        if phase_label == "vm_validation":
+                            vm_failure_summary = "VM preflight validation failed after local validation and git push succeeded."
+                        elif phase_label == "vm_bootstrap":
+                            vm_failure_summary = "VM bootstrap failed after local validation and git push succeeded."
+                        elif phase_label == "vm_smoke":
+                            vm_failure_summary = "VM smoke validation failed after local validation and git push succeeded."
+                        elif phase_label == "vm_cleanup":
+                            vm_failure_summary = "VM cleanup failed after validation completed."
+                        else:
+                            vm_failure_summary = "VM validation failed after local validation and git push succeeded."
+                    return False
+            return True
+
+        if vm_passed:
+            run_vm_phase(plan["vm_validation_commands"], "vm_validation")
+        if vm_passed:
+            run_vm_phase(plan["vm_bootstrap_commands"], "vm_bootstrap")
+        if vm_passed:
+            run_vm_phase(plan["vm_smoke_commands"], "vm_smoke")
+        if plan["vm_cleanup_commands"] and (vm_bootstrap_attempted or plan["vm_smoke_commands"]):
+            run_vm_phase(plan["vm_cleanup_commands"], "vm_cleanup", ignore_prior_failure=True)
         write_step(run_dir, "vm_validation", {"results": vm_results, "passed": vm_passed})
         steps.append({
             "name": "vm_validation",
             "outcome": "accepted" if vm_passed else "refined",
-            "detail": "All VM validation commands passed." if vm_passed else "At least one VM validation command failed.",
+            "detail": "All VM validation commands passed." if vm_passed else (
+                "VM preflight commands failed." if vm_failure_phase == "vm_validation" else
+                "VM bootstrap commands failed." if vm_failure_phase == "vm_bootstrap" else
+                "VM smoke commands failed." if vm_failure_phase == "vm_smoke" else
+                "VM cleanup commands failed." if vm_failure_phase == "vm_cleanup" else
+                "At least one VM validation command failed."
+            ),
         })
         classification = "accepted" if vm_passed else "refined"
-        summary = (
-            "Automated loop completed with VM validation success."
-            if vm_passed
-            else "VM validation failed after local validation and git push succeeded."
-        )
+        summary = "Automated loop completed with VM validation success." if vm_passed else vm_failure_summary
     else:
         classification = "accepted"
         summary = "Automated loop completed with builder-side local validation success."

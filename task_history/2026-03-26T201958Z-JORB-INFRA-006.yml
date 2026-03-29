@@ -1,0 +1,114 @@
+{
+  "task_id": "JORB-INFRA-006",
+  "title": "Harden builder UX conformance gating for product-facing tasks",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-26T20:01:39.472010+00:00",
+  "completed_at": "2026-03-26T20:19:58.419340+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200139Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200139Z-JORB-INFRA-006",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200139Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200139Z-JORB-INFRA-006"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200139Z-JORB-INFRA-006/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200139Z-JORB-INFRA-006/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200139Z-JORB-INFRA-006/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200139Z-JORB-INFRA-006/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200139Z-JORB-INFRA-006/local_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200139Z-JORB-INFRA-006/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200139Z-JORB-INFRA-006/executor.json"
+    }
+  ],
+  "files_changed": [
+    "prompts/implement_feature.md",
+    "scripts/automate_task_loop.py",
+    "scripts/common.py",
+    "scripts/render_packet.py",
+    "tests/test_automate_task_loop.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200139Z-JORB-INFRA-006/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed"
+  ],
+  "acceptance_met": [
+    "product-facing UX tasks must map implemented sections to design sections explicitly",
+    "product-facing UX tasks must list intentional deviations from design explicitly",
+    "builder acceptance for UX work includes a product-first checklist covering hierarchy and prohibited surfaces, not only backend data wiring",
+    "builder planning can mark primary-UX-prohibited surfaces such as source matrix, discovery internals, learning, autonomy ops, agent activity, investigations, diagnostics, and operator controls",
+    "future product-facing UX tasks cannot be accepted solely because they exist or are wired to real data"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with builder-side local validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with builder-side local validation success.",
+    "accepted": true,
+    "acceptance_met": [
+      "product-facing UX tasks must map implemented sections to design sections explicitly",
+      "product-facing UX tasks must list intentional deviations from design explicitly",
+      "builder acceptance for UX work includes a product-first checklist covering hierarchy and prohibited surfaces, not only backend data wiring",
+      "builder planning can mark primary-UX-prohibited surfaces such as source matrix, discovery internals, learning, autonomy ops, agent activity, investigations, diagnostics, and operator controls",
+      "future product-facing UX tasks cannot be accepted solely because they exist or are wired to real data"
+    ],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\nBuilder-side UX gating is now explicit instead of implicit. I added shared product-facing UX task detection and required planning fields in `scripts/common.py`, made packet rendering target the correct repo and inject UX conformance instructions in `scripts/render_packet.py` and `prompts/implement_feature.md`, and added an acceptance-time UX conformance gate plus history diagnostics in `scripts/automate_task_loop.py`. I also backfilled the live backlog\u2019s current UX/frontend tasks with explicit design-section mapping, intentional-deviation, product-first checklist, and prohibited-surface metadata in `backlog.yml` so `--inspect-backlog` stays valid under the new rule set.\n\n2. Exact files changed\n\n- `backlog.yml`\n- `prompts/implement_feature.md`\n- `scripts/automate_task_loop.py`\n- `scripts/common.py`\n- `scripts/render_packet.py`\n- `tests/test_automate_task_loop.py`\n\n3. Exact tests added or updated\n\n- Updated `tests/test_automate_task_loop.py`\n- Added helper `_apply_product_facing_ux_fields`\n- Added `test_product_facing_ux_task_requires_explicit_planning_fields_in_backlog_inspection`\n- Added `test_product_facing_ux_task_refines_without_explicit_ux_conformance_evidence`\n- Added `test_product_facing_ux_task_accepts_with_explicit_ux_conformance_evidence`\n- Updated the live-backlog assertion in `test_live_backlog_file_is_canonical_json_and_contains_new_tasks`\n\n4. Exact commands run\n\n- `python3 -m py_compile scripts/*.py`\n- `pytest tests/test_automate_task_loop.py -k \"product_facing_ux_task or resume_allows_expected_dirty_builder_task_files or retry_ready_product_task_continues_from_expected_dirty_files or retry_ready_product_task_retries_vm_without_dirty_files or retry_ready_product_task_recovers_vm_retry_from_stage_files or live_backlog_file_is_canonical_json_and_contains_new_tasks\"`\n- `pytest tests/test_automate_task_loop.py`\n- `python3 scripts/automate_task_loop.py --inspect-backlog`\n- `git status --short`\n\n5. Exact results\n\n- `python3 -m py_compile scripts/*.py`\n  - Passed\n- `pytest tests/test_automate_task_loop.py -k \"product_facing_ux_task or resume_allows_expected_dirty_builder_task_files or retry_ready_product_task_continues_from_expected_dirty_files or retry_ready_product_task_retries_vm_without_dirty_files or retry_ready_product_task_recovers_vm_retry_from_stage_files or live_backlog_file_is_canonical_json_and_contains_new_tasks\"`\n  - Passed\n  - `8 passed, 55 deselected in 8.76s`\n- `pytest tests/test_automate_task_loop.py`\n  - Passed\n  - `63 passed in 108.49s (0:01:48)`\n- `python3 scripts/automate_task_loop.py --inspect-backlog`\n  - Passed\n  - Exit `0`\n  - Reported `product_facing_ux_task_ids: [\"JORB-V2-002\", \"JORB-V2-004\", \"JORB-V2-013\", \"JORB-V2-014\", \"JORB-V2-015\", \"JORB-V2-016\", \"JORB-V2-017\", \"JORB-V2-018\"]`\n  - Reported `ready_queue: [\"JORB-INFRA-006\"]`\n- `git status --short`\n  - Showed my intended edits in the six files above\n  - Also showed existing/unrelated dirty files: `active_task.yml`, `blockers/BLK-JORB-INFRA-006.yml`, and `status.yml`\n\n6. Honest note on what remains unproven\n\nThis does not prove a real product-facing UX task has been run end-to-end through the live builder and rejected or accepted against an actual Figma/product review. The new gate is proven by builder tests and backlog inspection only, and the acceptance check still depends on structured executor self-report lines rather than independent visual diffing or live UX review."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "To github.com:sekrystal/Jorb-Builder.git\n   e908240..38a5f46  main -> main\n"
+      }
+    ],
+    "changed_files_count": 5,
+    "changed_files": [
+      "prompts/implement_feature.md",
+      "scripts/automate_task_loop.py",
+      "scripts/common.py",
+      "scripts/render_packet.py",
+      "tests/test_automate_task_loop.py"
+    ],
+    "unproven_runtime_gaps": []
+  },
+  "unproven_runtime_gaps": []
+}

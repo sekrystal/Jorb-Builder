@@ -1,0 +1,139 @@
+{
+  "task_id": "JORB-V2-016",
+  "title": "Implement Saved and Applied tracker surfaces in the JS front end",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-26T22:11:51.843268+00:00",
+  "completed_at": "2026-03-26T22:16:35.112826+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T221151Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T221151Z-JORB-V2-016",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T221151Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T221151Z-JORB-V2-016"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T221151Z-JORB-V2-016/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T221151Z-JORB-V2-016/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T221151Z-JORB-V2-016/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T221151Z-JORB-V2-016/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T221151Z-JORB-V2-016/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T221151Z-JORB-V2-016/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T221151Z-JORB-V2-016/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T221151Z-JORB-V2-016/executor.json"
+    }
+  ],
+  "files_changed": [
+    "README.md",
+    "frontend/src/styles.css",
+    "frontend/src/views/LeadPages.tsx",
+    "tests/test_workbench.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T221151Z-JORB-V2-016/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "the JS front end exposes Saved and Applied surfaces as first-class product flows",
+    "tracker state changes are wired to real backend data rather than static UI placeholders",
+    "the tracker surfaces integrate coherently with the real jobs flow",
+    "targeted tests and preflight pass"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [
+      "the JS front end exposes Saved and Applied surfaces as first-class product flows",
+      "tracker state changes are wired to real backend data rather than static UI placeholders",
+      "the tracker surfaces integrate coherently with the real jobs flow",
+      "targeted tests and preflight pass"
+    ],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\nUX Design Section Mapping: Saved jobs view -> shared first-class tracker workspace; Applied jobs view -> shared first-class tracker workspace; Job-to-tracker transitions -> in-flow handoff banner plus direct tracker links from saved/applied actions.\nUX Intentional Design Deviations: Tracker details ship as a focused first slice inside the existing jobs workspace, limited to timeline, next action, follow-up due, and notes.\nUX Product-First Checklist: hierarchy=yes, prohibited_surfaces=yes, backend_wiring_only=no.\n\n`/saved` and `/applied` no longer render the fallback table surface. They now reuse the main React jobs workspace with real backend-scoped queries, tracker-aware summary cards, tracker timeline and follow-up details in the side panel, and direct Saved/Applied handoff links after status changes from the Jobs flow.\n\n2. Exact files changed\n\n- [README.md](/Users/samuelkrystal/projects/jorb/README.md)\n- [frontend/src/styles.css](/Users/samuelkrystal/projects/jorb/frontend/src/styles.css)\n- [frontend/src/views/LeadPages.tsx](/Users/samuelkrystal/projects/jorb/frontend/src/views/LeadPages.tsx)\n- [tests/test_workbench.py](/Users/samuelkrystal/projects/jorb/tests/test_workbench.py)\n\n3. Exact tests added or updated\n\n- Updated [tests/test_workbench.py](/Users/samuelkrystal/projects/jorb/tests/test_workbench.py) with `test_js_saved_and_applied_pages_use_shared_tracker_workspace`\n\n4. Exact commands run\n\n- `pytest tests/test_applications.py tests/test_workbench.py`\n- `./scripts/preflight_check.sh`\n- `cd frontend && npm run build`\n\n5. Exact results\n\n- `pytest tests/test_applications.py tests/test_workbench.py`: passed, `34 passed in 1.55s`\n- `./scripts/preflight_check.sh`: passed, including compile/import smoke and full pytest run, `177 passed in 6.48s`\n- `cd frontend && npm run build`: failed because `tsc` is not installed in this environment (`sh: tsc: command not found`)\n\n6. Honest note on what remains unproven\n\nBrowser-level verification of the changed JS flow is still unproven here. I did not run `python scripts/reset_demo.py`, boot FastAPI locally, boot Streamlit locally, or verify the Saved/Applied workflow in the live app, and frontend build completeness is also unproven until the TypeScript toolchain is available."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 24 vulnerabilities on sekrystal/Jorb's default branch (19 moderate, 5 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   ffa765d..95b21e2  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 4,
+    "changed_files": [
+      "README.md",
+      "frontend/src/styles.css",
+      "frontend/src/views/LeadPages.tsx",
+      "tests/test_workbench.py"
+    ],
+    "unproven_runtime_gaps": [],
+    "ux_conformance": {
+      "required": true,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": "Saved jobs view -> shared first-class tracker workspace; Applied jobs view -> shared first-class tracker workspace; Job-to-tracker transitions -> in-flow handoff banner plus direct tracker links from saved/applied actions.",
+      "intentional_design_deviations": "Tracker details ship as a focused first slice inside the existing jobs workspace, limited to timeline, next action, follow-up due, and notes.",
+      "product_first_checklist": "hierarchy=yes, prohibited_surfaces=yes, backend_wiring_only=no.",
+      "primary_ux_prohibited_surfaces": [
+        "source matrix",
+        "discovery internals",
+        "learning",
+        "autonomy ops",
+        "agent activity",
+        "investigations",
+        "diagnostics",
+        "operator controls"
+      ]
+    }
+  },
+  "unproven_runtime_gaps": []
+}

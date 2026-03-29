@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "state": "verifying",
+  "state": "completed",
   "state_legend": {
     "idle": "No active task is currently in flight.",
     "task_selected": "A task has been selected and the current run has been initialized.",
@@ -11,18 +11,18 @@
     "completed": "The active run completed successfully and reached a terminal accepted state.",
     "blocked": "The active run reached a terminal blocked/refined state and requires intervention or retry."
   },
-  "active_task_id": "JORB-INFRA-006",
-  "last_task_id": "JORB-INFRA-006",
-  "last_result": "blocked",
-  "last_run_at": "2026-03-26T20:18:05.176220+00:00",
+  "active_task_id": null,
+  "last_task_id": "JORB-V2-007",
+  "last_result": "accepted",
+  "last_run_at": "2026-03-27T17:03:30.962306+00:00",
   "roadmap_focus": {
     "milestone": "M2",
     "theme": "discovery"
   },
   "stats": {
-    "completed_tasks": 39,
-    "blocked_tasks": 17,
-    "retry_ready_tasks": 12
+    "completed_tasks": 51,
+    "blocked_tasks": 19,
+    "retry_ready_tasks": 23
   },
   "notes": [
     "Builder v1 bootstrapped",

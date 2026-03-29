@@ -1,0 +1,97 @@
+{
+  "task_id": "JORB-V2-014",
+  "title": "Implement the Jobs screen from Figma in the JS front end",
+  "status": "refined",
+  "attempt": 1,
+  "started_at": "2026-03-26T21:49:33.183047+00:00",
+  "completed_at": "2026-03-26T21:49:33.296409+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T212911Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T214932Z-JORB-V2-014",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T212911Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T214932Z-JORB-V2-014"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T214932Z-JORB-V2-014/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T214932Z-JORB-V2-014/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T214932Z-JORB-V2-014/progress.jsonl"
+    }
+  ],
+  "files_changed": [],
+  "commands_run": [],
+  "results": [
+    "refined"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [
+    "the JS front end implements the Figma jobs screen including sidebar, jobs top bar, job list, job cards, detail panel or drawer, and loading and empty states",
+    "the jobs screen is wired to real backend data rather than mocked cards",
+    "job cards and detail state preserve title, company, score, explanation, and source provenance where available",
+    "targeted tests and preflight pass"
+  ],
+  "blocker_opened": null,
+  "notes": [
+    "Retry-ready task has no product repo changes to continue from."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Retry-ready task has no product repo changes to continue from.",
+    "accepted": false,
+    "acceptance_met": [],
+    "acceptance_unmet": [
+      "the JS front end implements the Figma jobs screen including sidebar, jobs top bar, job list, job cards, detail panel or drawer, and loading and empty states",
+      "the jobs screen is wired to real backend data rather than mocked cards",
+      "job cards and detail state preserve title, company, score, explanation, and source provenance where available",
+      "targeted tests and preflight pass"
+    ],
+    "step_outcomes": [
+      {
+        "name": "retry_check",
+        "outcome": "refined",
+        "detail": "No product repo changes were found for retry continuation."
+      }
+    ],
+    "changed_files_count": 0,
+    "changed_files": [],
+    "unproven_runtime_gaps": [
+      "Retry-ready task has no product repo changes to continue from."
+    ],
+    "ux_conformance": {
+      "required": true,
+      "passed": false,
+      "planning_issues": [],
+      "missing_response_fields": [
+        "response.design_section_mapping",
+        "response.intentional_design_deviations",
+        "response.product_first_checklist"
+      ],
+      "design_section_mapping": null,
+      "intentional_design_deviations": null,
+      "product_first_checklist": null,
+      "primary_ux_prohibited_surfaces": [
+        "source matrix",
+        "discovery internals",
+        "learning",
+        "autonomy ops",
+        "agent activity",
+        "investigations",
+        "diagnostics",
+        "operator controls"
+      ]
+    }
+  },
+  "unproven_runtime_gaps": [
+    "Retry-ready task has no product repo changes to continue from."
+  ]
+}

@@ -181,3 +181,53 @@ Does this directly improve:
 - JORB-V2-026 accepted by automated loop. History: 2026-03-26T194907Z-JORB-V2-026.yml
 
 - JORB-INFRA-006 blocked by automated loop via BLK-JORB-INFRA-006.yml. History: 2026-03-26T200006Z-JORB-INFRA-006.yml
+
+- JORB-INFRA-006 accepted by automated loop. History: 2026-03-26T201958Z-JORB-INFRA-006.yml
+
+- JORB-V2-012 accepted by automated loop. History: 2026-03-26T211929Z-JORB-V2-012.yml
+
+- JORB-V2-013 accepted by automated loop. History: 2026-03-26T212519Z-JORB-V2-013.yml
+
+- JORB-V2-014 refined by automated loop. History: 2026-03-26T213828Z-JORB-V2-014.yml
+
+- JORB-V2-014 refined by automated loop. History: 2026-03-26T214929Z-JORB-V2-014.yml
+
+- JORB-V2-014 refined by automated loop. History: 2026-03-26T214933Z-JORB-V2-014.yml
+
+- JORB-V2-014 accepted by automated loop. History: 2026-03-26T215712Z-JORB-V2-014.yml
+
+- JORB-V2-015 accepted by automated loop. History: 2026-03-26T220310Z-JORB-V2-015.yml
+
+- JORB-V2-016 accepted by automated loop. History: 2026-03-26T221635Z-JORB-V2-016.yml
+
+- JORB-V2-018 accepted by automated loop. History: 2026-03-26T222153Z-JORB-V2-018.yml
+
+- JORB-V2-003 accepted by automated loop. History: 2026-03-26T233019Z-JORB-V2-003.yml
+
+- JORB-V2-004 accepted by automated loop. History: 2026-03-26T233301Z-JORB-V2-004.yml
+
+- JORB-V2-006 refined by automated loop. History: 2026-03-27T001005Z-JORB-V2-006.yml
+
+- JORB-V2-006 refined by automated loop. History: 2026-03-27T021707Z-JORB-V2-006.yml
+
+- JORB-V2-006 refined by automated loop. History: 2026-03-27T040557Z-JORB-V2-006.yml
+
+- JORB-V2-006 refined by automated loop. History: 2026-03-27T043051Z-JORB-V2-006.yml
+
+- JORB-V2-006 refined by automated loop. History: 2026-03-27T044741Z-JORB-V2-006.yml
+
+- JORB-V2-006 refined by automated loop. History: 2026-03-27T051656Z-JORB-V2-006.yml
+
+- JORB-V2-006 refined by automated loop. History: 2026-03-27T052837Z-JORB-V2-006.yml
+
+- JORB-V2-006 blocked by automated loop via BLK-JORB-V2-006.yml. History: 2026-03-27T062655Z-JORB-V2-006.yml
+
+- JORB-V2-017 blocked by automated loop via BLK-JORB-V2-017.yml. History: 2026-03-27T144426Z-JORB-V2-017.yml
+
+- JORB-V2-017 accepted by automated loop. History: 2026-03-27T144908Z-JORB-V2-017.yml
+
+- JORB-V2-006 refined by automated loop. History: 2026-03-27T164859Z-JORB-V2-006.yml
+
+- JORB-V2-006 accepted by automated loop. History: 2026-03-27T165646Z-JORB-V2-006.yml
+
+- JORB-V2-007 accepted by automated loop. History: 2026-03-27T170330Z-JORB-V2-007.yml

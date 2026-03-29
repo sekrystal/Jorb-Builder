@@ -1,0 +1,135 @@
+{
+  "task_id": "JORB-V2-004",
+  "title": "Demote internal operator IA in the temporary Streamlit validation harness",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-26T23:30:19.449610+00:00",
+  "completed_at": "2026-03-26T23:33:01.122204+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T233019Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T233019Z-JORB-V2-004",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T233019Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T233019Z-JORB-V2-004"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T233019Z-JORB-V2-004/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T233019Z-JORB-V2-004/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T233019Z-JORB-V2-004/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T233019Z-JORB-V2-004/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T233019Z-JORB-V2-004/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T233019Z-JORB-V2-004/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T233019Z-JORB-V2-004/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T233019Z-JORB-V2-004/executor.json"
+    }
+  ],
+  "files_changed": [
+    "tests/test_workbench.py",
+    "ui/components/sidebar.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T233019Z-JORB-V2-004/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "the temporary Streamlit harness keeps operator or diagnostic surfaces secondary to the real-job validation path",
+    "internal labels and navigation that are only meaningful to operators are demoted, collapsed, or clearly separated from user-facing validation flows",
+    "the task does not broaden into treating Streamlit as the final production IA",
+    "targeted tests and preflight pass"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [
+      "the temporary Streamlit harness keeps operator or diagnostic surfaces secondary to the real-job validation path",
+      "internal labels and navigation that are only meaningful to operators are demoted, collapsed, or clearly separated from user-facing validation flows",
+      "the task does not broaden into treating Streamlit as the final production IA",
+      "targeted tests and preflight pass"
+    ],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\nUX Design Section Mapping: primary navigation remains the jobs-first validation shell; operator access moved behind a collapsed `Admin / debug` entry point instead of sitting directly in the main sidebar flow.\n\nUX Intentional Design Deviations: the temporary Streamlit harness still keeps a separate operator console with existing operator pages, but it is now more aggressively demoted than a final product IA would be.\n\nUX Product-First Checklist: hierarchy=yes, prohibited_surfaces=yes, backend_wiring_only=no.\n\nChanged the primary Streamlit sidebar so operator tooling is tucked into a collapsed `Admin / debug` section with a neutral `Open validation tools` action, and updated the workbench test to assert that demotion path instead of a primary-rail operator CTA.\n\n2. Exact files changed\n\n- `ui/components/sidebar.py`\n- `tests/test_workbench.py`\n\n3. Exact tests added or updated\n\n- Updated `tests/test_workbench.py::test_streamlit_jobs_shell_demotes_job_link_and_moves_operator_access_out_of_primary_nav`\n- No new tests added\n\n4. Exact commands run\n\n- `pytest tests/test_autonomy.py tests/test_workbench.py`\n- `./scripts/preflight_check.sh`\n- `python scripts/reset_demo.py`\n- `python -c \"import api.main; print('fastapi-import-ok')\"`\n- `python -c \"import ui.app; print('streamlit-import-ok')\"`\n- `.venv_validation/bin/python scripts/reset_demo.py`\n- `.venv_validation/bin/python -c \"import api.main; print('fastapi-import-ok')\"`\n- `.venv_validation/bin/python -c \"import ui.app; print('streamlit-import-ok')\"`\n- `.venv_validation/bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8000`\n- `.venv_validation/bin/streamlit run ui/app.py --server.headless true --server.port 8501`\n\n5. Exact results\n\n- `pytest tests/test_autonomy.py tests/test_workbench.py`: passed, `46 passed in 1.77s`\n- `./scripts/preflight_check.sh`: passed, `181 passed in 7.12s`, `Preflight checks passed.`\n- `python ...` commands: failed because `python` was not on PATH (`zsh:1: command not found: python`)\n- `.venv_validation/bin/python scripts/reset_demo.py`: passed; demo reset completed with `signals_ingested=4`, `listings_ingested=7`, `leads_updated=8`, `surfaced_count=5`, `live_mode_used=false`\n- `.venv_validation/bin/python -c \"import api.main; ...\"`: passed, printed `fastapi-import-ok`\n- `.venv_validation/bin/python -c \"import ui.app; ...\"`: passed, printed `streamlit-import-ok`\n- `.venv_validation/bin/python -m uvicorn ...`: app startup reached initialization, then failed to bind `127.0.0.1:8000` with `operation not permitted`\n- `.venv_validation/bin/streamlit run ...`: Streamlit startup reached server boot, then failed to bind its port with `PermissionError: [Errno 1] Operation not permitted`\n\n6. Honest note on what remains unproven\n\nLive FastAPI boot, live Streamlit boot, and direct validation of the changed workflow in the running app were not proven here because the sandbox blocked local port binding. The code path, targeted tests, full preflight, demo reset, and import-level startup all succeeded."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 24 vulnerabilities on sekrystal/Jorb's default branch (19 moderate, 5 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   4f1f5ee..a9a1042  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 2,
+    "changed_files": [
+      "tests/test_workbench.py",
+      "ui/components/sidebar.py"
+    ],
+    "unproven_runtime_gaps": [],
+    "ux_conformance": {
+      "required": true,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": "primary navigation remains the jobs-first validation shell; operator access moved behind a collapsed `Admin / debug` entry point instead of sitting directly in the main sidebar flow.",
+      "intentional_design_deviations": "the temporary Streamlit harness still keeps a separate operator console with existing operator pages, but it is now more aggressively demoted than a final product IA would be.",
+      "product_first_checklist": "hierarchy=yes, prohibited_surfaces=yes, backend_wiring_only=no.",
+      "primary_ux_prohibited_surfaces": [
+        "source matrix",
+        "discovery internals",
+        "learning",
+        "autonomy ops",
+        "agent activity",
+        "investigations",
+        "diagnostics",
+        "operator controls"
+      ]
+    }
+  },
+  "unproven_runtime_gaps": []
+}

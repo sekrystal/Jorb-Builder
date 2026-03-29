@@ -101,6 +101,17 @@ def main() -> int:
         """
     )
 
+    verification_block = fmt_list(task.get("verification", []))
+    vm_verification = task.get("vm_verification", [])
+    vm_bootstrap = task.get("vm_bootstrap", [])
+    vm_cleanup = task.get("vm_cleanup", [])
+    if vm_bootstrap:
+        verification_block += "\nVM bootstrap commands:\n" + fmt_list(vm_bootstrap)
+    if vm_verification:
+        verification_block += "\nVM-only verification commands:\n" + fmt_list(vm_verification)
+    if vm_cleanup:
+        verification_block += "\nVM cleanup commands:\n" + fmt_list(vm_cleanup)
+
     rendered = prompt_template.format(
         product_repo=product_label,
         target_repo=target_repo_label,
@@ -112,7 +123,7 @@ def main() -> int:
         allowlist=fmt_list(task.get("allowlist", [])),
         forbidlist=fmt_list(task.get("forbid", [])),
         acceptance=fmt_list(task.get("acceptance", [])),
-        verification_commands=fmt_list(task.get("verification", [])),
+        verification_commands=verification_block,
         failure_summary=active.get("failure_summary") or "No failure summary recorded.",
         builder_edit_constraint="- Do not edit product files." if target_kind_label == "builder" else "- Do not edit builder files.",
         ux_conformance_requirements=ux_requirements_block(task),
@@ -133,6 +144,12 @@ denylist:
 {fmt_list(task.get('forbid', []))}
 verification:
 {fmt_list(task.get('verification', []))}
+vm_verification:
+{fmt_list(task.get('vm_verification', []))}
+vm_bootstrap:
+{fmt_list(task.get('vm_bootstrap', []))}
+vm_cleanup:
+{fmt_list(task.get('vm_cleanup', []))}
 ---
 
 """

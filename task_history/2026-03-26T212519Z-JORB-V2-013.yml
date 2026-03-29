@@ -1,0 +1,139 @@
+{
+  "task_id": "JORB-V2-013",
+  "title": "Bootstrap the production JS front end shell for JORB",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-26T21:19:29.900164+00:00",
+  "completed_at": "2026-03-26T21:25:19.444131+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T211929Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T211929Z-JORB-V2-013",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T211929Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T211929Z-JORB-V2-013"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T211929Z-JORB-V2-013/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T211929Z-JORB-V2-013/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T211929Z-JORB-V2-013/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T211929Z-JORB-V2-013/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T211929Z-JORB-V2-013/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T211929Z-JORB-V2-013/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T211929Z-JORB-V2-013/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T211929Z-JORB-V2-013/executor.json"
+    }
+  ],
+  "files_changed": [
+    "OPERATIONS.md",
+    "README.md",
+    "tests/test_production_runtime.py",
+    "frontend/"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T211929Z-JORB-V2-013/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "a production JS front end shell exists with a realistic framework choice, routing or page structure, and backend API integration approach",
+    "local development setup is documented and wired to the existing backend",
+    "the relationship between the JS front end and the existing Streamlit harness is explicit",
+    "targeted tests and preflight pass"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [
+      "a production JS front end shell exists with a realistic framework choice, routing or page structure, and backend API integration approach",
+      "local development setup is documented and wired to the existing backend",
+      "the relationship between the JS front end and the existing Streamlit harness is explicit",
+      "targeted tests and preflight pass"
+    ],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\nUX Design Section Mapping: App shell -> Vite/React/TypeScript shell with routed layout frame; Primary jobs entry -> `/jobs` default route; Secondary Streamlit path -> `/validation-harness` page that explicitly points to Streamlit as the temporary harness.  \nUX Intentional Design Deviations: skeletal production shell only; Streamlit intentionally remains the home for operator and diagnostic surfaces during the bootstrap phase.  \nUX Product-First Checklist: hierarchy=yes, prohibited_surfaces=yes, backend_wiring_only=no.\n\nAdded a new production JS shell under `frontend/` with a product-first route hierarchy, a shared fetch client wired to the existing FastAPI backend, and a local Vite proxy for `/api` to `127.0.0.1:8000`. Documented the JS-vs-Streamlit split in `README.md` and `OPERATIONS.md`, and updated runtime tests to assert the shell stays product-facing and backend-wired.\n\n2. Exact files changed\n\n- `README.md`\n- `OPERATIONS.md`\n- `tests/test_production_runtime.py`\n- `frontend/index.html`\n- `frontend/package.json`\n- `frontend/tsconfig.app.json`\n- `frontend/tsconfig.json`\n- `frontend/tsconfig.node.json`\n- `frontend/vite.config.ts`\n- `frontend/src/lib/api.ts`\n- `frontend/src/main.tsx`\n- `frontend/src/router.tsx`\n- `frontend/src/shell/AppShell.tsx`\n- `frontend/src/styles.css`\n- `frontend/src/views/LeadPages.tsx`\n- `frontend/src/views/ProfilePage.tsx`\n- `frontend/src/views/ValidationHarnessPage.tsx`\n- `frontend/src/vite-env.d.ts`\n\n3. Exact tests added or updated\n\nUpdated `tests/test_production_runtime.py`:\n- `test_frontend_shell_uses_product_first_routes_and_streamlit_secondary_path`\n- `test_frontend_shell_dev_wiring_targets_existing_fastapi_backend`\n\n4. Exact commands run\n\n- `python3 scripts/reset_demo.py`\n- `python3 -m pytest tests/test_workbench.py tests/test_production_runtime.py`\n- `ls -1 .venv .venv_validation .venv_j1 2>/dev/null`\n- `./scripts/preflight_check.sh`\n- `./.venv_validation/bin/python scripts/reset_demo.py`\n- `./.venv_validation/bin/python -m pytest tests/test_workbench.py tests/test_production_runtime.py`\n- `./scripts/preflight_check.sh`\n- `./.venv_validation/bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8010`\n- `./.venv_validation/bin/streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8510`\n- `./.venv_validation/bin/python - <<'PY' ... fastapi.testclient ... PY`\n\n5. Exact results\n\n- `python3 scripts/reset_demo.py` failed: `ModuleNotFoundError: No module named 'sqlalchemy'`\n- `python3 -m pytest tests/test_workbench.py tests/test_production_runtime.py` failed: `No module named pytest`\n- `ls -1 .venv .venv_validation .venv_j1 2>/dev/null` showed `.venv_j1` and `.venv_validation`\n- First `./scripts/preflight_check.sh` run failed in pytest: `tests/test_production_runtime.py` had 1 failing assertion\n- `./.venv_validation/bin/python scripts/reset_demo.py` passed and reseeded demo data\n- `./.venv_validation/bin/python -m pytest tests/test_workbench.py tests/test_production_runtime.py` passed: `39 passed in 1.29s`\n- Second `./scripts/preflight_check.sh` passed: `175 passed in 6.32s` and `Preflight checks passed.`\n- `./.venv_validation/bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8010` failed: sandbox denied socket bind, `operation not permitted`\n- `./.venv_validation/bin/streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8510` failed: sandbox denied socket bind, `PermissionError: [Errno 1] Operation not permitted`\n- In-process FastAPI check failed before request execution: `RuntimeError` from `fastapi.testclient` because `httpx` is not installed\n\n6. Honest note on what remains unproven\n\nThe JS shell files, route structure, and backend wiring pattern are in place, and the required pytest/preflight verification passed. Actual localhost boot of FastAPI and Streamlit could not be proven in this sandbox because socket binding is blocked, and the JS frontend was not npm-installed or browser-run here, so live browser rendering and frontend build execution remain unproven."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 24 vulnerabilities on sekrystal/Jorb's default branch (19 moderate, 5 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   1577e35..e16dc0a  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 4,
+    "changed_files": [
+      "OPERATIONS.md",
+      "README.md",
+      "tests/test_production_runtime.py",
+      "frontend/"
+    ],
+    "unproven_runtime_gaps": [],
+    "ux_conformance": {
+      "required": true,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": "App shell -> Vite/React/TypeScript shell with routed layout frame; Primary jobs entry -> `/jobs` default route; Secondary Streamlit path -> `/validation-harness` page that explicitly points to Streamlit as the temporary harness.",
+      "intentional_design_deviations": "skeletal production shell only; Streamlit intentionally remains the home for operator and diagnostic surfaces during the bootstrap phase.",
+      "product_first_checklist": "hierarchy=yes, prohibited_surfaces=yes, backend_wiring_only=no.",
+      "primary_ux_prohibited_surfaces": [
+        "source matrix",
+        "discovery internals",
+        "learning",
+        "autonomy ops",
+        "agent activity",
+        "investigations",
+        "diagnostics",
+        "operator controls"
+      ]
+    }
+  },
+  "unproven_runtime_gaps": []
+}

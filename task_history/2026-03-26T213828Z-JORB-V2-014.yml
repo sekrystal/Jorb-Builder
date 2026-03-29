@@ -1,0 +1,147 @@
+{
+  "task_id": "JORB-V2-014",
+  "title": "Implement the Jobs screen from Figma in the JS front end",
+  "status": "refined",
+  "attempt": 1,
+  "started_at": "2026-03-26T21:29:11.947364+00:00",
+  "completed_at": "2026-03-26T21:38:28.245925+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T212911Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T212911Z-JORB-V2-014",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T212911Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T212911Z-JORB-V2-014"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T212911Z-JORB-V2-014/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T212911Z-JORB-V2-014/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T212911Z-JORB-V2-014/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T212911Z-JORB-V2-014/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T212911Z-JORB-V2-014/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T212911Z-JORB-V2-014/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T212911Z-JORB-V2-014/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T212911Z-JORB-V2-014/executor.json"
+    }
+  ],
+  "files_changed": [
+    "frontend/src/lib/api.ts",
+    "frontend/src/shell/AppShell.tsx",
+    "frontend/src/styles.css",
+    "frontend/src/views/LeadPages.tsx"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T212911Z-JORB-V2-014/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted",
+    "refined"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [
+    "the JS front end implements the Figma jobs screen including sidebar, jobs top bar, job list, job cards, detail panel or drawer, and loading and empty states",
+    "the jobs screen is wired to real backend data rather than mocked cards",
+    "job cards and detail state preserve title, company, score, explanation, and source provenance where available",
+    "targeted tests and preflight pass"
+  ],
+  "blocker_opened": null,
+  "notes": [
+    "UX conformance evidence is incomplete for this product-facing UX task."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "UX conformance evidence is incomplete for this product-facing UX task.",
+    "accepted": false,
+    "acceptance_met": [],
+    "acceptance_unmet": [
+      "the JS front end implements the Figma jobs screen including sidebar, jobs top bar, job list, job cards, detail panel or drawer, and loading and empty states",
+      "the jobs screen is wired to real backend data rather than mocked cards",
+      "job cards and detail state preserve title, company, score, explanation, and source provenance where available",
+      "targeted tests and preflight pass"
+    ],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. UX Design Section Mapping: Figma jobs screen shell -> updated [frontend/src/shell/AppShell.tsx](/Users/samuelkrystal/projects/jorb/frontend/src/shell/AppShell.tsx); jobs top bar, job list/cards, and detail panel -> rewritten [frontend/src/views/LeadPages.tsx](/Users/samuelkrystal/projects/jorb/frontend/src/views/LeadPages.tsx); visual system and responsive layout -> rebuilt [frontend/src/styles.css](/Users/samuelkrystal/projects/jorb/frontend/src/styles.css).\nUX Intentional Design Deviations: `Validation Harness` was moved out of the primary nav into a secondary sidebar link to keep the four core product routes dominant; `Dismiss` is rendered but disabled because the JS shell does not have a truthful backend dismissal contract and I did not invent one.\nUX Product-First Checklist: hierarchy=yes, prohibited_surfaces=yes, backend_wiring_only=no.\nChanged the JS jobs route from a backend table into a Figma-style jobs workspace wired to real `/opportunities` data, including search, location filter, remote toggle, sort, loading/empty/error states, selectable job cards, a secondary detail panel, and save/apply actions backed by the existing application-status API. I also expanded the frontend `Lead` type so the jobs UI can preserve title, company, score, explanation, and source provenance from real backend payloads.\n\n2. Exact files changed\n- [frontend/src/lib/api.ts](/Users/samuelkrystal/projects/jorb/frontend/src/lib/api.ts)\n- [frontend/src/shell/AppShell.tsx](/Users/samuelkrystal/projects/jorb/frontend/src/shell/AppShell.tsx)\n- [frontend/src/styles.css](/Users/samuelkrystal/projects/jorb/frontend/src/styles.css)\n- [frontend/src/views/LeadPages.tsx](/Users/samuelkrystal/projects/jorb/frontend/src/views/LeadPages.tsx)\n\n3. Exact tests added or updated\n- None.\n\n4. Exact commands run\n- `pytest tests/test_pipeline.py tests/test_production_runtime.py tests/test_workbench.py`\n- `./scripts/preflight_check.sh`\n- `.venv_validation/bin/python scripts/reset_demo.py`\n- `.venv_validation/bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8000`\n- `.venv_validation/bin/python -m streamlit run ui/app.py --server.headless true --server.port 8500 --server.address 127.0.0.1`\n\n5. Exact results\n- `pytest tests/test_pipeline.py tests/test_production_runtime.py tests/test_workbench.py`: passed, `55 passed in 4.76s`.\n- `./scripts/preflight_check.sh`: passed, `175 passed in 7.80s`, `Preflight checks passed.`\n- `.venv_validation/bin/python scripts/reset_demo.py`: passed; demo reset completed with `surfaced_count: 5` and `discovery_summary: \"Jobs found and surfaced normally.\"`\n- `.venv_validation/bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8000`: app startup reached initialization, then bind failed with `operation not permitted` in sandbox.\n- `.venv_validation/bin/python -m streamlit run ui/app.py --server.headless true --server.port 8500 --server.address 127.0.0.1`: startup reached Streamlit server boot, then bind failed with `PermissionError: [Errno 1] Operation not permitted`.\n\n6. Honest note on what remains unproven\nThe live FastAPI server, live Streamlit server, and browser-level verification of the new JS jobs screen remain unproven in this environment because the sandbox blocks binding to local ports. I also did not prove a frontend build or Vite runtime here, and `Dismiss` remains intentionally non-functional until there is a real backend contract for it."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 24 vulnerabilities on sekrystal/Jorb's default branch (19 moderate, 5 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   e16dc0a..acb7065  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      },
+      {
+        "name": "ux_conformance",
+        "outcome": "refined",
+        "detail": "Missing UX conformance evidence: response.design_section_mapping"
+      }
+    ],
+    "changed_files_count": 4,
+    "changed_files": [
+      "frontend/src/lib/api.ts",
+      "frontend/src/shell/AppShell.tsx",
+      "frontend/src/styles.css",
+      "frontend/src/views/LeadPages.tsx"
+    ],
+    "unproven_runtime_gaps": [],
+    "ux_conformance": {
+      "required": true,
+      "passed": false,
+      "planning_issues": [],
+      "missing_response_fields": [
+        "response.design_section_mapping"
+      ],
+      "design_section_mapping": null,
+      "intentional_design_deviations": "`Validation Harness` was moved out of the primary nav into a secondary sidebar link to keep the four core product routes dominant; `Dismiss` is rendered but disabled because the JS shell does not have a truthful backend dismissal contract and I did not invent one.",
+      "product_first_checklist": "hierarchy=yes, prohibited_surfaces=yes, backend_wiring_only=no.",
+      "primary_ux_prohibited_surfaces": [
+        "source matrix",
+        "discovery internals",
+        "learning",
+        "autonomy ops",
+        "agent activity",
+        "investigations",
+        "diagnostics",
+        "operator controls"
+      ]
+    }
+  },
+  "unproven_runtime_gaps": []
+}

@@ -1,0 +1,137 @@
+{
+  "task_id": "JORB-V2-003",
+  "title": "Keep onboarding skippable in the temporary Streamlit validation harness",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-26T23:26:36.215170+00:00",
+  "completed_at": "2026-03-26T23:30:18.999203+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T232634Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T232634Z-JORB-V2-003",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T232634Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T232634Z-JORB-V2-003"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T232634Z-JORB-V2-003/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T232634Z-JORB-V2-003/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T232634Z-JORB-V2-003/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T232634Z-JORB-V2-003/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T232634Z-JORB-V2-003/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T232634Z-JORB-V2-003/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T232634Z-JORB-V2-003/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T232634Z-JORB-V2-003/executor.json"
+    }
+  ],
+  "files_changed": [
+    "README.md",
+    "tests/test_workbench.py",
+    "ui/app.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T232634Z-JORB-V2-003/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "the temporary Streamlit validation harness does not force resume upload or LinkedIn import before users can reach the real-job validation path",
+    "streamlit-side onboarding remains clearly secondary to the underlying search-truth and real-job vertical slice work",
+    "optional onboarding still writes into the structured profile layer cleanly when used",
+    "targeted tests and preflight pass"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [
+      "the temporary Streamlit validation harness does not force resume upload or LinkedIn import before users can reach the real-job validation path",
+      "streamlit-side onboarding remains clearly secondary to the underlying search-truth and real-job vertical slice work",
+      "optional onboarding still writes into the structured profile layer cleanly when used",
+      "targeted tests and preflight pass"
+    ],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\nUX Design Section Mapping: Onboarding entry -> lightweight profile capture; Jobs-first landing path -> skip or defer onboarding  \nUX Intentional Design Deviations: Streamlit harness keeps a simple `Skip setup for now` / `Resume optional setup` control instead of introducing a fuller onboarding architecture  \nUX Product-First Checklist: hierarchy=yes, prohibited_surfaces=yes, backend_wiring_only=no\n\nThe Streamlit `Profile` onboarding is now explicitly optional in the temporary harness. I added a session-scoped defer flag so users can skip resume-first setup and still land in the discovery-ready state, while keeping the existing resume parse, profile review, and target-role save flow intact when they choose to use it. I also documented that optional behavior and added narrow tests to prove both the defer path and the structured profile update path without a resume flow.\n\n2. Exact files changed\n\n- [ui/app.py](/Users/samuelkrystal/projects/jorb/ui/app.py)\n- [tests/test_workbench.py](/Users/samuelkrystal/projects/jorb/tests/test_workbench.py)\n- [README.md](/Users/samuelkrystal/projects/jorb/README.md)\n\n3. Exact tests added or updated\n\n- Added `test_build_onboarding_state_allows_discovery_when_setup_is_deferred` in [tests/test_workbench.py:749](/Users/samuelkrystal/projects/jorb/tests/test_workbench.py#L749)\n- Added `test_build_profile_update_payload_still_writes_structured_profile_without_resume_flow` in [tests/test_workbench.py:906](/Users/samuelkrystal/projects/jorb/tests/test_workbench.py#L906)\n\n4. Exact commands run\n\n- `pytest tests/test_profile.py tests/test_workbench.py`\n- `./scripts/preflight_check.sh`\n- `./.venv_validation/bin/python scripts/reset_demo.py`\n- `./.venv_validation/bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8000`\n- `streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500`\n- `python scripts/reset_demo.py`\n- `python -m uvicorn api.main:app --host 127.0.0.1 --port 8000`\n\n5. Exact results\n\n- `pytest tests/test_profile.py tests/test_workbench.py`: passed, `48 passed in 1.70s`\n- `./scripts/preflight_check.sh`: passed, including full suite `181 passed in 6.06s`\n- `./.venv_validation/bin/python scripts/reset_demo.py`: passed; demo reset completed and reported `surfaced_count: 5`\n- `./.venv_validation/bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8000`: app startup completed, then sandbox blocked port bind with `[Errno 1] operation not permitted`\n- `streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500`: sandbox blocked port bind with `PermissionError: [Errno 1] Operation not permitted`\n- `python scripts/reset_demo.py`: failed because `python` is not on PATH in this shell\n- `python -m uvicorn api.main:app --host 127.0.0.1 --port 8000`: failed because `python` is not on PATH in this shell\n\n6. Honest note on what remains unproven\n\nLive browser verification of the changed Streamlit workflow remains unproven in this environment because the sandbox does not allow binding to `127.0.0.1:8000` or `127.0.0.1:8500`. FastAPI reached application startup before the bind failure, but I could not complete a real UI click-through of `Skip setup for now` or validate the end-to-end harness in a browser here."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 24 vulnerabilities on sekrystal/Jorb's default branch (19 moderate, 5 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   0cc2a36..4f1f5ee  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 3,
+    "changed_files": [
+      "README.md",
+      "tests/test_workbench.py",
+      "ui/app.py"
+    ],
+    "unproven_runtime_gaps": [],
+    "ux_conformance": {
+      "required": true,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": "Onboarding entry -> lightweight profile capture; Jobs-first landing path -> skip or defer onboarding",
+      "intentional_design_deviations": "Streamlit harness keeps a simple `Skip setup for now` / `Resume optional setup` control instead of introducing a fuller onboarding architecture",
+      "product_first_checklist": "hierarchy=yes, prohibited_surfaces=yes, backend_wiring_only=no",
+      "primary_ux_prohibited_surfaces": [
+        "source matrix",
+        "discovery internals",
+        "learning",
+        "autonomy ops",
+        "agent activity",
+        "investigations",
+        "diagnostics",
+        "operator controls"
+      ]
+    }
+  },
+  "unproven_runtime_gaps": []
+}

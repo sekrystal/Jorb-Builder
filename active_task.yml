@@ -1,23 +1,30 @@
 {
-  "task_id": "JORB-INFRA-006",
-  "title": "Harden builder UX conformance gating for product-facing tasks",
-  "state": "verifying",
+  "task_id": null,
+  "title": null,
+  "state": "completed",
   "attempt": 1,
-  "started_at": "2026-03-26T20:01:39.472010+00:00",
+  "started_at": "2026-03-27T16:56:46.891948+00:00",
   "handed_to_codex_at": null,
-  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200139Z/codex_prompt.md",
-  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200139Z-JORB-INFRA-006",
+  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T165646Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T165646Z-JORB-V2-007",
   "verification_commands": [
-    "python3 -m py_compile scripts/*.py",
-    "pytest tests/test_automate_task_loop.py",
-    "python3 scripts/automate_task_loop.py --inspect-backlog"
+    "pytest tests/test_production_runtime.py tests/test_workbench.py",
+    "./scripts/preflight_check.sh"
   ],
+  "vm_verification_commands": [],
+  "vm_bootstrap_commands": [],
+  "vm_cleanup_commands": [],
   "allowlist": [
-    "../jorb-builder/**"
+    "api/**",
+    "core/**",
+    "services/**",
+    "ui/**",
+    "tests/test_production_runtime.py",
+    "tests/test_workbench.py"
   ],
   "failure_summary": null,
   "notes": [],
-  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T200139Z",
-  "target_repo": "/Users/samuelkrystal/projects/jorb-builder",
-  "target_kind": "builder"
+  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T165646Z",
+  "target_repo": "/Users/samuelkrystal/projects/jorb",
+  "target_kind": "product"
 }

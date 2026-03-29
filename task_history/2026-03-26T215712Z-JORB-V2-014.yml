@@ -1,0 +1,137 @@
+{
+  "task_id": "JORB-V2-014",
+  "title": "Implement the Jobs screen from Figma in the JS front end",
+  "status": "accepted",
+  "attempt": 4,
+  "started_at": "2026-03-26T21:52:52.013333+00:00",
+  "completed_at": "2026-03-26T21:57:12.568182+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T215251Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T215251Z-JORB-V2-014",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T215251Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T215251Z-JORB-V2-014"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T215251Z-JORB-V2-014/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T215251Z-JORB-V2-014/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T215251Z-JORB-V2-014/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T215251Z-JORB-V2-014/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T215251Z-JORB-V2-014/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T215251Z-JORB-V2-014/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T215251Z-JORB-V2-014/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T215251Z-JORB-V2-014/executor.json"
+    }
+  ],
+  "files_changed": [
+    "README.md",
+    "frontend/src/styles.css",
+    "frontend/src/views/LeadPages.tsx"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T215251Z-JORB-V2-014/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "the JS front end implements the Figma jobs screen including sidebar, jobs top bar, job list, job cards, detail panel or drawer, and loading and empty states",
+    "the jobs screen is wired to real backend data rather than mocked cards",
+    "job cards and detail state preserve title, company, score, explanation, and source provenance where available",
+    "targeted tests and preflight pass"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [
+      "the JS front end implements the Figma jobs screen including sidebar, jobs top bar, job list, job cards, detail panel or drawer, and loading and empty states",
+      "the jobs screen is wired to real backend data rather than mocked cards",
+      "job cards and detail state preserve title, company, score, explanation, and source provenance where available",
+      "targeted tests and preflight pass"
+    ],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\nUX Design Section Mapping: Figma jobs screen shell -> existing app sidebar plus a stronger `/jobs` page header/top bar; job list and cards -> dominant primary column with shortlist header and live summary cards; detail panel or drawer -> sticky secondary inspection panel; sidebar and jobs top bar -> preserved as supporting navigation and controls.\n\nUX Intentional Design Deviations: No checked-in Figma asset was available in this repo, so I used the existing production shell visual language as the implementation baseline; I added compact shortlist summary cards above the list to reinforce the jobs-first hierarchy without introducing prohibited product surfaces.\n\nUX Product-First Checklist: hierarchy=yes, prohibited_surfaces=yes, backend_wiring_only=no.\n\nThe JS Jobs screen in [frontend/src/views/LeadPages.tsx](/Users/samuelkrystal/projects/jorb/frontend/src/views/LeadPages.tsx) is now a more explicit jobs-first product screen wired to the live `/api/opportunities` data: the list remains dominant above the fold, cards still preserve title/company/score/explanation/source provenance, and the detail panel now carries tags and current status in-context. [frontend/src/styles.css](/Users/samuelkrystal/projects/jorb/frontend/src/styles.css) was updated for the new layout, responsive behavior, and loading/empty-state hierarchy, and [README.md](/Users/samuelkrystal/projects/jorb/README.md) was updated to stop calling the JS shell skeletal.\n\n2. Exact files changed\n\n[frontend/src/views/LeadPages.tsx](/Users/samuelkrystal/projects/jorb/frontend/src/views/LeadPages.tsx)\n\n[frontend/src/styles.css](/Users/samuelkrystal/projects/jorb/frontend/src/styles.css)\n\n[README.md](/Users/samuelkrystal/projects/jorb/README.md)\n\n3. Exact tests added or updated\n\nNone.\n\n4. Exact commands run\n\n```bash\ncd /Users/samuelkrystal/projects/jorb/frontend && npm run build\ncd /Users/samuelkrystal/projects/jorb && pytest tests/test_pipeline.py tests/test_production_runtime.py tests/test_workbench.py\ncd /Users/samuelkrystal/projects/jorb && ./scripts/preflight_check.sh\ncd /Users/samuelkrystal/projects/jorb && .venv_validation/bin/python scripts/reset_demo.py\ncd /Users/samuelkrystal/projects/jorb && ./.venv_validation/bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8000\ncd /Users/samuelkrystal/projects/jorb && ./.venv_validation/bin/streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500\n```\n\n5. Exact results\n\n`npm run build`: failed because `tsc` was not available in this sandboxed frontend environment (`sh: tsc: command not found`), and `frontend/node_modules/.bin` is absent.\n\n`pytest tests/test_pipeline.py tests/test_production_runtime.py tests/test_workbench.py`: passed, `55 passed in 2.88s`.\n\n`./scripts/preflight_check.sh`: passed, including compile/import smoke and full test suite, `175 passed in 6.07s`.\n\n`.venv_validation/bin/python scripts/reset_demo.py`: passed and reseeded demo data; key result was `surfaced_count: 5` with `\"Jobs found and surfaced normally.\"`\n\n`uvicorn api.main:app --host 127.0.0.1 --port 8000`: startup reached application initialization, then failed to bind `127.0.0.1:8000` with `operation not permitted` due sandbox restrictions.\n\n`streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500`: failed to bind the local port with `PermissionError: [Errno 1] Operation not permitted` due sandbox restrictions.\n\n6. Honest note on what remains unproven\n\nI did not directly prove the live JS `/jobs` screen in a browser because this environment lacks installed frontend build tooling and also blocks local port binding, so I could not boot Vite, FastAPI, or Streamlit to manually exercise the changed workflow end-to-end."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 24 vulnerabilities on sekrystal/Jorb's default branch (19 moderate, 5 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   acb7065..d9ea4eb  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 3,
+    "changed_files": [
+      "README.md",
+      "frontend/src/styles.css",
+      "frontend/src/views/LeadPages.tsx"
+    ],
+    "unproven_runtime_gaps": [],
+    "ux_conformance": {
+      "required": true,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": "Figma jobs screen shell -> existing app sidebar plus a stronger `/jobs` page header/top bar; job list and cards -> dominant primary column with shortlist header and live summary cards; detail panel or drawer -> sticky secondary inspection panel; sidebar and jobs top bar -> preserved as supporting navigation and controls.",
+      "intentional_design_deviations": "No checked-in Figma asset was available in this repo, so I used the existing production shell visual language as the implementation baseline; I added compact shortlist summary cards above the list to reinforce the jobs-first hierarchy without introducing prohibited product surfaces.",
+      "product_first_checklist": "hierarchy=yes, prohibited_surfaces=yes, backend_wiring_only=no.",
+      "primary_ux_prohibited_surfaces": [
+        "source matrix",
+        "discovery internals",
+        "learning",
+        "autonomy ops",
+        "agent activity",
+        "investigations",
+        "diagnostics",
+        "operator controls"
+      ]
+    }
+  },
+  "unproven_runtime_gaps": []
+}

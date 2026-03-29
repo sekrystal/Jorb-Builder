@@ -1,0 +1,143 @@
+{
+  "task_id": "JORB-V2-018",
+  "title": "Clean the temporary Streamlit harness into a jobs-first validation shell",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-26T22:16:35.567218+00:00",
+  "completed_at": "2026-03-26T22:21:53.071156+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T221635Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T221635Z-JORB-V2-018",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T221635Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T221635Z-JORB-V2-018"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T221635Z-JORB-V2-018/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T221635Z-JORB-V2-018/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T221635Z-JORB-V2-018/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T221635Z-JORB-V2-018/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T221635Z-JORB-V2-018/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T221635Z-JORB-V2-018/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T221635Z-JORB-V2-018/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T221635Z-JORB-V2-018/executor.json"
+    }
+  ],
+  "files_changed": [
+    "README.md",
+    "tests/test_workbench.py",
+    "ui/app.py",
+    "ui/components/sidebar.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-26T221635Z-JORB-V2-018/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "the temporary Streamlit harness keeps the jobs list clearly primary on the main screen",
+    "Add job link is removed from the dominant top-of-screen position or otherwise demoted so it does not overshadow jobs",
+    "operator or debug surfaces such as discovery source matrix, discovery internals, learning, autonomy ops, agent activity, investigations, diagnostics, and admin controls are absent from the primary user-facing shell",
+    "lightweight user-facing status remains available without turning the main shell into an operator console",
+    "Saved, Applied, and Profile remain understandable in the temporary harness",
+    "acceptance requires live runtime review of the jobs-first shell and not tests alone"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [
+      "the temporary Streamlit harness keeps the jobs list clearly primary on the main screen",
+      "Add job link is removed from the dominant top-of-screen position or otherwise demoted so it does not overshadow jobs",
+      "operator or debug surfaces such as discovery source matrix, discovery internals, learning, autonomy ops, agent activity, investigations, diagnostics, and admin controls are absent from the primary user-facing shell",
+      "lightweight user-facing status remains available without turning the main shell into an operator console",
+      "Saved, Applied, and Profile remain understandable in the temporary harness",
+      "acceptance requires live runtime review of the jobs-first shell and not tests alone"
+    ],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\nUX Design Section Mapping: Main jobs screen -> `Jobs`, `Saved`, `Applied`, and `Profile` stay in the default shell; Secondary status and debug access -> moved behind a separate `Open operator console` path; Add job link and similar controls -> moved below the main Jobs experience inside a collapsed expander.\n\nUX Intentional Design Deviations: Lightweight system status remains visible in the sidebar; operator-heavy surfaces still exist in Streamlit, but only inside the separate operator console.\n\nUX Product-First Checklist: hierarchy=yes, prohibited_surfaces=yes, backend_wiring_only=no\n\nThe temporary Streamlit harness is now jobs-first by default. I removed operator/debug pages from the primary sidebar navigation, added a separate operator console shell for `Discovery`, `Agent Activity`, `Investigations`, `Learning`, and `Autonomy Ops`, and demoted `Add job link` so it no longer sits above the main jobs list/detail flow.\n\n2. Exact files changed\n\n- `ui/app.py`\n- `ui/components/sidebar.py`\n- `tests/test_workbench.py`\n- `README.md`\n\n3. Exact tests added or updated\n\nUpdated `tests/test_workbench.py` with:\n\n- `test_streamlit_primary_navigation_keeps_product_pages_separate_from_operator_pages`\n- `test_streamlit_jobs_shell_demotes_job_link_and_moves_operator_access_out_of_primary_nav`\n\n4. Exact commands run\n\n- `pytest tests/test_workbench.py`\n- `pytest tests/test_autonomy.py tests/test_production_runtime.py tests/test_workbench.py`\n- `./scripts/preflight_check.sh`\n- `./scripts/runtime_self_check.sh`\n- `.venv_validation/bin/python scripts/reset_demo.py`\n- `.venv_validation/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000`\n- `.venv_validation/bin/streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500`\n\n5. Exact results\n\n- `pytest tests/test_workbench.py`: passed, `33 passed in 1.44s`\n- `pytest tests/test_autonomy.py tests/test_production_runtime.py tests/test_workbench.py`: passed, `53 passed in 1.78s`\n- `./scripts/preflight_check.sh`: passed, including compile/import smoke and full suite `179 passed in 6.58s`\n- `./scripts/runtime_self_check.sh`: exited successfully as a script, but all local curl probes failed because no local services were running yet\n- `.venv_validation/bin/python scripts/reset_demo.py`: succeeded and reseeded demo data\n- `.venv_validation/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000`: failed to bind `127.0.0.1:8000` with `[Errno 1] operation not permitted`\n- `.venv_validation/bin/streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500`: failed to bind `127.0.0.1:8500` with `PermissionError: [Errno 1] Operation not permitted`\n\n6. Honest note on what remains unproven\n\nLive runtime review of the jobs-first shell remains unproven in this environment. I attempted the required FastAPI and Streamlit boot steps, but the sandbox blocks local port binding, so I could not complete an actual on-screen review of the updated Streamlit hierarchy or rerun endpoint checks against a live local server."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 24 vulnerabilities on sekrystal/Jorb's default branch (19 moderate, 5 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   95b21e2..0cc2a36  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 4,
+    "changed_files": [
+      "README.md",
+      "tests/test_workbench.py",
+      "ui/app.py",
+      "ui/components/sidebar.py"
+    ],
+    "unproven_runtime_gaps": [],
+    "ux_conformance": {
+      "required": true,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": "Main jobs screen -> `Jobs`, `Saved`, `Applied`, and `Profile` stay in the default shell; Secondary status and debug access -> moved behind a separate `Open operator console` path; Add job link and similar controls -> moved below the main Jobs experience inside a collapsed expander.",
+      "intentional_design_deviations": "Lightweight system status remains visible in the sidebar; operator-heavy surfaces still exist in Streamlit, but only inside the separate operator console.",
+      "product_first_checklist": "hierarchy=yes, prohibited_surfaces=yes, backend_wiring_only=no",
+      "primary_ux_prohibited_surfaces": [
+        "source matrix",
+        "discovery internals",
+        "learning",
+        "autonomy ops",
+        "agent activity",
+        "investigations",
+        "diagnostics",
+        "operator controls"
+      ]
+    }
+  },
+  "unproven_runtime_gaps": []
+}

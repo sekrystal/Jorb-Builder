@@ -1,0 +1,162 @@
+{
+  "task_id": "JORB-V2-007",
+  "title": "Remove datetime.utcnow deprecation noise from active UI and runtime paths",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-27T16:56:46.891948+00:00",
+  "completed_at": "2026-03-27T17:03:30.951792+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T165646Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T165646Z-JORB-V2-007",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T165646Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T165646Z-JORB-V2-007"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T165646Z-JORB-V2-007/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T165646Z-JORB-V2-007/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T165646Z-JORB-V2-007/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T165646Z-JORB-V2-007/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T165646Z-JORB-V2-007/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T165646Z-JORB-V2-007/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T165646Z-JORB-V2-007/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T165646Z-JORB-V2-007/executor.json"
+    }
+  ],
+  "files_changed": [
+    "core/models.py",
+    "services/activity.py",
+    "services/alerts.py",
+    "services/applications.py",
+    "services/autonomy.py",
+    "services/company_discovery.py",
+    "services/connector_admin.py",
+    "services/connectors_health.py",
+    "services/discovery_agents.py",
+    "services/governance.py",
+    "services/investigations.py",
+    "services/learning.py",
+    "services/ops.py",
+    "services/pipeline.py",
+    "services/resolve_company.py",
+    "services/runtime_control.py",
+    "services/sync.py",
+    "services/worker_runtime.py",
+    "tests/test_production_runtime.py",
+    "ui/app.py",
+    "core/time.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T165646Z-JORB-V2-007/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "datetime.utcnow deprecation warnings are removed from the targeted active UI and runtime paths touched by Phase 2 work",
+    "warning cleanup does not regress runtime behavior or broaden into unrelated refactors",
+    "targeted tests and preflight pass"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [
+      "datetime.utcnow deprecation warnings are removed from the targeted active UI and runtime paths touched by Phase 2 work",
+      "warning cleanup does not regress runtime behavior or broaden into unrelated refactors",
+      "targeted tests and preflight pass"
+    ],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Replaced direct `datetime.utcnow()` usage in the targeted active runtime and UI paths with a new shared `core.time.utcnow()` helper that returns naive UTC via `datetime.now(timezone.utc).replace(tzinfo=None)`, preserving existing storage/comparison behavior while removing the deprecation source. Updated the targeted runtime test timestamps to use the same helper.\n\n2. Exact files changed:\n`core/time.py`\n`core/models.py`\n`services/activity.py`\n`services/alerts.py`\n`services/applications.py`\n`services/autonomy.py`\n`services/company_discovery.py`\n`services/connector_admin.py`\n`services/connectors_health.py`\n`services/discovery_agents.py`\n`services/governance.py`\n`services/investigations.py`\n`services/learning.py`\n`services/ops.py`\n`services/pipeline.py`\n`services/resolve_company.py`\n`services/runtime_control.py`\n`services/sync.py`\n`services/worker_runtime.py`\n`tests/test_production_runtime.py`\n`ui/app.py`\n\n3. Exact tests added or updated:\nNo new tests added.\nUpdated `tests/test_production_runtime.py`.\n`tests/test_workbench.py` was not changed.\n\n4. Exact commands run:\n`git status --short`\n`grep -RIn \"datetime.utcnow\\|utcnow(\" api core services ui tests/test_production_runtime.py tests/test_workbench.py`\n`grep -RIn \"from datetime import\\|import datetime\" api core services ui tests/test_production_runtime.py tests/test_workbench.py`\n`sed -n '1,120p' core/models.py`\n`sed -n '1,140p' services/runtime_control.py`\n`sed -n '1,120p' ui/app.py`\n`sed -n '1,140p' services/worker_runtime.py`\n`sed -n '1,220p' tests/test_production_runtime.py`\n`sed -n '1,220p' tests/test_workbench.py`\n`sed -n '1,140p' services/activity.py`\n`sed -n '1,40p' services/discovery_agents.py`\n`sed -n '1,40p' services/sync.py`\n`sed -n '1,40p' services/company_discovery.py`\n`sed -n '1,40p' services/pipeline.py`\n`sed -n '1,30p' services/alerts.py`\n`sed -n '1,30p' services/applications.py`\n`sed -n '1,30p' services/autonomy.py`\n`sed -n '1,30p' services/connectors_health.py`\n`sed -n '1,30p' services/ops.py`\n`sed -n '1,30p' services/connector_admin.py`\n`sed -n '1,30p' services/learning.py`\n`sed -n '1,30p' services/resolve_company.py`\n`sed -n '1,30p' services/investigations.py`\n`sed -n '1,30p' services/governance.py`\n`pytest tests/test_production_runtime.py tests/test_workbench.py`\n`./scripts/preflight_check.sh`\n`git diff --name-only -- core/models.py core/time.py services/discovery_agents.py services/sync.py services/alerts.py services/worker_runtime.py services/company_discovery.py services/applications.py services/autonomy.py services/activity.py services/connectors_health.py services/ops.py services/runtime_control.py services/pipeline.py services/connector_admin.py services/learning.py services/resolve_company.py services/investigations.py services/governance.py ui/app.py tests/test_production_runtime.py tests/test_workbench.py`\n`git diff --stat -- core/models.py core/time.py services/discovery_agents.py services/sync.py services/alerts.py services/worker_runtime.py services/company_discovery.py services/applications.py services/autonomy.py services/activity.py services/connectors_health.py services/ops.py services/runtime_control.py services/pipeline.py services/connector_admin.py services/learning.py services/resolve_company.py services/investigations.py services/governance.py ui/app.py tests/test_production_runtime.py tests/test_workbench.py`\n`git status --short -- core/models.py core/time.py services/discovery_agents.py services/sync.py services/alerts.py services/worker_runtime.py services/company_discovery.py services/applications.py services/autonomy.py services/activity.py services/connectors_health.py services/ops.py services/runtime_control.py services/pipeline.py services/connector_admin.py services/learning.py services/resolve_company.py services/investigations.py services/governance.py ui/app.py tests/test_production_runtime.py tests/test_workbench.py`\n\n5. Exact results:\n`pytest tests/test_production_runtime.py tests/test_workbench.py`:\n47 tests collected, 47 passed.\n\n`./scripts/preflight_check.sh`:\nPassed.\n`compileall` succeeded.\nRoute/import smoke succeeded.\nEmbedded pytest run succeeded: 184 passed in 8.84s.\nScript output ended with:\n`Preflight checks passed.`\n`This script proves local imports, DB init, and test coverage only.`\n`It is not live runtime proof.`\n\n6. Honest note on what remains unproven:\nI did not run `python scripts/reset_demo.py`, boot FastAPI locally, boot Streamlit locally, or verify the changed workflow in the live app/API. I also did not capture runtime warning output from a live UI/worker session, so the cleanup is proven by code-path replacement plus tests/preflight, not by live stack execution."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 24 vulnerabilities on sekrystal/Jorb's default branch (19 moderate, 5 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   3e37f2c..66ad188  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 21,
+    "changed_files": [
+      "core/models.py",
+      "services/activity.py",
+      "services/alerts.py",
+      "services/applications.py",
+      "services/autonomy.py",
+      "services/company_discovery.py",
+      "services/connector_admin.py",
+      "services/connectors_health.py",
+      "services/discovery_agents.py",
+      "services/governance.py",
+      "services/investigations.py",
+      "services/learning.py",
+      "services/ops.py",
+      "services/pipeline.py",
+      "services/resolve_company.py",
+      "services/runtime_control.py",
+      "services/sync.py",
+      "services/worker_runtime.py",
+      "tests/test_production_runtime.py",
+      "ui/app.py",
+      "core/time.py"
+    ],
+    "unproven_runtime_gaps": [],
+    "ux_conformance": {
+      "required": false,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": null,
+      "intentional_design_deviations": null,
+      "product_first_checklist": null,
+      "primary_ux_prohibited_surfaces": []
+    }
+  },
+  "unproven_runtime_gaps": []
+}

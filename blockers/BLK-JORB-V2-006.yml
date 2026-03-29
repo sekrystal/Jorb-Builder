@@ -1,0 +1,27 @@
+{
+  "id": "BLK-JORB-V2-006",
+  "title": "Task JORB-V2-006 blocked during automated execution",
+  "severity": "high",
+  "opened_at": "2026-03-27T06:26:55.901627+00:00",
+  "related_tasks": [
+    "JORB-V2-006"
+  ],
+  "status": "resolved",
+  "symptoms": [
+    "Product repo was dirty before automated execution; refusing to continue."
+  ],
+  "diagnosis": "Resolved by state repair after the dirty-repo evidence cleared and no current product worktree changes remained.",
+  "evidence": [
+    "OPERATIONS.md",
+    "README.md",
+    "scripts/runtime_self_check.sh",
+    "tests/test_production_runtime.py",
+    "tests/test_workbench.py",
+    "opportunity_scout.db-journal"
+  ],
+  "next_actions": [
+    "rerun python3 scripts/automate_task_loop.py so JORB-V2-006 can execute again"
+  ],
+  "human_needed": false,
+  "resolved_at": "2026-03-27T00:00:00+00:00"
+}

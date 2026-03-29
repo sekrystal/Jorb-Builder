@@ -1,0 +1,111 @@
+{
+  "task_id": "JORB-V2-017",
+  "title": "Demote Streamlit to an internal validation and operator harness",
+  "status": "blocked",
+  "attempt": 1,
+  "started_at": "2026-03-27T14:44:26.309055+00:00",
+  "completed_at": "2026-03-27T14:44:26.420837+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T144424Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T144424Z-JORB-V2-017",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T144424Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T144424Z-JORB-V2-017"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T144424Z-JORB-V2-017/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T144424Z-JORB-V2-017/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T144424Z-JORB-V2-017/progress.jsonl"
+    }
+  ],
+  "files_changed": [
+    "OPERATIONS.md",
+    "README.md",
+    "scripts/runtime_self_check.sh",
+    "tests/test_production_runtime.py",
+    "tests/test_workbench.py",
+    "opportunity_scout.db-journal"
+  ],
+  "commands_run": [],
+  "results": [
+    "blocked"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [
+    "the JS front end is the explicit primary product path",
+    "Streamlit is demoted to internal validation, debugging, or operator use rather than the default product shell",
+    "docs and runtime guidance make the transition explicit",
+    "targeted tests and preflight pass"
+  ],
+  "blocker_opened": null,
+  "notes": [
+    "Product repo is dirty before automated execution; refusing to continue."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Product repo is dirty before automated execution; refusing to continue.",
+    "accepted": false,
+    "acceptance_met": [],
+    "acceptance_unmet": [
+      "the JS front end is the explicit primary product path",
+      "Streamlit is demoted to internal validation, debugging, or operator use rather than the default product shell",
+      "docs and runtime guidance make the transition explicit",
+      "targeted tests and preflight pass"
+    ],
+    "step_outcomes": [
+      {
+        "name": "git_status_before",
+        "outcome": "blocked",
+        "detail": "OPERATIONS.md\nREADME.md\nscripts/runtime_self_check.sh\ntests/test_production_runtime.py\ntests/test_workbench.py\nopportunity_scout.db-journal"
+      }
+    ],
+    "changed_files_count": 6,
+    "changed_files": [
+      "OPERATIONS.md",
+      "README.md",
+      "scripts/runtime_self_check.sh",
+      "tests/test_production_runtime.py",
+      "tests/test_workbench.py",
+      "opportunity_scout.db-journal"
+    ],
+    "unproven_runtime_gaps": [
+      "Product repo is dirty before automated execution; refusing to continue."
+    ],
+    "ux_conformance": {
+      "required": true,
+      "passed": false,
+      "planning_issues": [],
+      "missing_response_fields": [
+        "response.design_section_mapping",
+        "response.intentional_design_deviations",
+        "response.product_first_checklist"
+      ],
+      "design_section_mapping": null,
+      "intentional_design_deviations": null,
+      "product_first_checklist": null,
+      "primary_ux_prohibited_surfaces": [
+        "source matrix",
+        "discovery internals",
+        "learning",
+        "autonomy ops",
+        "agent activity",
+        "investigations",
+        "diagnostics",
+        "operator controls"
+      ]
+    }
+  },
+  "unproven_runtime_gaps": [
+    "Product repo is dirty before automated execution; refusing to continue."
+  ]
+}

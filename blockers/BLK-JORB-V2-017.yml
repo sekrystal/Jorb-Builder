@@ -1,0 +1,28 @@
+{
+  "id": "BLK-JORB-V2-017",
+  "title": "Task JORB-V2-017 blocked during automated execution",
+  "severity": "high",
+  "opened_at": "2026-03-27T14:44:26.421891+00:00",
+  "related_tasks": [
+    "JORB-V2-017"
+  ],
+  "status": "resolved",
+  "symptoms": [
+    "Product repo is dirty before automated execution; refusing to continue."
+  ],
+  "diagnosis": "Product repo is dirty before automated execution; refusing to continue.",
+  "evidence": [
+    "OPERATIONS.md",
+    "README.md",
+    "scripts/runtime_self_check.sh",
+    "tests/test_production_runtime.py",
+    "tests/test_workbench.py",
+    "opportunity_scout.db-journal"
+  ],
+  "next_actions": [
+    "Inspect automation_result.json and narrow the next bounded refinement."
+  ],
+  "human_needed": true,
+  "resolved_at": "2026-03-27T14:45:41.061242+00:00",
+  "resolution": "Resolved by state repair: prior dirty-repo blocker is no longer current and the task is runnable again."
+}

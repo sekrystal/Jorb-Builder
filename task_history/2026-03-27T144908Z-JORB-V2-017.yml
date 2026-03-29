@@ -1,0 +1,147 @@
+{
+  "task_id": "JORB-V2-017",
+  "title": "Demote Streamlit to an internal validation and operator harness",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-27T14:45:41.565857+00:00",
+  "completed_at": "2026-03-27T14:49:08.484678+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T144541Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T144541Z-JORB-V2-017",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T144541Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T144541Z-JORB-V2-017"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T144541Z-JORB-V2-017/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T144541Z-JORB-V2-017/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T144541Z-JORB-V2-017/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T144541Z-JORB-V2-017/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T144541Z-JORB-V2-017/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T144541Z-JORB-V2-017/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T144541Z-JORB-V2-017/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T144541Z-JORB-V2-017/executor.json"
+    }
+  ],
+  "files_changed": [
+    "OPERATIONS.md",
+    "README.md",
+    "frontend/src/shell/AppShell.tsx",
+    "frontend/src/views/ValidationHarnessPage.tsx",
+    "tests/test_production_runtime.py",
+    "tests/test_workbench.py",
+    "ui/app.py",
+    "ui/components/sidebar.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.318.11754-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-27T144541Z-JORB-V2-017/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [
+    "the JS front end is the explicit primary product path",
+    "Streamlit is demoted to internal validation, debugging, or operator use rather than the default product shell",
+    "docs and runtime guidance make the transition explicit",
+    "targeted tests and preflight pass"
+  ],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [
+      "the JS front end is the explicit primary product path",
+      "Streamlit is demoted to internal validation, debugging, or operator use rather than the default product shell",
+      "docs and runtime guidance make the transition explicit",
+      "targeted tests and preflight pass"
+    ],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\nUX Design Section Mapping: Primary product shell -> JS front end; Secondary validation and operator shell -> Streamlit  \nUX Intentional Design Deviations: Some overlap remains via an explicit JS link to the secondary harness page, but the product/default hierarchy is now stated directly in UI copy and docs.  \nUX Product-First Checklist: hierarchy=yes, prohibited_surfaces=yes, backend_wiring_only=no\n\nThe React shell now identifies itself as the primary product shell, labels Streamlit as an internal harness, and routes operator-only framing through the dedicated validation page. Streamlit copy was tightened to describe it as internal validation/operator use, and README/OPERATIONS now explicitly tell operators to use the JS app as the primary product path while treating Streamlit as secondary validation/debug tooling. Targeted tests were updated to lock that hierarchy in.\n\n2. Exact files changed\n\n- [frontend/src/shell/AppShell.tsx](/Users/samuelkrystal/projects/jorb/frontend/src/shell/AppShell.tsx)\n- [frontend/src/views/ValidationHarnessPage.tsx](/Users/samuelkrystal/projects/jorb/frontend/src/views/ValidationHarnessPage.tsx)\n- [ui/components/sidebar.py](/Users/samuelkrystal/projects/jorb/ui/components/sidebar.py)\n- [ui/app.py](/Users/samuelkrystal/projects/jorb/ui/app.py)\n- [README.md](/Users/samuelkrystal/projects/jorb/README.md)\n- [OPERATIONS.md](/Users/samuelkrystal/projects/jorb/OPERATIONS.md)\n- [tests/test_production_runtime.py](/Users/samuelkrystal/projects/jorb/tests/test_production_runtime.py)\n- [tests/test_workbench.py](/Users/samuelkrystal/projects/jorb/tests/test_workbench.py)\n\n3. Exact tests added or updated\n\n- Updated [tests/test_production_runtime.py](/Users/samuelkrystal/projects/jorb/tests/test_production_runtime.py) to assert the JS shell is the primary product shell and Streamlit is the internal/operator harness.\n- Updated [tests/test_workbench.py](/Users/samuelkrystal/projects/jorb/tests/test_workbench.py) to assert the new internal-harness wording in Streamlit and the revised acceptance-doc language.\n\n4. Exact commands run\n\n```bash\npytest tests/test_production_runtime.py tests/test_workbench.py\n./scripts/preflight_check.sh\n```\n\n5. Exact results\n\n- `pytest tests/test_production_runtime.py tests/test_workbench.py`\n  - Passed: `47 passed in 1.41s`\n- `./scripts/preflight_check.sh`\n  - Passed: `184 passed in 5.96s`\n  - Final preflight output: `Preflight checks passed.`\n  - Preflight also states it is not live runtime proof.\n\n6. Honest note on what remains unproven\n\nI did not run `python scripts/reset_demo.py`, boot FastAPI, boot Streamlit, or verify the changed workflow live in the browser. I also did not run `./scripts/runtime_self_check.sh`. So the copy, routing hierarchy, and test coverage are proven locally, but live runtime/product-path behavior is still unproven in this turn."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 24 vulnerabilities on sekrystal/Jorb's default branch (19 moderate, 5 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   e55ac58..68d4a4d  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 8,
+    "changed_files": [
+      "OPERATIONS.md",
+      "README.md",
+      "frontend/src/shell/AppShell.tsx",
+      "frontend/src/views/ValidationHarnessPage.tsx",
+      "tests/test_production_runtime.py",
+      "tests/test_workbench.py",
+      "ui/app.py",
+      "ui/components/sidebar.py"
+    ],
+    "unproven_runtime_gaps": [],
+    "ux_conformance": {
+      "required": true,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": "Primary product shell -> JS front end; Secondary validation and operator shell -> Streamlit",
+      "intentional_design_deviations": "Some overlap remains via an explicit JS link to the secondary harness page, but the product/default hierarchy is now stated directly in UI copy and docs.",
+      "product_first_checklist": "hierarchy=yes, prohibited_surfaces=yes, backend_wiring_only=no",
+      "primary_ux_prohibited_surfaces": [
+        "source matrix",
+        "discovery internals",
+        "learning",
+        "autonomy ops",
+        "agent activity",
+        "investigations",
+        "diagnostics",
+        "operator controls"
+      ]
+    }
+  },
+  "unproven_runtime_gaps": []
+}

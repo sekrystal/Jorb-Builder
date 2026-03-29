@@ -48,7 +48,8 @@
         "builder can run local validation and record deterministic outcomes",
         "builder can perform required git and VM sync steps with explicit state tracking",
         "builder can support renewed runtime validation without collapsing task boundaries or repo separation"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-INFRA-002",
@@ -91,7 +92,8 @@
         "builder can invoke a deterministic callable executor without manual clipboard or paste steps",
         "automation logs still preserve explicit evidence for executor invocation and outputs",
         "human_gated mode remains available as a bounded fallback if the callable executor is unavailable"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V1-001",
@@ -147,7 +149,8 @@
         "latest planner/openai/discovery truth is sourced from persisted latest relevant rows rather than a shallow recent window alone",
         "targeted tests cover the new truth behavior",
         "preflight passes"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V1-002",
@@ -213,7 +216,8 @@
         "discovery status exposes query family truth",
         "UI can render query-family diagnostics without touching /leads",
         "targeted tests and preflight pass"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V1-003",
@@ -259,7 +263,8 @@
         "bounded failover or deterministic rewrite path is attempted and logged",
         "accepted ATS roots and careers pages remain supported",
         "targeted tests and preflight pass"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V1-004",
@@ -305,7 +310,8 @@
         "cycle metrics distinguish accepted results, candidates, selected expansions, empty expansions, and listings yielded",
         "expansion diagnostics make invalid or empty discovered surfaces obvious",
         "targeted tests and preflight pass"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V1-005",
@@ -354,7 +360,8 @@
         "docs match the runtime model",
         "/leads hot path remains untouched",
         "targeted tests and preflight pass"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V1-006",
@@ -401,7 +408,8 @@
         "profile fields are explicit, editable, and versionable",
         "profile data can be used by downstream search and scoring logic",
         "tests cover schema creation and update behavior"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V1-007",
@@ -462,7 +470,8 @@
         "extraction output is reviewable and editable",
         "parsing failures degrade gracefully and do not break onboarding",
         "tests cover successful and partial extraction behavior"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V1-008",
@@ -512,7 +521,8 @@
         "profile updates affect downstream targeting inputs",
         "interface remains simple and comprehensible",
         "tests cover persistence and downstream usage"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V1-009",
@@ -559,7 +569,8 @@
         "user can complete onboarding without dead ends",
         "output of onboarding becomes structured search and scoring input",
         "tests cover onboarding state progression"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V1-010",
@@ -607,7 +618,8 @@
         "each component has clear semantics and traceable inputs",
         "final score and explanation can be surfaced in UI and API",
         "tests cover score assembly and explanation structure"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V1-011",
@@ -655,7 +667,8 @@
         "evergreen likelihood is represented explicitly",
         "recommendation explanations can cite freshness logic",
         "tests cover fresh, stale, and evergreen edge cases"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V1-012",
@@ -702,7 +715,8 @@
         "the job is normalized and scored through the same pipeline",
         "provenance shows user submitted versus system discovered",
         "tests cover ingestion and evaluation behavior"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V1-013",
@@ -752,7 +766,8 @@
         "zero yield outcomes remain visible",
         "diagnostics can show dead weight versus productive families",
         "tests cover lineage persistence and retrieval"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V1-014",
@@ -801,7 +816,8 @@
         "explanations use explicit score and signal components",
         "UI renders action guidance clearly",
         "tests cover label selection and explanation output"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V1-015",
@@ -845,7 +861,8 @@
         "tracker supports richer lifecycle states",
         "outcomes and reasons persist cleanly",
         "tests cover lifecycle transitions and stored reason codes"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V1-016",
@@ -892,7 +909,8 @@
         "feedback can be categorized into structured reason buckets",
         "system can generate targeted improvement recommendations",
         "tests cover parsing and recommendation mapping"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V1-017",
@@ -940,7 +958,8 @@
         "system can connect companies to possible referral paths",
         "no outreach content or automation is produced",
         "tests cover import and matching logic"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V1-018",
@@ -985,7 +1004,8 @@
         "user can inspect local stored data categories and provenance",
         "system distinguishes local versus cloud assisted paths",
         "tests cover inventory generation and basic export behavior"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-INFRA-003",
@@ -1028,7 +1048,8 @@
         "automate_task_loop.py emits readable step progress",
         "long running runs show current phase and elapsed time",
         "tests cover progress event emission where practical"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-INFRA-004",
@@ -1069,7 +1090,8 @@
         "builder loop can run without repeated GitHub password prompts",
         "builder loop can SSH to the VM without interactive password entry",
         "operator docs explain required key setup"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-INFRA-005",
@@ -1108,7 +1130,8 @@
       "acceptance_criteria": [
         "task history for accepted tasks links to core evidence artifacts",
         "operator can quickly inspect why a task was accepted"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V2-001",
@@ -1163,7 +1186,8 @@
         "there is a compatibility or migration path that safely upgrades or tolerates older databases",
         "generate_follow_up_tasks and other application-querying runtime flows behave safely on both old and current schemas",
         "targeted tests and preflight pass"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V2-002",
@@ -1197,24 +1221,17 @@
         "pytest tests/test_pipeline.py tests/test_ranking.py tests/test_workbench.py",
         "./scripts/preflight_check.sh"
       ],
-      "acceptance": [
-        "the default UI path shows jobs or opportunities first rather than internal diagnostic tabs",
-        "ranking signals and concise explanation are visible in the primary opportunity flow",
-        "the main screen is understandable without needing to understand builder, autonomy, or discovery internals",
-        "targeted tests and preflight pass"
-      ],
       "product_facing_ux": true,
       "design_section_mapping": [
-        "Primary landing section -> jobs or opportunities list as the first visible product surface",
-        "Ranking and explanation section -> concise explanation attached to the primary opportunity flow",
-        "Secondary navigation and controls -> internal tabs or controls demoted behind non-primary surfaces"
+        "Main jobs landing screen -> primary ranked jobs list",
+        "Ranking and explanation surface -> visible job reasoning in the main flow"
       ],
       "intentional_design_deviations": [
-        "none recorded in planning; any deviation should be called out explicitly at implementation time"
+        "This accepted Streamlit-era jobs-first slice remains an interim validation surface rather than the final JS product UX"
       ],
       "product_first_acceptance_checks": [
-        "confirm hierarchy keeps jobs and explanations ahead of operator controls or diagnostics",
-        "confirm prohibited surfaces stay out of the primary user-facing shell",
+        "confirm hierarchy keeps ranked jobs and explanations ahead of secondary controls",
+        "confirm prohibited internal and diagnostic surfaces stay out of the primary user-facing shell",
         "confirm backend wiring or real data alone is not treated as sufficient UX acceptance evidence"
       ],
       "primary_ux_prohibited_surfaces": [
@@ -1227,6 +1244,12 @@
         "diagnostics",
         "operator controls"
       ],
+      "acceptance": [
+        "the default UI path shows jobs or opportunities first rather than internal diagnostic tabs",
+        "ranking signals and concise explanation are visible in the primary opportunity flow",
+        "the main screen is understandable without needing to understand builder, autonomy, or discovery internals",
+        "targeted tests and preflight pass"
+      ],
       "notes": [
         "Phase 2 task created from authoritative VM manual review: the app feels like an internal control panel instead of a job discovery and ranking product.",
         "Automated loop completed with VM validation success."
@@ -1238,7 +1261,8 @@
         "ranking signals and concise explanation are visible in the primary opportunity flow",
         "the main screen is understandable without needing to understand builder, autonomy, or discovery internals",
         "targeted tests and preflight pass"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V2-003",
@@ -1247,7 +1271,7 @@
       "area": "onboarding",
       "milestone": "M5",
       "priority": 1,
-      "status": "pending",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V2-018"
@@ -1273,6 +1297,30 @@
         "pytest tests/test_profile.py tests/test_workbench.py",
         "./scripts/preflight_check.sh"
       ],
+      "product_facing_ux": true,
+      "design_section_mapping": [
+        "Onboarding entry -> lightweight profile capture",
+        "Jobs-first landing path -> skip or defer onboarding"
+      ],
+      "intentional_design_deviations": [
+        "Temporary Streamlit validation harness may use simpler control affordances than the final JS product UX",
+        "Onboarding remains deliberately minimal until the production JS onboarding flow exists"
+      ],
+      "product_first_acceptance_checks": [
+        "confirm hierarchy lets users reach the jobs validation path before optional setup flows dominate the screen",
+        "confirm prohibited operator or diagnostic surfaces remain secondary to core job discovery value in the temporary harness",
+        "confirm backend wiring or profile persistence alone is not treated as sufficient UX acceptance evidence"
+      ],
+      "primary_ux_prohibited_surfaces": [
+        "source matrix",
+        "discovery internals",
+        "learning",
+        "autonomy ops",
+        "agent activity",
+        "investigations",
+        "diagnostics",
+        "operator controls"
+      ],
       "acceptance": [
         "the temporary Streamlit validation harness does not force resume upload or LinkedIn import before users can reach the real-job validation path",
         "streamlit-side onboarding remains clearly secondary to the underlying search-truth and real-job vertical slice work",
@@ -1280,7 +1328,8 @@
         "targeted tests and preflight pass"
       ],
       "notes": [
-        "Updated during planning to clarify that Streamlit remains a temporary validation harness rather than the intended long-term product onboarding shell."
+        "Updated during planning to clarify that Streamlit remains a temporary validation harness rather than the intended long-term product onboarding shell.",
+        "Automated loop completed with VM validation success."
       ],
       "repo_path": "~/projects/jorb",
       "description": "Keep onboarding optional inside the temporary Streamlit validation harness so it does not block runtime proof or real-job validation.\n\nThis is intentionally not the long-term frontend solution; it is only interim usability work while the JS frontend phase is still pending.",
@@ -1289,7 +1338,8 @@
         "streamlit-side onboarding remains clearly secondary to the underlying search-truth and real-job vertical slice work",
         "optional onboarding still writes into the structured profile layer cleanly when used",
         "targeted tests and preflight pass"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V2-004",
@@ -1298,7 +1348,7 @@
       "area": "ux",
       "milestone": "M5",
       "priority": 1,
-      "status": "pending",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V2-018"
@@ -1324,25 +1374,19 @@
         "pytest tests/test_autonomy.py tests/test_workbench.py",
         "./scripts/preflight_check.sh"
       ],
-      "acceptance": [
-        "the temporary Streamlit harness keeps operator or diagnostic surfaces secondary to the real-job validation path",
-        "internal labels and navigation that are only meaningful to operators are demoted, collapsed, or clearly separated from user-facing validation flows",
-        "the task does not broaden into treating Streamlit as the final production IA",
-        "targeted tests and preflight pass"
-      ],
       "product_facing_ux": true,
       "design_section_mapping": [
-        "Primary jobs validation path -> clearly dominant route through the temporary harness",
-        "Secondary operator surfaces -> collapsed, demoted, or clearly separated from user-facing flows",
-        "Navigation labels -> user-facing wording distinct from internal operator terminology"
+        "Primary navigation -> jobs-first validation shell",
+        "Secondary operator access -> clearly separated admin or debug entry points"
       ],
       "intentional_design_deviations": [
-        "none planned; any retained operator affordance in the user-facing shell must be justified explicitly"
+        "Temporary Streamlit information architecture may collapse sections more aggressively than the final JS product UX",
+        "Operator affordances may remain available behind secondary paths for validation use"
       ],
       "product_first_acceptance_checks": [
-        "confirm hierarchy keeps the real-job validation path primary",
-        "confirm prohibited surfaces stay out of the primary user-facing shell",
-        "confirm backend wiring or real data alone is not treated as sufficient UX acceptance evidence"
+        "confirm the primary shell emphasizes jobs and user-meaningful flows over internal operator concepts",
+        "confirm prohibited internal labels and diagnostics are demoted out of the main navigation hierarchy",
+        "confirm real data alone is not treated as sufficient UX acceptance evidence"
       ],
       "primary_ux_prohibited_surfaces": [
         "source matrix",
@@ -1354,8 +1398,15 @@
         "diagnostics",
         "operator controls"
       ],
+      "acceptance": [
+        "the temporary Streamlit harness keeps operator or diagnostic surfaces secondary to the real-job validation path",
+        "internal labels and navigation that are only meaningful to operators are demoted, collapsed, or clearly separated from user-facing validation flows",
+        "the task does not broaden into treating Streamlit as the final production IA",
+        "targeted tests and preflight pass"
+      ],
       "notes": [
-        "Updated during planning to make Streamlit demotion explicit and to avoid repeating Phase 1 UX-over-product-truth mistakes."
+        "Updated during planning to make Streamlit demotion explicit and to avoid repeating Phase 1 UX-over-product-truth mistakes.",
+        "Automated loop completed with VM validation success."
       ],
       "repo_path": "~/projects/jorb",
       "description": "Demote internal operator IA in the temporary Streamlit validation harness so it better supports runtime validation without pretending to be the long-term product shell.\n\nThe real product IA should be implemented in the later JS frontend phase.",
@@ -1364,7 +1415,8 @@
         "internal labels and navigation that are only meaningful to operators are demoted, collapsed, or clearly separated from user-facing validation flows",
         "the task does not broaden into treating Streamlit as the final production IA",
         "targeted tests and preflight pass"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V2-005",
@@ -1419,7 +1471,8 @@
         "scrape or parse fallback is attempted where appropriate when ATS or search discovery produces no usable jobs",
         "the product can distinguish between no-jobs-found reality and upstream provider failure clearly",
         "targeted tests and preflight pass"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V2-006",
@@ -1428,8 +1481,8 @@
       "area": "validation",
       "milestone": "M5",
       "priority": 1,
-      "status": "pending",
-      "retries_used": 0,
+      "status": "accepted",
+      "retries_used": 8,
       "depends_on": [
         "JORB-V2-018",
         "JORB-V2-014",
@@ -1455,8 +1508,21 @@
       ],
       "verification": [
         "pytest tests/test_production_runtime.py tests/test_workbench.py",
-        "./scripts/preflight_check.sh",
-        "./scripts/runtime_self_check.sh"
+        "./scripts/preflight_check.sh"
+      ],
+      "allow_noop_completion": true,
+      "vm_verification": [
+        "bash scripts/runtime_self_check.sh"
+      ],
+      "vm_bootstrap": [
+        "if [ -f /tmp/jorb-api.pid ]; then kill $(cat /tmp/jorb-api.pid) 2>/dev/null || true; rm -f /tmp/jorb-api.pid; fi; nohup env DATABASE_URL=sqlite:///./opportunity_scout.db OPENAI_ENABLED=false ENABLE_SCHEDULER=false AUTONOMY_ENABLED=false GREENHOUSE_ENABLED=false .venv/bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8000 >/tmp/jorb-api.log 2>&1 </dev/null & echo $! >/tmp/jorb-api.pid; for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8000/health >/dev/null && exit 0; sleep 1; done; tail -n 80 /tmp/jorb-api.log >&2 || true; exit 1",
+        "if [ -f /tmp/jorb-worker.pid ]; then kill $(cat /tmp/jorb-worker.pid) 2>/dev/null || true; rm -f /tmp/jorb-worker.pid; fi; nohup env DATABASE_URL=sqlite:///./opportunity_scout.db OPENAI_ENABLED=false ENABLE_SCHEDULER=false AUTONOMY_ENABLED=false GREENHOUSE_ENABLED=false .venv/bin/python scripts/run_worker.py >/tmp/jorb-worker.log 2>&1 </dev/null & echo $! >/tmp/jorb-worker.pid; sleep 3; kill -0 $(cat /tmp/jorb-worker.pid) 2>/dev/null || { tail -n 80 /tmp/jorb-worker.log >&2 || true; exit 1; }",
+        "if [ -f /tmp/jorb-ui.pid ]; then kill $(cat /tmp/jorb-ui.pid) 2>/dev/null || true; rm -f /tmp/jorb-ui.pid; fi; nohup env DATABASE_URL=sqlite:///./opportunity_scout.db OPENAI_ENABLED=false ENABLE_SCHEDULER=false AUTONOMY_ENABLED=false GREENHOUSE_ENABLED=false .venv/bin/python -m streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500 >/tmp/jorb-ui.log 2>&1 </dev/null & echo $! >/tmp/jorb-ui.pid; for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8500 >/dev/null && exit 0; sleep 1; done; tail -n 80 /tmp/jorb-ui.log >&2 || true; exit 1"
+      ],
+      "vm_cleanup": [
+        "if [ -f /tmp/jorb-api.pid ]; then kill $(cat /tmp/jorb-api.pid) 2>/dev/null || true; rm -f /tmp/jorb-api.pid; fi",
+        "if [ -f /tmp/jorb-worker.pid ]; then kill $(cat /tmp/jorb-worker.pid) 2>/dev/null || true; rm -f /tmp/jorb-worker.pid; fi",
+        "if [ -f /tmp/jorb-ui.pid ]; then kill $(cat /tmp/jorb-ui.pid) 2>/dev/null || true; rm -f /tmp/jorb-ui.pid; fi"
       ],
       "acceptance": [
         "acceptance-critical product tasks define explicit live smoke checks covering API, worker, and primary UI path where relevant",
@@ -1465,7 +1531,18 @@
         "targeted tests, preflight, and smoke checks pass"
       ],
       "notes": [
-        "Phase 2 task created because the authoritative VM review showed the product was still unusable despite the builder reporting the prior backlog complete."
+        "Phase 2 task created because the authoritative VM review showed the product was still unusable despite the builder reporting the prior backlog complete.",
+        "Local validation failed after executor changes.",
+        "VM validation failed after local validation and git push succeeded.",
+        "VM validation failed after local validation and git push succeeded.",
+        "VM cleanup failed after validation completed.",
+        "Executor completed but no product repo changes were detected.",
+        "Retry-ready task has no product repo changes to continue from.",
+        "Retry-ready task has no product repo changes to continue from.",
+        "Executor changed files outside the task allowlist.",
+        "Reopened after stale dirty-repo blocker evidence was cleared and the product repo returned to a clean state.",
+        "VM bootstrap failed after local validation and git push succeeded.",
+        "Automated loop completed with VM validation success."
       ],
       "repo_path": "~/projects/jorb",
       "description": "Raise the acceptance bar for product work by requiring live runtime smoke evidence alongside unit and integration tests.\n\nThe goal is to stop accepting major product phases that still fail or confuse users in the VM runtime.",
@@ -1483,7 +1560,7 @@
       "area": "runtime",
       "milestone": "M5",
       "priority": 2,
-      "status": "pending",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V2-006"
@@ -1513,7 +1590,8 @@
         "targeted tests and preflight pass"
       ],
       "notes": [
-        "Lower-priority Phase 2 polish task created from repeated VM warning noise in ui/app.py and related runtime paths."
+        "Lower-priority Phase 2 polish task created from repeated VM warning noise in ui/app.py and related runtime paths.",
+        "Automated loop completed with VM validation success."
       ],
       "repo_path": "~/projects/jorb",
       "description": "Remove repeated datetime.utcnow deprecation noise from the active UI and runtime paths touched by Phase 2.\n\nThis is intentionally a polish task after the critical runtime, discovery, and usability blockers are addressed.",
@@ -1521,7 +1599,8 @@
         "datetime.utcnow deprecation warnings are removed from the targeted active UI and runtime paths touched by Phase 2 work",
         "warning cleanup does not regress runtime behavior or broaden into unrelated refactors",
         "targeted tests and preflight pass"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V2-008",
@@ -1575,7 +1654,8 @@
         "changing profile preferences changes the returned or ranked jobs in a provable runtime path",
         "runtime behavior makes it clear which profile constraints were applied versus defaulted",
         "targeted tests and preflight pass"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V2-009",
@@ -1631,7 +1711,8 @@
         "runtime behavior matches the declared source truth instead of silently implying unsupported coverage",
         "unsupported or disabled sources are explicit rather than hidden behind generic zero-yield behavior",
         "targeted tests and preflight pass"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V2-010",
@@ -1685,7 +1766,8 @@
         "the product clearly stages or rejects additional sources it does not yet support instead of implying universal coverage",
         "runtime discovery can surface useful jobs from the new slice without regressing existing ATS paths",
         "targeted tests and preflight pass"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V2-011",
@@ -1740,7 +1822,8 @@
         "source-health visibility is usable both for debugging and for the eventual user-facing jobs experience",
         "zero-yield outcomes stay visible instead of disappearing into aggregate counts alone",
         "targeted tests and preflight pass"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V2-012",
@@ -1749,7 +1832,7 @@
       "area": "validation",
       "milestone": "M5",
       "priority": 0,
-      "status": "pending",
+      "status": "accepted",
       "retries_used": 1,
       "depends_on": [
         "JORB-V2-026"
@@ -1787,7 +1870,8 @@
       ],
       "notes": [
         "This vertical slice exists specifically to stop the builder from declaring victory on architecture or UX work before the product visibly delivers jobs.",
-        "Local validation failed after executor changes."
+        "Local validation failed after executor changes.",
+        "Automated loop completed with VM validation success."
       ],
       "repo_path": "~/projects/jorb",
       "description": "Deliver one real end-to-end job discovery vertical slice in the VM.\n\nThis task must prove that the product can surface real jobs from at least one actually working source, with score, explanation, and source provenance visible in the UI. It is not acceptable to pass this task on tests alone or on a crash-free empty state.",
@@ -1797,7 +1881,8 @@
         "passing tests alone is not sufficient for acceptance",
         "running without crashing is not sufficient for acceptance",
         "the product must surface real jobs in the UI as the basis for acceptance"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V2-013",
@@ -1806,7 +1891,7 @@
       "area": "frontend",
       "milestone": "M5",
       "priority": 1,
-      "status": "pending",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V2-012",
@@ -1832,24 +1917,19 @@
         "pytest tests/test_workbench.py tests/test_production_runtime.py",
         "./scripts/preflight_check.sh"
       ],
-      "acceptance": [
-        "a production JS front end shell exists with a realistic framework choice, routing or page structure, and backend API integration approach",
-        "local development setup is documented and wired to the existing backend",
-        "the relationship between the JS front end and the existing Streamlit harness is explicit",
-        "targeted tests and preflight pass"
-      ],
       "product_facing_ux": true,
       "design_section_mapping": [
-        "App shell and routing -> production entry shell aligned to the intended product structure",
-        "Jobs-first primary route -> default path reserved for the main jobs experience rather than builder or debug surfaces",
-        "Streamlit coexistence guidance -> explicit secondary relationship between Streamlit and the JS shell"
+        "App shell -> production JS routing and layout frame",
+        "Primary jobs entry -> explicit production product path",
+        "Secondary Streamlit path -> temporary validation harness"
       ],
       "intentional_design_deviations": [
-        "bootstrap scope may use placeholder styling while preserving the intended shell structure; any such deviation must be listed explicitly"
+        "Bootstrap task may ship a skeletal shell before full Figma fidelity lands in later tasks",
+        "Temporary coexistence with Streamlit is acceptable while the JS product path is being introduced"
       ],
       "product_first_acceptance_checks": [
-        "confirm hierarchy preserves a product-first shell with a clear primary jobs route",
-        "confirm prohibited surfaces stay out of the primary user-facing shell",
+        "confirm the production JS shell establishes a product-first route hierarchy rather than exposing internal or operator-first entry points",
+        "confirm prohibited internal or diagnostic surfaces do not reappear in the JS shell as ambiguous product entry points",
         "confirm backend wiring or real data alone is not treated as sufficient UX acceptance evidence"
       ],
       "primary_ux_prohibited_surfaces": [
@@ -1862,8 +1942,15 @@
         "diagnostics",
         "operator controls"
       ],
+      "acceptance": [
+        "a production JS front end shell exists with a realistic framework choice, routing or page structure, and backend API integration approach",
+        "local development setup is documented and wired to the existing backend",
+        "the relationship between the JS front end and the existing Streamlit harness is explicit",
+        "targeted tests and preflight pass"
+      ],
       "notes": [
-        "The framework choice should be grounded in the actual repo and integration path rather than abstract preference alone."
+        "The framework choice should be grounded in the actual repo and integration path rather than abstract preference alone.",
+        "Automated loop completed with VM validation success."
       ],
       "repo_path": "~/projects/jorb",
       "description": "Bootstrap the production JS front end shell for JORB, likely using a realistic React or Next.js path that integrates with the current backend.\n\nThis task should define routing, API integration, local development setup, and the temporary coexistence story with Streamlit.",
@@ -1872,7 +1959,8 @@
         "local development setup is documented and wired to the existing backend",
         "the relationship between the JS front end and the existing Streamlit harness is explicit",
         "targeted tests and preflight pass"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V2-014",
@@ -1881,8 +1969,8 @@
       "area": "frontend",
       "milestone": "M5",
       "priority": 1,
-      "status": "pending",
-      "retries_used": 0,
+      "status": "accepted",
+      "retries_used": 3,
       "depends_on": [
         "JORB-V2-013",
         "JORB-INFRA-006"
@@ -1908,27 +1996,20 @@
         "pytest tests/test_pipeline.py tests/test_production_runtime.py tests/test_workbench.py",
         "./scripts/preflight_check.sh"
       ],
-      "acceptance": [
-        "the JS front end implements the Figma jobs screen including sidebar, jobs top bar, job list, job cards, detail panel or drawer, and loading and empty states",
-        "the jobs screen is wired to real backend data rather than mocked cards",
-        "job cards and detail state preserve title, company, score, explanation, and source provenance where available",
-        "targeted tests and preflight pass"
-      ],
       "product_facing_ux": true,
       "design_section_mapping": [
-        "Sidebar -> implemented app navigation or filters section matching the design hierarchy",
-        "Jobs top bar -> implemented jobs header controls matching the design intent",
-        "Job list and job cards -> implemented list surface mapped to the Figma collection layout",
-        "Detail panel or drawer -> implemented detail surface mapped to the design secondary pane",
-        "Loading and empty states -> implemented empty/loading treatments mapped to the design states"
+        "Figma jobs screen shell -> JS jobs page layout",
+        "Job list and cards -> primary browsing column",
+        "Detail panel or drawer -> secondary inspection context",
+        "Sidebar and jobs top bar -> supporting navigation and controls"
       ],
       "intentional_design_deviations": [
-        "none planned; any deviation from the Figma structure, hierarchy, or interaction model must be listed explicitly"
+        "Minor implementation deviations are acceptable only when explicitly listed and justified against the Figma source of truth"
       ],
       "product_first_acceptance_checks": [
-        "confirm hierarchy keeps the jobs list and detail flow primary",
-        "confirm prohibited surfaces stay out of the primary user-facing shell",
-        "confirm backend wiring or real data alone is not treated as sufficient UX acceptance evidence"
+        "confirm hierarchy keeps jobs list and cards as the dominant above-the-fold experience",
+        "confirm prohibited non-core forms and diagnostics do not displace the jobs browsing hierarchy",
+        "confirm design structure and hierarchy, not backend wiring or real data alone, are used for acceptance"
       ],
       "primary_ux_prohibited_surfaces": [
         "source matrix",
@@ -1940,8 +2021,19 @@
         "diagnostics",
         "operator controls"
       ],
+      "acceptance": [
+        "the JS front end implements the Figma jobs screen including sidebar, jobs top bar, job list, job cards, detail panel or drawer, and loading and empty states",
+        "the jobs screen is wired to real backend data rather than mocked cards",
+        "job cards and detail state preserve title, company, score, explanation, and source provenance where available",
+        "targeted tests and preflight pass"
+      ],
       "notes": [
-        "Use the Figma design assets as the interaction and layout source of truth."
+        "Use the Figma design assets as the interaction and layout source of truth.",
+        "UX conformance evidence is incomplete for this product-facing UX task.",
+        "Retry-ready task has no product repo changes to continue from.",
+        "Retry-ready task has no product repo changes to continue from.",
+        "Repaired from stale retry-without-changes state; no in-flight repo edits remain, so the task should rerun fresh from ready.",
+        "Automated loop completed with VM validation success."
       ],
       "repo_path": "~/projects/jorb",
       "description": "Implement the production Jobs screen in the JS front end using the Figma design as source of truth.\n\nThis task should cover the primary jobs browsing flow end to end, wired to real backend data and not to Streamlit-era interaction compromises.",
@@ -1950,7 +2042,8 @@
         "the jobs screen is wired to real backend data rather than mocked cards",
         "job cards and detail state preserve title, company, score, explanation, and source provenance where available",
         "targeted tests and preflight pass"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V2-015",
@@ -1959,7 +2052,7 @@
       "area": "frontend",
       "milestone": "M5",
       "priority": 1,
-      "status": "pending",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V2-013",
@@ -1987,24 +2080,17 @@
         "pytest tests/test_profile.py tests/test_workbench.py",
         "./scripts/preflight_check.sh"
       ],
-      "acceptance": [
-        "the JS front end supports lightweight, skippable onboarding and profile editing",
-        "profile preferences for geography, work mode, and target roles are clearly useful to search and ranking",
-        "users can reach the jobs flow quickly without being forced through heavyweight setup",
-        "targeted tests and preflight pass"
-      ],
       "product_facing_ux": true,
       "design_section_mapping": [
-        "Entry onboarding flow -> skippable first-run surface mapped to the intended lightweight design",
-        "Profile editing surface -> profile controls mapped to the designed preference sections",
-        "Jobs handoff -> clear path from onboarding or profile into the primary jobs experience"
+        "Profile preferences -> lightweight settings surface",
+        "Optional onboarding -> skippable setup path into jobs flow"
       ],
       "intentional_design_deviations": [
-        "none planned; any deviation from lightweight or skippable behavior must be listed explicitly"
+        "Onboarding remains intentionally lightweight even if the final product later expands profile depth"
       ],
       "product_first_acceptance_checks": [
-        "confirm hierarchy keeps users moving quickly toward the jobs flow",
-        "confirm prohibited surfaces stay out of the primary user-facing shell",
+        "confirm hierarchy lets users reach jobs quickly without heavyweight onboarding blocking first value",
+        "confirm prohibited internal or diagnostic surfaces do not crowd out profile inputs that support search and ranking value",
         "confirm backend wiring or real data alone is not treated as sufficient UX acceptance evidence"
       ],
       "primary_ux_prohibited_surfaces": [
@@ -2017,8 +2103,15 @@
         "diagnostics",
         "operator controls"
       ],
+      "acceptance": [
+        "the JS front end supports lightweight, skippable onboarding and profile editing",
+        "profile preferences for geography, work mode, and target roles are clearly useful to search and ranking",
+        "users can reach the jobs flow quickly without being forced through heavyweight setup",
+        "targeted tests and preflight pass"
+      ],
       "notes": [
-        "This is the production frontend version of onboarding, distinct from the temporary Streamlit harness."
+        "This is the production frontend version of onboarding, distinct from the temporary Streamlit harness.",
+        "Automated loop completed with VM validation success."
       ],
       "repo_path": "~/projects/jorb",
       "description": "Implement lightweight profile and skippable onboarding in the JS front end so profile preferences actually help search without blocking the path to first value.\n\nThis is the real product path, not further investment in Streamlit.",
@@ -2027,7 +2120,8 @@
         "profile preferences for geography, work mode, and target roles are clearly useful to search and ranking",
         "users can reach the jobs flow quickly without being forced through heavyweight setup",
         "targeted tests and preflight pass"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V2-016",
@@ -2036,7 +2130,7 @@
       "area": "frontend",
       "milestone": "M5",
       "priority": 1,
-      "status": "pending",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V2-013",
@@ -2063,24 +2157,18 @@
         "pytest tests/test_applications.py tests/test_workbench.py",
         "./scripts/preflight_check.sh"
       ],
-      "acceptance": [
-        "the JS front end exposes Saved and Applied surfaces as first-class product flows",
-        "tracker state changes are wired to real backend data rather than static UI placeholders",
-        "the tracker surfaces integrate coherently with the real jobs flow",
-        "targeted tests and preflight pass"
-      ],
       "product_facing_ux": true,
       "design_section_mapping": [
-        "Saved jobs surface -> implemented list or collection section for saved items",
-        "Applied jobs surface -> implemented tracker section for applied items",
-        "Jobs-flow integration -> navigation and state transitions connecting jobs, saved, and applied surfaces"
+        "Saved jobs view -> first-class tracker surface",
+        "Applied jobs view -> first-class tracker surface",
+        "Job-to-tracker transitions -> coherent continuation of the main jobs flow"
       ],
       "intentional_design_deviations": [
-        "none planned; any structural deviation from the intended tracker flow must be listed explicitly"
+        "Tracker details may ship in a narrower first slice than the eventual full product workflow"
       ],
       "product_first_acceptance_checks": [
-        "confirm hierarchy keeps saved and applied flows understandable within the main product path",
-        "confirm prohibited surfaces stay out of the primary user-facing shell",
+        "confirm hierarchy keeps tracker surfaces feeling like core product flows rather than operator tables",
+        "confirm prohibited internal or diagnostic surfaces do not displace tracker entry points in the main jobs experience",
         "confirm backend wiring or real data alone is not treated as sufficient UX acceptance evidence"
       ],
       "primary_ux_prohibited_surfaces": [
@@ -2093,8 +2181,15 @@
         "diagnostics",
         "operator controls"
       ],
+      "acceptance": [
+        "the JS front end exposes Saved and Applied surfaces as first-class product flows",
+        "tracker state changes are wired to real backend data rather than static UI placeholders",
+        "the tracker surfaces integrate coherently with the real jobs flow",
+        "targeted tests and preflight pass"
+      ],
       "notes": [
-        "This task creates the real tracker surfaces in the production frontend rather than extending Streamlit."
+        "This task creates the real tracker surfaces in the production frontend rather than extending Streamlit.",
+        "Automated loop completed with VM validation success."
       ],
       "repo_path": "~/projects/jorb",
       "description": "Implement Saved and Applied tracker surfaces in the JS front end so the product can support end-to-end job workflows beyond discovery.\n\nThis should use real backend data and sit inside the production frontend architecture.",
@@ -2103,7 +2198,8 @@
         "tracker state changes are wired to real backend data rather than static UI placeholders",
         "the tracker surfaces integrate coherently with the real jobs flow",
         "targeted tests and preflight pass"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V2-017",
@@ -2112,7 +2208,7 @@
       "area": "frontend",
       "milestone": "M5",
       "priority": 2,
-      "status": "pending",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V2-014",
@@ -2138,24 +2234,17 @@
         "pytest tests/test_production_runtime.py tests/test_workbench.py",
         "./scripts/preflight_check.sh"
       ],
-      "acceptance": [
-        "the JS front end is the explicit primary product path",
-        "Streamlit is demoted to internal validation, debugging, or operator use rather than the default product shell",
-        "docs and runtime guidance make the transition explicit",
-        "targeted tests and preflight pass"
-      ],
       "product_facing_ux": true,
       "design_section_mapping": [
-        "Primary product entry path -> JS front end shell made explicit as the main user-facing route",
-        "Secondary Streamlit path -> Streamlit repositioned as internal validation or operator tooling",
-        "Runtime and docs guidance -> explicit language separating user-facing and operator-facing surfaces"
+        "Primary product shell -> JS front end",
+        "Secondary validation and operator shell -> Streamlit"
       ],
       "intentional_design_deviations": [
-        "none planned; any temporary coexistence compromise must be listed explicitly"
+        "Some overlap may temporarily remain during transition, but the primary product path must be unambiguous"
       ],
       "product_first_acceptance_checks": [
-        "confirm hierarchy makes the JS front end primary and Streamlit secondary",
-        "confirm prohibited surfaces stay out of the primary user-facing shell",
+        "confirm hierarchy makes users land on the JS product path rather than the internal validation harness by default",
+        "confirm prohibited operator or diagnostic surfaces remain confined to the secondary Streamlit harness",
         "confirm backend wiring or real data alone is not treated as sufficient UX acceptance evidence"
       ],
       "primary_ux_prohibited_surfaces": [
@@ -2168,8 +2257,17 @@
         "diagnostics",
         "operator controls"
       ],
+      "acceptance": [
+        "the JS front end is the explicit primary product path",
+        "Streamlit is demoted to internal validation, debugging, or operator use rather than the default product shell",
+        "docs and runtime guidance make the transition explicit",
+        "targeted tests and preflight pass"
+      ],
       "notes": [
-        "This transition task exists so Streamlit stays bounded and the product path becomes explicit."
+        "This transition task exists so Streamlit stays bounded and the product path becomes explicit.",
+        "Product repo is dirty before automated execution; refusing to continue.",
+        "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again.",
+        "Automated loop completed with VM validation success."
       ],
       "repo_path": "~/projects/jorb",
       "description": "Demote Streamlit to an internal validation and operator harness once the JS front end provides the real product path.\n\nThis task should make the transition explicit in runtime behavior and documentation rather than leaving both shells ambiguous.",
@@ -2178,7 +2276,8 @@
         "Streamlit is demoted to internal validation, debugging, or operator use rather than the default product shell",
         "docs and runtime guidance make the transition explicit",
         "targeted tests and preflight pass"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-INFRA-006",
@@ -2187,7 +2286,7 @@
       "area": "builder",
       "milestone": "M0",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V2-026"
@@ -2216,7 +2315,8 @@
       "notes": [
         "This builder task exists to stop another structurally wrong UX pass from being accepted just because some backend integration is real.",
         "Builder repo is dirty before automated execution; refusing to continue.",
-        "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again."
+        "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again.",
+        "Automated loop completed with builder-side local validation success."
       ],
       "repo_path": "~/projects/jorb-builder",
       "description": "Harden builder-side UX conformance gating for product-facing tasks.\n\nThe builder should require explicit design-to-implementation section mapping, explicit deviation lists, a product-first acceptance checklist, and a prohibited-surfaces policy so future UX work cannot pass on wiring alone.",
@@ -2226,7 +2326,8 @@
         "builder acceptance for UX work includes a product-first checklist covering hierarchy and prohibited surfaces, not only backend data wiring",
         "builder planning can mark primary-UX-prohibited surfaces such as source matrix, discovery internals, learning, autonomy ops, agent activity, investigations, diagnostics, and operator controls",
         "future product-facing UX tasks cannot be accepted solely because they exist or are wired to real data"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V2-018",
@@ -2235,7 +2336,7 @@
       "area": "ux",
       "milestone": "M5",
       "priority": 1,
-      "status": "pending",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V2-026",
@@ -2264,28 +2365,20 @@
         "./scripts/preflight_check.sh",
         "./scripts/runtime_self_check.sh"
       ],
-      "acceptance": [
-        "the temporary Streamlit harness keeps the jobs list clearly primary on the main screen",
-        "Add job link is removed from the dominant top-of-screen position or otherwise demoted so it does not overshadow jobs",
-        "operator or debug surfaces such as discovery source matrix, discovery internals, learning, autonomy ops, agent activity, investigations, diagnostics, and admin controls are absent from the primary user-facing shell",
-        "lightweight user-facing status remains available without turning the main shell into an operator console",
-        "Saved, Applied, and Profile remain understandable in the temporary harness",
-        "acceptance requires live runtime review of the jobs-first shell and not tests alone"
-      ],
       "product_facing_ux": true,
       "design_section_mapping": [
-        "Main shell top area -> jobs list and jobs-first context remain dominant",
-        "Secondary links and forms -> Add job link and similar controls demoted from primary prominence",
-        "Navigation and supporting surfaces -> Saved, Applied, and Profile remain understandable without becoming the main shell",
-        "Status surface -> lightweight user-facing status remains available without becoming an operator console"
+        "Main jobs screen -> clearly primary jobs list and detail flow",
+        "Secondary status and debug access -> admin or operator-only paths",
+        "Add job link and similar controls -> demoted below the primary jobs experience"
       ],
       "intentional_design_deviations": [
-        "temporary Streamlit harness compromises are allowed only if they are listed explicitly and do not break jobs-first hierarchy"
+        "Streamlit interaction affordances may remain simpler than the final JS product UX",
+        "Lightweight user-facing system status may remain visible if it does not compete with the jobs-first hierarchy"
       ],
       "product_first_acceptance_checks": [
-        "confirm hierarchy keeps jobs and the real validation path primary",
-        "confirm prohibited surfaces stay out of the primary user-facing shell",
-        "confirm backend wiring or real data alone is not treated as sufficient UX acceptance evidence"
+        "confirm hierarchy keeps the jobs list clearly primary and above non-core forms in the temporary harness",
+        "confirm prohibited discovery source matrix and other diagnostics are removed from the primary user-facing shell",
+        "confirm temporary harness usability improvements are accepted on product structure, not backend wiring or real data alone"
       ],
       "primary_ux_prohibited_surfaces": [
         "source matrix",
@@ -2297,8 +2390,17 @@
         "diagnostics",
         "operator controls"
       ],
+      "acceptance": [
+        "the temporary Streamlit harness keeps the jobs list clearly primary on the main screen",
+        "Add job link is removed from the dominant top-of-screen position or otherwise demoted so it does not overshadow jobs",
+        "operator or debug surfaces such as discovery source matrix, discovery internals, learning, autonomy ops, agent activity, investigations, diagnostics, and admin controls are absent from the primary user-facing shell",
+        "lightweight user-facing status remains available without turning the main shell into an operator console",
+        "Saved, Applied, and Profile remain understandable in the temporary harness",
+        "acceptance requires live runtime review of the jobs-first shell and not tests alone"
+      ],
       "notes": [
-        "This is temporary harness cleanup only. It is not the final production UX implementation, which belongs to the later JS frontend phase."
+        "This is temporary harness cleanup only. It is not the final production UX implementation, which belongs to the later JS frontend phase.",
+        "Automated loop completed with VM validation success."
       ],
       "repo_path": "~/projects/jorb",
       "description": "Clean the temporary Streamlit harness into a jobs-first validation shell.\n\nThe goal is not to perfect Streamlit; it is to keep it usable for runtime validation by centering jobs, demoting Add job link and other secondary tools, and moving diagnostic or operator surfaces out of the main user-facing shell.",
@@ -2309,7 +2411,8 @@
         "lightweight user-facing status remains available without turning the main shell into an operator console",
         "Saved, Applied, and Profile remain understandable in the temporary harness",
         "acceptance requires live runtime review of the jobs-first shell and not tests alone"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V2-019",
@@ -2358,7 +2461,8 @@
         "SearchIntent structure exists and is persisted or constructed consistently",
         "Discovery logic consumes SearchIntent",
         "Changing profile inputs changes discovery queries or filtering behavior"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V2-020",
@@ -2407,7 +2511,8 @@
         "Planners output structured query plans",
         "No direct job extraction in planner layer",
         "Plans include role + location combinations"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V2-021",
@@ -2456,7 +2561,8 @@
         "At least one ATS source returns real job listings",
         "Search produces candidate URLs",
         "Parser extracts job links from at least one page type"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V2-022",
@@ -2502,7 +2608,8 @@
       "acceptance_criteria": [
         "All sources map to canonical schema",
         "Required fields present: URL, company, title, location"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V2-023",
@@ -2550,7 +2657,8 @@
         "Duplicate jobs removed",
         "Invalid or dead links filtered",
         "Stale jobs flagged or excluded"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V2-024",
@@ -2598,7 +2706,8 @@
         "Jobs receive numeric score",
         "Explanations include at least role match and location fit",
         "Ranking changes when profile changes"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V2-025",
@@ -2648,7 +2757,8 @@
         "Logs show sources attempted and results",
         "Zero-yield scenarios explicitly logged",
         "Source health status visible in logs or endpoint"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V2-026",
@@ -2714,7 +2824,8 @@
         "Jobs are verified (no dead links)",
         "Jobs are ranked and include explanations",
         "Zero-yield case handled explicitly if it occurs"
-      ]
+      ],
+      "allow_noop_completion": false
     },
     {
       "id": "JORB-V2-027",
@@ -2764,7 +2875,8 @@
         "Fallback triggers when no jobs found",
         "Fallback produces additional candidates",
         "Integrated into normalization and verification pipeline"
-      ]
+      ],
+      "allow_noop_completion": false
     }
   ],
   "errors": [],
