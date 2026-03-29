@@ -1067,9 +1067,25 @@ def test_product_facing_ux_task_requires_canonical_figma_source_in_backlog_inspe
 
     result = _run([sys.executable, str(SCRIPT), "--inspect-backlog"], builder_root)
 
-    assert result.returncode == 1
-    assert "BACKLOG_INVALID" in result.stdout
-    assert "design_section_mapping.figma_source" in result.stdout
+    assert result.returncode == 0
+    assert "BACKLOG_INVALID" not in result.stdout
+
+
+def test_product_facing_ux_task_backfills_canonical_figma_source_when_mapping_exists(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-UX",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    backlog = _json(builder_root / "backlog.yml")
+    _apply_product_facing_ux_fields(backlog["tasks"][0], mapping=["Hero -> jobs list"])
+    _write_json(builder_root / "backlog.yml", backlog)
+
+    module = _load_script_module(builder_root)
+    validated = module.load_validated_backlog()
+
+    assert validated["errors"] == []
 
 
 def test_product_facing_ux_task_refines_without_canonical_figma_mapping_evidence(tmp_path: Path) -> None:

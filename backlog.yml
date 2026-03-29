@@ -1224,7 +1224,8 @@
       "product_facing_ux": true,
       "design_section_mapping": [
         "Main jobs landing screen -> primary ranked jobs list",
-        "Ranking and explanation surface -> visible job reasoning in the main flow"
+        "Ranking and explanation surface -> visible job reasoning in the main flow",
+        "Canonical Figma source: /Users/samuelkrystal/projects/jorb/design/figma"
       ],
       "intentional_design_deviations": [
         "This accepted Streamlit-era jobs-first slice remains an interim validation surface rather than the final JS product UX"
@@ -1300,7 +1301,8 @@
       "product_facing_ux": true,
       "design_section_mapping": [
         "Onboarding entry -> lightweight profile capture",
-        "Jobs-first landing path -> skip or defer onboarding"
+        "Jobs-first landing path -> skip or defer onboarding",
+        "Canonical Figma source: /Users/samuelkrystal/projects/jorb/design/figma"
       ],
       "intentional_design_deviations": [
         "Temporary Streamlit validation harness may use simpler control affordances than the final JS product UX",
@@ -1377,7 +1379,8 @@
       "product_facing_ux": true,
       "design_section_mapping": [
         "Primary navigation -> jobs-first validation shell",
-        "Secondary operator access -> clearly separated admin or debug entry points"
+        "Secondary operator access -> clearly separated admin or debug entry points",
+        "Canonical Figma source: /Users/samuelkrystal/projects/jorb/design/figma"
       ],
       "intentional_design_deviations": [
         "Temporary Streamlit information architecture may collapse sections more aggressively than the final JS product UX",
@@ -1921,7 +1924,8 @@
       "design_section_mapping": [
         "App shell -> production JS routing and layout frame",
         "Primary jobs entry -> explicit production product path",
-        "Secondary Streamlit path -> temporary validation harness"
+        "Secondary Streamlit path -> temporary validation harness",
+        "Canonical Figma source: /Users/samuelkrystal/projects/jorb/design/figma"
       ],
       "intentional_design_deviations": [
         "Bootstrap task may ship a skeletal shell before full Figma fidelity lands in later tasks",
@@ -2001,7 +2005,8 @@
         "Figma jobs screen shell -> JS jobs page layout",
         "Job list and cards -> primary browsing column",
         "Detail panel or drawer -> secondary inspection context",
-        "Sidebar and jobs top bar -> supporting navigation and controls"
+        "Sidebar and jobs top bar -> supporting navigation and controls",
+        "Canonical Figma source: /Users/samuelkrystal/projects/jorb/design/figma"
       ],
       "intentional_design_deviations": [
         "Minor implementation deviations are acceptable only when explicitly listed and justified against the Figma source of truth"
@@ -2083,7 +2088,8 @@
       "product_facing_ux": true,
       "design_section_mapping": [
         "Profile preferences -> lightweight settings surface",
-        "Optional onboarding -> skippable setup path into jobs flow"
+        "Optional onboarding -> skippable setup path into jobs flow",
+        "Canonical Figma source: /Users/samuelkrystal/projects/jorb/design/figma"
       ],
       "intentional_design_deviations": [
         "Onboarding remains intentionally lightweight even if the final product later expands profile depth"
@@ -2161,7 +2167,8 @@
       "design_section_mapping": [
         "Saved jobs view -> first-class tracker surface",
         "Applied jobs view -> first-class tracker surface",
-        "Job-to-tracker transitions -> coherent continuation of the main jobs flow"
+        "Job-to-tracker transitions -> coherent continuation of the main jobs flow",
+        "Canonical Figma source: /Users/samuelkrystal/projects/jorb/design/figma"
       ],
       "intentional_design_deviations": [
         "Tracker details may ship in a narrower first slice than the eventual full product workflow"
@@ -2237,7 +2244,8 @@
       "product_facing_ux": true,
       "design_section_mapping": [
         "Primary product shell -> JS front end",
-        "Secondary validation and operator shell -> Streamlit"
+        "Secondary validation and operator shell -> Streamlit",
+        "Canonical Figma source: /Users/samuelkrystal/projects/jorb/design/figma"
       ],
       "intentional_design_deviations": [
         "Some overlap may temporarily remain during transition, but the primary product path must be unambiguous"
@@ -2369,7 +2377,8 @@
       "design_section_mapping": [
         "Main jobs screen -> clearly primary jobs list and detail flow",
         "Secondary status and debug access -> admin or operator-only paths",
-        "Add job link and similar controls -> demoted below the primary jobs experience"
+        "Add job link and similar controls -> demoted below the primary jobs experience",
+        "Canonical Figma source: /Users/samuelkrystal/projects/jorb/design/figma"
       ],
       "intentional_design_deviations": [
         "Streamlit interaction affordances may remain simpler than the final JS product UX",
@@ -3490,7 +3499,7 @@
       "area": "builder",
       "milestone": "M6",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [],
       "prompt": "implement_feature",
@@ -3517,7 +3526,8 @@
       "notes": [
         "Builder repo is dirty before automated execution; refusing to continue.",
         "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again.",
-        "executor_transport_failure"
+        "executor_transport_failure",
+        "Automated loop completed with builder-side local validation success."
       ]
     },
     {
@@ -3527,7 +3537,7 @@
       "area": "builder",
       "milestone": "M6",
       "priority": 1,
-      "status": "ready",
+      "status": "blocked",
       "retries_used": 0,
       "depends_on": [],
       "prompt": "implement_feature",
@@ -3550,7 +3560,10 @@
       ],
       "repo_path": "~/projects/jorb-builder",
       "description": "Teach the builder to require concrete VM runtime proof for product tasks, including visible UI or log evidence that matches task intent.",
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "notes": [
+        "Builder repo is dirty before automated execution; refusing to continue."
+      ]
     },
     {
       "id": "JORB-INFRA-009",

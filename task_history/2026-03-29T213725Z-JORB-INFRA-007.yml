@@ -1,0 +1,108 @@
+{
+  "task_id": "JORB-INFRA-007",
+  "title": "Enforce Figma compliance",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-29T21:27:14.727249+00:00",
+  "completed_at": "2026-03-29T21:37:25.079717+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T212714Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T212714Z-JORB-INFRA-007",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T212714Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T212714Z-JORB-INFRA-007"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T212714Z-JORB-INFRA-007/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T212714Z-JORB-INFRA-007/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T212714Z-JORB-INFRA-007/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T212714Z-JORB-INFRA-007/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T212714Z-JORB-INFRA-007/local_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T212714Z-JORB-INFRA-007/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T212714Z-JORB-INFRA-007/executor.json"
+    }
+  ],
+  "files_changed": [
+    "scripts/automate_task_loop.py",
+    "scripts/common.py",
+    "tests/test_automate_task_loop.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.325.31654-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T212714Z-JORB-INFRA-007/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with builder-side local validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with builder-side local validation success.",
+    "accepted": true,
+    "acceptance_met": [],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed  \nAdded a canonical-Figma-source requirement to product-facing UX planning and acceptance: backlog `design_section_mapping` now must reference `/Users/samuelkrystal/projects/jorb/design/figma`, and accepted executor UX mapping evidence must reference that same canonical Figma path or the task is refined. Also fixed a resume-path regression so active verification overrides are not wiped by empty backlog verification arrays.\n\n2. Exact files changed  \n`/Users/samuelkrystal/projects/jorb-builder/scripts/common.py`  \n`/Users/samuelkrystal/projects/jorb-builder/scripts/automate_task_loop.py`  \n`/Users/samuelkrystal/projects/jorb-builder/tests/test_automate_task_loop.py`\n\n3. Exact tests added or updated  \nAdded `test_product_facing_ux_task_requires_canonical_figma_source_in_backlog_inspection` in `/Users/samuelkrystal/projects/jorb-builder/tests/test_automate_task_loop.py`  \nAdded `test_product_facing_ux_task_refines_without_canonical_figma_mapping_evidence` in `/Users/samuelkrystal/projects/jorb-builder/tests/test_automate_task_loop.py`  \nUpdated `test_product_facing_ux_task_accepts_with_explicit_ux_conformance_evidence` in `/Users/samuelkrystal/projects/jorb-builder/tests/test_automate_task_loop.py`  \nUpdated `test_product_facing_ux_task_accepts_with_numbered_ux_conformance_labels` in `/Users/samuelkrystal/projects/jorb-builder/tests/test_automate_task_loop.py`  \nUpdated `_apply_product_facing_ux_fields` fixture helper in `/Users/samuelkrystal/projects/jorb-builder/tests/test_automate_task_loop.py`\n\n4. Exact commands run  \n`find . -maxdepth 3 -type f | sort`  \n`grep -RInE \"Figma|figma|acceptance|UX acceptance|ux acceptance|design|product-facing|automate_task_loop|accept\" .`  \n`sed -n '160,260p' scripts/automate_task_loop.py`  \n`sed -n '2880,2925p' scripts/automate_task_loop.py`  \n`sed -n '1000,1145p' tests/test_automate_task_loop.py`  \n`sed -n '90,160p' scripts/common.py`  \n`sed -n '30,60p' scripts/render_packet.py`  \n`sed -n '3478,3525p' backlog.yml`  \n`python3 -m py_compile scripts/*.py`  \n`pytest tests/test_automate_task_loop.py`  \n`pytest tests/test_automate_task_loop.py -x -vv`  \n`git status --short`  \n`git diff -- scripts/common.py scripts/automate_task_loop.py tests/test_automate_task_loop.py`\n\n5. Exact results  \n`python3 -m py_compile scripts/*.py`: passed  \nFirst `pytest tests/test_automate_task_loop.py`: exposed test failures, which I fixed  \n`pytest tests/test_automate_task_loop.py -x -vv`: exposed and then confirmed fixes for the failing cases during iteration  \nFinal `pytest tests/test_automate_task_loop.py`: `80 passed in 126.93s (0:02:06)`\n\n6. Honest note on what remains unproven  \nThis is only proven in builder logic and tests. It is not proven against a live product task, a real implementation diff in `~/projects/jorb`, or the actual contents of the Figma directory itself."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "To github.com:sekrystal/Jorb-Builder.git\n   6dd72bb..1ea5094  main -> main\n"
+      }
+    ],
+    "changed_files_count": 3,
+    "changed_files": [
+      "scripts/automate_task_loop.py",
+      "scripts/common.py",
+      "tests/test_automate_task_loop.py"
+    ],
+    "unproven_runtime_gaps": [],
+    "ux_conformance": {
+      "required": false,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": null,
+      "intentional_design_deviations": null,
+      "product_first_checklist": null,
+      "primary_ux_prohibited_surfaces": []
+    }
+  },
+  "unproven_runtime_gaps": []
+}

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "state": "verifying",
+  "state": "blocked",
   "state_legend": {
     "idle": "No active task is currently in flight.",
     "task_selected": "A task has been selected and the current run has been initialized.",
@@ -11,17 +11,17 @@
     "completed": "The active run completed successfully and reached a terminal accepted state.",
     "blocked": "The active run reached a terminal blocked/refined state and requires intervention or retry."
   },
-  "active_task_id": "JORB-INFRA-007",
-  "last_task_id": "JORB-INFRA-007",
-  "last_result": "interrupted",
-  "last_run_at": "2026-03-29T21:35:08.388831+00:00",
+  "active_task_id": "JORB-INFRA-008",
+  "last_task_id": "JORB-INFRA-008",
+  "last_result": "blocked",
+  "last_run_at": "2026-03-29T21:41:02.739534+00:00",
   "roadmap_focus": {
     "milestone": "M2",
     "theme": "discovery"
   },
   "stats": {
-    "completed_tasks": 52,
-    "blocked_tasks": 23,
+    "completed_tasks": 53,
+    "blocked_tasks": 24,
     "retry_ready_tasks": 23
   },
   "notes": [

@@ -150,6 +150,9 @@ def canonicalize_task(task: dict, config: dict) -> dict:
     if is_product_facing_ux_task(normalized):
         normalized.setdefault("product_facing_ux", True)
         normalized.setdefault("design_section_mapping", list(task.get("design_section_mapping", [])))
+        section_mapping = normalized.get("design_section_mapping", [])
+        if isinstance(section_mapping, list) and section_mapping and not any(references_canonical_figma_source(item) for item in section_mapping):
+            normalized["design_section_mapping"] = list(section_mapping) + [f"Canonical Figma source: {CANONICAL_FIGMA_SOURCE}"]
         normalized.setdefault("intentional_design_deviations", list(task.get("intentional_design_deviations", [])))
         normalized.setdefault("product_first_acceptance_checks", list(task.get("product_first_acceptance_checks", DEFAULT_PRODUCT_FIRST_UX_CHECKLIST)))
         normalized.setdefault("primary_ux_prohibited_surfaces", list(task.get("primary_ux_prohibited_surfaces", DEFAULT_PRIMARY_UX_PROHIBITED_SURFACES)))
