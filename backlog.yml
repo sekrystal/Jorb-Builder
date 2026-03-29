@@ -3537,7 +3537,7 @@
       "area": "builder",
       "milestone": "M6",
       "priority": 1,
-      "status": "blocked",
+      "status": "ready",
       "retries_used": 0,
       "depends_on": [],
       "prompt": "implement_feature",
@@ -3562,7 +3562,8 @@
       "description": "Teach the builder to require concrete VM runtime proof for product tasks, including visible UI or log evidence that matches task intent.",
       "allow_noop_completion": false,
       "notes": [
-        "Builder repo is dirty before automated execution; refusing to continue."
+        "Builder repo is dirty before automated execution; refusing to continue.",
+        "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again."
       ]
     },
     {

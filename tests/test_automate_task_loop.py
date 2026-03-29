@@ -478,7 +478,7 @@ def _base_config(product_repo: Path, builder_root: Path) -> dict:
         "automation": {"mode": "explicit_script", "preserve_step_logs": True},
         "executor": {"mode": "human_gated", "command": None, "shell": "/bin/zsh", "timeout_seconds": 1800},
         "git": {"require_clean_worktree": True, "commit_message_template": "{task_id}: {title}", "push_command": "git push origin HEAD"},
-        "vm": {"ssh_target": "vm.example", "ssh_options": [], "product_repo": str(product_repo), "pull_command": "git pull --ff-only", "validation_commands": ["echo ok"], "runtime_validation_commands": []},
+        "vm": {"ssh_target": "vm.example", "ssh_options": [], "product_repo": str(product_repo), "pull_command": "git pull --ff-only", "validation_commands": ["echo ok"], "runtime_validation_commands": ["echo runtime-ok"]},
         "verification": {"default_check_group": "targeted", "required_on_completion": ["preflight"]},
         "rules": {"forbid_builder_code_in_product_repo": True, "require_explicit_allowlist": True, "require_explicit_verification": True, "require_exact_return_format": True, "allow_only_jorb_repo_edits": True},
         "codex": {"worker": "vscode", "mode": "manual_packet"},
@@ -1396,6 +1396,29 @@ def test_product_validation_fails_clearly_without_venv(tmp_path: Path) -> None:
     assert "No product validation virtualenv found" in payload["summary"]
 
 
+def test_product_task_blocks_when_vm_runtime_proof_is_not_configured(tmp_path: Path) -> None:
+    builder_root, product_repo, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="discovery",
+        allowlist=["services/company_discovery.py"],
+    )
+    _commit_allowlisted_product_file(product_repo, "services/company_discovery.py", "print('seed')\n")
+
+    config = _json(builder_root / "config.yml")
+    config["vm"]["runtime_validation_commands"] = []
+    _write_json(builder_root / "config.yml", config)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 2
+    assert "Missing automation configuration: vm.runtime_validation_commands or task.vm_verification" in result.stdout
+    payload = _json(_active_run_dir(builder_root) / "automation_result.json")
+    assert payload["classification"] == "blocked"
+    assert payload["summary"] == "Missing automation configuration: vm.runtime_validation_commands or task.vm_verification"
+    assert payload["unproven_runtime_gaps"] == ["Missing automation configuration: vm.runtime_validation_commands or task.vm_verification"]
+
+
 def test_retry_ready_product_task_continues_from_expected_dirty_files(tmp_path: Path) -> None:
     builder_root, product_repo, _, _ = _setup_builder_fixture(
         tmp_path,
@@ -1650,6 +1673,7 @@ def test_vm_cleanup_does_not_override_prior_bootstrap_failure(tmp_path: Path) ->
 
     backlog = _json(builder_root / "backlog.yml")
     backlog["tasks"][0]["vm_bootstrap"] = ["echo bootstrap-api"]
+    backlog["tasks"][0]["vm_verification"] = ["echo smoke-check"]
     backlog["tasks"][0]["vm_cleanup"] = ["echo cleanup"]
     _write_json(builder_root / "backlog.yml", backlog)
 
