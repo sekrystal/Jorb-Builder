@@ -12,6 +12,7 @@ import time
 
 SCRIPT = Path("/Users/samuelkrystal/projects/jorb-builder/scripts/automate_task_loop.py")
 LIVE_BUILDER_ROOT = Path("/Users/samuelkrystal/projects/jorb-builder")
+CANONICAL_FIGMA_SOURCE = "/Users/samuelkrystal/projects/jorb/design/figma"
 
 
 def _json(path: Path):
@@ -284,7 +285,7 @@ def _write_fake_codex_slow(path: Path, *, relative_output: str, sleep_seconds: i
 
 def _apply_product_facing_ux_fields(task: dict, *, mapping: list[str] | None = None, deviations: list[str] | None = None) -> None:
     task["product_facing_ux"] = True
-    task["design_section_mapping"] = mapping or ["Hero section -> jobs list"]
+    task["design_section_mapping"] = mapping or [f"Hero section in {CANONICAL_FIGMA_SOURCE} -> jobs list"]
     task["intentional_design_deviations"] = deviations if deviations is not None else ["none"]
     task["product_first_acceptance_checks"] = [
         "confirm hierarchy keeps core jobs value ahead of secondary controls",
@@ -1053,6 +1054,62 @@ def test_product_facing_ux_task_refines_without_explicit_ux_conformance_evidence
     assert "response.design_section_mapping" in history["operator_diagnostics"]["ux_conformance"]["missing_response_fields"]
 
 
+def test_product_facing_ux_task_requires_canonical_figma_source_in_backlog_inspection(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-UX",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    backlog = _json(builder_root / "backlog.yml")
+    _apply_product_facing_ux_fields(backlog["tasks"][0], mapping=["Hero -> jobs list"])
+    _write_json(builder_root / "backlog.yml", backlog)
+
+    result = _run([sys.executable, str(SCRIPT), "--inspect-backlog"], builder_root)
+
+    assert result.returncode == 1
+    assert "BACKLOG_INVALID" in result.stdout
+    assert "design_section_mapping.figma_source" in result.stdout
+
+
+def test_product_facing_ux_task_refines_without_canonical_figma_mapping_evidence(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-UX",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    backlog = _json(builder_root / "backlog.yml")
+    _apply_product_facing_ux_fields(backlog["tasks"][0], mapping=[f"Hero in {CANONICAL_FIGMA_SOURCE} -> jobs list"])
+    _write_json(builder_root / "backlog.yml", backlog)
+
+    fake_codex = tmp_path / "fake-codex-ux-no-figma"
+    _write_fake_codex(
+        fake_codex,
+        relative_output="worker.py",
+        last_message=(
+            "1. Concise summary of exactly what changed\n"
+            "UX Design Section Mapping: Hero -> jobs list; Sidebar -> filters\n"
+            "UX Intentional Design Deviations: none\n"
+            "UX Product-First Checklist: hierarchy=yes; prohibited_surfaces=yes; backend_wiring_only=no\n"
+        ),
+    )
+    config = _json(builder_root / "config.yml")
+    config["executor"]["mode"] = "codex_exec"
+    config["executor"]["codex_cli"] = str(fake_codex)
+    _write_json(builder_root / "config.yml", config)
+    _git(["add", "backlog.yml", "config.yml", "prompts/implement_feature.md"], builder_root)
+    _git(["commit", "-m", "reject ux evidence without figma source"], builder_root)
+
+    _run([sys.executable, str(SCRIPT)], builder_root)
+
+    payload = _json(_active_run_dir(builder_root) / "automation_result.json")
+    assert payload["classification"] == "refined"
+    assert any(step["name"] == "ux_conformance" and step["outcome"] == "refined" for step in payload["steps"])
+    history = _json(next((builder_root / "task_history").glob("*.yml")))
+    assert "response.design_section_mapping.figma_source" in history["operator_diagnostics"]["ux_conformance"]["missing_response_fields"]
+
+
 def test_product_facing_ux_task_accepts_with_explicit_ux_conformance_evidence(tmp_path: Path) -> None:
     builder_root, _, _, _ = _setup_builder_fixture(
         tmp_path,
@@ -1061,7 +1118,10 @@ def test_product_facing_ux_task_accepts_with_explicit_ux_conformance_evidence(tm
         allowlist=["../jorb-builder/**"],
     )
     backlog = _json(builder_root / "backlog.yml")
-    _apply_product_facing_ux_fields(backlog["tasks"][0], mapping=["Hero -> jobs list", "Sidebar -> filters"])
+    _apply_product_facing_ux_fields(
+        backlog["tasks"][0],
+        mapping=[f"Hero in {CANONICAL_FIGMA_SOURCE} -> jobs list", f"Sidebar in {CANONICAL_FIGMA_SOURCE} -> filters"],
+    )
     _write_json(builder_root / "backlog.yml", backlog)
 
     fake_codex = tmp_path / "fake-codex-ux-ok"
@@ -1070,7 +1130,7 @@ def test_product_facing_ux_task_accepts_with_explicit_ux_conformance_evidence(tm
         relative_output="worker.py",
         last_message=(
             "1. Concise summary of exactly what changed\n"
-            "UX Design Section Mapping: Hero -> jobs list; Sidebar -> filters\n"
+            f"UX Design Section Mapping: Hero and Sidebar in {CANONICAL_FIGMA_SOURCE} -> jobs list and filters\n"
             "UX Intentional Design Deviations: none\n"
             "UX Product-First Checklist: hierarchy=yes; prohibited_surfaces=yes; backend_wiring_only=no\n"
         ),
@@ -1089,7 +1149,7 @@ def test_product_facing_ux_task_accepts_with_explicit_ux_conformance_evidence(tm
     assert history["status"] == "accepted"
     ux = history["operator_diagnostics"]["ux_conformance"]
     assert ux["passed"] is True
-    assert ux["design_section_mapping"] == "Hero -> jobs list; Sidebar -> filters"
+    assert ux["design_section_mapping"] == f"Hero and Sidebar in {CANONICAL_FIGMA_SOURCE} -> jobs list and filters"
     assert ux["intentional_design_deviations"] == "none"
     assert ux["product_first_checklist"] == "hierarchy=yes; prohibited_surfaces=yes; backend_wiring_only=no"
 
@@ -1102,7 +1162,10 @@ def test_product_facing_ux_task_accepts_with_numbered_ux_conformance_labels(tmp_
         allowlist=["../jorb-builder/**"],
     )
     backlog = _json(builder_root / "backlog.yml")
-    _apply_product_facing_ux_fields(backlog["tasks"][0], mapping=["Hero -> jobs list", "Sidebar -> filters"])
+    _apply_product_facing_ux_fields(
+        backlog["tasks"][0],
+        mapping=[f"Hero in {CANONICAL_FIGMA_SOURCE} -> jobs list", f"Sidebar in {CANONICAL_FIGMA_SOURCE} -> filters"],
+    )
     _write_json(builder_root / "backlog.yml", backlog)
 
     fake_codex = tmp_path / "fake-codex-ux-numbered"
@@ -1110,7 +1173,7 @@ def test_product_facing_ux_task_accepts_with_numbered_ux_conformance_labels(tmp_
         fake_codex,
         relative_output="worker.py",
         last_message=(
-            "1. UX Design Section Mapping: Hero -> jobs list; Sidebar -> filters\n"
+            f"1. UX Design Section Mapping: Hero and Sidebar in {CANONICAL_FIGMA_SOURCE} -> jobs list and filters\n"
             "2. UX Intentional Design Deviations: none\n"
             "3. UX Product-First Checklist: hierarchy=yes; prohibited_surfaces=yes; backend_wiring_only=no\n"
         ),
@@ -1128,7 +1191,7 @@ def test_product_facing_ux_task_accepts_with_numbered_ux_conformance_labels(tmp_
     history = _json(next((builder_root / "task_history").glob("*.yml")))
     ux = history["operator_diagnostics"]["ux_conformance"]
     assert ux["passed"] is True
-    assert ux["design_section_mapping"] == "Hero -> jobs list; Sidebar -> filters"
+    assert ux["design_section_mapping"] == f"Hero and Sidebar in {CANONICAL_FIGMA_SOURCE} -> jobs list and filters"
     assert ux["intentional_design_deviations"] == "none"
     assert ux["product_first_checklist"] == "hierarchy=yes; prohibited_surfaces=yes; backend_wiring_only=no"
 

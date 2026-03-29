@@ -18,6 +18,7 @@ from typing import Any, Callable
 from common import (
     builder_root,
     builder_path_from_config,
+    references_canonical_figma_source,
     compute_backlog_diagnostics,
     expand_path,
     is_product_facing_ux_task,
@@ -211,6 +212,8 @@ def ux_conformance_result(task: dict[str, Any], executor_output: str) -> dict[st
         missing.extend(planning_issues)
     if not result["design_section_mapping"]:
         missing.append("response.design_section_mapping")
+    elif not references_canonical_figma_source(result["design_section_mapping"]):
+        missing.append("response.design_section_mapping.figma_source")
     if result["intentional_design_deviations"] is None:
         missing.append("response.intentional_design_deviations")
     checklist = str(result["product_first_checklist"] or "").lower()
@@ -2071,10 +2074,14 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         except KeyError:
             task = None
     if task is not None:
-        active["verification_commands"] = list(task.get("verification", []))
-        active["vm_verification_commands"] = list(task.get("vm_verification", []))
-        active["vm_bootstrap_commands"] = list(task.get("vm_bootstrap", []))
-        active["vm_cleanup_commands"] = list(task.get("vm_cleanup", []))
+        if not active.get("verification_commands"):
+            active["verification_commands"] = list(task.get("verification", []))
+        if not active.get("vm_verification_commands"):
+            active["vm_verification_commands"] = list(task.get("vm_verification", []))
+        if not active.get("vm_bootstrap_commands"):
+            active["vm_bootstrap_commands"] = list(task.get("vm_bootstrap", []))
+        if not active.get("vm_cleanup_commands"):
+            active["vm_cleanup_commands"] = list(task.get("vm_cleanup", []))
     execution = resolve_execution_candidate(backlog, active, status, resume=args.resume)
     diagnostics = execution["diagnostics"]
     if active.get("task_id") and execution.get("active_candidate_id") is None and not backlog.get("errors"):

@@ -47,6 +47,7 @@ DEFAULT_PRODUCT_FIRST_UX_CHECKLIST = [
     "confirm prohibited surfaces stay out of the primary user-facing shell",
     "confirm backend wiring or real data alone is not treated as sufficient UX acceptance evidence",
 ]
+CANONICAL_FIGMA_SOURCE = "/Users/samuelkrystal/projects/jorb/design/figma"
 
 
 def expand_path(value: str) -> Path:
@@ -102,6 +103,10 @@ def is_product_facing_ux_task(task: dict) -> bool:
     return area in {"ux", "frontend"}
 
 
+def references_canonical_figma_source(value: object) -> bool:
+    return CANONICAL_FIGMA_SOURCE in str(value or "")
+
+
 def ux_conformance_planning_issues(task: dict) -> list[str]:
     if not is_product_facing_ux_task(task):
         return []
@@ -109,6 +114,8 @@ def ux_conformance_planning_issues(task: dict) -> list[str]:
     section_mapping = task.get("design_section_mapping", [])
     if not isinstance(section_mapping, list) or not [item for item in section_mapping if str(item).strip()]:
         issues.append("design_section_mapping")
+    elif not any(references_canonical_figma_source(item) for item in section_mapping):
+        issues.append("design_section_mapping.figma_source")
     deviations = task.get("intentional_design_deviations", [])
     if not isinstance(deviations, list):
         issues.append("intentional_design_deviations")

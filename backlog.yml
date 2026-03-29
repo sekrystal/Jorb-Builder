@@ -3490,7 +3490,7 @@
       "area": "builder",
       "milestone": "M6",
       "priority": 1,
-      "status": "blocked",
+      "status": "ready",
       "retries_used": 0,
       "depends_on": [],
       "prompt": "implement_feature",
@@ -3515,7 +3515,9 @@
       "description": "Harden the builder so product-facing UX tasks cannot pass without explicit Figma mapping, card-content compliance, hierarchy evidence, and prohibited-surface checks.",
       "allow_noop_completion": false,
       "notes": [
-        "Builder repo is dirty before automated execution; refusing to continue."
+        "Builder repo is dirty before automated execution; refusing to continue.",
+        "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again.",
+        "executor_transport_failure"
       ]
     },
     {

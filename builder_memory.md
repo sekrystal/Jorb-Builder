@@ -243,3 +243,5 @@ Does this directly improve:
 - JORB-V3-001 accepted by automated loop. History: 2026-03-29T212218Z-JORB-V3-001.yml
 
 - JORB-INFRA-007 blocked by automated loop via BLK-JORB-INFRA-007.yml. History: 2026-03-29T212406Z-JORB-INFRA-007.yml
+
+- JORB-INFRA-007 interrupted by operator. History: 2026-03-29T212609Z-JORB-INFRA-007.yml
