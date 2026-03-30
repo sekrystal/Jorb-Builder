@@ -4,7 +4,8 @@
   "type": "object",
   "required": [
     "generated_at",
-    "entries"
+    "entries",
+    "artifact_index"
   ],
   "properties": {
     "generated_at": {
@@ -58,6 +59,81 @@
             "items": {"type": "object"}
           }
         }
+      }
+    },
+    "artifact_index": {
+      "type": "object",
+      "required": [
+        "generated_at",
+        "entries",
+        "counts_by_label",
+        "counts_by_kind",
+        "by_task_id",
+        "by_label",
+        "by_name"
+      ],
+      "properties": {
+        "generated_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "artifact_id",
+              "task_id",
+              "ticket_family",
+              "history_path",
+              "run_log_dir",
+              "path",
+              "relative_path",
+              "artifact_name",
+              "artifact_stem",
+              "extension",
+              "kind",
+              "size_bytes",
+              "timestamp",
+              "history_status",
+              "labels",
+              "phase4_artifact",
+              "search_tokens"
+            ],
+            "properties": {
+              "artifact_id": {"type": "string"},
+              "task_id": {"type": ["string", "null"]},
+              "ticket_family": {"type": "string"},
+              "history_path": {"type": "string"},
+              "run_log_dir": {"type": ["string", "null"]},
+              "path": {"type": "string"},
+              "relative_path": {"type": "string"},
+              "artifact_name": {"type": "string"},
+              "artifact_stem": {"type": "string"},
+              "extension": {"type": "string"},
+              "kind": {"type": "string"},
+              "size_bytes": {"type": ["integer", "null"]},
+              "timestamp": {"type": ["string", "null"]},
+              "history_status": {"type": "string"},
+              "labels": {
+                "type": "array",
+                "items": {"type": "string"}
+              },
+              "phase4_artifact": {"type": "boolean"},
+              "search_tokens": {
+                "type": "array",
+                "items": {"type": "string"}
+              }
+            }
+          }
+        },
+        "counts_by_label": {"type": "object"},
+        "counts_by_kind": {"type": "object"},
+        "by_task_id": {"type": "object"},
+        "by_label": {"type": "object"},
+        "by_name": {"type": "object"}
       }
     }
   }

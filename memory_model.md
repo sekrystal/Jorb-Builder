@@ -5,6 +5,8 @@ Builder memory is structured external state, not raw prompt stuffing.
 ## Storage
 
 - derived index: `memory_store.json`
+  - includes `entries` for retrieval memories
+  - includes `artifact_index` for searchable persisted artifact metadata
 - operator overrides: `memory_overrides.json`
 - per-run retrieval artifacts:
   - `memory_context.json`
@@ -35,6 +37,17 @@ Each memory entry includes:
 - `support_count`
 - `superseded_by`
 - `supersedes`
+
+## Artifact index shape
+
+`memory_store.json.artifact_index` stores persisted artifact metadata keyed for search over prior run evidence.
+
+- `entries`
+- `counts_by_label`
+- `counts_by_kind`
+- `by_task_id`
+- `by_label`
+- `by_name`
 
 ## Supported memory types in this slice
 

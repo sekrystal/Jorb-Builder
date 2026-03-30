@@ -92,6 +92,18 @@ PHASE4_OPERATOR_ARTIFACTS = (
     "evidence_bundle.json",
     "runtime_proof.log",
 )
+AUTOMATION_RUN_ARTIFACT_LABELS = {
+    "automation_result.json": "automation_result",
+    "automation_summary.md": "automation_summary",
+    "progress.jsonl": "progress_log",
+    "codex_last_message.md": "executor_output",
+    "local_validation.json": "local_validation",
+    "vm_validation.json": "vm_validation",
+    "git.json": "git",
+    "executor.json": "executor",
+    "eval_result.json": "eval_result",
+    "judge_memory_context.json": "judge_memory_context",
+}
 PHASE4_ARTIFACT_FAILURE_PREFIX = "Phase 4 artifact enforcement failed:"
 
 
@@ -555,6 +567,131 @@ def _serializable_memory_profiles() -> dict[str, Any]:
     return payload
 
 
+def _artifact_relative_path(path: Path, root: Path) -> str:
+    try:
+        return str(path.relative_to(root))
+    except ValueError:
+        return str(path)
+
+
+def _artifact_search_tokens(*parts: Any) -> list[str]:
+    tokens: set[str] = set()
+    for part in parts:
+        if part is None:
+            continue
+        for token in re.split(r"[^a-zA-Z0-9_.-]+", str(part).lower()):
+            if token:
+                tokens.add(token)
+    return sorted(tokens)
+
+
+def _artifact_candidate_paths(payload: dict[str, Any], history_path: Path) -> list[tuple[str, Path]]:
+    candidates: list[tuple[str, Path]] = []
+    prompt = payload.get("prompt")
+    if prompt:
+        candidates.append(("prompt", Path(str(prompt)).expanduser()))
+    run_log_dir = payload.get("run_log_dir")
+    if run_log_dir:
+        run_dir = Path(str(run_log_dir)).expanduser()
+        candidates.append(("run_log_dir", run_dir))
+        for name, label in AUTOMATION_RUN_ARTIFACT_LABELS.items():
+            candidates.append((label, run_dir / name))
+        for name in PHASE4_OPERATOR_ARTIFACTS:
+            candidates.append((f"phase4:{name}", run_dir / name))
+    for item in payload.get("evidence_artifacts", []):
+        if not isinstance(item, dict):
+            continue
+        artifact_path = item.get("path")
+        if not artifact_path:
+            continue
+        candidates.append((str(item.get("label") or "artifact"), Path(str(artifact_path)).expanduser()))
+    return candidates
+
+
+def build_artifact_metadata_index(root: Path | None = None) -> dict[str, Any]:
+    repo_root = Path(root or builder_root()).expanduser().resolve()
+    task_history_dir = repo_root / "task_history"
+    records: dict[tuple[str, str], dict[str, Any]] = {}
+    for history_path in sorted(task_history_dir.glob("*.yml")) if task_history_dir.exists() else []:
+        payload = load_data(history_path)
+        task_id = str(payload.get("task_id") or "")
+        ticket_family = task_family(task_id)
+        run_log_dir = payload.get("run_log_dir")
+        run_dir = Path(str(run_log_dir)).expanduser().resolve() if run_log_dir else None
+        timestamp = payload.get("completed_at") or payload.get("started_at")
+        for label, candidate in _artifact_candidate_paths(payload, history_path):
+            resolved = candidate.resolve()
+            if not resolved.exists():
+                continue
+            key = (task_id, str(resolved))
+            record = records.get(key)
+            if record is None:
+                is_dir = resolved.is_dir()
+                suffix = resolved.suffix.lower()
+                record = {
+                    "artifact_id": _memory_id("artifact", task_id or "unknown", f"{history_path}:{resolved}"),
+                    "task_id": task_id or None,
+                    "ticket_family": ticket_family,
+                    "history_path": str(history_path),
+                    "run_log_dir": str(run_dir) if run_dir is not None else None,
+                    "path": str(resolved),
+                    "relative_path": _artifact_relative_path(resolved, repo_root),
+                    "artifact_name": resolved.name,
+                    "artifact_stem": resolved.stem,
+                    "extension": suffix,
+                    "kind": "directory" if is_dir else "file",
+                    "size_bytes": None if is_dir else resolved.stat().st_size,
+                    "timestamp": timestamp,
+                    "history_status": str(payload.get("status") or "unknown"),
+                    "labels": [],
+                    "phase4_artifact": resolved.name in PHASE4_OPERATOR_ARTIFACTS,
+                    "search_tokens": [],
+                }
+                records[key] = record
+            record["labels"] = sorted({*record.get("labels", []), label})
+            record["search_tokens"] = _artifact_search_tokens(
+                task_id,
+                ticket_family,
+                resolved.name,
+                resolved.stem,
+                resolved.suffix,
+                label,
+                history_path.name,
+                payload.get("status"),
+            )
+
+    entries = sorted(
+        records.values(),
+        key=lambda item: (str(item.get("timestamp") or ""), str(item.get("task_id") or ""), item["path"]),
+        reverse=True,
+    )
+    by_task_id: dict[str, list[str]] = {}
+    by_label: dict[str, list[str]] = {}
+    by_name: dict[str, list[str]] = {}
+    counts_by_label: dict[str, int] = {}
+    counts_by_kind: dict[str, int] = {}
+    for entry in entries:
+        artifact_id = str(entry["artifact_id"])
+        task_id = str(entry.get("task_id") or "")
+        if task_id:
+            by_task_id.setdefault(task_id, []).append(artifact_id)
+        by_name.setdefault(str(entry["artifact_name"]), []).append(artifact_id)
+        kind = str(entry["kind"])
+        counts_by_kind[kind] = counts_by_kind.get(kind, 0) + 1
+        for label in entry.get("labels", []):
+            by_label.setdefault(str(label), []).append(artifact_id)
+            counts_by_label[str(label)] = counts_by_label.get(str(label), 0) + 1
+    return {
+        "generated_at": now_iso(),
+        "entries": entries,
+        "counts_by_label": counts_by_label,
+        "counts_by_kind": counts_by_kind,
+        "by_task_id": by_task_id,
+        "by_label": by_label,
+        "by_name": by_name,
+    }
+
+
 def build_memory_store(root: Path | None = None) -> dict:
     repo_root = Path(root or builder_root()).expanduser().resolve()
     task_history_dir = repo_root / "task_history"
@@ -580,6 +717,7 @@ def build_memory_store(root: Path | None = None) -> dict:
     store = {
         "generated_at": now_iso(),
         "entries": entries,
+        "artifact_index": build_artifact_metadata_index(repo_root),
         "profiles": _serializable_memory_profiles(),
         "counts_by_status": _memory_counts(entries),
         "source_counts": {
@@ -731,6 +869,15 @@ def validate_memory_store_schema(store: dict[str, Any]) -> list[str]:
     issues: list[str] = []
     if not isinstance(store.get("entries"), list):
         return ["entries:not_list"]
+    artifact_index = store.get("artifact_index")
+    if not isinstance(artifact_index, dict):
+        issues.append("artifact_index:not_object")
+        artifact_entries: list[dict[str, Any]] = []
+    else:
+        artifact_entries = artifact_index.get("entries", [])
+        if not isinstance(artifact_entries, list):
+            issues.append("artifact_index.entries:not_list")
+            artifact_entries = []
     required_fields = {
         "memory_id",
         "memory_type",
@@ -751,6 +898,29 @@ def validate_memory_store_schema(store: dict[str, Any]) -> list[str]:
         missing = sorted(required_fields - set(entry.keys()))
         for field in missing:
             issues.append(f"entries[{index}]:missing:{field}")
+    artifact_required_fields = {
+        "artifact_id",
+        "task_id",
+        "ticket_family",
+        "history_path",
+        "run_log_dir",
+        "path",
+        "relative_path",
+        "artifact_name",
+        "artifact_stem",
+        "extension",
+        "kind",
+        "size_bytes",
+        "timestamp",
+        "history_status",
+        "labels",
+        "phase4_artifact",
+        "search_tokens",
+    }
+    for index, entry in enumerate(artifact_entries):
+        missing = sorted(artifact_required_fields - set(entry.keys()))
+        for field in missing:
+            issues.append(f"artifact_index.entries[{index}]:missing:{field}")
     return issues
 
 

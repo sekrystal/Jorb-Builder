@@ -2636,29 +2636,8 @@ def repair_legacy_state() -> int:
                 break
     backlog_diagnostics = compute_backlog_diagnostics({"tasks": backlog.get("tasks", [])})
 
-    terminal_classification = str(run_result.get("classification") or "")
-    if (
-        task is not None
-        and str(task.get("status")) == "ready"
-        and active.get("task_id")
-        and terminal_classification in {"accepted", "refined", "blocked", "interrupted"}
-    ):
-        classify_and_update_state(
-            terminal_classification,
-            str(run_result.get("summary") or ""),
-            task,
-            backlog,
-            active,
-            status,
-            run_result,
-            terminal_state="completed" if terminal_classification == "accepted" else "blocked",
-        )
-        write_data(BACKLOG, backlog)
-        repaired.append(f"backlog task {task_id} finalized from terminal automation_result -> {task.get('status')}")
-        print("STATE_REPAIRED")
-        for line in repaired:
-            print(f"- {line}")
-        return 0
+    terminal_classification = str((run_result or {}).get("classification") or "")
+    run_result_summary = str((run_result or {}).get("summary") or "")
 
     if is_auth_preflight_only_block(active, status, run_result):
         repaired_active = reset_active()
@@ -2722,7 +2701,7 @@ def repair_legacy_state() -> int:
         task is not None
         and task.get("status") in {"ready", "retry_ready"}
         and active.get("state") == "blocked"
-        and str(active.get("failure_summary") or run_result.get("summary") or "")
+        and str(active.get("failure_summary") or run_result_summary or "")
         == "Retry-ready task has no product repo changes to continue from."
     ):
         task["status"] = "ready"
@@ -2741,6 +2720,29 @@ def repair_legacy_state() -> int:
         )
         write_data(BACKLOG, backlog)
         repaired.append(f"stale retry-ready continuation for {task_id} cleared -> fresh ready rerun")
+        print("STATE_REPAIRED")
+        for line in repaired:
+            print(f"- {line}")
+        return 0
+
+    if (
+        task is not None
+        and str(task.get("status")) == "ready"
+        and active.get("task_id")
+        and terminal_classification in {"accepted", "refined", "blocked", "interrupted"}
+    ):
+        classify_and_update_state(
+            terminal_classification,
+            run_result_summary,
+            task,
+            backlog,
+            active,
+            status,
+            run_result,
+            terminal_state="completed" if terminal_classification == "accepted" else "blocked",
+        )
+        write_data(BACKLOG, backlog)
+        repaired.append(f"backlog task {task_id} finalized from terminal automation_result -> {task.get('status')}")
         print("STATE_REPAIRED")
         for line in repaired:
             print(f"- {line}")

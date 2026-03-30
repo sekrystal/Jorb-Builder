@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-30T22:03:24.198421+00:00",
+  "generated_at": "2026-03-30T22:39:11.238058+00:00",
   "entries": [
     {
       "memory_id": "mem-479fde0e0817",
@@ -105,8 +105,8 @@
       "confidence": 0.65,
       "freshness": {
         "observed_at": "2026-03-29T22:27:18.940801+00:00",
-        "age_days": 0,
-        "decay_factor": 1.0,
+        "age_days": 1,
+        "decay_factor": 0.984,
         "stale_after_days": 21,
         "freshness_state": "fresh"
       },
@@ -751,6 +751,54 @@
       "content": "Builder repo is dirty before automated execution; refusing to continue."
     },
     {
+      "memory_id": "mem-e1f4bb84f5c2",
+      "memory_type": "successful_fix",
+      "ticket_family": "JORB-INFRA",
+      "task_id": "JORB-INFRA-023",
+      "area": "builder",
+      "summary": "Implemented direct run scoring for the private builder eval suite with regression comparison against comparable history, plus focused test and spec coverage.",
+      "source_artifact": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T222211Z-JORB-INFRA-023.yml",
+      "timestamp": "2026-03-30T23:08:00+00:00",
+      "confidence": 0.88,
+      "freshness": {
+        "observed_at": "2026-03-30T23:08:00+00:00",
+        "age_days": 0,
+        "decay_factor": 1.0,
+        "stale_after_days": 21,
+        "freshness_state": "fresh"
+      },
+      "observation": "Implemented direct run scoring for the private builder eval suite with regression comparison against comparable history, plus focused test and spec coverage.",
+      "inference": "Past successful execution pattern",
+      "primary_basis": "observation",
+      "relevance_tags": [
+        "JORB-INFRA",
+        "accepted_pattern",
+        "implementation_pattern",
+        "private_builder_eval_suite",
+        "proof_pattern"
+      ],
+      "origin": "judge",
+      "status": "active",
+      "status_reason": "derived_from_history",
+      "provenance": [
+        {
+          "path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T222211Z-JORB-INFRA-023.yml",
+          "kind": "task_history"
+        }
+      ],
+      "signature": "724f21e670a306f87ff84fe97401f7837df882c8",
+      "support_count": 1,
+      "superseded_by": null,
+      "supersedes": [],
+      "manual": false,
+      "role_fit": [
+        "planner",
+        "architect",
+        "judge"
+      ],
+      "content": "Implemented direct run scoring for the private builder eval suite with regression comparison against comparable history, plus focused test and spec coverage."
+    },
+    {
       "memory_id": "proposal-prop-c967a7d8242d",
       "memory_type": "operator_feedback",
       "ticket_family": "JORB-INFRA",
@@ -758,10 +806,10 @@
       "area": "builder",
       "summary": "Harden operator truth for Phase 4 artifact enforcement state",
       "source_artifact": "/Users/samuelkrystal/projects/jorb-builder/backlog_proposals.json",
-      "timestamp": "2026-03-30T22:03:24.198271+00:00",
+      "timestamp": "2026-03-30T22:39:11.237878+00:00",
       "confidence": 0.88,
       "freshness": {
-        "observed_at": "2026-03-30T22:03:24.198271+00:00",
+        "observed_at": "2026-03-30T22:39:11.237878+00:00",
         "age_days": 0,
         "decay_factor": 1.0,
         "stale_after_days": 45,
@@ -2036,8 +2084,8 @@
       "confidence": 0.72,
       "freshness": {
         "observed_at": "2026-03-29T22:27:18.939962+00:00",
-        "age_days": 0,
-        "decay_factor": 1.0,
+        "age_days": 1,
+        "decay_factor": 0.984,
         "stale_after_days": 21,
         "freshness_state": "fresh"
       },
@@ -3241,8 +3289,8 @@
       "confidence": 0.88,
       "freshness": {
         "observed_at": "2026-03-26T22:21:53.071156+00:00",
-        "age_days": 3,
-        "decay_factor": 0.952,
+        "age_days": 4,
+        "decay_factor": 0.937,
         "stale_after_days": 21,
         "freshness_state": "fresh"
       },
@@ -3291,8 +3339,8 @@
       "confidence": 0.88,
       "freshness": {
         "observed_at": "2026-03-26T22:16:35.112826+00:00",
-        "age_days": 3,
-        "decay_factor": 0.952,
+        "age_days": 4,
+        "decay_factor": 0.937,
         "stale_after_days": 21,
         "freshness_state": "fresh"
       },
@@ -6259,7 +6307,7 @@
       "timestamp": "2026-03-24T22:34:18.248689+00:00",
       "confidence": 0.72,
       "freshness": {
-        "observed_at": "2026-03-24T22:34:18.248689+00:00",
+        "observed_at": "2026-03-25T00:00:49.340530+00:00",
         "age_days": 5,
         "decay_factor": 0.921,
         "stale_after_days": 21,
@@ -6373,10 +6421,10 @@
   },
   "counts_by_status": {
     "superseded": 16,
-    "active": 114
+    "active": 115
   },
   "source_counts": {
-    "task_history": 113,
+    "task_history": 114,
     "blockers": 16,
     "manual": 1
   }

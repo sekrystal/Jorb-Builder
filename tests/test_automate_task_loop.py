@@ -4142,6 +4142,51 @@ def test_memory_store_schema_and_observation_inference_are_explicit(tmp_path: Pa
     assert entry["source_artifact"].endswith(".yml")
 
 
+def test_memory_store_builds_artifact_metadata_index_from_task_history(tmp_path: Path) -> None:
+    builder_root, _, run_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-024",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    common = _load_common_module(builder_root)
+    prompt_path = builder_root / "run_logs" / "packet" / "codex_prompt.md"
+    prompt_path.parent.mkdir(parents=True, exist_ok=True)
+    prompt_path.write_text("prompt\n", encoding="utf-8")
+    (run_dir / "automation_result.json").write_text("{}\n", encoding="utf-8")
+    (run_dir / "compiled_feature_spec.md").write_text("spec\n", encoding="utf-8")
+    (run_dir / "judge_decision.md").write_text("judge\n", encoding="utf-8")
+    _write_json(
+        builder_root / "task_history" / "2026-03-30T000000Z-JORB-INFRA-024.yml",
+        {
+            "task_id": "JORB-INFRA-024",
+            "status": "accepted",
+            "completed_at": "2026-03-30T00:00:00+00:00",
+            "prompt": str(prompt_path),
+            "run_log_dir": str(run_dir),
+            "evidence_artifacts": [
+                {"label": "automation_result", "path": str(run_dir / "automation_result.json")},
+                {"label": "judge_decision", "path": str(run_dir / "judge_decision.md")},
+            ],
+            "operator_diagnostics": {"accepted": True, "decision_summary": "artifact index landed"},
+        },
+    )
+
+    store = common.build_memory_store(builder_root)
+    issues = common.validate_memory_store_schema(store)
+
+    assert issues == []
+    artifact_index = store["artifact_index"]
+    assert artifact_index["by_task_id"]["JORB-INFRA-024"]
+    assert artifact_index["by_label"]["automation_result"]
+    assert artifact_index["by_name"]["compiled_feature_spec.md"]
+    entries_by_name = {entry["artifact_name"]: entry for entry in artifact_index["entries"]}
+    assert entries_by_name["compiled_feature_spec.md"]["phase4_artifact"] is True
+    assert "phase4:compiled_feature_spec.md" in entries_by_name["compiled_feature_spec.md"]["labels"]
+    assert entries_by_name["automation_result.json"]["run_log_dir"] == str(run_dir)
+    assert "jorb-infra-024" in entries_by_name["automation_result.json"]["search_tokens"]
+
+
 def test_memory_store_deduplicates_similar_entries_and_preserves_provenance(tmp_path: Path) -> None:
     builder_root, _, _, _ = _setup_builder_fixture(
         tmp_path,
