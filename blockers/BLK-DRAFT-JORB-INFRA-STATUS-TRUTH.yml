@@ -1,0 +1,22 @@
+{
+  "id": "BLK-DRAFT-JORB-INFRA-STATUS-TRUTH",
+  "title": "Task DRAFT-JORB-INFRA-STATUS-TRUTH blocked during automated execution",
+  "severity": "high",
+  "opened_at": "2026-03-30T20:47:23.403474+00:00",
+  "related_tasks": [
+    "DRAFT-JORB-INFRA-STATUS-TRUTH"
+  ],
+  "status": "open",
+  "symptoms": [
+    "Builder repo is dirty before automated execution; refusing to continue."
+  ],
+  "diagnosis": "Builder repo is dirty before automated execution; refusing to continue.",
+  "evidence": [
+    "scripts/automate_task_loop.py",
+    "tests/test_automate_task_loop.py"
+  ],
+  "next_actions": [
+    "Inspect automation_result.json and narrow the next bounded refinement."
+  ],
+  "human_needed": true
+}

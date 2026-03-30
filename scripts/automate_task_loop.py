@@ -167,6 +167,39 @@ FAILURE_RECOVERY_MAP = {
 }
 
 
+def is_auto_ready_synthesized_builder_followup(task: dict[str, Any], completed: set[str]) -> bool:
+    if str(task.get("status")) != "pending":
+        return False
+    if not str(task.get("id") or "").startswith("DRAFT-JORB-INFRA-"):
+        return False
+    if str(task.get("area") or "").lower() != "builder":
+        return False
+    operator = task.get("operator_approval") or {}
+    if not operator.get("approved"):
+        return False
+    dependencies = [str(dep) for dep in task.get("depends_on", [])]
+    if any(dep not in completed for dep in dependencies):
+        return False
+    return True
+
+
+def promote_auto_ready_pending_tasks(backlog: dict[str, Any]) -> list[str]:
+    tasks = list(backlog.get("tasks", []))
+    completed = {str(task.get("id")) for task in tasks if str(task.get("status")) in {"accepted", "done"}}
+    promoted: list[str] = []
+    for task in tasks:
+        if not is_auto_ready_synthesized_builder_followup(task, completed):
+            continue
+        task["status"] = "ready"
+        notes = list(task.get("notes", []))
+        note = "Auto-promoted to ready after dependency-satisfied synthesized JORB-INFRA follow-up became runnable."
+        if note not in notes:
+            notes.append(note)
+        task["notes"] = notes
+        promoted.append(str(task.get("id")))
+    return promoted
+
+
 def extract_streamlit_port(commands: list[str]) -> str | None:
     for command in commands:
         match = re.search(r"--server\.port\s+(\d+)", str(command))
@@ -4227,6 +4260,9 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
     classification = str(automation_result.get("classification", classification))
     summary = str(automation_result.get("summary", summary))
     classify_and_update_state(classification, summary, task, backlog, active, status, automation_result)
+    promoted_followups: list[str] = []
+    if classification == "accepted":
+        promoted_followups = promote_auto_ready_pending_tasks(backlog)
     write_data(BACKLOG, backlog)
     write_data(STATUS, status)
     if classification == "accepted":
@@ -4247,6 +4283,13 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
                     "Run python3 scripts/automate_task_loop.py --inspect-backlog for skip reasons.",
                 )
                 return 1
+            if promoted_followups and next_diagnostics and next_diagnostics.get("next_selected_task_id"):
+                print_result(
+                    "NEXT_TASK_READY",
+                    f"Accepted task completed and auto-promoted {', '.join(promoted_followups)} to ready.",
+                    f"Next runnable task: {next_diagnostics['next_selected_task_id']}",
+                )
+                return 0
             print_result("NO_READY_TASKS_REMAIN", "No ready tasks remain after the accepted task completed.", "Mark the next task ready in backlog.yml before rerunning automation.")
             return 0
         print_result("ACCEPTED", summary, "Review automation_summary.md for evidence and proceed to the next task.")

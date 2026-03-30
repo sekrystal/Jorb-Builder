@@ -3700,7 +3700,7 @@
       "area": "builder",
       "milestone": "M7",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [],
       "prompt": "implement_feature",
@@ -3729,7 +3729,8 @@
         "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again.",
         "Eval threshold not met: overall_score=0.832",
         "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again.",
-        "executor_transport_failure: DNS/network resolution failed while Codex tried to reach chatgpt.com"
+        "executor_transport_failure: DNS/network resolution failed while Codex tried to reach chatgpt.com",
+        "Automated loop completed with builder-side local validation success."
       ]
     },
     {
@@ -4543,7 +4544,7 @@
       "type": "infrastructure",
       "area": "builder",
       "priority": 2,
-      "status": "pending",
+      "status": "blocked",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-010"
@@ -4589,7 +4590,8 @@
         "review_note": "approved for narrow JORB-INFRA synthesis lifecycle"
       },
       "notes": [
-        "Synthesized from proposal prop-c967a7d8242d"
+        "Synthesized from proposal prop-c967a7d8242d",
+        "Builder repo is dirty before automated execution; refusing to continue."
       ],
       "repo_path": "~/projects/jorb-builder",
       "description": "The builder should not show a clean dry-run surface when repeated Phase 4 judge failures for missing artifacts are the strongest recent truth. Tighten operator status truth so artifact-enforcement failures, current blocker, and artifact completeness stay coherent across blocked and dry-run transitions.\n\nrun_ledger.json records repeated blocked judge events for JORB-INFRA-010 citing missing compiled_feature_spec.md, proposal.md, tradeoff_matrix.md, and research_brief.md, while show_status.py currently reports run_state dry_run, current_blocker none, and artifact_missing only judge_decision.md and evidence_bundle.json.",

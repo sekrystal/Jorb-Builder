@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-30T20:07:38.853307+00:00",
+  "generated_at": "2026-03-30T20:47:23.100223+00:00",
   "entries": [
     {
       "memory_id": "mem-fb3d40505dc7",
@@ -712,10 +712,10 @@
       "area": "builder",
       "summary": "Harden operator truth for Phase 4 artifact enforcement state",
       "source_artifact": "/Users/samuelkrystal/projects/jorb-builder/backlog_proposals.json",
-      "timestamp": "2026-03-30T20:07:38.853149+00:00",
+      "timestamp": "2026-03-30T20:47:23.100062+00:00",
       "confidence": 0.88,
       "freshness": {
-        "observed_at": "2026-03-30T20:07:38.853149+00:00",
+        "observed_at": "2026-03-30T20:47:23.100062+00:00",
         "age_days": 0,
         "decay_factor": 1.0,
         "stale_after_days": 45,
@@ -747,6 +747,54 @@
         "judge"
       ],
       "content": "Harden operator truth for Phase 4 artifact enforcement state"
+    },
+    {
+      "memory_id": "mem-2e36b09aa62c",
+      "memory_type": "successful_fix",
+      "ticket_family": "JORB-INFRA",
+      "task_id": "JORB-INFRA-010",
+      "area": "builder",
+      "summary": "Automated loop completed with builder-side local validation success.",
+      "source_artifact": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T202150Z-JORB-INFRA-010.yml",
+      "timestamp": "2026-03-30T20:21:50.768571+00:00",
+      "confidence": 0.88,
+      "freshness": {
+        "observed_at": "2026-03-30T20:21:50.768571+00:00",
+        "age_days": 0,
+        "decay_factor": 1.0,
+        "stale_after_days": 21,
+        "freshness_state": "fresh"
+      },
+      "observation": "Automated loop completed with builder-side local validation success.",
+      "inference": "Past successful execution pattern",
+      "primary_basis": "observation",
+      "relevance_tags": [
+        "JORB-INFRA",
+        "accepted_pattern",
+        "feature_understanding_compiler",
+        "implementation_pattern",
+        "proof_pattern"
+      ],
+      "origin": "judge",
+      "status": "active",
+      "status_reason": "derived_from_history",
+      "provenance": [
+        {
+          "path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T202150Z-JORB-INFRA-010.yml",
+          "kind": "task_history"
+        }
+      ],
+      "signature": "771219161267001a9f3d52c7016176fb094a7918",
+      "support_count": 1,
+      "superseded_by": null,
+      "supersedes": [],
+      "manual": false,
+      "role_fit": [
+        "planner",
+        "architect",
+        "judge"
+      ],
+      "content": "Automated loop completed with builder-side local validation success."
     },
     {
       "memory_id": "mem-fdd2f94edbb6",
@@ -3403,8 +3451,8 @@
       "confidence": 0.88,
       "freshness": {
         "observed_at": "2026-03-26T20:19:58.419340+00:00",
-        "age_days": 3,
-        "decay_factor": 0.952,
+        "age_days": 4,
+        "decay_factor": 0.937,
         "stale_after_days": 21,
         "freshness_state": "fresh"
       },
@@ -6135,10 +6183,10 @@
   },
   "counts_by_status": {
     "superseded": 15,
-    "active": 110
+    "active": 111
   },
   "source_counts": {
-    "task_history": 109,
+    "task_history": 110,
     "blockers": 15,
     "manual": 1
   }

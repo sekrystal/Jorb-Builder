@@ -5094,6 +5094,37 @@ def test_synthesis_dry_run_does_not_mutate_canonical_files(tmp_path: Path) -> No
     assert (builder_root / "backlog.yml").read_text(encoding="utf-8") == backlog_before
 
 
+def test_accepted_task_auto_promotes_dependency_satisfied_synthesized_followup(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-010",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    module = _load_script_module(builder_root)
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "accepted"
+    backlog["tasks"].append(
+        {
+            "id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
+            "title": "Harden operator truth for Phase 4 artifact enforcement state",
+            "type": "infrastructure",
+            "area": "builder",
+            "priority": 2,
+            "status": "pending",
+            "depends_on": ["JORB-INFRA-010"],
+            "operator_approval": {"approved": True, "review_status": "accepted"},
+            "notes": ["Synthesized from proposal prop-1"],
+        }
+    )
+
+    promoted = module.promote_auto_ready_pending_tasks(backlog)
+
+    assert promoted == ["DRAFT-JORB-INFRA-STATUS-TRUTH"]
+    assert backlog["tasks"][-1]["status"] == "ready"
+    assert any("Auto-promoted to ready" in note for note in backlog["tasks"][-1]["notes"])
+
+
 def test_apply_synthesized_entry_requires_explicit_approval_and_audit(tmp_path: Path) -> None:
     builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
     module = _load_backlog_synthesis_module(builder_root)
