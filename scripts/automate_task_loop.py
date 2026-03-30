@@ -1328,6 +1328,8 @@ def emit_progress(
     detail: str | None = None,
     extra_payload: dict[str, Any] | None = None,
 ) -> None:
+    if state == "running" and (run_dir / RESULT_FILE).exists():
+        return
     if (run_dir / RESULT_FILE).exists():
         raise RuntimeError("Cannot emit running progress after terminal automation_result.json exists.")
     overall = backlog_progress(backlog, active_task_id=task_id)
@@ -2633,6 +2635,30 @@ def repair_legacy_state() -> int:
                 task = item
                 break
     backlog_diagnostics = compute_backlog_diagnostics({"tasks": backlog.get("tasks", [])})
+
+    terminal_classification = str(run_result.get("classification") or "")
+    if (
+        task is not None
+        and str(task.get("status")) == "ready"
+        and active.get("task_id")
+        and terminal_classification in {"accepted", "refined", "blocked", "interrupted"}
+    ):
+        classify_and_update_state(
+            terminal_classification,
+            str(run_result.get("summary") or ""),
+            task,
+            backlog,
+            active,
+            status,
+            run_result,
+            terminal_state="completed" if terminal_classification == "accepted" else "blocked",
+        )
+        write_data(BACKLOG, backlog)
+        repaired.append(f"backlog task {task_id} finalized from terminal automation_result -> {task.get('status')}")
+        print("STATE_REPAIRED")
+        for line in repaired:
+            print(f"- {line}")
+        return 0
 
     if is_auth_preflight_only_block(active, status, run_result):
         repaired_active = reset_active()

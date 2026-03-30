@@ -3415,6 +3415,90 @@ def test_repair_state_reopens_stale_executor_interruption_when_no_real_blocker_r
     assert 'next_selected_task: "TASK-PRODUCT"' in inspect.stdout
 
 
+def test_repair_state_finalizes_terminal_result_after_late_crash(tmp_path: Path) -> None:
+    builder_root, _, run_log_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-023",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "ready"
+    _write_json(builder_root / "backlog.yml", backlog)
+
+    active = _json(builder_root / "active_task.yml")
+    active["state"] = "implementing"
+    active["run_log_dir"] = str(run_log_dir)
+    _write_json(builder_root / "active_task.yml", active)
+
+    status = _json(builder_root / "status.yml")
+    status["state"] = "implementing"
+    status["active_task_id"] = "JORB-INFRA-023"
+    status["last_task_id"] = "JORB-INFRA-023"
+    _write_json(builder_root / "status.yml", status)
+
+    _write_json(
+        run_log_dir / "automation_result.json",
+        {
+            "task_id": "JORB-INFRA-023",
+            "classification": "accepted",
+            "finished_at": "2026-03-30T00:00:00+00:00",
+            "summary": "Implemented direct run scoring for the private builder eval suite.",
+            "steps": [{"name": "local_validation", "outcome": "passed", "detail": "ok"}],
+            "changed_files": ["scripts/private_eval_suite.py"],
+            "blocker_evidence": [],
+            "unproven_runtime_gaps": [],
+        },
+    )
+
+    repair = _run([sys.executable, str(SCRIPT), "--repair-state"], builder_root)
+    backlog_after = _json(builder_root / "backlog.yml")
+    active_after = _json(builder_root / "active_task.yml")
+    status_after = _json(builder_root / "status.yml")
+
+    assert repair.returncode == 0
+    assert "finalized from terminal automation_result -> accepted" in repair.stdout
+    assert backlog_after["tasks"][0]["status"] == "accepted"
+    assert active_after["task_id"] is None
+    assert status_after["last_result"] == "accepted"
+
+
+def test_emit_progress_ignores_running_heartbeat_after_terminal_result_exists(tmp_path: Path) -> None:
+    builder_root, _, run_log_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    module = _load_script_module(builder_root)
+    _write_json(
+        run_log_dir / "automation_result.json",
+        {
+            "task_id": "TASK-BUILDER",
+            "classification": "accepted",
+            "finished_at": "2026-03-30T00:00:00+00:00",
+            "summary": "done",
+            "steps": [],
+            "changed_files": [],
+        },
+    )
+    progress_path = run_log_dir / "progress.jsonl"
+    before = progress_path.read_text(encoding="utf-8") if progress_path.exists() else ""
+
+    module.emit_progress(
+        run_log_dir,
+        task_id="TASK-BUILDER",
+        stage_index=3,
+        backlog=_json(builder_root / "backlog.yml"),
+        task_started_at="2026-03-30T00:00:00+00:00",
+        state="running",
+        detail="heartbeat",
+    )
+
+    after = progress_path.read_text(encoding="utf-8") if progress_path.exists() else ""
+    assert after == before
+
+
 def test_dry_run_does_not_leave_stale_task_selected_state(tmp_path: Path) -> None:
     builder_root, _, _, _ = _setup_builder_fixture(
         tmp_path,
@@ -4730,6 +4814,116 @@ def test_private_eval_compare_two_attempts_reports_regression(tmp_path: Path) ->
 
     assert comparison["trend"] == "regressed"
     assert comparison["category_deltas"]["planning_quality"] == -0.4
+
+
+def test_private_eval_scores_existing_run_dir_and_compares_against_prior_history(tmp_path: Path) -> None:
+    builder_root, _, run_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-023",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    module = _load_private_eval_module(builder_root)
+    task = _json(builder_root / "backlog.yml")["tasks"][0]
+    task["title"] = "Private builder eval suite"
+    task["status"] = "selected"
+    _write_eval_fixture(
+        builder_root / "eval_fixtures" / "infra.json",
+        {
+            "fixture_id": "infra_hardening_v1",
+            "fixture_family": "infra_hardening",
+            "description": "infra fixture",
+            "selector": {"task_family": "JORB-INFRA", "area": "builder"},
+            "mandatory_artifacts": ["compiled_feature_spec.md", "proposal.md", "tradeoff_matrix.md", "judge_decision.md", "evidence_bundle.json", "runtime_proof.log"],
+            "rubric_dimensions": [
+                {"name": "planning_quality", "weight": 0.2, "threshold": 0.7, "description": "plan"},
+                {"name": "test_adequacy", "weight": 0.2, "threshold": 0.7, "description": "tests"},
+                {"name": "runtime_proof_quality", "weight": 0.2, "threshold": 0.7, "description": "runtime"},
+                {"name": "evidence_quality", "weight": 0.2, "threshold": 0.7, "description": "evidence"},
+                {"name": "operator_handoff_quality", "weight": 0.2, "threshold": 0.6, "description": "handoff"},
+            ],
+            "pass_threshold": 0.78,
+        },
+    )
+    standards = {"agents_exists": True, "skills_exists": True, "agents_path": "AGENTS.md", "skills_dir": "skills", "skill_files": []}
+    _write_valid_phase4_feature_spec(_load_script_module(builder_root), run_dir, task, standards)
+    for name in (
+        "proposal.md",
+        "tradeoff_matrix.md",
+        "research_brief.md",
+        "judge_decision.md",
+        "evidence_bundle.json",
+        "runtime_proof.log",
+        "automation_summary.md",
+        "local_validation.json",
+    ):
+        (run_dir / name).write_text("{}\n" if name.endswith(".json") else "ok\n", encoding="utf-8")
+    prior_run_dir = builder_root / "run_logs" / "2026-03-29T210000Z-JORB-INFRA-023"
+    prior_run_dir.mkdir(parents=True, exist_ok=True)
+    _write_valid_phase4_feature_spec(_load_script_module(builder_root), prior_run_dir, task, standards)
+    for name in ("proposal.md", "tradeoff_matrix.md", "research_brief.md", "automation_summary.md"):
+        (prior_run_dir / name).write_text("{}\n" if name.endswith(".json") else "ok\n", encoding="utf-8")
+    _write_json(
+        prior_run_dir / "automation_result.json",
+        {
+            "task_id": "JORB-INFRA-023",
+            "classification": "accepted",
+            "summary": "prior run",
+            "steps": [],
+            "changed_files": [],
+        },
+    )
+    _write_json(
+        builder_root / "task_history" / "2026-03-29T210000Z-JORB-INFRA-023.yml",
+        {
+            "task_id": "JORB-INFRA-023",
+            "title": "Private builder eval suite",
+            "status": "accepted",
+            "run_log_dir": str(prior_run_dir),
+            "notes": ["prior run"],
+            "operator_diagnostics": {"step_outcomes": []},
+        },
+    )
+
+    result = module.score_run_directory(run_dir, root=builder_root)
+
+    assert result["task"]["id"] == "JORB-INFRA-023"
+    assert result["passed"] is True
+    assert result["regression_vs_prior"]["trend"] == "improved"
+    assert result["regression_vs_prior"]["baseline_history_path"].endswith("2026-03-29T210000Z-JORB-INFRA-023.yml")
+
+
+def test_private_eval_cli_scores_existing_run_dir_to_output_file(tmp_path: Path) -> None:
+    builder_root, _, run_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-023",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    task = _json(builder_root / "backlog.yml")["tasks"][0]
+    task["title"] = "Private builder eval suite"
+    standards = {"agents_exists": True, "skills_exists": True, "agents_path": "AGENTS.md", "skills_dir": "skills", "skill_files": []}
+    _write_valid_phase4_feature_spec(_load_script_module(builder_root), run_dir, task, standards)
+    for name in (
+        "proposal.md",
+        "tradeoff_matrix.md",
+        "research_brief.md",
+        "judge_decision.md",
+        "evidence_bundle.json",
+        "runtime_proof.log",
+    ):
+        (run_dir / name).write_text("{}\n" if name.endswith(".json") else "ok\n", encoding="utf-8")
+    output_path = builder_root / "run_score.json"
+
+    result = _run(
+        [sys.executable, str(PRIVATE_EVAL_SCRIPT), "--score-run", str(run_dir), "--output", str(output_path)],
+        builder_root,
+    )
+
+    assert result.returncode == 0
+    payload = _json(output_path)
+    assert payload["eval_result"]["task"]["id"] == "JORB-INFRA-023"
+    assert payload["eval_result"]["run_dir"] == str(run_dir)
 
 
 def test_eval_gate_blocks_acceptance_when_fixture_threshold_fails(tmp_path: Path) -> None:

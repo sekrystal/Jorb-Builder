@@ -1,12 +1,12 @@
 {
-  "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
-  "title": "Harden operator truth for Phase 4 artifact enforcement state",
-  "state": "verifying",
+  "task_id": null,
+  "title": null,
+  "state": "completed",
   "attempt": 1,
-  "started_at": "2026-03-30T21:06:17.527879+00:00",
+  "started_at": "2026-03-30T22:03:24.354283+00:00",
   "handed_to_codex_at": null,
-  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z/codex_prompt.md",
-  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z-DRAFT-JORB-INFRA-STATUS-TRUTH",
+  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T220324Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T220324Z-JORB-INFRA-023",
   "verification_commands": [
     "python3 -m py_compile scripts/*.py",
     "pytest tests/test_automate_task_loop.py"
@@ -20,9 +20,9 @@
   "failure_summary": null,
   "notes": [],
   "prior_run_log_dirs": [
-    "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z"
+    "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T220324Z"
   ],
-  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z",
+  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T220324Z",
   "target_repo": "/Users/samuelkrystal/projects/jorb-builder",
   "target_kind": "builder"
 }

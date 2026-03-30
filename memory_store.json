@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-30T21:06:17.381018+00:00",
+  "generated_at": "2026-03-30T22:03:24.198421+00:00",
   "entries": [
     {
       "memory_id": "mem-479fde0e0817",
@@ -153,8 +153,8 @@
       "confidence": 0.65,
       "freshness": {
         "observed_at": "2026-03-29T21:41:02.738813+00:00",
-        "age_days": 0,
-        "decay_factor": 1.0,
+        "age_days": 1,
+        "decay_factor": 0.984,
         "stale_after_days": 21,
         "freshness_state": "fresh"
       },
@@ -200,8 +200,8 @@
       "confidence": 0.65,
       "freshness": {
         "observed_at": "2026-03-29T21:24:06.239312+00:00",
-        "age_days": 0,
-        "decay_factor": 1.0,
+        "age_days": 1,
+        "decay_factor": 0.984,
         "stale_after_days": 21,
         "freshness_state": "fresh"
       },
@@ -758,10 +758,10 @@
       "area": "builder",
       "summary": "Harden operator truth for Phase 4 artifact enforcement state",
       "source_artifact": "/Users/samuelkrystal/projects/jorb-builder/backlog_proposals.json",
-      "timestamp": "2026-03-30T21:06:17.380777+00:00",
+      "timestamp": "2026-03-30T22:03:24.198271+00:00",
       "confidence": 0.88,
       "freshness": {
-        "observed_at": "2026-03-30T21:06:17.380777+00:00",
+        "observed_at": "2026-03-30T22:03:24.198271+00:00",
         "age_days": 0,
         "decay_factor": 1.0,
         "stale_after_days": 45,
@@ -793,6 +793,54 @@
         "judge"
       ],
       "content": "Harden operator truth for Phase 4 artifact enforcement state"
+    },
+    {
+      "memory_id": "mem-96bb0ec93018",
+      "memory_type": "successful_fix",
+      "ticket_family": "DRAFT-JORB",
+      "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
+      "area": "unknown",
+      "summary": "Automated loop completed with builder-side local validation success.",
+      "source_artifact": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T211404Z-DRAFT-JORB-INFRA-STATUS-TRUTH.yml",
+      "timestamp": "2026-03-30T21:14:04.420786+00:00",
+      "confidence": 0.88,
+      "freshness": {
+        "observed_at": "2026-03-30T21:14:04.420786+00:00",
+        "age_days": 0,
+        "decay_factor": 1.0,
+        "stale_after_days": 21,
+        "freshness_state": "fresh"
+      },
+      "observation": "Automated loop completed with builder-side local validation success.",
+      "inference": "Past successful execution pattern",
+      "primary_basis": "observation",
+      "relevance_tags": [
+        "DRAFT-JORB",
+        "accepted_pattern",
+        "harden_operator_truth_for_phase_4_artifact_enforcement_state",
+        "implementation_pattern",
+        "proof_pattern"
+      ],
+      "origin": "judge",
+      "status": "active",
+      "status_reason": "derived_from_history",
+      "provenance": [
+        {
+          "path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T211404Z-DRAFT-JORB-INFRA-STATUS-TRUTH.yml",
+          "kind": "task_history"
+        }
+      ],
+      "signature": "944ce1ddc11d1527508e4e1b69e8cbd6009cb4fd",
+      "support_count": 1,
+      "superseded_by": null,
+      "supersedes": [],
+      "manual": false,
+      "role_fit": [
+        "planner",
+        "architect",
+        "judge"
+      ],
+      "content": "Automated loop completed with builder-side local validation success."
     },
     {
       "memory_id": "mem-62108c29b0c6",
@@ -2035,8 +2083,8 @@
       "confidence": 0.88,
       "freshness": {
         "observed_at": "2026-03-29T22:02:36.449405+00:00",
-        "age_days": 0,
-        "decay_factor": 1.0,
+        "age_days": 1,
+        "decay_factor": 0.984,
         "stale_after_days": 21,
         "freshness_state": "fresh"
       },
@@ -2083,8 +2131,8 @@
       "confidence": 0.88,
       "freshness": {
         "observed_at": "2026-03-29T21:52:04.817135+00:00",
-        "age_days": 0,
-        "decay_factor": 1.0,
+        "age_days": 1,
+        "decay_factor": 0.984,
         "stale_after_days": 21,
         "freshness_state": "fresh"
       },
@@ -2131,8 +2179,8 @@
       "confidence": 0.72,
       "freshness": {
         "observed_at": "2026-03-29T21:41:02.738194+00:00",
-        "age_days": 0,
-        "decay_factor": 1.0,
+        "age_days": 1,
+        "decay_factor": 0.984,
         "stale_after_days": 21,
         "freshness_state": "fresh"
       },
@@ -2178,8 +2226,8 @@
       "confidence": 0.88,
       "freshness": {
         "observed_at": "2026-03-29T21:37:25.079717+00:00",
-        "age_days": 0,
-        "decay_factor": 1.0,
+        "age_days": 1,
+        "decay_factor": 0.984,
         "stale_after_days": 21,
         "freshness_state": "fresh"
       },
@@ -2226,8 +2274,8 @@
       "confidence": 0.72,
       "freshness": {
         "observed_at": "2026-03-29T21:26:09.166788+00:00",
-        "age_days": 0,
-        "decay_factor": 1.0,
+        "age_days": 1,
+        "decay_factor": 0.984,
         "stale_after_days": 21,
         "freshness_state": "fresh"
       },
@@ -2273,8 +2321,8 @@
       "confidence": 0.72,
       "freshness": {
         "observed_at": "2026-03-29T21:24:06.238645+00:00",
-        "age_days": 0,
-        "decay_factor": 1.0,
+        "age_days": 1,
+        "decay_factor": 0.984,
         "stale_after_days": 21,
         "freshness_state": "fresh"
       },
@@ -2320,8 +2368,8 @@
       "confidence": 0.88,
       "freshness": {
         "observed_at": "2026-03-29T21:22:18.935618+00:00",
-        "age_days": 0,
-        "decay_factor": 1.0,
+        "age_days": 1,
+        "decay_factor": 0.984,
         "stale_after_days": 21,
         "freshness_state": "fresh"
       },
@@ -2369,8 +2417,8 @@
       "confidence": 0.72,
       "freshness": {
         "observed_at": "2026-03-29T21:14:01.006185+00:00",
-        "age_days": 0,
-        "decay_factor": 1.0,
+        "age_days": 1,
+        "decay_factor": 0.984,
         "stale_after_days": 21,
         "freshness_state": "fresh"
       },
@@ -3293,8 +3341,8 @@
       "confidence": 0.88,
       "freshness": {
         "observed_at": "2026-03-26T22:03:10.099935+00:00",
-        "age_days": 3,
-        "decay_factor": 0.952,
+        "age_days": 4,
+        "decay_factor": 0.937,
         "stale_after_days": 21,
         "freshness_state": "fresh"
       },
@@ -3343,8 +3391,8 @@
       "confidence": 0.88,
       "freshness": {
         "observed_at": "2026-03-26T21:57:12.568182+00:00",
-        "age_days": 3,
-        "decay_factor": 0.952,
+        "age_days": 4,
+        "decay_factor": 0.937,
         "stale_after_days": 21,
         "freshness_state": "fresh"
       },
@@ -3393,8 +3441,8 @@
       "confidence": 0.72,
       "freshness": {
         "observed_at": "2026-03-26T21:49:29.006884+00:00",
-        "age_days": 3,
-        "decay_factor": 0.952,
+        "age_days": 4,
+        "decay_factor": 0.937,
         "stale_after_days": 21,
         "freshness_state": "fresh"
       },
@@ -3445,8 +3493,8 @@
       "confidence": 0.72,
       "freshness": {
         "observed_at": "2026-03-26T21:38:28.245925+00:00",
-        "age_days": 3,
-        "decay_factor": 0.952,
+        "age_days": 4,
+        "decay_factor": 0.937,
         "stale_after_days": 21,
         "freshness_state": "fresh"
       },
@@ -3494,8 +3542,8 @@
       "confidence": 0.88,
       "freshness": {
         "observed_at": "2026-03-26T21:25:19.444131+00:00",
-        "age_days": 3,
-        "decay_factor": 0.952,
+        "age_days": 4,
+        "decay_factor": 0.937,
         "stale_after_days": 21,
         "freshness_state": "fresh"
       },
@@ -3544,8 +3592,8 @@
       "confidence": 0.88,
       "freshness": {
         "observed_at": "2026-03-26T21:19:29.459774+00:00",
-        "age_days": 3,
-        "decay_factor": 0.952,
+        "age_days": 4,
+        "decay_factor": 0.937,
         "stale_after_days": 21,
         "freshness_state": "fresh"
       },
@@ -4574,8 +4622,8 @@
       "confidence": 0.88,
       "freshness": {
         "observed_at": "2026-03-25T21:07:40.026771+00:00",
-        "age_days": 4,
-        "decay_factor": 0.937,
+        "age_days": 5,
+        "decay_factor": 0.921,
         "stale_after_days": 21,
         "freshness_state": "fresh"
       },
@@ -6325,10 +6373,10 @@
   },
   "counts_by_status": {
     "superseded": 16,
-    "active": 113
+    "active": 114
   },
   "source_counts": {
-    "task_history": 112,
+    "task_history": 113,
     "blockers": 16,
     "manual": 1
   }

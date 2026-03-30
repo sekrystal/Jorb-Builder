@@ -1,0 +1,108 @@
+{
+  "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
+  "title": "Harden operator truth for Phase 4 artifact enforcement state",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-30T21:06:17.527879+00:00",
+  "completed_at": "2026-03-30T21:14:04.420786+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z-DRAFT-JORB-INFRA-STATUS-TRUTH",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z-DRAFT-JORB-INFRA-STATUS-TRUTH"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z-DRAFT-JORB-INFRA-STATUS-TRUTH/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z-DRAFT-JORB-INFRA-STATUS-TRUTH/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z-DRAFT-JORB-INFRA-STATUS-TRUTH/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z-DRAFT-JORB-INFRA-STATUS-TRUTH/local_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z-DRAFT-JORB-INFRA-STATUS-TRUTH/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z-DRAFT-JORB-INFRA-STATUS-TRUTH/executor.json"
+    }
+  ],
+  "files_changed": [
+    "scripts/common.py",
+    "tests/test_automate_task_loop.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.325.31654-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with builder-side local validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with builder-side local validation success.",
+    "accepted": true,
+    "acceptance_met": [],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\nI hardened Phase 4 operator truth in [scripts/common.py](/Users/samuelkrystal/projects/jorb-builder/scripts/common.py#L236) so repeated recent judge artifact failures are merged into a single stronger blocker surface. The operator view now synthesizes `current_blocker` from the union of recent Phase 4 artifact-failure events instead of trusting only the most recent narrower detail, and it keeps `artifact_completeness` aligned with that blocked truth across later `dry_run` transitions. I also added a regression in [tests/test_automate_task_loop.py](/Users/samuelkrystal/projects/jorb-builder/tests/test_automate_task_loop.py#L4548) covering the real pattern of a broad artifact failure, then a narrower `compiled_feature_spec.md:missing_machine_payload`, then a dry run.\n\n2. Exact files changed\n\n- [scripts/common.py](/Users/samuelkrystal/projects/jorb-builder/scripts/common.py)\n- [tests/test_automate_task_loop.py](/Users/samuelkrystal/projects/jorb-builder/tests/test_automate_task_loop.py)\n\n3. Exact tests added or updated\n\n- Added `test_show_status_synthesizes_strongest_recent_phase4_blocker_from_repeated_judge_failures`\n- Updated none\n\n4. Exact commands run\n\n- `pwd`\n- `find scripts tests -type f | sort`\n- `grep -RInE \"show_status|run_state|current_blocker|artifact_missing|judge\" scripts tests`\n- `sed -n '200,280p' scripts/common.py`\n- `sed -n '1,140p' scripts/show_status.py`\n- `sed -n '4440,4560p' tests/test_automate_task_loop.py`\n- `sed -n '1360,1465p' scripts/automate_task_loop.py`\n- `sed -n '890,955p' scripts/automate_task_loop.py`\n- `grep -n \"derive_phase4_operator_truth\" -n scripts/automate_task_loop.py scripts/common.py tests/test_automate_task_loop.py`\n- `sed -n '840,900p' scripts/automate_task_loop.py`\n- `grep -n \"PHASE4_OPERATOR_ARTIFACTS\\|PHASE4_ARTIFACT_FAILURE_PREFIX\" -n scripts/common.py scripts/automate_task_loop.py`\n- `sed -n '1,110p' scripts/common.py`\n- `sed -n '4960,5005p' tests/test_automate_task_loop.py`\n- `grep -n \"runtime_proof.log\" tests/test_automate_task_loop.py | tail -n 20`\n- `grep -n \"PHASE4_REQUIRED_ARTIFACTS\" -n scripts/automate_task_loop.py`\n- `sed -n '56,74p' scripts/automate_task_loop.py`\n- `python3 - <<'PY' ... run_ledger summary ... PY`\n- `python3 - <<'PY' ... JORB-INFRA-010 events ... PY`\n- `python3 - <<'PY' ... Phase 4 artifact events ... PY`\n- `grep -RIn \"Phase 4 artifact enforcement failed:\" run_logs task_history | tail -n 20`\n- `git status --short -- scripts/common.py scripts/automate_task_loop.py scripts/show_status.py tests/test_automate_task_loop.py`\n- `git diff -- scripts/common.py scripts/automate_task_loop.py scripts/show_status.py tests/test_automate_task_loop.py`\n- `pytest tests/test_automate_task_loop.py::test_show_status_prefers_recent_phase4_artifact_blocker_truth_over_stale_dry_run_surface tests/test_automate_task_loop.py::test_show_status_synthesizes_strongest_recent_phase4_blocker_from_repeated_judge_failures -q`\n- `git diff -- scripts/common.py tests/test_automate_task_loop.py`\n- `python3 -m py_compile scripts/*.py`\n- `pytest tests/test_automate_task_loop.py`\n- `git status --short -- scripts/common.py tests/test_automate_task_loop.py`\n- `nl -ba scripts/common.py | sed -n '232,266p'`\n- `nl -ba tests/test_automate_task_loop.py | sed -n '4540,4615p'`\n\n5. Exact results\n\n- `rg` was unavailable in this environment, so I used `find` and `grep` instead.\n- `pytest tests/test_automate_task_loop.py::test_show_status_prefers_recent_phase4_artifact_blocker_truth_over_stale_dry_run_surface tests/test_automate_task_loop.py::test_show_status_synthesizes_strongest_recent_phase4_blocker_from_repeated_judge_failures -q` passed with `2 passed in 1.08s`.\n- `python3 -m py_compile scripts/*.py` passed with exit code `0`.\n- `pytest tests/test_automate_task_loop.py` passed with `137 passed in 145.67s (0:02:25)`.\n\n6. Honest note on what remains unproven\n\nThis is proven by local code inspection and the required local test suite only. I did not run a live builder automation cycle that mutates the real repo state, so I did not directly prove the patched operator surface against a fresh end-to-end runtime outside the test harness."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "To github.com:sekrystal/Jorb-Builder.git\n   42e510b..b67855d  main -> main\n"
+      }
+    ],
+    "changed_files_count": 2,
+    "changed_files": [
+      "scripts/common.py",
+      "tests/test_automate_task_loop.py"
+    ],
+    "unproven_runtime_gaps": [],
+    "ux_conformance": {
+      "required": false,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": null,
+      "intentional_design_deviations": null,
+      "product_first_checklist": null,
+      "primary_ux_prohibited_surfaces": []
+    }
+  },
+  "unproven_runtime_gaps": [],
+  "failure_taxonomy": null,
+  "eval_result": null
+}

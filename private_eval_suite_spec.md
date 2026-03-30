@@ -3,6 +3,7 @@
 
 The private eval suite now supports:
 
+- direct scoring of an existing `run_logs/...` directory via `--score-run`
 - offline fixture families for infra hardening, runtime VM work, product UX work, repo recovery, and proposal-to-backlog synthesis
 - replay over historical `task_history/*.yml`
 - compare mode for two attempts
@@ -48,6 +49,7 @@ This builder-private eval suite scores runs against explicit fixture families in
 - `scripts/private_eval_suite.py` owns fixture loading, scoring, replay, and comparison
 - `scripts/automate_task_loop.py` calls the suite inside the existing eval gate
 - `scripts/show_status.py` exposes eval family, pass/fail, and regression delta
+- operators can score a single run directory directly without synthesizing a `task_history` replay first
 
 ## Evidence model
 

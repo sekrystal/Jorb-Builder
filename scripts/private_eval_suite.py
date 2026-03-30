@@ -4,6 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 import argparse
 import json
+import re
 from typing import Any
 
 from common import (
@@ -29,6 +30,8 @@ SUPPORTED_DIMENSIONS = {
     "data_contract_compliance",
     "backlog_synthesis_quality",
 }
+RUN_DIR_TASK_ID_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{6}Z-(.+)$")
+FEATURE_SPEC_PAYLOAD_PATTERN = re.compile(r"## Machine-Checkable Payload\n```json\n(.*?)\n```", re.DOTALL)
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -81,6 +84,29 @@ def load_eval_fixtures(root: Path | None = None) -> list[dict[str, Any]]:
         fixture["_issues"] = validate_fixture_schema(fixture)
         fixtures.append(fixture)
     return fixtures
+
+
+def _task_id_from_run_dir_name(run_dir: Path) -> str | None:
+    match = RUN_DIR_TASK_ID_PATTERN.match(run_dir.name)
+    if match is None:
+        return None
+    task_id = match.group(1).strip()
+    return task_id or None
+
+
+def _task_id_from_feature_spec(run_dir: Path) -> str | None:
+    feature_spec_path = run_dir / "compiled_feature_spec.md"
+    if not feature_spec_path.exists():
+        return None
+    match = FEATURE_SPEC_PAYLOAD_PATTERN.search(feature_spec_path.read_text(encoding="utf-8"))
+    if match is None:
+        return None
+    try:
+        payload = json.loads(match.group(1))
+    except json.JSONDecodeError:
+        return None
+    task_id = str(payload.get("task_id") or "").strip()
+    return task_id or None
 
 
 def _task_has_runtime_contract(task: dict[str, Any]) -> bool:
@@ -349,6 +375,56 @@ def _load_task_for_history(task_id: str, root: Path) -> dict[str, Any]:
     return {"id": task_id, "title": task_id, "area": "builder" if task_id.startswith("JORB-INFRA") else "unknown"}
 
 
+def load_task_for_run_dir(run_dir: Path, *, root: Path | None = None) -> dict[str, Any]:
+    repo_root = Path(root or builder_root()).expanduser().resolve()
+    task_id = None
+    automation_result_path = run_dir / "automation_result.json"
+    if automation_result_path.exists():
+        task_id = str(load_json(automation_result_path).get("task_id") or "").strip() or None
+    if task_id is None:
+        task_id = _task_id_from_feature_spec(run_dir)
+    if task_id is None:
+        task_id = _task_id_from_run_dir_name(run_dir)
+    if task_id is None:
+        raise ValueError(f"Could not infer task_id for run directory: {run_dir}")
+    return _load_task_for_history(task_id, repo_root)
+
+
+def load_automation_result_for_run_dir(run_dir: Path, task: dict[str, Any]) -> dict[str, Any]:
+    automation_result_path = run_dir / "automation_result.json"
+    if automation_result_path.exists():
+        return load_json(automation_result_path)
+    classification = "accepted" if (run_dir / "judge_decision.md").exists() else "unknown"
+    step_outcomes: list[dict[str, Any]] = []
+    if (run_dir / "local_validation.json").exists():
+        step_outcomes.append({"name": "local_validation", "outcome": "passed"})
+    if (run_dir / "runtime_proof.log").exists():
+        step_outcomes.append({"name": "vm_validation", "outcome": "accepted"})
+    return {
+        "task_id": task.get("id"),
+        "classification": classification,
+        "summary": f"Scored existing run artifacts from {run_dir.name}.",
+        "steps": step_outcomes,
+        "changed_files": [],
+    }
+
+
+def score_run_directory(run_dir: Path, *, root: Path | None = None) -> dict[str, Any]:
+    repo_root = Path(root or builder_root()).expanduser().resolve()
+    resolved_run_dir = Path(run_dir).expanduser().resolve()
+    task = load_task_for_run_dir(resolved_run_dir, root=repo_root)
+    automation_result = load_automation_result_for_run_dir(resolved_run_dir, task)
+    standards = load_repo_local_standards(repo_root)
+    eval_result = score_private_eval(task, automation_result, run_dir=resolved_run_dir, standards=standards, root=repo_root)
+    prior_eval = latest_comparable_history_eval(task, eval_result, exclude_run_dir=resolved_run_dir, root=repo_root)
+    if prior_eval is not None:
+        eval_result["regression_vs_prior"] = compare_eval_results(prior_eval, eval_result)
+        eval_result["regression_vs_prior"]["baseline_history_path"] = prior_eval.get("history_path")
+    eval_result["run_dir"] = str(resolved_run_dir)
+    eval_result["task"] = {"id": task.get("id"), "title": task.get("title"), "area": task.get("area")}
+    return eval_result
+
+
 def replay_history_eval(history_path: Path, *, root: Path | None = None) -> dict[str, Any]:
     repo_root = Path(root or builder_root()).expanduser().resolve()
     history = load_data(history_path)
@@ -511,12 +587,20 @@ def _cli_compare(paths: list[str], *, output_path: str | None = None) -> int:
     return _emit_payload(payload, output_path)
 
 
+def _cli_score_run(run_dir: str, *, output_path: str | None = None) -> int:
+    payload = {"eval_result": score_run_directory(Path(run_dir), root=ROOT)}
+    return _emit_payload(payload, output_path)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Private builder eval suite")
+    parser.add_argument("--score-run", help="Score an existing run_logs directory and report regression against comparable history when available.")
     parser.add_argument("--replay", nargs="+", help="Replay one or more task_history files through the private eval suite.")
     parser.add_argument("--compare", nargs="+", help="Compare two task_history files.")
     parser.add_argument("--output", help="Optional JSON output path for replay or compare results.")
     args = parser.parse_args()
+    if args.score_run:
+        return _cli_score_run(args.score_run, output_path=args.output)
     if args.replay:
         return _cli_replay(args.replay, output_path=args.output)
     if args.compare:

@@ -1,0 +1,114 @@
+{
+  "task_id": "JORB-INFRA-023",
+  "title": "Private builder eval suite",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-30T22:03:24.354283+00:00",
+  "completed_at": "2026-03-30T23:08:00Z",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T220324Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T220324Z-JORB-INFRA-023",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T220324Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T220324Z-JORB-INFRA-023"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T220324Z-JORB-INFRA-023/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T220324Z-JORB-INFRA-023/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T220324Z-JORB-INFRA-023/progress.jsonl"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T220324Z-JORB-INFRA-023/local_validation.json"
+    },
+    {
+      "label": "eval_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T220324Z-JORB-INFRA-023/eval_result.json"
+    },
+    {
+      "label": "judge_decision",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T220324Z-JORB-INFRA-023/judge_decision.md"
+    },
+    {
+      "label": "evidence_bundle",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T220324Z-JORB-INFRA-023/evidence_bundle.json"
+    }
+  ],
+  "files_changed": [
+    "scripts/private_eval_suite.py",
+    "tests/test_automate_task_loop.py",
+    "private_eval_suite_spec.md"
+  ],
+  "commands_run": [],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "passed"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Implemented direct run scoring for the private builder eval suite with regression comparison against comparable history, plus focused test and spec coverage."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Implemented direct run scoring for the private builder eval suite with regression comparison against comparable history, plus focused test and spec coverage.",
+    "accepted": true,
+    "acceptance_met": [],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "planner",
+        "outcome": "passed",
+        "detail": "compiled_feature_spec.md was generated before implementation."
+      },
+      {
+        "name": "architect",
+        "outcome": "passed",
+        "detail": "proposal.md, tradeoff_matrix.md, and research_brief.md document the selected approach."
+      },
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "Added --score-run support with run-dir task inference and comparable-history regression reporting."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "python3 -m py_compile scripts/*.py; pytest tests/test_automate_task_loop.py"
+      }
+    ],
+    "changed_files_count": 3,
+    "changed_files": [
+      "scripts/private_eval_suite.py",
+      "tests/test_automate_task_loop.py",
+      "private_eval_suite_spec.md"
+    ],
+    "unproven_runtime_gaps": [],
+    "ux_conformance": {
+      "required": false,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": null,
+      "intentional_design_deviations": null,
+      "product_first_checklist": null,
+      "primary_ux_prohibited_surfaces": []
+    }
+  },
+  "unproven_runtime_gaps": [],
+  "failure_taxonomy": null,
+  "eval_result": null
+}

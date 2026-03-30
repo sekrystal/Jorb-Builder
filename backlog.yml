@@ -4160,7 +4160,7 @@
       "area": "builder",
       "milestone": "M8",
       "priority": 1,
-      "status": "pending",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-022"
@@ -4186,7 +4186,9 @@
       "repo_path": "~/projects/jorb-builder",
       "description": "Add a private eval suite so builder hardening and intelligence work can be measured and regressed automatically.",
       "allow_noop_completion": false,
-      "notes": []
+      "notes": [
+        "Implemented direct run scoring for the private builder eval suite with regression comparison against comparable history, plus focused test and spec coverage."
+      ]
     },
     {
       "id": "JORB-INFRA-024",
@@ -4195,7 +4197,7 @@
       "area": "builder",
       "milestone": "M8",
       "priority": 1,
-      "status": "pending",
+      "status": "ready",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-023"
@@ -4544,7 +4546,7 @@
       "type": "infrastructure",
       "area": "builder",
       "priority": 2,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-010"
@@ -4594,7 +4596,8 @@
         "Builder repo is dirty before automated execution; refusing to continue.",
         "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again.",
         "Executor changed files outside the task allowlist.",
-        "Repaired from stale synthesized allowlist blocker; canonical builder repo bounds are now present and the task is runnable again."
+        "Repaired from stale synthesized allowlist blocker; canonical builder repo bounds are now present and the task is runnable again.",
+        "Automated loop completed with builder-side local validation success."
       ],
       "repo_path": "~/projects/jorb-builder",
       "allowlist": [
