@@ -238,8 +238,10 @@ def derive_phase4_operator_truth(ledger: dict[str, Any] | None) -> dict[str, Any
     missing = [str(name) for name in artifact_state.get("missing", [])]
     missing_set = set(missing)
     present_set = set(present)
+    event_missing_set: set[str] = set()
     for event in artifact_events:
         for name in event["missing"]:
+            event_missing_set.add(name)
             missing_set.add(name)
             present_set.discard(name)
 
@@ -247,10 +249,16 @@ def derive_phase4_operator_truth(ledger: dict[str, Any] | None) -> dict[str, Any
     ordered_missing.extend(sorted(name for name in missing_set if name not in PHASE4_OPERATOR_ARTIFACTS))
     ordered_present = [name for name in PHASE4_OPERATOR_ARTIFACTS if name in present_set]
     ordered_present.extend(sorted(name for name in present_set if name not in PHASE4_OPERATOR_ARTIFACTS))
+    ordered_event_missing = [name for name in PHASE4_OPERATOR_ARTIFACTS if name in event_missing_set]
+    ordered_event_missing.extend(sorted(name for name in event_missing_set if name not in PHASE4_OPERATOR_ARTIFACTS))
 
     payload["run_state"] = "blocked"
     payload["current_stage"] = "judge"
-    payload["current_blocker"] = artifact_events[0]["detail"]
+    payload["current_blocker"] = (
+        f"{PHASE4_ARTIFACT_FAILURE_PREFIX} {', '.join(ordered_event_missing)}"
+        if ordered_event_missing
+        else artifact_events[0]["detail"]
+    )
     payload["artifact_completeness"] = {
         "present": ordered_present,
         "missing": ordered_missing,

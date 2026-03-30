@@ -4545,6 +4545,68 @@ def test_show_status_prefers_recent_phase4_artifact_blocker_truth_over_stale_dry
     assert "- artifact_missing: compiled_feature_spec.md, proposal.md, tradeoff_matrix.md, research_brief.md, judge_decision.md, evidence_bundle.json, runtime_proof.log" in result.stdout
 
 
+def test_show_status_synthesizes_strongest_recent_phase4_blocker_from_repeated_judge_failures(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-010",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    _write_json(
+        builder_root / "run_ledger.json",
+        {
+            "current_task": "JORB-INFRA-010",
+            "current_stage": "plan",
+            "run_state": "dry_run",
+            "current_blocker": None,
+            "artifact_completeness": {
+                "present": [
+                    "proposal.md",
+                    "tradeoff_matrix.md",
+                    "research_brief.md",
+                ],
+                "missing": [
+                    "compiled_feature_spec.md",
+                    "judge_decision.md",
+                    "evidence_bundle.json",
+                    "runtime_proof.log",
+                ],
+            },
+            "events": [
+                {
+                    "at": "2026-03-30T20:21:35+00:00",
+                    "task_id": "JORB-INFRA-010",
+                    "run_state": "blocked",
+                    "stage_name": "judge",
+                    "detail": "Phase 4 artifact enforcement failed: compiled_feature_spec.md, proposal.md, tradeoff_matrix.md, research_brief.md",
+                },
+                {
+                    "at": "2026-03-30T20:57:12+00:00",
+                    "task_id": "JORB-INFRA-010",
+                    "run_state": "blocked",
+                    "stage_name": "judge",
+                    "detail": "Phase 4 artifact enforcement failed: compiled_feature_spec.md:missing_machine_payload",
+                },
+                {
+                    "at": "2026-03-30T21:00:00+00:00",
+                    "task_id": "JORB-INFRA-010",
+                    "run_state": "dry_run",
+                    "stage_name": "plan",
+                    "detail": "Dry run only. No executor, git, or VM commands were executed.",
+                },
+            ],
+        },
+    )
+
+    result = _run([sys.executable, str(SCRIPT.parent / "show_status.py")], builder_root)
+
+    assert result.returncode == 0
+    assert "- current_stage: judge" in result.stdout
+    assert "- run_state: blocked" in result.stdout
+    assert "- current_blocker: Phase 4 artifact enforcement failed: compiled_feature_spec.md, proposal.md, tradeoff_matrix.md, research_brief.md" in result.stdout
+    assert "- artifact_missing: compiled_feature_spec.md, proposal.md, tradeoff_matrix.md, research_brief.md, judge_decision.md, evidence_bundle.json, runtime_proof.log" in result.stdout
+
+
 def test_private_eval_fixture_schema_validation_rejects_missing_fields(tmp_path: Path) -> None:
     module = _load_private_eval_module(tmp_path)
 

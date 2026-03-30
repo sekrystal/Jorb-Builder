@@ -1,200 +1,212 @@
 {
   "events": [
     {
-      "at": "2026-03-30T20:53:52.043454+00:00",
+      "at": "2026-03-30T21:09:48.826812+00:00",
       "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
       "run_state": "running",
       "stage_name": "Codex execution running",
-      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=40329 | elapsed=211s | timeout_remaining=1588s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=5s | stdout_seen=false | stderr_seen=true | poll=running"
+      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=64763 | elapsed=211s | timeout_remaining=1588s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=18s | stdout_seen=false | stderr_seen=true | poll=running"
     },
     {
-      "at": "2026-03-30T20:54:07.119129+00:00",
+      "at": "2026-03-30T21:10:03.915920+00:00",
       "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
       "run_state": "running",
       "stage_name": "Codex execution running",
-      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=40329 | elapsed=226s | timeout_remaining=1573s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=3s | stdout_seen=false | stderr_seen=true | poll=running"
+      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=64763 | elapsed=226s | timeout_remaining=1573s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=1s | stdout_seen=false | stderr_seen=true | poll=running"
     },
     {
-      "at": "2026-03-30T20:54:22.188426+00:00",
+      "at": "2026-03-30T21:10:19.024331+00:00",
       "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
       "run_state": "running",
       "stage_name": "Codex execution running",
-      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=40329 | elapsed=241s | timeout_remaining=1558s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=18s | stdout_seen=false | stderr_seen=true | poll=running"
+      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=64763 | elapsed=241s | timeout_remaining=1558s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=16s | stdout_seen=false | stderr_seen=true | poll=running"
     },
     {
-      "at": "2026-03-30T20:54:37.288852+00:00",
+      "at": "2026-03-30T21:10:34.134787+00:00",
       "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
       "run_state": "running",
       "stage_name": "Codex execution running",
-      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=40329 | elapsed=256s | timeout_remaining=1543s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=0s | stdout_seen=false | stderr_seen=true | poll=running"
+      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=64763 | elapsed=256s | timeout_remaining=1543s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=31s | stdout_seen=false | stderr_seen=true | poll=running"
     },
     {
-      "at": "2026-03-30T20:54:52.386365+00:00",
-      "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
-      "run_state": "running",
-      "stage_name": "Codex execution running",
-      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=40329 | elapsed=271s | timeout_remaining=1528s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=3s | stdout_seen=false | stderr_seen=true | poll=running"
-    },
-    {
-      "at": "2026-03-30T20:55:07.471694+00:00",
-      "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
-      "run_state": "running",
-      "stage_name": "Codex execution running",
-      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=40329 | elapsed=286s | timeout_remaining=1513s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=5s | stdout_seen=false | stderr_seen=true | poll=running"
-    },
-    {
-      "at": "2026-03-30T20:55:22.552916+00:00",
-      "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
-      "run_state": "running",
-      "stage_name": "Codex execution running",
-      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=40329 | elapsed=301s | timeout_remaining=1498s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=5s | stdout_seen=false | stderr_seen=true | poll=running"
-    },
-    {
-      "at": "2026-03-30T20:55:37.629788+00:00",
-      "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
-      "run_state": "running",
-      "stage_name": "Codex execution running",
-      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=40329 | elapsed=316s | timeout_remaining=1483s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=0s | stdout_seen=false | stderr_seen=true | poll=running"
-    },
-    {
-      "at": "2026-03-30T20:55:52.771197+00:00",
-      "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
-      "run_state": "running",
-      "stage_name": "Codex execution running",
-      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=40329 | elapsed=331s | timeout_remaining=1468s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=4s | stdout_seen=false | stderr_seen=true | poll=running"
-    },
-    {
-      "at": "2026-03-30T20:56:07.860932+00:00",
-      "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
-      "run_state": "running",
-      "stage_name": "Codex execution running",
-      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=40329 | elapsed=346s | timeout_remaining=1453s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=6s | stdout_seen=false | stderr_seen=true | poll=running"
-    },
-    {
-      "at": "2026-03-30T20:56:22.932553+00:00",
-      "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
-      "run_state": "running",
-      "stage_name": "Codex execution running",
-      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=40329 | elapsed=361s | timeout_remaining=1438s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=9s | stdout_seen=false | stderr_seen=true | poll=running"
-    },
-    {
-      "at": "2026-03-30T20:56:37.989380+00:00",
-      "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
-      "run_state": "running",
-      "stage_name": "Codex execution running",
-      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=40329 | elapsed=376s | timeout_remaining=1423s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=1s | stdout_seen=false | stderr_seen=true | poll=running"
-    },
-    {
-      "at": "2026-03-30T20:56:53.059934+00:00",
-      "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
-      "run_state": "running",
-      "stage_name": "Codex execution running",
-      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=40329 | elapsed=392s | timeout_remaining=1407s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=4s | stdout_seen=false | stderr_seen=true | poll=running"
-    },
-    {
-      "at": "2026-03-30T20:57:08.133526+00:00",
-      "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
-      "run_state": "running",
-      "stage_name": "Codex execution running",
-      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=40329 | elapsed=407s | timeout_remaining=1392s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=5s | stdout_seen=false | stderr_seen=true | poll=running"
-    },
-    {
-      "at": "2026-03-30T20:57:12.231178+00:00",
+      "at": "2026-03-30T21:10:48.635660+00:00",
       "task_id": "JORB-INFRA-010",
       "run_state": "blocked",
       "stage_name": "judge",
       "detail": "Phase 4 artifact enforcement failed: compiled_feature_spec.md, proposal.md, tradeoff_matrix.md, research_brief.md, research_brief.md"
     },
     {
-      "at": "2026-03-30T20:57:12.293417+00:00",
+      "at": "2026-03-30T21:10:48.652567+00:00",
       "task_id": "JORB-INFRA-010",
       "run_state": "blocked",
       "stage_name": "judge",
       "detail": "Phase 4 artifact enforcement failed: compiled_feature_spec.md:missing_machine_payload"
     },
     {
-      "at": "2026-03-30T20:57:23.256169+00:00",
+      "at": "2026-03-30T21:10:49.212964+00:00",
       "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
       "run_state": "running",
       "stage_name": "Codex execution running",
-      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=40329 | elapsed=422s | timeout_remaining=1377s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=8s | stdout_seen=false | stderr_seen=true | poll=running"
+      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=64763 | elapsed=271s | timeout_remaining=1528s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=10s | stdout_seen=false | stderr_seen=true | poll=running"
     },
     {
-      "at": "2026-03-30T20:57:38.324283+00:00",
+      "at": "2026-03-30T21:11:04.307636+00:00",
       "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
       "run_state": "running",
       "stage_name": "Codex execution running",
-      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=40329 | elapsed=437s | timeout_remaining=1362s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=4s | stdout_seen=false | stderr_seen=true | poll=running"
+      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=64763 | elapsed=286s | timeout_remaining=1513s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=1s | stdout_seen=false | stderr_seen=true | poll=running"
     },
     {
-      "at": "2026-03-30T20:57:53.417992+00:00",
+      "at": "2026-03-30T21:11:19.390679+00:00",
       "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
       "run_state": "running",
       "stage_name": "Codex execution running",
-      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=40329 | elapsed=452s | timeout_remaining=1347s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=19s | stdout_seen=false | stderr_seen=true | poll=running"
+      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=64763 | elapsed=301s | timeout_remaining=1498s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=11s | stdout_seen=false | stderr_seen=true | poll=running"
     },
     {
-      "at": "2026-03-30T20:58:08.504256+00:00",
-      "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
-      "run_state": "running",
-      "stage_name": "Codex execution running",
-      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=40329 | elapsed=467s | timeout_remaining=1332s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=34s | stdout_seen=false | stderr_seen=true | poll=running"
-    },
-    {
-      "at": "2026-03-30T20:58:23.574467+00:00",
-      "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
-      "run_state": "running",
-      "stage_name": "Codex execution running",
-      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=40329 | elapsed=482s | timeout_remaining=1317s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=49s | stdout_seen=false | stderr_seen=true | poll=running"
-    },
-    {
-      "at": "2026-03-30T20:58:25.546574+00:00",
+      "at": "2026-03-30T21:11:34.449704+00:00",
       "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
       "run_state": "running",
       "stage_name": "Applying changes",
-      "detail": "Detected 4 changed file(s)."
+      "detail": "Detected 2 changed file(s)."
     },
     {
-      "at": "2026-03-30T20:58:25.549303+00:00",
+      "at": "2026-03-30T21:11:34.450849+00:00",
       "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
-      "run_state": "failed",
-      "stage_name": "Applying changes",
-      "detail": "Executor changed files outside the task allowlist."
-    },
-    {
-      "at": "2026-03-30T20:58:25.550049+00:00",
-      "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
-      "run_state": "blocked",
-      "stage_name": "classification",
-      "detail": "Executor changed files outside the task allowlist."
-    },
-    {
-      "at": "2026-03-30T20:58:25.639550+00:00",
-      "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
-      "run_state": "blocked",
+      "run_state": "verifying",
       "stage_name": null,
-      "detail": "Executor changed files outside the task allowlist."
+      "detail": null
+    },
+    {
+      "at": "2026-03-30T21:11:34.452494+00:00",
+      "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
+      "run_state": "running",
+      "stage_name": "Local validation (pytest)",
+      "detail": "python3 -m py_compile scripts/*.py"
+    },
+    {
+      "at": "2026-03-30T21:11:34.667693+00:00",
+      "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
+      "run_state": "running",
+      "stage_name": "Preflight check",
+      "detail": "pytest tests/test_automate_task_loop.py"
+    },
+    {
+      "at": "2026-03-30T21:11:49.773246+00:00",
+      "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
+      "run_state": "running",
+      "stage_name": "Preflight check",
+      "detail": "phase=local_validation | pid=75275 | elapsed=15s | timeout_remaining=Nones | command=pytest tests/test_automate_task_loop.py | poll=running"
+    },
+    {
+      "at": "2026-03-30T21:12:04.844345+00:00",
+      "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
+      "run_state": "running",
+      "stage_name": "Preflight check",
+      "detail": "phase=local_validation | pid=75275 | elapsed=30s | timeout_remaining=Nones | command=pytest tests/test_automate_task_loop.py | poll=running"
+    },
+    {
+      "at": "2026-03-30T21:12:19.938367+00:00",
+      "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
+      "run_state": "running",
+      "stage_name": "Preflight check",
+      "detail": "phase=local_validation | pid=75275 | elapsed=45s | timeout_remaining=Nones | command=pytest tests/test_automate_task_loop.py | poll=running"
+    },
+    {
+      "at": "2026-03-30T21:12:34.976100+00:00",
+      "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
+      "run_state": "running",
+      "stage_name": "Preflight check",
+      "detail": "phase=local_validation | pid=75275 | elapsed=60s | timeout_remaining=Nones | command=pytest tests/test_automate_task_loop.py | poll=running"
+    },
+    {
+      "at": "2026-03-30T21:12:49.977254+00:00",
+      "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
+      "run_state": "running",
+      "stage_name": "Preflight check",
+      "detail": "phase=local_validation | pid=75275 | elapsed=75s | timeout_remaining=Nones | command=pytest tests/test_automate_task_loop.py | poll=running"
+    },
+    {
+      "at": "2026-03-30T21:13:05.050720+00:00",
+      "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
+      "run_state": "running",
+      "stage_name": "Preflight check",
+      "detail": "phase=local_validation | pid=75275 | elapsed=90s | timeout_remaining=Nones | command=pytest tests/test_automate_task_loop.py | poll=running"
+    },
+    {
+      "at": "2026-03-30T21:13:20.104732+00:00",
+      "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
+      "run_state": "running",
+      "stage_name": "Preflight check",
+      "detail": "phase=local_validation | pid=75275 | elapsed=105s | timeout_remaining=Nones | command=pytest tests/test_automate_task_loop.py | poll=running"
+    },
+    {
+      "at": "2026-03-30T21:13:35.140713+00:00",
+      "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
+      "run_state": "running",
+      "stage_name": "Preflight check",
+      "detail": "phase=local_validation | pid=75275 | elapsed=120s | timeout_remaining=Nones | command=pytest tests/test_automate_task_loop.py | poll=running"
+    },
+    {
+      "at": "2026-03-30T21:13:48.035230+00:00",
+      "task_id": "JORB-INFRA-010",
+      "run_state": "blocked",
+      "stage_name": "judge",
+      "detail": "Phase 4 artifact enforcement failed: compiled_feature_spec.md, proposal.md, tradeoff_matrix.md, research_brief.md, research_brief.md"
+    },
+    {
+      "at": "2026-03-30T21:13:48.053116+00:00",
+      "task_id": "JORB-INFRA-010",
+      "run_state": "blocked",
+      "stage_name": "judge",
+      "detail": "Phase 4 artifact enforcement failed: compiled_feature_spec.md:missing_machine_payload"
+    },
+    {
+      "at": "2026-03-30T21:13:50.150588+00:00",
+      "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
+      "run_state": "running",
+      "stage_name": "Preflight check",
+      "detail": "phase=local_validation | pid=75275 | elapsed=135s | timeout_remaining=Nones | command=pytest tests/test_automate_task_loop.py | poll=running"
+    },
+    {
+      "at": "2026-03-30T21:14:01.921273+00:00",
+      "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
+      "run_state": "running",
+      "stage_name": "Git commit and push",
+      "detail": "Running git add/commit/push."
     }
   ],
-  "updated_at": "2026-03-30T21:04:30+00:00",
-  "current_task": null,
+  "updated_at": "2026-03-30T21:14:01.921262+00:00",
+  "current_task": "DRAFT-JORB-INFRA-STATUS-TRUTH",
   "current_title": null,
-  "current_stage": null,
-  "run_state": "idle",
+  "current_stage": "Git commit and push",
+  "run_state": "running",
   "current_blocker": null,
   "last_successful_checkpoint": null,
-  "artifact_completeness": null,
+  "artifact_completeness": {
+    "present": [
+      "compiled_feature_spec.md"
+    ],
+    "missing": [
+      "proposal.md",
+      "tradeoff_matrix.md",
+      "research_brief.md",
+      "judge_decision.md",
+      "evidence_bundle.json",
+      "runtime_proof.log"
+    ]
+  },
   "failure_taxonomy": null,
   "eval_result": null,
   "runtime_proof_summary": null,
-  "next_recommended_action": "Inspect backlog truth and rerun automation when ready.",
-  "run_log_dir": null,
+  "next_recommended_action": null,
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T210617Z-DRAFT-JORB-INFRA-STATUS-TRUTH",
   "event": {
-    "at": "2026-03-30T21:04:30+00:00",
-    "task_id": null,
-    "run_state": "idle",
-    "stage_name": null,
-    "detail": null
+    "at": "2026-03-30T21:14:01.921273+00:00",
+    "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
+    "run_state": "running",
+    "stage_name": "Git commit and push",
+    "detail": "Running git add/commit/push."
   },
   "eval_blocked_acceptance": false
 }
