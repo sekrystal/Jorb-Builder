@@ -1,0 +1,74 @@
+{
+  "task_id": "JORB-V3-002",
+  "title": "Expose SearchRun via API",
+  "status": "blocked",
+  "attempt": 1,
+  "started_at": "2026-03-29T22:27:18.933677+00:00",
+  "completed_at": "2026-03-29T22:27:18.939962+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T222716Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T222716Z-JORB-V3-002",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T222716Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T222716Z-JORB-V3-002"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T222716Z-JORB-V3-002/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T222716Z-JORB-V3-002/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T222716Z-JORB-V3-002/progress.jsonl"
+    }
+  ],
+  "files_changed": [],
+  "commands_run": [],
+  "results": [
+    "blocked"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Missing automation configuration: vm.runtime_validation_commands or task.vm_verification"
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Missing automation configuration: vm.runtime_validation_commands or task.vm_verification",
+    "accepted": false,
+    "acceptance_met": [],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "configuration",
+        "outcome": "blocked",
+        "detail": "Missing automation configuration: vm.runtime_validation_commands or task.vm_verification"
+      }
+    ],
+    "changed_files_count": 0,
+    "changed_files": [],
+    "unproven_runtime_gaps": [
+      "Missing automation configuration: vm.runtime_validation_commands or task.vm_verification"
+    ],
+    "ux_conformance": {
+      "required": false,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": null,
+      "intentional_design_deviations": null,
+      "product_first_checklist": null,
+      "primary_ux_prohibited_surfaces": []
+    }
+  },
+  "unproven_runtime_gaps": [
+    "Missing automation configuration: vm.runtime_validation_commands or task.vm_verification"
+  ]
+}

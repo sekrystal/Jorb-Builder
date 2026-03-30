@@ -1,0 +1,141 @@
+{
+  "generated_at": "2026-03-30T19:23:37.108969+00:00",
+  "proposals": [
+    {
+      "proposal_id": "prop-c967a7d8242d",
+      "dedupe_key": "status_truth_inconsistency::JORB-INFRA::create_follow_up_hardening_ticket",
+      "status": "accepted",
+      "source_signal_id": "manual-seed-jorb-infra-status-truth",
+      "title": "Harden operator truth for Phase 4 artifact enforcement state",
+      "rationale": "The builder should not show a clean dry-run surface when repeated Phase 4 judge failures for missing artifacts are the strongest recent truth. Tighten operator status truth so artifact-enforcement failures, current blocker, and artifact completeness stay coherent across blocked and dry-run transitions.",
+      "evidence_summary": "run_ledger.json records repeated blocked judge events for JORB-INFRA-010 citing missing compiled_feature_spec.md, proposal.md, tradeoff_matrix.md, and research_brief.md, while show_status.py currently reports run_state dry_run, current_blocker none, and artifact_missing only judge_decision.md and evidence_bundle.json.",
+      "evidence_links": [
+        "/Users/samuelkrystal/projects/jorb-builder/run_ledger.json",
+        "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T182652Z-JORB-INFRA-010/automation_result.json",
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-29T213725Z-JORB-INFRA-007.yml"
+      ],
+      "affected_ticket_family": "JORB-INFRA",
+      "priority_recommendation": "high",
+      "confidence": 0.88,
+      "recurrence_count": 5,
+      "proposed_action_type": "create_follow_up_hardening_ticket",
+      "dependencies": [
+        "JORB-INFRA-010"
+      ],
+      "operator_approval_required": true,
+      "draft_ticket": {
+        "id_placeholder": "DRAFT-JORB-INFRA-STATUS-TRUTH",
+        "title": "Harden operator truth for Phase 4 artifact enforcement state",
+        "type": "infrastructure",
+        "area": "builder",
+        "objective": "Make run_ledger and show_status reflect the strongest current blocked truth when Phase 4 artifact enforcement has recently failed, instead of presenting a misleading clean dry-run state.",
+        "evidence_basis": [
+          "/Users/samuelkrystal/projects/jorb-builder/run_ledger.json",
+          "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T182652Z-JORB-INFRA-010/automation_result.json",
+          "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-29T213725Z-JORB-INFRA-007.yml"
+        ]
+      },
+      "created_at": "2026-03-30T19:15:00+00:00",
+      "reviewed_at": "2026-03-30T19:15:51.748069+00:00",
+      "review_note": "approved for narrow JORB-INFRA synthesis lifecycle"
+    },
+    {
+      "proposal_id": "prop-42f9a2dbeee1",
+      "dedupe_key": "repeated_preflight_failure::JORB-V1::refine_existing_ticket",
+      "status": "draft",
+      "source_signal_id": "sig-508834552f75",
+      "title": "Refine preflight handling for JORB-V1",
+      "rationale": "Consider refine existing ticket for JORB-V1.",
+      "evidence_summary": "Pattern observed 3 times in JORB-V1.",
+      "evidence_links": [
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-25T013237Z-JORB-V1-003.yml",
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-25T050715Z-JORB-V1-007.yml",
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-25T050925Z-JORB-V1-007.yml"
+      ],
+      "affected_ticket_family": "JORB-V1",
+      "priority_recommendation": "high",
+      "confidence": 0.9,
+      "recurrence_count": 3,
+      "proposed_action_type": "refine_existing_ticket",
+      "dependencies": [],
+      "operator_approval_required": true,
+      "draft_ticket": {
+        "id_placeholder": "DRAFT-JORB-V1-REPEATED_PREFLIGHT_FAILURE",
+        "title": "Refine preflight handling for JORB-V1",
+        "type": "hardening",
+        "area": "product",
+        "objective": "Consider refine existing ticket for JORB-V1.",
+        "evidence_basis": [
+          "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-25T013237Z-JORB-V1-003.yml",
+          "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-25T050715Z-JORB-V1-007.yml",
+          "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-25T050925Z-JORB-V1-007.yml"
+        ]
+      },
+      "created_at": "2026-03-30T18:37:36.321459+00:00"
+    },
+    {
+      "proposal_id": "prop-f6ae0073a270",
+      "dedupe_key": "repeated_preflight_failure::JORB-V3::refine_existing_ticket",
+      "status": "draft",
+      "source_signal_id": "sig-6b2d51e1aaf6",
+      "title": "Refine preflight handling for JORB-V3",
+      "rationale": "Consider refine existing ticket for JORB-V3.",
+      "evidence_summary": "Pattern observed 2 times in JORB-V3.",
+      "evidence_links": [
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-29T190200Z-JORB-V3-001.yml",
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-29T222718Z-JORB-V3-002.yml"
+      ],
+      "affected_ticket_family": "JORB-V3",
+      "priority_recommendation": "high",
+      "confidence": 0.8,
+      "recurrence_count": 2,
+      "proposed_action_type": "refine_existing_ticket",
+      "dependencies": [],
+      "operator_approval_required": true,
+      "draft_ticket": {
+        "id_placeholder": "DRAFT-JORB-V3-REPEATED_PREFLIGHT_FAILURE",
+        "title": "Refine preflight handling for JORB-V3",
+        "type": "hardening",
+        "area": "product",
+        "objective": "Consider refine existing ticket for JORB-V3.",
+        "evidence_basis": [
+          "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-29T190200Z-JORB-V3-001.yml",
+          "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-29T222718Z-JORB-V3-002.yml"
+        ]
+      },
+      "created_at": "2026-03-30T18:37:36.321470+00:00"
+    },
+    {
+      "proposal_id": "prop-31f9d6b6caca",
+      "dedupe_key": "eval_regression::JORB-INFRA::add_missing_eval_coverage",
+      "status": "draft",
+      "source_signal_id": "sig-9fcb38c88c74",
+      "title": "Add eval coverage for JORB-INFRA eval regression",
+      "rationale": "Consider add missing eval coverage for JORB-INFRA.",
+      "evidence_summary": "Pattern observed 1 times in JORB-INFRA.",
+      "evidence_links": [
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T192337Z-JORB-INFRA-010.yml"
+      ],
+      "affected_ticket_family": "JORB-INFRA",
+      "priority_recommendation": "high",
+      "confidence": 0.7,
+      "recurrence_count": 1,
+      "proposed_action_type": "add_missing_eval_coverage",
+      "dependencies": [
+        "JORB-INFRA-010"
+      ],
+      "operator_approval_required": true,
+      "draft_ticket": {
+        "id_placeholder": "DRAFT-JORB-INFRA-EVAL_REGRESSION",
+        "title": "Add eval coverage for JORB-INFRA eval regression",
+        "type": "infrastructure",
+        "area": "builder",
+        "objective": "Consider add missing eval coverage for JORB-INFRA.",
+        "evidence_basis": [
+          "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T192337Z-JORB-INFRA-010.yml"
+        ]
+      },
+      "created_at": "2026-03-30T19:23:37.108960+00:00"
+    }
+  ]
+}

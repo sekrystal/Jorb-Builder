@@ -1,0 +1,129 @@
+{
+  "task_id": "JORB-V3-003",
+  "title": "Display search state in UI",
+  "status": "refined",
+  "attempt": 1,
+  "started_at": "2026-03-29T23:27:33.942429+00:00",
+  "completed_at": "2026-03-29T23:31:41.615646+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T232733Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T232733Z-JORB-V3-003",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T232733Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T232733Z-JORB-V3-003"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T232733Z-JORB-V3-003/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T232733Z-JORB-V3-003/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T232733Z-JORB-V3-003/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T232733Z-JORB-V3-003/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T232733Z-JORB-V3-003/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T232733Z-JORB-V3-003/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T232733Z-JORB-V3-003/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T232733Z-JORB-V3-003/executor.json"
+    }
+  ],
+  "files_changed": [
+    "tests/test_workbench.py",
+    "ui/app.py",
+    "ui/screens/jobs.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.325.31654-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T232733Z-JORB-V3-003/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "refined"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "VM smoke validation failed after local validation and git push succeeded."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "VM smoke validation failed after local validation and git push succeeded.",
+    "accepted": false,
+    "acceptance_met": [],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\nUX Design Section Mapping: Jobs primary surface, status messaging region directly under the Jobs heading in the existing Jobs screen hierarchy.\n\nUX Intentional Design Deviations: none\n\nUX Product-First Checklist: hierarchy=yes, prohibited_surfaces=yes, backend_wiring_only=no\n\nThe Jobs page now fetches `/search-runs/latest` and renders a compact, supportive search-state message under the Jobs heading. The message maps the latest run into four user-facing states: running, failed, finished with no matching jobs, and finished successfully. Saved and Applied remain unchanged.\n\n2. Exact files changed\n\n- [ui/app.py](/Users/samuelkrystal/projects/jorb/ui/app.py)\n- [ui/screens/jobs.py](/Users/samuelkrystal/projects/jorb/ui/screens/jobs.py)\n- [tests/test_workbench.py](/Users/samuelkrystal/projects/jorb/tests/test_workbench.py)\n\n3. Exact tests added or updated\n\nUpdated in [tests/test_workbench.py](/Users/samuelkrystal/projects/jorb/tests/test_workbench.py):\n\n- `test_build_search_state_view_model_reports_running_state`\n- `test_build_search_state_view_model_reports_failure_state`\n- `test_build_search_state_view_model_reports_zero_results_state`\n- `test_build_search_state_view_model_reports_success_state`\n\n4. Exact commands run\n\n- `pytest tests/test_production_runtime.py tests/test_workbench.py`\n- `./scripts/preflight_check.sh`\n- `python scripts/reset_demo.py`\n- `python3 scripts/reset_demo.py`\n- `./.venv_j1/bin/python scripts/reset_demo.py`\n- `./.venv_j1/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000`\n- `./.venv_j1/bin/streamlit run ui/app.py --server.port 8501 --server.headless true`\n- `git diff --name-only -- ui/app.py ui/screens/jobs.py tests/test_workbench.py`\n\n5. Exact results\n\n- `pytest tests/test_production_runtime.py tests/test_workbench.py`: passed, `56 passed in 3.37s`\n- `./scripts/preflight_check.sh`: passed, `194 passed in 9.27s`\n- `python scripts/reset_demo.py`: failed, `python: command not found`\n- `python3 scripts/reset_demo.py`: failed, `ModuleNotFoundError: No module named 'sqlalchemy'`\n- `./.venv_j1/bin/python scripts/reset_demo.py`: passed\n  - `signals_ingested=4`\n  - `listings_ingested=7`\n  - `leads_updated=8`\n  - `surfaced_count=5`\n  - `live_mode_used=false`\n- `./.venv_j1/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000`: failed, `[Errno 1] ... bind on address ('127.0.0.1', 8000): operation not permitted`\n- `./.venv_j1/bin/streamlit run ui/app.py --server.port 8501 --server.headless true`: failed, `PermissionError: [Errno 1] Operation not permitted` while binding `127.0.0.1:8501`\n- `git diff --name-only -- ui/app.py ui/screens/jobs.py tests/test_workbench.py`: returned\n  - `tests/test_workbench.py`\n  - `ui/app.py`\n  - `ui/screens/jobs.py`\n\n6. Honest note on what remains unproven\n\nLive runtime proof is not established here. Because the sandbox blocks local port binding, I could not boot FastAPI or Streamlit, could not run `curl -s http://127.0.0.1:8000/search-runs/latest`, and could not run `curl -I http://127.0.0.1:8501`. The UI change is proven by code-level tests and preflight only, not by a live browser or live local HTTP check in this environment."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 27 vulnerabilities on sekrystal/Jorb's default branch (20 moderate, 7 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   d90e4a3..bbc18a1  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "refined",
+        "detail": "VM smoke commands failed."
+      }
+    ],
+    "changed_files_count": 3,
+    "changed_files": [
+      "tests/test_workbench.py",
+      "ui/app.py",
+      "ui/screens/jobs.py"
+    ],
+    "unproven_runtime_gaps": [
+      "VM smoke validation failed after local validation and git push succeeded."
+    ],
+    "ux_conformance": {
+      "required": true,
+      "passed": false,
+      "planning_issues": [],
+      "missing_response_fields": [
+        "response.design_section_mapping.figma_source"
+      ],
+      "design_section_mapping": "Jobs primary surface, status messaging region directly under the Jobs heading in the existing Jobs screen hierarchy.",
+      "intentional_design_deviations": "none",
+      "product_first_checklist": "hierarchy=yes, prohibited_surfaces=yes, backend_wiring_only=no",
+      "primary_ux_prohibited_surfaces": [
+        "discovery",
+        "autonomy",
+        "connectors",
+        "source matrix"
+      ]
+    }
+  },
+  "unproven_runtime_gaps": [
+    "VM smoke validation failed after local validation and git push succeeded."
+  ]
+}

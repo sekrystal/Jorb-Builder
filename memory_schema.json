@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Builder Memory Store",
+  "type": "object",
+  "required": [
+    "generated_at",
+    "entries"
+  ],
+  "properties": {
+    "generated_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "memory_id",
+          "memory_type",
+          "ticket_family",
+          "source_artifact",
+          "timestamp",
+          "confidence",
+          "freshness",
+          "observation",
+          "inference",
+          "primary_basis",
+          "relevance_tags",
+          "origin",
+          "status",
+          "provenance"
+        ],
+        "properties": {
+          "memory_id": {"type": "string"},
+          "memory_type": {"type": "string"},
+          "ticket_family": {"type": "string"},
+          "task_id": {"type": ["string", "null"]},
+          "area": {"type": "string"},
+          "source_artifact": {"type": "string"},
+          "timestamp": {"type": ["string", "null"]},
+          "confidence": {"type": "number"},
+          "freshness": {"type": "object"},
+          "observation": {"type": "string"},
+          "inference": {"type": "string"},
+          "primary_basis": {"type": "string"},
+          "relevance_tags": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "origin": {"type": "string"},
+          "status": {"type": "string"},
+          "status_reason": {"type": "string"},
+          "provenance": {
+            "type": "array",
+            "items": {"type": "object"}
+          }
+        }
+      }
+    }
+  }
+}

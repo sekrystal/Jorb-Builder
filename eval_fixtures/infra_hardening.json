@@ -1,0 +1,66 @@
+{
+  "fixture_id": "infra_hardening_v1",
+  "fixture_family": "infra_hardening",
+  "description": "Builder-only hardening and governance tasks must show strong planning, evidence, tests, and operator handoff.",
+  "selector": {
+    "task_family": "JORB-INFRA",
+    "area": "builder",
+    "product_facing_ux": false,
+    "requires_vm_runtime_proof": false
+  },
+  "mandatory_artifacts": [
+    "compiled_feature_spec.md",
+    "research_brief.md",
+    "proposal.md",
+    "tradeoff_matrix.md",
+    "judge_decision.md",
+    "evidence_bundle.json",
+    "runtime_proof.log"
+  ],
+  "rubric_dimensions": [
+    {
+      "name": "planning_quality",
+      "weight": 0.22,
+      "threshold": 0.75,
+      "description": "Planning artifacts must be complete and reviewable."
+    },
+    {
+      "name": "implementation_quality",
+      "weight": 0.18,
+      "threshold": 0.6,
+      "description": "Implementation should land coherently or fail for explicit reasons."
+    },
+    {
+      "name": "test_adequacy",
+      "weight": 0.18,
+      "threshold": 0.7,
+      "description": "Local validation should be present and passing."
+    },
+    {
+      "name": "evidence_quality",
+      "weight": 0.2,
+      "threshold": 0.8,
+      "description": "Judge and evidence artifacts must be complete."
+    },
+    {
+      "name": "operator_handoff_quality",
+      "weight": 0.12,
+      "threshold": 0.7,
+      "description": "Run summary and operator artifacts should support handoff."
+    },
+    {
+      "name": "recovery_quality",
+      "weight": 0.1,
+      "threshold": 0.6,
+      "description": "Failures should classify cleanly and carry recovery intent."
+    }
+  ],
+  "pass_threshold": 0.78,
+  "historical_examples": [
+    "task_history/2026-03-29T212609Z-JORB-INFRA-007.yml"
+  ],
+  "known_failure_cases": [
+    "executor transport interruption without a postmortem or taxonomy",
+    "missing evidence bundle or judge artifact"
+  ]
+}

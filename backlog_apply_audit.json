@@ -1,0 +1,20 @@
+{
+  "events": [
+    {
+      "applied_at": "2026-03-30T19:19:39.209729+00:00",
+      "synthesis_id": "syn-245e482be1f3",
+      "source_proposal_id": "prop-c967a7d8242d",
+      "synthesized_entry_sha1": "49f1dbe1b6b1c9113fa3ac3fa06e29be9e8b357c",
+      "backlog_before_sha1": "a74dad71e712674c9872a950f6b086a5e72b788c",
+      "backlog_after_sha1": "e05d64b7406d23c65d2edae2bba96913395f807c",
+      "ticket_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
+      "operator_review": {
+        "required": true,
+        "approved": true,
+        "review_status": "accepted",
+        "reviewed_at": "2026-03-30T19:15:51.748069+00:00",
+        "review_note": "approved for narrow JORB-INFRA synthesis lifecycle"
+      }
+    }
+  ]
+}

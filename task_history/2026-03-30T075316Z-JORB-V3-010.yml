@@ -1,0 +1,123 @@
+{
+  "task_id": "JORB-V3-010",
+  "title": "Remove internal UX leakage",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-30T07:48:54.523262+00:00",
+  "completed_at": "2026-03-30T07:53:16.502514+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T074850Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T074850Z-JORB-V3-010",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T074850Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T074850Z-JORB-V3-010"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T074850Z-JORB-V3-010/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T074850Z-JORB-V3-010/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T074850Z-JORB-V3-010/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T074850Z-JORB-V3-010/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T074850Z-JORB-V3-010/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T074850Z-JORB-V3-010/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T074850Z-JORB-V3-010/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T074850Z-JORB-V3-010/executor.json"
+    }
+  ],
+  "files_changed": [
+    "tests/test_workbench.py",
+    "ui/app.py",
+    "ui/components/sidebar.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.325.31654-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T074850Z-JORB-V3-010/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed  \nUX Design Section Mapping: primary-shell jobs-first copy aligned to `/Users/samuelkrystal/projects/jorb/design/figma`  \nUX Intentional Design Deviations: none  \nUX Product-First Checklist: hierarchy=yes, prohibited_surfaces=yes, backend_wiring_only=no  \n\nRemoved primary-shell leakage of internal UX language by renaming onboarding copy from \u201cdiscovery\u201d to jobs-focused wording, changing the jobs empty-state to \u201cnext refresh,\u201d softening the sidebar entry point from `Admin / debug` / `Open internal harness` to `Workspace tools`, and updating the profile privacy copy to avoid internal operating terminology.\n\n2. Exact files changed  \n[ui/app.py](/Users/samuelkrystal/projects/jorb/ui/app.py)  \n[ui/components/sidebar.py](/Users/samuelkrystal/projects/jorb/ui/components/sidebar.py)  \n[tests/test_workbench.py](/Users/samuelkrystal/projects/jorb/tests/test_workbench.py)\n\n3. Exact tests added or updated  \nUpdated `test_streamlit_jobs_shell_demotes_job_link_and_moves_operator_access_out_of_primary_nav` in [tests/test_workbench.py](/Users/samuelkrystal/projects/jorb/tests/test_workbench.py)  \nAdded `test_streamlit_primary_shell_copy_avoids_internal_system_language` in [tests/test_workbench.py](/Users/samuelkrystal/projects/jorb/tests/test_workbench.py)\n\n4. Exact commands run  \n`find ui api -type f | sort`  \n`grep -RInE \"discovery|autonomy|connectors|source matrix\" ui api tests/test_production_runtime.py tests/test_workbench.py`  \n`sed -n '1,220p' ui/components/sidebar.py`  \n`sed -n '150,420p' ui/app.py`  \n`sed -n '1170,1685p' ui/app.py`  \n`sed -n '730,790p' tests/test_workbench.py`  \n`grep -RIn \"Enter discovery\\|Save profile and enter discovery\\|Discovery tab\\|discovery cycle\\|Jobs-first opportunity intelligence\\|Open internal harness\\|Admin / debug\" tests/test_workbench.py ui/app.py ui/components/sidebar.py`  \n`sed -n '880,1160p' tests/test_workbench.py`  \n`find design/figma -maxdepth 2 -type f | sort | head -n 40`  \n`sed -n '500,540p' tests/test_workbench.py`  \n`grep -RInE \"Jobs|Saved|Applied|Profile|workbench|operator|discovery|autonomy|connectors|source matrix\" design/figma/src design/figma/README.md design/figma/guidelines/Guidelines.md`  \n`sed -n '1,220p' design/figma/README.md`  \n`sed -n '280,305p' design/figma/src/imports/pasted_text/job-discovery-ui-spec.md`  \n`grep -RIn \"Save profile and enter discovery\\|Step 4: Enter discovery\\|the next discovery cycle\\|Admin / debug\\|Open internal harness\" ui tests/test_workbench.py`  \n`grep -RInE \"discovery|autonomy|connectors|source matrix\" ui/components/sidebar.py ui/app.py`  \n`pytest tests/test_production_runtime.py tests/test_workbench.py`  \n`sed -n '1,220p' scripts/preflight_check.sh`  \n`./scripts/preflight_check.sh`  \n`curl -s http://127.0.0.1:8000/search-runs/latest`  \n`curl -I http://127.0.0.1:8500`  \n`git diff -- ui/app.py ui/components/sidebar.py tests/test_workbench.py`\n\n5. Exact results  \n`pytest tests/test_production_runtime.py tests/test_workbench.py`: passed, `71 passed in 2.18s`  \n`./scripts/preflight_check.sh`: passed, including compile/import smoke and full test suite, `212 passed in 7.70s`  \n`curl -s http://127.0.0.1:8000/search-runs/latest`: failed with exit code `7`  \n`curl -I http://127.0.0.1:8500`: failed with exit code `56` (`Recv failure: Connection reset by peer`)  \nSearch/read commands confirmed the user-facing leakage points were in the Streamlit primary shell copy, and the final diff is limited to the three files listed above.\n\n6. Honest note on what remains unproven  \nLive FastAPI and Streamlit runtime behavior is not proven from this turn. The VM-only HTTP checks failed, so I cannot claim local API/UI boot success or live workflow verification. I also did not run `python scripts/reset_demo.py`, so demo reset behavior remains unproven."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 27 vulnerabilities on sekrystal/Jorb's default branch (20 moderate, 7 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   cca91e7..9c5624c  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 3,
+    "changed_files": [
+      "tests/test_workbench.py",
+      "ui/app.py",
+      "ui/components/sidebar.py"
+    ],
+    "unproven_runtime_gaps": [],
+    "ux_conformance": {
+      "required": true,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": "primary-shell jobs-first copy aligned to `/Users/samuelkrystal/projects/jorb/design/figma`",
+      "intentional_design_deviations": "none",
+      "product_first_checklist": "hierarchy=yes, prohibited_surfaces=yes, backend_wiring_only=no",
+      "primary_ux_prohibited_surfaces": [
+        "discovery",
+        "autonomy",
+        "connectors",
+        "source matrix"
+      ]
+    }
+  },
+  "unproven_runtime_gaps": []
+}

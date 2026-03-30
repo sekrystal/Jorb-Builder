@@ -16,19 +16,31 @@ import time
 from typing import Any, Callable
 
 from common import (
+    build_memory_store,
     builder_root,
     builder_path_from_config,
     references_canonical_figma_source,
     compute_backlog_diagnostics,
     expand_path,
+    format_memory_bundle_text,
     is_product_facing_ux_task,
+    is_phase4_builder_task,
     load_config,
     load_data,
+    load_repo_local_standards,
     load_validated_backlog,
     product_repo_path,
+    retrieve_memory_for_role,
     ux_conformance_planning_issues,
+    validate_memory_store_schema,
     write_data,
 )
+from private_eval_suite import (
+    compare_eval_results as compare_private_eval_results,
+    latest_comparable_history_eval,
+    score_private_eval,
+)
+from feedback_engine import generate_backlog_proposals
 
 
 ROOT = builder_root()
@@ -39,11 +51,42 @@ STATUS = ROOT / "status.yml"
 MEMORY = ROOT / "builder_memory.md"
 TASK_HISTORY = ROOT / "task_history"
 BLOCKERS = ROOT / "blockers"
+RUN_LEDGER = ROOT / "run_ledger.json"
+RUN_LOCK = ROOT / "run_lock.json"
 SELECT_TASK = SCRIPTS_DIR / "select_task.py"
 RENDER_PACKET = SCRIPTS_DIR / "render_packet.py"
 RESULT_FILE = "automation_result.json"
 SUMMARY_FILE = "automation_summary.md"
 PROGRESS_FILE = "progress.jsonl"
+PHASE4_REQUIRED_ARTIFACTS = (
+    "compiled_feature_spec.md",
+    "proposal.md",
+    "tradeoff_matrix.md",
+    "judge_decision.md",
+    "evidence_bundle.json",
+)
+PHASE4_OPTION_SET = (
+    {
+        "name": "Minimal coherent change",
+        "summary": "Use the smallest machine-checkable builder change that enforces the task contract without expanding scope.",
+        "complexity": "low",
+        "risks": "May leave extensibility work for later if the contract grows.",
+        "maintainability": "High if the enforcement boundary stays narrow and explicit.",
+        "runtime": "Keeps execution overhead modest and predictable.",
+        "product": "Improves trust without inventing extra process.",
+        "decision": "Prefer when one bounded mechanism can enforce the requirement directly.",
+    },
+    {
+        "name": "Generalized framework extension",
+        "summary": "Introduce a more extensible subsystem that can support similar builder behaviors across future products and tasks.",
+        "complexity": "medium",
+        "risks": "Higher chance of overbuilding or introducing regressions in unrelated flows.",
+        "maintainability": "Good if the abstractions remain narrow and well-tested.",
+        "runtime": "May add more orchestration and artifact overhead.",
+        "product": "Creates stronger reuse but costs more now.",
+        "decision": "Prefer when the task explicitly requires reuse beyond one product or stage.",
+    },
+)
 CANONICAL_RUN_STATES = {
     "idle",
     "task_selected",
@@ -90,6 +133,647 @@ TRANSIENT_EXECUTOR_FAILURE_PATTERNS = (
     "thread/read failed",
     "not materialized yet",
 )
+FAILURE_RECOVERY_MAP = {
+    "prompt_planning_failure": {"action": "replan_required", "retryable": True},
+    "implementation_failure": {"action": "retry_with_modified_strategy", "retryable": True},
+    "local_test_failure": {"action": "retry_with_modified_strategy", "retryable": True},
+    "runtime_vm_failure": {"action": "retry_with_modified_strategy", "retryable": True},
+    "repo_state_failure": {"action": "block_pending_operator_decision", "retryable": False},
+    "auth_connectivity_failure": {"action": "block_pending_operator_decision", "retryable": False},
+    "artifact_completeness_failure": {"action": "replan_required", "retryable": True},
+    "flaky_nondeterministic_failure": {"action": "quarantine_flaky_task", "retryable": False},
+    "spec_ambiguity_failure": {"action": "block_pending_operator_decision", "retryable": False},
+    "configuration_defect": {"action": "block_pending_operator_decision", "retryable": False},
+}
+
+
+def extract_streamlit_port(commands: list[str]) -> str | None:
+    for command in commands:
+        match = re.search(r"--server\.port\s+(\d+)", str(command))
+        if match:
+            return match.group(1)
+    return None
+
+
+def extract_runtime_self_check_ui_url(commands: list[str]) -> str | None:
+    for command in commands:
+        text = str(command)
+        if "runtime_self_check.sh" not in text:
+            continue
+        match = re.search(r"UI_URL=([^\s]+)", text)
+        if match:
+            return match.group(1)
+        return "http://127.0.0.1:8500"
+    return None
+
+
+def phase4_artifact_path(run_dir: Path, name: str) -> Path:
+    return run_dir / name
+
+
+def phase4_required_artifact_paths(run_dir: Path) -> dict[str, Path]:
+    return {name: phase4_artifact_path(run_dir, name) for name in PHASE4_REQUIRED_ARTIFACTS}
+
+
+def phase4_runtime_proof_path(run_dir: Path) -> Path:
+    return run_dir / "runtime_proof.log"
+
+
+def phase4_research_brief_path(run_dir: Path) -> Path:
+    return run_dir / "research_brief.md"
+
+
+def phase4_postmortem_path(run_dir: Path) -> Path:
+    return run_dir / "postmortem.md"
+
+
+def phase4_requires_artifact_enforcement(task: dict[str, Any]) -> bool:
+    return is_phase4_builder_task(task)
+
+
+def phase4_stage_order(task: dict[str, Any], *, use_vm_flow: bool) -> list[str]:
+    stages = ["planner", "architect", "implementer", "validator"]
+    if use_vm_flow:
+        stages.append("runtime_critic")
+    if is_product_facing_ux_task(task):
+        stages.append("ux_checker")
+    stages.append("judge")
+    return stages
+
+
+def phase4_failure_category(summary: str) -> str:
+    normalized = summary.lower()
+    if "missing automation configuration" in normalized:
+        return "configuration_defect"
+    if "dirty before automated execution" in normalized:
+        return "environment_defect"
+    if "allowlist" in normalized:
+        return "code_defect"
+    if "vm bootstrap failed" in normalized or "vm preflight" in normalized or "vm smoke" in normalized:
+        return "environment_defect"
+    if "ux conformance" in normalized:
+        return "unresolved_ux_mismatch"
+    if "selector_filtered_everything" in normalized or "dependency" in normalized:
+        return "dependency_ordering_defect"
+    if "no product repo changes" in normalized:
+        return "recovery_logic_gap"
+    return "code_defect"
+
+
+def repo_local_standards_issues(standards: dict[str, Any]) -> list[str]:
+    issues: list[str] = []
+    if not standards.get("agents_exists"):
+        issues.append("AGENTS.md")
+    if not standards.get("skills_exists"):
+        issues.append("skills/")
+    return issues
+
+
+def phase4_decision_checkpoint_issue(task: dict[str, Any]) -> str | None:
+    if not phase4_requires_artifact_enforcement(task):
+        return None
+    options = task.get("implementation_options", [])
+    if isinstance(options, list) and len(options) > 1 and not str(task.get("selected_approach") or "").strip():
+        return "Decision checkpoint required: multiple implementation options are declared but no selected_approach is recorded."
+    return None
+
+
+def phase4_feature_spec_text(task: dict[str, Any], standards: dict[str, Any]) -> str:
+    acceptance = task.get("acceptance", []) or task.get("acceptance_criteria", [])
+    return "\n".join(
+        [
+            f"# Compiled Feature Spec: {task['id']}",
+            "",
+            "## User Story",
+            f"A builder operator needs {task['title'].lower()} so the builder can execute work with explicit and reviewable discipline.",
+            "",
+            "## Initiating Trigger",
+            f"Backlog task {task['id']} enters execution as part of the builder hardening program.",
+            "",
+            "## Data Inputs",
+            f"- Task metadata: {task['id']}, title, objective, acceptance, verification, allowlist",
+            "- Builder config, backlog truth, active task state, and repo-local standards",
+            "",
+            "## State Transitions",
+            "- selected -> packet_rendered -> implementing -> verifying -> completed/blocked/refined/interrupted",
+            "- acceptance is allowed only after judge/evidence enforcement succeeds",
+            "",
+            "## Backend Changes",
+            "- Builder orchestration and enforcement code only",
+            "",
+            "## Frontend or UX Surfaces",
+            "- Builder operator artifacts and run logs",
+            "",
+            "## Failure Modes",
+            "- missing required artifacts",
+            "- unresolved decision checkpoint",
+            "- missing runtime proof when required",
+            "- misleading success without judge evidence",
+            "",
+            "## Observability Requirements",
+            "- explicit stage plan",
+            "- artifact files written to run_logs",
+            "- evidence bundle and judge decision",
+            "",
+            "## Out of Scope",
+            "- JORB product feature implementation",
+            "- product repo edits except runtime-proof interaction when explicitly required",
+            "",
+            "## Acceptance Test In Product Terms",
+            *([f"- {item}" for item in acceptance] if acceptance else ["- Acceptance criteria are taken directly from backlog task metadata."]),
+            "",
+            "## Repo-Local Standards",
+            f"- AGENTS.md loaded: {'yes' if standards.get('agents_exists') else 'no'}",
+            f"- skills loaded: {', '.join(standards.get('skill_files', [])) or 'none'}",
+        ]
+    )
+
+
+def phase4_research_brief_text(task: dict[str, Any]) -> str:
+    title = str(task.get("title") or task.get("id"))
+    return "\n".join(
+        [
+            f"# Research Brief: {task['id']}",
+            "",
+            f"Task focus: {title}",
+            "",
+            "## Relevant Patterns",
+            "- staged delivery pipelines separate planning, implementation, validation, and acceptance",
+            "- CI/CD gate systems require machine-checkable evidence before promotion",
+            "- operator tooling benefits from explicit artifacts and replayable run logs",
+            "",
+            "## What Works",
+            "- distinct acceptance authority (judge) separate from implementation",
+            "- required artifacts that block optimistic success",
+            "- runtime proof that records commands, timestamps, and outputs",
+            "",
+            "## What Fails",
+            "- checklist-only process with no automatic enforcement",
+            "- acceptance based on summary text instead of evidence",
+            "- retry logic that mutates queue truth without preserving context",
+            "",
+            "## Why These Patterns Apply Here",
+            "- the builder is an orchestration product and needs the same enforcement discipline it asks of product work",
+        ]
+    )
+
+
+def phase4_tradeoff_matrix_text(task: dict[str, Any]) -> str:
+    lines = [f"# Tradeoff Matrix: {task['id']}", ""]
+    for option in PHASE4_OPTION_SET:
+        lines.extend(
+            [
+                f"## {option['name']}",
+                f"- Summary: {option['summary']}",
+                f"- Complexity: {option['complexity']}",
+                f"- Risks: {option['risks']}",
+                f"- Maintainability: {option['maintainability']}",
+                f"- Runtime implications: {option['runtime']}",
+                f"- Product implications: {option['product']}",
+                f"- When to choose: {option['decision']}",
+                "",
+            ]
+        )
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def phase4_proposal_text(task: dict[str, Any], standards: dict[str, Any]) -> str:
+    return "\n".join(
+        [
+            f"# Proposal: {task['id']}",
+            "",
+            "## Recommended Approach",
+            "Choose the minimal coherent change first, while keeping contracts machine-checkable and reusable.",
+            "",
+            "## Assumptions",
+            f"- Task area: {task.get('area')}",
+            f"- Repo-local standards are available: {'yes' if not repo_local_standards_issues(standards) else 'no'}",
+            "",
+            "## Constraints",
+            "- Do not modify JORB product code during builder-only hardening work.",
+            "- Preserve accepted backlog truth and stop on first hard failure.",
+            "",
+            "## Tradeoff Summary",
+            "- Prefer explicit artifacts and gates over prose-only policy.",
+            "- Escalate to a decision checkpoint only when materially different approaches exist.",
+        ]
+    )
+
+
+def write_phase4_preimplementation_artifacts(
+    run_dir: Path,
+    task: dict[str, Any],
+    standards: dict[str, Any],
+) -> list[str]:
+    created: list[str] = []
+    artifacts = {
+        "compiled_feature_spec.md": phase4_feature_spec_text(task, standards),
+        "research_brief.md": phase4_research_brief_text(task),
+        "tradeoff_matrix.md": phase4_tradeoff_matrix_text(task),
+        "proposal.md": phase4_proposal_text(task, standards),
+    }
+    for name, content in artifacts.items():
+        path = run_dir / name
+        path.write_text(content if content.endswith("\n") else content + "\n", encoding="utf-8")
+        created.append(str(path))
+    return created
+
+
+def write_phase4_runtime_proof_log(
+    run_dir: Path,
+    *,
+    local_validation: dict[str, Any] | None,
+    vm_validation: dict[str, Any] | None,
+    summary: str,
+) -> Path:
+    lines = ["# Runtime Proof", "", f"summary: {summary}", ""]
+    if local_validation is not None:
+        lines.append("## Local Validation")
+        for result in local_validation.get("results", []):
+            lines.append(f"- command: {result.get('command')}")
+            lines.append(f"  passed: {result.get('passed')}")
+    if vm_validation is not None:
+        lines.append("")
+        lines.append("## VM Validation")
+        for result in vm_validation.get("results", []):
+            lines.append(f"- phase: {result.get('phase', 'vm_pull')}")
+            lines.append(f"  command: {result.get('command')}")
+            lines.append(f"  passed: {result.get('passed')}")
+    path = phase4_runtime_proof_path(run_dir)
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return path
+
+
+def write_phase4_judge_decision(
+    run_dir: Path,
+    *,
+    task: dict[str, Any],
+    automation_result: dict[str, Any],
+    standards: dict[str, Any],
+    judge_memory_bundle: dict[str, Any] | None = None,
+) -> Path:
+    required_artifacts = phase4_required_artifact_paths(run_dir)
+    lines = [
+        f"# Judge Decision: {task['id']}",
+        "",
+        f"classification: {automation_result['classification']}",
+        f"summary: {automation_result['summary']}",
+        "",
+        "## Gate Check",
+        f"- required artifacts present: {'yes' if all(path.exists() for path in required_artifacts.values() if path.name != 'judge_decision.md') else 'no'}",
+        f"- repo-local standards loaded: {'yes' if not repo_local_standards_issues(standards) else 'no'}",
+        f"- runtime proof captured: {'yes' if phase4_runtime_proof_path(run_dir).exists() else 'no'}",
+        "",
+        "## Decision",
+        "Acceptance is based on evidence artifacts and recorded validation results, not on narrative confidence.",
+    ]
+    if judge_memory_bundle:
+        lines.extend(
+            [
+                "",
+                "## Judge Memory Context",
+                format_memory_bundle_text(judge_memory_bundle),
+            ]
+        )
+    path = run_dir / "judge_decision.md"
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return path
+
+
+def write_phase4_postmortem(run_dir: Path, *, summary: str, automation_result: dict[str, Any]) -> Path:
+    path = phase4_postmortem_path(run_dir)
+    path.write_text(
+        "\n".join(
+            [
+                "# Failure Postmortem",
+                "",
+                f"summary: {summary}",
+                f"category: {phase4_failure_category(summary)}",
+                "",
+                "## Step Outcomes",
+                *[
+                    f"- {step.get('name')}: {step.get('outcome')} ({step.get('detail')})"
+                    for step in automation_result.get("steps", [])
+                ],
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return path
+
+
+def phase4_artifact_issues(run_dir: Path, *, require_runtime_proof: bool) -> list[str]:
+    issues = [name for name, path in phase4_required_artifact_paths(run_dir).items() if not path.exists()]
+    if not phase4_research_brief_path(run_dir).exists():
+        issues.append("research_brief.md")
+    if require_runtime_proof and not phase4_runtime_proof_path(run_dir).exists():
+        issues.append("runtime_proof.log")
+    return issues
+
+
+def persist_result_with_phase4_artifacts(
+    run_dir: Path,
+    task: dict[str, Any],
+    automation_result: dict[str, Any],
+    *,
+    standards: dict[str, Any],
+    require_runtime_proof: bool,
+    local_validation_payload: dict[str, Any] | None = None,
+    vm_validation_payload: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    eval_result: dict[str, Any] | None = None
+    if phase4_requires_artifact_enforcement(task):
+        memory_store = build_memory_store(ROOT)
+        judge_memory_bundle = retrieve_memory_for_role(task, memory_store, role="judge")
+        judge_memory_path = run_dir / "judge_memory_context.json"
+        judge_memory_path.write_text(json.dumps(judge_memory_bundle, indent=2) + "\n", encoding="utf-8")
+        if not phase4_runtime_proof_path(run_dir).exists():
+            write_phase4_runtime_proof_log(
+                run_dir,
+                local_validation=local_validation_payload,
+                vm_validation=vm_validation_payload,
+                summary=automation_result.get("summary", ""),
+            )
+        if automation_result.get("classification") != "accepted":
+            write_phase4_postmortem(run_dir, summary=automation_result.get("summary", ""), automation_result=automation_result)
+        write_phase4_judge_decision(
+            run_dir,
+            task=task,
+            automation_result=automation_result,
+            standards=standards,
+            judge_memory_bundle=judge_memory_bundle,
+        )
+        evidence_path = run_dir / "evidence_bundle.json"
+        evidence_payload = {
+            "task_id": task["id"],
+            "classification": automation_result.get("classification"),
+            "summary": automation_result.get("summary"),
+            "artifacts": {
+                "compiled_feature_spec": str(run_dir / "compiled_feature_spec.md"),
+                "research_brief": str(phase4_research_brief_path(run_dir)),
+                "proposal": str(run_dir / "proposal.md"),
+                "tradeoff_matrix": str(run_dir / "tradeoff_matrix.md"),
+                "runtime_proof": str(phase4_runtime_proof_path(run_dir)),
+                "eval_result": str(run_dir / "eval_result.json"),
+                "judge_memory_context": str(judge_memory_path),
+                "judge_decision": str(run_dir / "judge_decision.md"),
+                "postmortem": str(phase4_postmortem_path(run_dir)) if phase4_postmortem_path(run_dir).exists() else None,
+            },
+            "repo_local_standards": {
+                "agents_path": standards.get("agents_path"),
+                "skills_dir": standards.get("skills_dir"),
+                "skill_files": standards.get("skill_files", []),
+            },
+            "memory_schema_issues": validate_memory_store_schema(memory_store),
+            "judge_memory_selected": [
+                {
+                    "memory_id": entry.get("memory_id"),
+                    "memory_type": entry.get("memory_type"),
+                    "selection_score": entry.get("selection_score"),
+                    "selection_reasons": entry.get("selection_reasons"),
+                }
+                for entry in judge_memory_bundle.get("selected", [])
+            ],
+            "steps": automation_result.get("steps", []),
+        }
+        evidence_path.write_text(json.dumps(evidence_payload, indent=2) + "\n", encoding="utf-8")
+        issues = phase4_artifact_issues(run_dir, require_runtime_proof=require_runtime_proof)
+        if issues and automation_result.get("classification") == "accepted":
+            automation_result["classification"] = "blocked"
+            automation_result["summary"] = "Phase 4 artifact enforcement failed: " + ", ".join(issues)
+            automation_result.setdefault("steps", []).append(
+                {
+                    "name": "judge",
+                    "outcome": "blocked",
+                    "detail": "Missing required artifacts: " + ", ".join(issues),
+                }
+            )
+        eval_result = score_run_eval(task, automation_result, run_dir=run_dir, standards=standards)
+        prior_eval = latest_comparable_history_eval(task, eval_result, exclude_run_dir=run_dir, root=ROOT)
+        if prior_eval is not None:
+            eval_result["regression_vs_prior"] = compare_private_eval_results(prior_eval, eval_result)
+            eval_result["regression_vs_prior"]["baseline_history_path"] = prior_eval.get("history_path")
+        if automation_result.get("classification") == "accepted" and not eval_result.get("passed"):
+            automation_result["classification"] = "blocked"
+            automation_result["summary"] = f"Eval threshold not met: overall_score={eval_result['overall_score']}"
+            automation_result.setdefault("steps", []).append(
+                {
+                    "name": "eval_gate",
+                    "outcome": "blocked",
+                    "detail": f"overall_score={eval_result['overall_score']} threshold={eval_result['threshold']}",
+                }
+            )
+            eval_result["blocked_acceptance"] = True
+        else:
+            eval_result["blocked_acceptance"] = False
+        write_eval_result(run_dir, eval_result)
+        automation_result["eval_result"] = eval_result
+    write_json(run_dir / RESULT_FILE, automation_result)
+    write_summary(run_dir, automation_result)
+    update_run_ledger(
+        task_id=task.get("id"),
+        title=task.get("title"),
+        run_state=str(automation_result.get("classification")),
+        stage_name="judge" if phase4_requires_artifact_enforcement(task) else "classification",
+        run_log_dir=run_dir,
+        detail=str(automation_result.get("summary")),
+        failure_taxonomy=automation_result.get("failure_taxonomy"),
+        eval_result=eval_result,
+        next_action="Inspect automation_result.json and judge_decision.md.",
+    )
+    return automation_result
+
+
+def current_artifact_completeness(run_dir: Path | None) -> dict[str, Any]:
+    if run_dir is None:
+        return {"present": [], "missing": list(PHASE4_REQUIRED_ARTIFACTS)}
+    present: list[str] = []
+    missing: list[str] = []
+    for name in PHASE4_REQUIRED_ARTIFACTS:
+        path = run_dir / name
+        if path.exists():
+            present.append(name)
+        else:
+            missing.append(name)
+    if phase4_runtime_proof_path(run_dir).exists():
+        present.append("runtime_proof.log")
+    return {"present": present, "missing": missing}
+
+
+def write_run_ledger(snapshot: dict[str, Any]) -> None:
+    previous = load_data(RUN_LEDGER) if RUN_LEDGER.exists() else {"events": []}
+    events = list(previous.get("events", []))
+    event = snapshot.get("event")
+    if event:
+        events.append(event)
+        events = events[-25:]
+    payload = {**previous, **snapshot}
+    payload["events"] = events
+    write_data(RUN_LEDGER, payload)
+
+
+def update_run_ledger(
+    *,
+    task_id: str | None,
+    title: str | None,
+    run_state: str,
+    stage_name: str | None,
+    run_log_dir: Path | None,
+    detail: str | None = None,
+    failure_taxonomy: dict[str, Any] | None = None,
+    eval_result: dict[str, Any] | None = None,
+    next_action: str | None = None,
+) -> None:
+    artifact_state = current_artifact_completeness(run_log_dir)
+    payload = {
+        "updated_at": now_iso(),
+        "current_task": task_id,
+        "current_title": title,
+        "current_stage": stage_name,
+        "run_state": run_state,
+        "current_blocker": detail if run_state in {"blocked", "preflight_failed"} else None,
+        "last_successful_checkpoint": stage_name if run_state in {"task_selected", "preflight_passed", "implementing", "verifying", "completed"} else None,
+        "artifact_completeness": artifact_state,
+        "failure_taxonomy": failure_taxonomy,
+        "eval_result": eval_result,
+        "eval_blocked_acceptance": bool((eval_result or {}).get("blocked_acceptance")),
+        "runtime_proof_summary": None if run_log_dir is None else (phase4_runtime_proof_path(run_log_dir).read_text(encoding="utf-8")[:400] if phase4_runtime_proof_path(run_log_dir).exists() else None),
+        "next_recommended_action": next_action,
+        "run_log_dir": str(run_log_dir) if run_log_dir else None,
+        "event": {
+            "at": now_iso(),
+            "task_id": task_id,
+            "run_state": run_state,
+            "stage_name": stage_name,
+            "detail": detail,
+        },
+    }
+    write_run_ledger(payload)
+
+
+def detect_failure_taxonomy(summary: str, automation_result: dict[str, Any]) -> dict[str, Any]:
+    normalized = summary.lower()
+    if "auth" in normalized or "interactive prompts" in normalized or "ssh" in normalized or "executor_transport_failure" in normalized:
+        failure_class = "auth_connectivity_failure" if "auth" in normalized or "ssh" in normalized else "flaky_nondeterministic_failure"
+    elif "dirty before automated execution" in normalized or "allowlist" in normalized:
+        failure_class = "repo_state_failure"
+    elif "local validation failed" in normalized:
+        failure_class = "local_test_failure"
+    elif "vm " in normalized:
+        failure_class = "runtime_vm_failure"
+    elif "artifact" in normalized or "ux conformance evidence is incomplete" in normalized:
+        failure_class = "artifact_completeness_failure"
+    elif "missing automation configuration" in normalized:
+        failure_class = "configuration_defect"
+    elif "ambiguity" in normalized or "source of truth" in normalized:
+        failure_class = "spec_ambiguity_failure"
+    elif "executor completed but no" in normalized or "executor_failure" in normalized:
+        failure_class = "implementation_failure"
+    else:
+        failure_class = "prompt_planning_failure"
+    policy = FAILURE_RECOVERY_MAP.get(failure_class, {"action": "replan_required", "retryable": False})
+    return {
+        "failure_class": failure_class,
+        "recovery_action": policy["action"],
+        "retryable": policy["retryable"],
+    }
+
+
+def recent_failure_loop_count(task_id: str, failure_class: str, *, limit: int = 5) -> int:
+    count = 0
+    history_files = sorted(TASK_HISTORY.glob(f"*-{task_id}.yml"), reverse=True)
+    for path in history_files[:limit]:
+        payload = load_data(path)
+        taxonomy = payload.get("failure_taxonomy") or {}
+        if taxonomy.get("failure_class") == failure_class:
+            count += 1
+    return count
+
+
+def score_run_eval(
+    task: dict[str, Any],
+    automation_result: dict[str, Any],
+    *,
+    run_dir: Path,
+    standards: dict[str, Any],
+) -> dict[str, Any]:
+    eval_result = score_private_eval(task, automation_result, run_dir=run_dir, standards=standards, root=ROOT)
+    if eval_result.get("mode") != "no_fixture":
+        return eval_result
+    step_lookup = {step.get("name"): step for step in automation_result.get("steps", [])}
+    scores = {
+        "planning_quality": 1.0 if (run_dir / "compiled_feature_spec.md").exists() and (run_dir / "proposal.md").exists() else 0.3,
+        "implementation_quality": 1.0 if automation_result.get("classification") == "accepted" else 0.5 if step_lookup.get("executor", {}).get("outcome") == "passed" else 0.2,
+        "test_adequacy": 1.0 if step_lookup.get("local_validation", {}).get("outcome") in {"passed", "accepted"} or "local_validation" not in step_lookup else 0.0,
+        "runtime_proof_quality": 1.0 if phase4_runtime_proof_path(run_dir).exists() else 0.0,
+        "evidence_quality": 1.0 if (run_dir / "evidence_bundle.json").exists() and (run_dir / "judge_decision.md").exists() else 0.0,
+        "operator_handoff_quality": 1.0 if (standards.get("agents_exists") and standards.get("skills_exists")) else 0.4,
+    }
+    overall = round(sum(scores.values()) / len(scores), 3)
+    return {
+        "suite_version": 1,
+        "mode": "heuristic_fallback",
+        "task_id": task["id"],
+        "scores": scores,
+        "overall_score": overall,
+        "threshold": 0.75,
+        "passed": overall >= 0.75,
+        "mandatory_artifacts": {"present": [], "missing": []},
+        "dimension_failures": [],
+    }
+
+
+def write_eval_result(run_dir: Path, eval_result: dict[str, Any]) -> Path:
+    path = run_dir / "eval_result.json"
+    path.write_text(json.dumps(eval_result, indent=2) + "\n", encoding="utf-8")
+    return path
+
+
+def preflight_contract_issues(
+    *,
+    task: dict[str, Any],
+    target_kind: str,
+    target_repo: Path,
+    standards: dict[str, Any],
+) -> list[str]:
+    issues: list[str] = []
+    if not target_repo.exists():
+        issues.append(f"missing_target_repo:{target_repo}")
+    required_dirs = [ROOT / "prompts", ROOT / "run_logs", ROOT / "task_history", ROOT / "blockers"]
+    for directory in required_dirs:
+        if not directory.exists():
+            issues.append(f"missing_required_dir:{directory.name}")
+    if phase4_requires_artifact_enforcement(task):
+        issues.extend(repo_local_standards_issues(standards))
+    return issues
+
+
+def acquire_run_lock(task_id: str) -> tuple[bool, str | None]:
+    current = {
+        "pid": os.getpid(),
+        "task_id": task_id,
+        "acquired_at": now_iso(),
+    }
+    if RUN_LOCK.exists():
+        payload = load_data(RUN_LOCK)
+        other_pid = payload.get("pid")
+        if isinstance(other_pid, int):
+            try:
+                os.kill(other_pid, 0)
+                return False, f"run_lock held by pid {other_pid} for task {payload.get('task_id')}"
+            except OSError:
+                pass
+    write_data(RUN_LOCK, current)
+    return True, None
+
+
+def release_run_lock() -> None:
+    if not RUN_LOCK.exists():
+        return
+    payload = load_data(RUN_LOCK)
+    if payload.get("pid") == os.getpid():
+        RUN_LOCK.unlink(missing_ok=True)
 
 
 def now_iso() -> str:
@@ -123,6 +807,7 @@ def reset_active() -> dict[str, Any]:
         "target_repo": None,
         "target_kind": None,
         "previous_run_log_dir": None,
+        "prior_run_log_dirs": [],
     }
 
 
@@ -155,6 +840,10 @@ def history_evidence_artifacts(run_dir: Path | None, prompt_file: Path | None) -
                 ("vm_validation", run_dir / "vm_validation.json"),
                 ("git", run_dir / "git.json"),
                 ("executor", run_dir / "executor.json"),
+                ("eval_result", run_dir / "eval_result.json"),
+                ("judge_memory_context", run_dir / "judge_memory_context.json"),
+                ("judge_decision", run_dir / "judge_decision.md"),
+                ("evidence_bundle", run_dir / "evidence_bundle.json"),
             ]
         )
     artifacts: list[dict[str, str]] = []
@@ -189,6 +878,19 @@ def is_retryable_executor_failure(executor_result: dict[str, Any]) -> bool:
         part for part in (str(executor_result.get("stderr") or ""), str(executor_result.get("stdout") or "")) if part
     ).lower()
     return any(pattern in text for pattern in TRANSIENT_EXECUTOR_FAILURE_PATTERNS)
+
+
+def summarize_retryable_executor_failure(executor_result: dict[str, Any]) -> str:
+    text = "\n".join(
+        part for part in (str(executor_result.get("stderr") or ""), str(executor_result.get("stdout") or "")) if part
+    ).lower()
+    if "failed to lookup address information" in text or "could not resolve host" in text:
+        return "executor_transport_failure: DNS/network resolution failed while Codex tried to reach chatgpt.com"
+    if "stream disconnected before completion" in text or "error sending request for url" in text:
+        return "executor_transport_failure: Codex lost its upstream connection before completion"
+    if "attempt to write a readonly database" in text:
+        return "executor_transport_failure: Codex could not write its local state database"
+    return "executor_transport_failure"
 
 
 def ux_conformance_result(task: dict[str, Any], executor_output: str) -> dict[str, Any]:
@@ -384,6 +1086,14 @@ def emit_progress(
             **(extra_payload or {}),
         },
     )
+    update_run_ledger(
+        task_id=task_id,
+        title=None,
+        run_state=state,
+        stage_name=stage_name,
+        run_log_dir=run_dir,
+        detail=detail,
+    )
 
 
 def allocate_run_dir(task_id: str) -> Path:
@@ -426,13 +1136,41 @@ def sync_run_state(
         status["last_result"] = last_result
     write_data(ACTIVE, active)
     write_data(STATUS, status)
+    update_run_ledger(
+        task_id=task_id,
+        title=title,
+        run_state=state,
+        stage_name=None,
+        run_log_dir=run_log_dir,
+        detail=failure_summary,
+    )
 
 
 def prepare_invocation_run_dir(active: dict[str, Any], task_id: str) -> tuple[Path | None, Path]:
+    prior_run_log_dirs: list[str] = []
+    seen_prior_run_log_dirs: set[str] = set()
+
+    def add_prior_run_log_dir(value: Any) -> None:
+        if not value:
+            return
+        resolved = str(Path(str(value)).expanduser().resolve())
+        if resolved in seen_prior_run_log_dirs:
+            return
+        seen_prior_run_log_dirs.add(resolved)
+        prior_run_log_dirs.append(resolved)
+
+    add_prior_run_log_dir(active.get("run_log_dir"))
+    add_prior_run_log_dir(active.get("previous_run_log_dir"))
+    for entry in active.get("prior_run_log_dirs", []):
+        add_prior_run_log_dir(entry)
+
     previous = None
     if active.get("run_log_dir"):
         previous = Path(str(active["run_log_dir"])).expanduser().resolve()
+    elif active.get("previous_run_log_dir"):
+        previous = Path(str(active["previous_run_log_dir"])).expanduser().resolve()
     run_dir = allocate_run_dir(task_id)
+    active["prior_run_log_dirs"] = prior_run_log_dirs
     active["previous_run_log_dir"] = str(previous) if previous else None
     active["run_log_dir"] = str(run_dir)
     active["started_at"] = now_iso()
@@ -913,6 +1651,16 @@ def ignored_git_paths_for_target(target_kind: str, git_config: dict[str, Any] | 
             "backlog.yml",
             "status.yml",
             "builder_memory.md",
+            "backlog_apply_audit.json",
+            "backlog_proposals.json",
+            "feedback_signals.json",
+            "memory_overrides.json",
+            "memory_store.json",
+            "run_ledger.json",
+            "run_lock.json",
+            "replay_summary.json",
+            "eval_comparison.json",
+            "synthesized_backlog_entries.json",
             "task_history/",
             "blockers/",
             "run_logs/",
@@ -1036,6 +1784,8 @@ def record_history(task: dict[str, Any], active: dict[str, Any], automation_resu
         "notes": [automation_result["summary"]],
         "operator_diagnostics": operator_diagnostics,
         "unproven_runtime_gaps": automation_result.get("unproven_runtime_gaps", []),
+        "failure_taxonomy": automation_result.get("failure_taxonomy"),
+        "eval_result": automation_result.get("eval_result"),
     }
     write_data(path, payload)
     return path
@@ -1104,84 +1854,128 @@ def is_retry_continuation(active: dict[str, Any], status: dict[str, Any], *, res
     )
 
 
-def load_prior_automation_result(run_dir: Path | None) -> dict[str, Any] | None:
-    if run_dir is None:
-        return None
-    path = run_dir / RESULT_FILE
-    if not path.exists():
-        return None
-    return load_data(path)
+def iter_prior_run_dirs(run_dir: Path | None, active: dict[str, Any] | None = None) -> list[Path]:
+    candidates: list[Path] = []
+    seen: set[str] = set()
+
+    def add_candidate(value: Any) -> None:
+        if not value:
+            return
+        resolved = Path(str(value)).expanduser().resolve()
+        resolved_key = str(resolved)
+        if resolved_key in seen:
+            return
+        seen.add(resolved_key)
+        candidates.append(resolved)
+
+    add_candidate(run_dir)
+    if active is not None:
+        add_candidate(active.get("previous_run_log_dir"))
+        for entry in active.get("prior_run_log_dirs", []):
+            add_candidate(entry)
+    return candidates
 
 
-def prior_result_supports_vm_retry(run_dir: Path | None) -> dict[str, Any] | None:
-    prior = load_prior_automation_result(run_dir)
-    if prior:
-        steps = {step.get("name"): step for step in prior.get("steps", [])}
-        if (
-            steps.get("local_validation", {}).get("outcome") == "passed"
-            and steps.get("git", {}).get("outcome") == "passed"
-            and steps.get("vm_validation", {}).get("outcome") == "refined"
-            and prior.get("changed_files")
-        ):
-            return prior
+def load_prior_automation_result(run_dir: Path | None, active: dict[str, Any] | None = None) -> dict[str, Any] | None:
+    for candidate in iter_prior_run_dirs(run_dir, active):
+        path = candidate / RESULT_FILE
+        if path.exists():
+            return load_data(path)
+    return None
 
-    local_validation_path = run_dir / "local_validation.json"
-    git_path = run_dir / "git.json"
-    vm_validation_path = run_dir / "vm_validation.json"
-    if not (local_validation_path.exists() and git_path.exists() and vm_validation_path.exists()):
-        return None
 
-    local_validation = load_data(local_validation_path)
-    git_result = load_data(git_path)
-    vm_validation = load_data(vm_validation_path)
-    if not local_validation.get("passed"):
-        return None
-    if not (
-        git_result.get("add", {}).get("passed")
-        and git_result.get("commit", {}).get("passed")
-        and git_result.get("push", {}).get("passed")
-    ):
-        return None
-    if vm_validation.get("passed") is not False:
-        return None
+def prior_result_supports_vm_retry(run_dir: Path | None, active: dict[str, Any] | None = None) -> dict[str, Any] | None:
+    for candidate in iter_prior_run_dirs(run_dir, active):
+        prior = load_prior_automation_result(candidate)
+        if prior:
+            steps = {step.get("name"): step for step in prior.get("steps", [])}
+            if (
+                steps.get("vm_validation", {}).get("outcome") == "refined"
+                and prior.get("changed_files")
+                and (
+                    (
+                        steps.get("local_validation", {}).get("outcome") == "passed"
+                        and steps.get("git", {}).get("outcome") == "passed"
+                    )
+                    or steps.get("retry_check", {}).get("outcome") == "passed"
+                )
+            ):
+                return prior
 
-    changed_files: list[str] = []
-    for result in local_validation.get("results", []):
-        stdout = str(result.get("stdout", ""))
-        if "== git status --short ==" not in stdout:
+        local_validation_path = candidate / "local_validation.json"
+        git_path = candidate / "git.json"
+        vm_validation_path = candidate / "vm_validation.json"
+        if not (local_validation_path.exists() and git_path.exists() and vm_validation_path.exists()):
             continue
-        capture = False
-        for line in stdout.splitlines():
-            if line.strip() == "== git status --short ==":
-                capture = True
-                continue
-            if capture and line.startswith("== "):
-                break
-            if not capture:
-                continue
-            if not line.strip():
-                continue
-            changed_files.append(line[3:] if len(line) > 3 else line.strip())
-        if changed_files:
-            break
-    if not changed_files:
-        previous = load_prior_automation_result(run_dir)
-        if previous and previous.get("changed_files"):
-            changed_files = list(previous.get("changed_files", []))
-    if not changed_files:
-        return None
 
-    return {
-        "task_id": None,
-        "classification": "refined",
-        "summary": "VM validation failed after local validation and git push succeeded.",
-        "steps": [
-            {"name": "local_validation", "outcome": "passed"},
-            {"name": "git", "outcome": "passed"},
-            {"name": "vm_validation", "outcome": "refined"},
-        ],
-        "changed_files": changed_files,
-    }
+        local_validation = load_data(local_validation_path)
+        git_result = load_data(git_path)
+        vm_validation = load_data(vm_validation_path)
+        if not local_validation.get("passed"):
+            continue
+        if not (
+            git_result.get("add", {}).get("passed")
+            and git_result.get("commit", {}).get("passed")
+            and git_result.get("push", {}).get("passed")
+        ):
+            continue
+        if vm_validation.get("passed") is not False:
+            continue
+
+        changed_files: list[str] = []
+        for result in local_validation.get("results", []):
+            stdout = str(result.get("stdout", ""))
+            if "== git status --short ==" not in stdout:
+                continue
+            capture = False
+            for line in stdout.splitlines():
+                if line.strip() == "== git status --short ==":
+                    capture = True
+                    continue
+                if capture and line.startswith("== "):
+                    break
+                if not capture:
+                    continue
+                if not line.strip():
+                    continue
+                changed_files.append(line[3:] if len(line) > 3 else line.strip())
+            if changed_files:
+                break
+        if not changed_files:
+            previous = load_prior_automation_result(candidate, active)
+            if previous and previous.get("changed_files"):
+                changed_files = list(previous.get("changed_files", []))
+        if not changed_files:
+            continue
+
+        return {
+            "task_id": None,
+            "classification": "refined",
+            "summary": "VM validation failed after local validation and git push succeeded.",
+            "steps": [
+                {"name": "local_validation", "outcome": "passed"},
+                {"name": "git", "outcome": "passed"},
+                {"name": "vm_validation", "outcome": "refined"},
+            ],
+            "changed_files": changed_files,
+        }
+    return None
+
+
+def prior_result_supports_ux_evidence_retry(run_dir: Path | None, active: dict[str, Any] | None = None) -> dict[str, Any] | None:
+    for candidate in iter_prior_run_dirs(run_dir, active):
+        prior = load_prior_automation_result(candidate)
+        if not prior:
+            continue
+        if prior.get("summary") != "UX conformance evidence is incomplete for this product-facing UX task.":
+            continue
+        steps = {step.get("name"): step for step in prior.get("steps", [])}
+        if steps.get("executor", {}).get("outcome") != "passed":
+            continue
+        if steps.get("git", {}).get("outcome") != "passed":
+            continue
+        if prior.get("changed_files"):
+            return prior
     return None
 
 
@@ -1206,7 +2000,25 @@ def classify_and_update_state(
     terminal_state: str | None = None,
 ) -> None:
     status.setdefault("stats", {})
+    if classification != "accepted":
+        taxonomy = detect_failure_taxonomy(summary, automation_result)
+        automation_result["failure_taxonomy"] = taxonomy
+        if classification == "refined" and recent_failure_loop_count(task["id"], taxonomy["failure_class"]) >= 2:
+            classification = "blocked"
+            summary = f"{summary} Retry loop detected for failure class {taxonomy['failure_class']}; blocking for replan."
+            automation_result["classification"] = "blocked"
+            automation_result["summary"] = summary
+            automation_result.setdefault("steps", []).append(
+                {
+                    "name": "recovery_controller",
+                    "outcome": "blocked",
+                    "detail": "Repeated refined failures of the same class triggered loop protection.",
+                }
+            )
+    else:
+        automation_result["failure_taxonomy"] = None
     history_path = record_history(task, active, automation_result)
+    generate_backlog_proposals(ROOT, dry_run=False)
 
     if classification == "interrupted":
         append_memory(f"{task['id']} interrupted by operator. History: {history_path.name}")
@@ -1577,6 +2389,7 @@ def repair_legacy_state() -> int:
         and str(active.get("failure_summary") or run_result.get("summary") or "")
         == "Retry-ready task has no product repo changes to continue from."
     ):
+        task["status"] = "ready"
         repaired_active = reset_active()
         repaired_active["previous_run_log_dir"] = active.get("run_log_dir")
         write_data(ACTIVE, repaired_active)
@@ -2074,14 +2887,10 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         except KeyError:
             task = None
     if task is not None:
-        if not active.get("verification_commands"):
-            active["verification_commands"] = list(task.get("verification", []))
-        if not active.get("vm_verification_commands"):
-            active["vm_verification_commands"] = list(task.get("vm_verification", []))
-        if not active.get("vm_bootstrap_commands"):
-            active["vm_bootstrap_commands"] = list(task.get("vm_bootstrap", []))
-        if not active.get("vm_cleanup_commands"):
-            active["vm_cleanup_commands"] = list(task.get("vm_cleanup", []))
+        active["verification_commands"] = list(task.get("verification", []))
+        active["vm_verification_commands"] = list(task.get("vm_verification", []))
+        active["vm_bootstrap_commands"] = list(task.get("vm_bootstrap", []))
+        active["vm_cleanup_commands"] = list(task.get("vm_cleanup", []))
     execution = resolve_execution_candidate(backlog, active, status, resume=args.resume)
     diagnostics = execution["diagnostics"]
     if active.get("task_id") and execution.get("active_candidate_id") is None and not backlog.get("errors"):
@@ -2166,9 +2975,9 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
     context["vm_product_repo"] = vm_repo
 
     vm_validation_commands = list(vm_config.get("validation_commands", []))
-    vm_bootstrap_commands = list(active.get("vm_bootstrap_commands", []))
+    vm_bootstrap_commands = list(active.get("vm_bootstrap_commands", [])) or list(vm_config.get("bootstrap_commands", []))
     vm_smoke_commands = list(vm_config.get("runtime_validation_commands", [])) + list(active.get("vm_verification_commands", []))
-    vm_cleanup_commands = list(active.get("vm_cleanup_commands", []))
+    vm_cleanup_commands = list(active.get("vm_cleanup_commands", [])) or list(vm_config.get("cleanup_commands", []))
     local_validation_commands = list(active.get("verification_commands", []))
     prepared_validation_commands, validation_venv = validation_commands_for_target(
         local_validation_commands,
@@ -2176,6 +2985,8 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         target_repo=target_repo,
     )
     use_vm_flow = target_kind == "product"
+    standards = load_repo_local_standards(ROOT)
+    phase4_enforcement = phase4_requires_artifact_enforcement(task)
     effective_vm_ssh_options = noninteractive_vm_ssh_options(vm_config) if use_vm_flow else []
     ignored_git_paths = ignored_git_paths_for_target(target_kind, git_config)
     plan = {
@@ -2206,30 +3017,75 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         "missing_configuration": [],
         "retry_continuation": retry_continuation,
     }
+    if phase4_enforcement:
+        plan["phase4_stage_order"] = phase4_stage_order(task, use_vm_flow=use_vm_flow)
+        plan["repo_local_standards"] = {
+            "agents_path": standards.get("agents_path"),
+            "skills_dir": standards.get("skills_dir"),
+            "skill_files": standards.get("skill_files", []),
+        }
     executor_result: dict[str, Any] = {}
+    local_validation_payload: dict[str, Any] | None = None
+    vm_validation_payload: dict[str, Any] | None = None
     if executor_mode != "human_gated" and not executor_config.get("command"):
         if executor_mode == "codex_exec":
             if shutil.which(codex_cli) is None and not Path(codex_cli).expanduser().exists():
                 plan["missing_configuration"].append("executor.codex_cli")
         else:
             plan["missing_configuration"].append("executor.command")
+    if phase4_enforcement:
+        plan["missing_configuration"].extend(repo_local_standards_issues(standards))
+        checkpoint_issue = phase4_decision_checkpoint_issue(task)
+        if checkpoint_issue:
+            plan["missing_configuration"].append(checkpoint_issue)
+    plan["preflight_contract_issues"] = preflight_contract_issues(
+        task=task,
+        target_kind=target_kind,
+        target_repo=target_repo,
+        standards=standards,
+    )
+    if plan["preflight_contract_issues"]:
+        plan["missing_configuration"].extend(plan["preflight_contract_issues"])
     if use_vm_flow and not vm_config.get("ssh_target"):
         plan["missing_configuration"].append("vm.ssh_target")
     if use_vm_flow and not vm_smoke_commands:
         plan["missing_configuration"].append("vm.runtime_validation_commands or task.vm_verification")
     if use_vm_flow and vm_smoke_commands and not vm_bootstrap_commands:
-        plan["missing_configuration"].append("task.vm_bootstrap")
+        plan["missing_configuration"].append("vm.bootstrap_commands or task.vm_bootstrap")
+    if use_vm_flow and vm_bootstrap_commands and vm_smoke_commands:
+        bootstrap_streamlit_port = extract_streamlit_port(vm_bootstrap_commands)
+        runtime_self_check_ui_url = extract_runtime_self_check_ui_url(vm_smoke_commands)
+        if bootstrap_streamlit_port and runtime_self_check_ui_url:
+            expected_ui_url = f"http://127.0.0.1:{bootstrap_streamlit_port}"
+            if runtime_self_check_ui_url != expected_ui_url:
+                plan["missing_configuration"].append(
+                    f"vm runtime UI mismatch: bootstrap uses {expected_ui_url} but runtime_self_check expects {runtime_self_check_ui_url}"
+                )
 
     if args.dry_run:
+        planned_artifacts: list[str] = []
+        planned_steps: list[dict[str, Any]] = []
+        if phase4_enforcement:
+            planned_artifacts = write_phase4_preimplementation_artifacts(run_dir, task, standards)
+            planned_steps.extend(
+                [
+                    {"name": "planner", "outcome": "planned", "detail": f"compiled_feature_spec.md -> {run_dir / 'compiled_feature_spec.md'}"},
+                    {"name": "architect", "outcome": "planned", "detail": f"tradeoff_matrix.md + proposal.md -> {run_dir}"},
+                    {"name": "research_grounding", "outcome": "planned", "detail": f"research_brief.md -> {run_dir / 'research_brief.md'}"},
+                    {"name": "decision_checkpoint", "outcome": "planned", "detail": "Decision checkpoint would block if selected_approach were missing while multiple options were declared."},
+                    {"name": "implementer", "outcome": "planned", "detail": "Executor would run only after planning artifacts exist."},
+                    {"name": "validator", "outcome": "planned", "detail": "Local validation, git, and runtime proof would run according to the task target."},
+                    {"name": "judge", "outcome": "planned", "detail": "Acceptance would require judge_decision.md and evidence_bundle.json."},
+                ]
+            )
         payload = {
             "task_id": task["id"],
             "classification": "dry_run",
             "finished_at": now_iso(),
             "summary": "Dry run only. No executor, git, or VM commands were executed.",
-            "steps": [
-                {"name": "plan", "outcome": "planned", "detail": json.dumps(plan, indent=2)},
-            ],
+            "steps": planned_steps + [{"name": "plan", "outcome": "planned", "detail": json.dumps(plan, indent=2)}],
             "changed_files": [],
+            "planned_artifacts": planned_artifacts,
             "unproven_runtime_gaps": ["Automation loop not executed; this was a dry run."],
         }
         write_json(run_dir / RESULT_FILE, payload)
@@ -2245,8 +3101,45 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         status["last_task_id"] = task["id"]
         status["last_run_at"] = now_iso()
         write_data(STATUS, status)
+        update_run_ledger(
+            task_id=task["id"],
+            title=task["title"],
+            run_state="dry_run",
+            stage_name="plan",
+            run_log_dir=run_dir,
+            detail=payload["summary"],
+            next_action="Inspect automation_result.json for the planned stages and artifacts.",
+        )
         print_result("DRY_RUN", f"Plan written to {run_dir / RESULT_FILE}")
         return 0
+
+    lock_acquired, lock_issue = acquire_run_lock(task["id"])
+    if not lock_acquired:
+        summary = f"Missing automation configuration: {lock_issue}"
+        automation_result = {
+            "task_id": task["id"],
+            "classification": "blocked",
+            "finished_at": now_iso(),
+            "summary": summary,
+            "steps": [{"name": "run_lock", "outcome": "blocked", "detail": lock_issue}],
+            "changed_files": [],
+            "blocker_evidence": [lock_issue] if lock_issue else [],
+            "unproven_runtime_gaps": [summary],
+        }
+        automation_result = persist_result_with_phase4_artifacts(
+            run_dir,
+            task,
+            automation_result,
+            standards=standards,
+            require_runtime_proof=phase4_enforcement,
+            local_validation_payload=local_validation_payload,
+            vm_validation_payload=vm_validation_payload,
+        )
+        classify_and_update_state("blocked", summary, task, backlog, active, status, automation_result)
+        write_data(BACKLOG, backlog)
+        write_data(STATUS, status)
+        print_result("BLOCKED", summary, "Wait for the current controller to finish or clear the stale run lock before rerunning automation.")
+        return 2
 
     auth_status = check_auth_status(config, target_kind=target_kind, target_repo=target_repo, cwd=ROOT)
     write_step(run_dir, "auth_preflight", auth_status)
@@ -2264,8 +3157,15 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             "blocker_evidence": [item for item in blocker_evidence if item],
             "unproven_runtime_gaps": [summary],
         }
-        write_json(run_dir / RESULT_FILE, automation_result)
-        write_summary(run_dir, automation_result)
+        automation_result = persist_result_with_phase4_artifacts(
+            run_dir,
+            task,
+            automation_result,
+            standards=standards,
+            require_runtime_proof=phase4_enforcement,
+            local_validation_payload=local_validation_payload,
+            vm_validation_payload=vm_validation_payload,
+        )
         classify_and_update_state("blocked", summary, task, backlog, active, status, automation_result, terminal_state="preflight_failed")
         write_data(BACKLOG, backlog)
         print_result(
@@ -2303,6 +3203,17 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
     steps: list[dict[str, Any]] = []
     blocker_evidence: list[str] = []
     continue_from_prior_vm_retry = False
+    continue_from_prior_ux_evidence_retry = False
+
+    if phase4_enforcement:
+        write_phase4_preimplementation_artifacts(run_dir, task, standards)
+        steps.extend(
+            [
+                {"name": "planner", "outcome": "passed", "detail": f"compiled_feature_spec.md written to {run_dir / 'compiled_feature_spec.md'}"},
+                {"name": "architect", "outcome": "passed", "detail": f"proposal.md and tradeoff_matrix.md written to {run_dir}"},
+                {"name": "research_grounding", "outcome": "passed", "detail": f"research_brief.md written to {run_dir / 'research_brief.md'}"},
+            ]
+        )
 
     if plan["missing_configuration"]:
         summary = "Missing automation configuration: " + ", ".join(plan["missing_configuration"])
@@ -2317,8 +3228,15 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             "blocker_evidence": plan["missing_configuration"],
             "unproven_runtime_gaps": [summary],
         }
-        write_json(run_dir / RESULT_FILE, automation_result)
-        write_summary(run_dir, automation_result)
+        automation_result = persist_result_with_phase4_artifacts(
+            run_dir,
+            task,
+            automation_result,
+            standards=standards,
+            require_runtime_proof=phase4_enforcement,
+            local_validation_payload=local_validation_payload,
+            vm_validation_payload=vm_validation_payload,
+        )
         classify_and_update_state("blocked", summary, task, backlog, active, status, automation_result)
         write_data(BACKLOG, backlog)
         write_data(STATUS, status)
@@ -2327,11 +3245,19 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
 
     baseline = git_status_porcelain(target_repo, ignored_prefixes=ignored_git_paths)
     if retry_continuation and bool(task.get("allow_noop_completion")) and not baseline.get("files"):
-        prior_vm_retry = prior_result_supports_vm_retry(previous_run_dir)
+        prior_vm_retry = prior_result_supports_vm_retry(previous_run_dir, active)
         if not prior_vm_retry:
             retry_continuation = False
             active.setdefault("notes", []).append(
                 "Retry-ready continuation cleared for allow_noop_completion task because no in-flight repo changes remained; rerunning fresh."
+            )
+    if retry_continuation and not baseline.get("files") and is_product_facing_ux_task(task):
+        prior_ux_evidence_retry = prior_result_supports_ux_evidence_retry(previous_run_dir, active)
+        if prior_ux_evidence_retry:
+            retry_continuation = False
+            continue_from_prior_ux_evidence_retry = True
+            active.setdefault("notes", []).append(
+                "Retry-ready continuation cleared for UX-evidence-only refine; rerunning executor fresh and allowing verified no-op completion."
             )
     write_step(run_dir, "git_status_before", baseline)
     if not args.resume and not retry_continuation and git_config.get("require_clean_worktree", True) and baseline.get("files"):
@@ -2348,8 +3274,15 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             "blocker_evidence": blocker_evidence,
             "unproven_runtime_gaps": [summary],
         }
-        write_json(run_dir / RESULT_FILE, automation_result)
-        write_summary(run_dir, automation_result)
+        automation_result = persist_result_with_phase4_artifacts(
+            run_dir,
+            task,
+            automation_result,
+            standards=standards,
+            require_runtime_proof=phase4_enforcement,
+            local_validation_payload=local_validation_payload,
+            vm_validation_payload=vm_validation_payload,
+        )
         classify_and_update_state("blocked", summary, task, backlog, active, status, automation_result)
         write_data(BACKLOG, backlog)
         write_data(STATUS, status)
@@ -2435,7 +3368,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             "detail": f"Continuing from existing {target_kind} repo task changes." if after_executor.get("files") else f"No {target_kind} repo changes were found for retry continuation.",
         })
         if not after_executor.get("files"):
-            prior_vm_retry = prior_result_supports_vm_retry(previous_run_dir)
+            prior_vm_retry = prior_result_supports_vm_retry(previous_run_dir, active)
             if prior_vm_retry:
                 steps[-1]["outcome"] = "passed"
                 steps[-1]["detail"] = "No current dirty repo changes; continuing from prior post-push VM retry context."
@@ -2451,8 +3384,15 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
                     "blocker_evidence": [],
                     "unproven_runtime_gaps": [summary],
                 }
-                write_json(run_dir / RESULT_FILE, automation_result)
-                write_summary(run_dir, automation_result)
+                automation_result = persist_result_with_phase4_artifacts(
+                    run_dir,
+                    task,
+                    automation_result,
+                    standards=standards,
+                    require_runtime_proof=phase4_enforcement,
+                    local_validation_payload=local_validation_payload,
+                    vm_validation_payload=vm_validation_payload,
+                )
                 classify_and_update_state("refined", summary, task, backlog, active, status, automation_result)
                 write_data(BACKLOG, backlog)
                 write_data(STATUS, status)
@@ -2549,7 +3489,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             elif failure_reason == "executor_interrupted":
                 summary = "executor_interrupted"
             elif retryable_executor_failure:
-                summary = "executor_transport_failure"
+                summary = summarize_retryable_executor_failure(executor_result)
             else:
                 summary = "executor_failure"
             emit_progress(run_dir, task_id=task["id"], stage_index=3, backlog=backlog, task_started_at=progress_started_at, state="failed", detail=summary)
@@ -2570,8 +3510,15 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
                 "blocker_evidence": [item for item in blocker_evidence if item],
                 "unproven_runtime_gaps": [summary],
             }
-            write_json(run_dir / RESULT_FILE, automation_result)
-            write_summary(run_dir, automation_result)
+            automation_result = persist_result_with_phase4_artifacts(
+                run_dir,
+                task,
+                automation_result,
+                standards=standards,
+                require_runtime_proof=phase4_enforcement,
+                local_validation_payload=local_validation_payload,
+                vm_validation_payload=vm_validation_payload,
+            )
             classify_and_update_state("interrupted" if failure_reason == "executor_interrupted" or retryable_executor_failure else "blocked", summary, task, backlog, active, status, automation_result)
             write_data(BACKLOG, backlog)
             if failure_reason == "executor_interrupted":
@@ -2592,7 +3539,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
     noop_completion = False
     allow_noop_completion = bool(task.get("allow_noop_completion"))
     if retry_continuation and not changed_files:
-        prior_vm_retry = prior_result_supports_vm_retry(previous_run_dir)
+        prior_vm_retry = prior_result_supports_vm_retry(previous_run_dir, active)
         if prior_vm_retry:
             changed_files = list(prior_vm_retry.get("changed_files", []))
             continue_from_prior_vm_retry = True
@@ -2612,8 +3559,15 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             "blocker_evidence": disallowed,
             "unproven_runtime_gaps": [summary],
         }
-        write_json(run_dir / RESULT_FILE, automation_result)
-        write_summary(run_dir, automation_result)
+        automation_result = persist_result_with_phase4_artifacts(
+            run_dir,
+            task,
+            automation_result,
+            standards=standards,
+            require_runtime_proof=phase4_enforcement,
+            local_validation_payload=local_validation_payload,
+            vm_validation_payload=vm_validation_payload,
+        )
         classify_and_update_state("blocked", summary, task, backlog, active, status, automation_result)
         write_data(BACKLOG, backlog)
         write_data(STATUS, status)
@@ -2622,6 +3576,12 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
 
     if not changed_files:
         summary = f"Executor completed but no {target_kind} repo changes were detected."
+        if continue_from_prior_ux_evidence_retry and executor_result.get("passed"):
+            prior_ux_evidence_retry = prior_result_supports_ux_evidence_retry(previous_run_dir, active)
+            if prior_ux_evidence_retry:
+                changed_files = list(prior_ux_evidence_retry.get("changed_files", []))
+                noop_completion = True
+                summary = f"Executor completed with no new {target_kind} repo changes because this rerun only repaired UX conformance evidence."
         if allow_noop_completion:
             noop_completion = True
             steps.append(
@@ -2651,8 +3611,15 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
                 "blocker_evidence": [],
                 "unproven_runtime_gaps": [summary],
             }
-            write_json(run_dir / RESULT_FILE, automation_result)
-            write_summary(run_dir, automation_result)
+            automation_result = persist_result_with_phase4_artifacts(
+                run_dir,
+                task,
+                automation_result,
+                standards=standards,
+                require_runtime_proof=phase4_enforcement,
+                local_validation_payload=local_validation_payload,
+                vm_validation_payload=vm_validation_payload,
+            )
             classify_and_update_state("refined", summary, task, backlog, active, status, automation_result)
             write_data(BACKLOG, backlog)
             write_data(STATUS, status)
@@ -2676,8 +3643,15 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             "blocker_evidence": [summary],
             "unproven_runtime_gaps": [summary],
         }
-        write_json(run_dir / RESULT_FILE, automation_result)
-        write_summary(run_dir, automation_result)
+        automation_result = persist_result_with_phase4_artifacts(
+            run_dir,
+            task,
+            automation_result,
+            standards=standards,
+            require_runtime_proof=phase4_enforcement,
+            local_validation_payload=local_validation_payload,
+            vm_validation_payload=vm_validation_payload,
+        )
         classify_and_update_state("blocked", summary, task, backlog, active, status, automation_result)
         write_data(BACKLOG, backlog)
         write_data(STATUS, status)
@@ -2717,6 +3691,11 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
                 "venv_path": str(validation_venv) if validation_venv else None,
             },
         )
+        local_validation_payload = {
+            "results": local_results,
+            "passed": local_passed,
+            "venv_path": str(validation_venv) if validation_venv else None,
+        }
         steps.append({
             "name": "local_validation",
             "outcome": "passed" if local_passed else "refined",
@@ -2735,8 +3714,15 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
                 "blocker_evidence": [],
                 "unproven_runtime_gaps": [summary],
             }
-            write_json(run_dir / RESULT_FILE, automation_result)
-            write_summary(run_dir, automation_result)
+            automation_result = persist_result_with_phase4_artifacts(
+                run_dir,
+                task,
+                automation_result,
+                standards=standards,
+                require_runtime_proof=phase4_enforcement,
+                local_validation_payload=local_validation_payload,
+                vm_validation_payload=vm_validation_payload,
+            )
             classify_and_update_state("refined", summary, task, backlog, active, status, automation_result)
             write_data(BACKLOG, backlog)
             write_data(STATUS, status)
@@ -2816,8 +3802,15 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
                     "blocker_evidence": [item for item in blocker_evidence if item],
                     "unproven_runtime_gaps": [summary],
                 }
-                write_json(run_dir / RESULT_FILE, automation_result)
-                write_summary(run_dir, automation_result)
+                automation_result = persist_result_with_phase4_artifacts(
+                    run_dir,
+                    task,
+                    automation_result,
+                    standards=standards,
+                    require_runtime_proof=phase4_enforcement,
+                    local_validation_payload=local_validation_payload,
+                    vm_validation_payload=vm_validation_payload,
+                )
                 classify_and_update_state("blocked", summary, task, backlog, active, status, automation_result)
                 write_data(BACKLOG, backlog)
                 write_data(STATUS, status)
@@ -2887,7 +3880,8 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             run_vm_phase(plan["vm_smoke_commands"], "vm_smoke")
         if plan["vm_cleanup_commands"] and (vm_bootstrap_attempted or plan["vm_smoke_commands"]):
             run_vm_phase(plan["vm_cleanup_commands"], "vm_cleanup", ignore_prior_failure=True)
-        write_step(run_dir, "vm_validation", {"results": vm_results, "passed": vm_passed})
+        vm_validation_payload = {"results": vm_results, "passed": vm_passed}
+        write_step(run_dir, "vm_validation", vm_validation_payload)
         steps.append({
             "name": "vm_validation",
             "outcome": "accepted" if vm_passed else "refined",
@@ -2935,8 +3929,17 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         state="completed" if classification == "accepted" else "failed",
         detail=summary,
     )
-    write_json(run_dir / RESULT_FILE, automation_result)
-    write_summary(run_dir, automation_result)
+    automation_result = persist_result_with_phase4_artifacts(
+        run_dir,
+        task,
+        automation_result,
+        standards=standards,
+        require_runtime_proof=phase4_enforcement,
+        local_validation_payload=local_validation_payload,
+        vm_validation_payload=vm_validation_payload,
+    )
+    classification = str(automation_result.get("classification", classification))
+    summary = str(automation_result.get("summary", summary))
     classify_and_update_state(classification, summary, task, backlog, active, status, automation_result)
     write_data(BACKLOG, backlog)
     write_data(STATUS, status)
@@ -2961,9 +3964,11 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             print_result("NO_READY_TASKS_REMAIN", "No ready tasks remain after the accepted task completed.", "Mark the next task ready in backlog.yml before rerunning automation.")
             return 0
         print_result("ACCEPTED", summary, "Review automation_summary.md for evidence and proceed to the next task.")
+    elif classification == "blocked":
+        print_result("BLOCKED", summary, f"Inspect {run_dir / RESULT_FILE} for enforcement and validation details, then rerun once the issue is fixed.")
     else:
         print_result("REFINED", summary, f"Inspect {run_dir / RESULT_FILE} for VM validation details, then rerun once the issue is fixed.")
-    return 0 if vm_passed else 1
+    return 0 if classification == "accepted" else 1
 
 
 def main() -> int:
@@ -2979,6 +3984,8 @@ def main() -> int:
     except KeyboardInterrupt:
         print_result("INTERRUPTED", "Run interrupted by user.")
         return 130
+    finally:
+        release_run_lock()
 
 
 if __name__ == "__main__":

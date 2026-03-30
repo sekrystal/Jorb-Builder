@@ -1,0 +1,114 @@
+{
+  "task_id": "JORB-V3-002",
+  "title": "Expose SearchRun via API",
+  "status": "accepted",
+  "attempt": 5,
+  "started_at": "2026-03-29T23:23:20.931594+00:00",
+  "completed_at": "2026-03-29T23:27:33.339573+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T232320Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T232320Z-JORB-V3-002",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T232320Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T232320Z-JORB-V3-002"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T232320Z-JORB-V3-002/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T232320Z-JORB-V3-002/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T232320Z-JORB-V3-002/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T232320Z-JORB-V3-002/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T232320Z-JORB-V3-002/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T232320Z-JORB-V3-002/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T232320Z-JORB-V3-002/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T232320Z-JORB-V3-002/executor.json"
+    }
+  ],
+  "files_changed": [
+    "tests/test_production_runtime.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.325.31654-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T232320Z-JORB-V3-002/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\n`/search-runs/latest` was already implemented in the backend, so I made the smallest robust change by adding an HTTP-surface regression test that exercises the actual FastAPI app for the latest `SearchRun` payload without relying on `httpx`/`TestClient`, which was breaking the validation environment.\n\n2. Exact files changed\n\n[`tests/test_production_runtime.py`](/Users/samuelkrystal/projects/jorb/tests/test_production_runtime.py)\n\n3. Exact tests added or updated\n\nAdded `test_search_runs_latest_http_endpoint_returns_latest_run_payload` in [`tests/test_production_runtime.py`](/Users/samuelkrystal/projects/jorb/tests/test_production_runtime.py)\n\nUpdated the same file to add a small in-test ASGI helper used by that new API-level test.\n\n4. Exact commands run\n\n`grep -RIn \"SearchRun\\|search-run\\|search_runs\\|search runs\\|/search-runs\\|APIRouter\\|FastAPI\" api core services tests/test_production_runtime.py tests/test_workbench.py`\n\n`git status --short`\n\n`sed -n '1,220p' api/routes/search_runs.py`\n\n`sed -n '1,220p' services/search_runs.py`\n\n`sed -n '840,920p' core/schemas.py`\n\n`sed -n '1,220p' tests/test_production_runtime.py`\n\n`pytest tests/test_production_runtime.py tests/test_workbench.py`\n\n`./scripts/preflight_check.sh`\n\n`sed -n '1,220p' api/main.py`\n\n`grep -RIn \"TestClient\\|client.get(\\\"/search-runs/latest\\\"\\|/search-runs/latest\" tests api`\n\n`sed -n '260,360p' core/models.py`\n\n`grep -RIn \"dependency_overrides\\|TestClient\\|from fastapi.testclient import TestClient\" tests | head -n 40`\n\n`git diff -- tests/test_production_runtime.py`\n\n`which python3 && ./.venv_validation/bin/python scripts/reset_demo.py`\n\n`ls .venv_validation/bin/uvicorn .venv_validation/bin/streamlit`\n\n`./.venv_validation/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000`\n\n`./.venv_validation/bin/streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500`\n\n`curl -s http://127.0.0.1:8000/search-runs/latest`\n\n5. Exact results\n\n`pytest tests/test_production_runtime.py tests/test_workbench.py`\nPassed twice.\nFinal run: `52 passed in 2.65s`\n\n`./scripts/preflight_check.sh`\nPassed after replacing `TestClient`.\nFinal run: `190 passed in 12.22s`\nScript output ended with `Preflight checks passed.`\n\n`./.venv_validation/bin/python scripts/reset_demo.py`\nPassed.\nReturned seeded/demo reset JSON including `\"live_mode_used\": false` and `\"search_web\": {\"raw\": 0, \"normalized\": 0, \"verified\": 0}`.\n\n`./.venv_validation/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000`\nStartup reached application init, then failed to bind:\n`[Errno 1] error while attempting to bind on address ('127.0.0.1', 8000): operation not permitted`\n\n`./.venv_validation/bin/streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500`\nFailed to bind:\n`PermissionError: [Errno 1] Operation not permitted`\n\n`curl -s http://127.0.0.1:8000/search-runs/latest`\nFailed because the API could not bind its port.\nExit behavior matched curl connection failure (`code 7`).\n\n6. Honest note on what remains unproven\n\nLive runtime proof remains unproven in this sandbox because both FastAPI on `127.0.0.1:8000` and Streamlit on `127.0.0.1:8500` were blocked by port-binding permissions, so I could not complete the required live `curl` verification against a running local server. The backend route itself was already present before this patch; the only code change here is stronger API-level regression coverage."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 27 vulnerabilities on sekrystal/Jorb's default branch (20 moderate, 7 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   3b8ce7e..d90e4a3  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 1,
+    "changed_files": [
+      "tests/test_production_runtime.py"
+    ],
+    "unproven_runtime_gaps": [],
+    "ux_conformance": {
+      "required": false,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": null,
+      "intentional_design_deviations": null,
+      "product_first_checklist": null,
+      "primary_ux_prohibited_surfaces": []
+    }
+  },
+  "unproven_runtime_gaps": []
+}

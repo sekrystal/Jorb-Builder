@@ -1,0 +1,118 @@
+{
+  "task_id": "JORB-V3-011",
+  "title": "Multi-source acquisition",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-30T06:27:36.312851+00:00",
+  "completed_at": "2026-03-30T06:33:44.588624+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T062736Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T062736Z-JORB-V3-011",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T062736Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T062736Z-JORB-V3-011"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T062736Z-JORB-V3-011/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T062736Z-JORB-V3-011/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T062736Z-JORB-V3-011/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T062736Z-JORB-V3-011/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T062736Z-JORB-V3-011/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T062736Z-JORB-V3-011/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T062736Z-JORB-V3-011/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T062736Z-JORB-V3-011/executor.json"
+    }
+  ],
+  "files_changed": [
+    "services/sync.py",
+    "tests/test_pipeline.py",
+    "tests/test_search_discovery.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.325.31654-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T062736Z-JORB-V3-011/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\nAggregated search acquisition status across both ATS-seeded acquisition and generic web search so discovery no longer reports zero-yield based on only the generic branch. `sync_all` now records ATS acquisition as its own search-run source key (`search_web_ats`), combines worker diagnostics before setting `search_fetch_diagnostics` and `source_runtime_observer[\"search_web\"]`, and only emits `search_zero_yield` when the combined acquisition envelope is actually empty. I also added regression coverage for explicit ATS search-run persistence and for the ATS-success/generic-empty acquisition case.\n\n2. Exact files changed\n\n- `services/sync.py`\n- `tests/test_pipeline.py`\n- `tests/test_search_discovery.py`\n\n3. Exact tests added or updated\n\nAdded:\n- `tests/test_pipeline.py::test_sync_all_treats_ats_seed_results_as_search_acquisition_success`\n- `tests/test_search_discovery.py::test_record_search_run_persists_explicit_ats_source_key`\n\nUpdated implicitly by behavior change:\n- no existing test bodies were modified beyond adding the new regression coverage\n\n4. Exact commands run\n\n- `pytest tests/test_search_discovery.py tests/test_pipeline.py tests/test_workbench.py`\n- `./scripts/preflight_check.sh`\n- `./.venv_validation/bin/python scripts/reset_demo.py`\n- `./.venv_validation/bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8000`\n- `./.venv_validation/bin/streamlit run ui/app.py --server.headless true --server.port 8501`\n- `curl -s http://127.0.0.1:8000/search-runs/latest`\n- `curl -s http://127.0.0.1:8000/discovery-status`\n\n5. Exact results\n\n- `pytest tests/test_search_discovery.py tests/test_pipeline.py tests/test_workbench.py`\n  Result: passed, `86 passed in 4.10s`\n- `./scripts/preflight_check.sh`\n  Result: passed, `205 passed in 11.90s`; script ended with `Preflight checks passed.`\n- `./.venv_validation/bin/python scripts/reset_demo.py`\n  Result: passed; demo reset completed and printed a sync summary with `discovery_summary: \"Jobs found and surfaced normally.\"`\n- `./.venv_validation/bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8000`\n  Result: failed to boot, `[Errno 1] error while attempting to bind on address ('127.0.0.1', 8000): operation not permitted`\n- `./.venv_validation/bin/streamlit run ui/app.py --server.headless true --server.port 8501`\n  Result: failed to boot, `PermissionError: [Errno 1] Operation not permitted` while binding the port\n- `curl -s http://127.0.0.1:8000/search-runs/latest`\n  Result: failed, exit code `7` because no local server was listening\n- `curl -s http://127.0.0.1:8000/discovery-status`\n  Result: failed, exit code `7` because no local server was listening\n\n6. Honest note on what remains unproven\n\nLive local API boot, live Streamlit boot, and endpoint-level runtime verification remain unproven in this environment because the sandbox blocked binding to localhost ports. The code changes are covered by tests and preflight only; I could not directly prove the `/search-runs/latest` and `/discovery-status` behavior over a running local server here."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 27 vulnerabilities on sekrystal/Jorb's default branch (20 moderate, 7 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   0e4ba10..39469bb  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 3,
+    "changed_files": [
+      "services/sync.py",
+      "tests/test_pipeline.py",
+      "tests/test_search_discovery.py"
+    ],
+    "unproven_runtime_gaps": [],
+    "ux_conformance": {
+      "required": false,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": null,
+      "intentional_design_deviations": null,
+      "product_first_checklist": null,
+      "primary_ux_prohibited_surfaces": []
+    }
+  },
+  "unproven_runtime_gaps": []
+}

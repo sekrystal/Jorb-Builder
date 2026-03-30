@@ -1,0 +1,57 @@
+{
+  "fixture_id": "repo_recovery_v1",
+  "fixture_family": "repo_recovery",
+  "description": "Recovery-oriented runs must classify failures cleanly, preserve evidence, and avoid blind retry loops.",
+  "selector": {
+    "failure_classes": [
+      "repo_state_failure",
+      "artifact_completeness_failure",
+      "flaky_nondeterministic_failure"
+    ]
+  },
+  "mandatory_artifacts": [
+    "judge_decision.md",
+    "evidence_bundle.json",
+    "runtime_proof.log"
+  ],
+  "rubric_dimensions": [
+    {
+      "name": "recovery_quality",
+      "weight": 0.35,
+      "threshold": 0.8,
+      "description": "The run must classify and route failure explicitly."
+    },
+    {
+      "name": "evidence_quality",
+      "weight": 0.2,
+      "threshold": 0.75,
+      "description": "Failure evidence should be durable."
+    },
+    {
+      "name": "operator_handoff_quality",
+      "weight": 0.2,
+      "threshold": 0.7,
+      "description": "Operators should get clear next actions."
+    },
+    {
+      "name": "planning_quality",
+      "weight": 0.1,
+      "threshold": 0.5,
+      "description": "Recovery runs still need planning context."
+    },
+    {
+      "name": "test_adequacy",
+      "weight": 0.15,
+      "threshold": 0.4,
+      "description": "Validation evidence should explain what was or was not rerun."
+    }
+  ],
+  "pass_threshold": 0.72,
+  "historical_examples": [
+    "task_history/2026-03-29T212609Z-JORB-INFRA-007.yml"
+  ],
+  "known_failure_cases": [
+    "same failure class refined repeatedly without loop stop",
+    "repo-state or transport failure with no explicit recovery action"
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "fixture_id": "runtime_vm_v1",
+  "fixture_family": "runtime_vm",
+  "description": "Runtime and VM-oriented work must prove validation quality and contract compliance beyond local artifacts.",
+  "selector": {
+    "requires_vm_runtime_proof": true
+  },
+  "mandatory_artifacts": [
+    "compiled_feature_spec.md",
+    "proposal.md",
+    "tradeoff_matrix.md",
+    "judge_decision.md",
+    "evidence_bundle.json",
+    "runtime_proof.log"
+  ],
+  "rubric_dimensions": [
+    {
+      "name": "planning_quality",
+      "weight": 0.12,
+      "threshold": 0.75,
+      "description": "Planning should define runtime proof intent."
+    },
+    {
+      "name": "test_adequacy",
+      "weight": 0.14,
+      "threshold": 0.7,
+      "description": "Local validation should pass."
+    },
+    {
+      "name": "runtime_proof_quality",
+      "weight": 0.28,
+      "threshold": 0.8,
+      "description": "Runtime proof artifacts and VM stage outcomes must be strong."
+    },
+    {
+      "name": "data_contract_compliance",
+      "weight": 0.16,
+      "threshold": 0.7,
+      "description": "Accepted runtime work should preserve contract checks."
+    },
+    {
+      "name": "evidence_quality",
+      "weight": 0.16,
+      "threshold": 0.8,
+      "description": "Evidence must be complete."
+    },
+    {
+      "name": "operator_handoff_quality",
+      "weight": 0.14,
+      "threshold": 0.7,
+      "description": "Operator output should clearly describe runtime truth."
+    }
+  ],
+  "pass_threshold": 0.8,
+  "historical_examples": [
+    "task_history/2026-03-29T232733Z-JORB-V3-002.yml"
+  ],
+  "known_failure_cases": [
+    "vm smoke failure after successful local validation",
+    "runtime proof log missing despite vm validation"
+  ]
+}

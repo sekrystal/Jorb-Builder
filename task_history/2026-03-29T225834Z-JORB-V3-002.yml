@@ -1,0 +1,124 @@
+{
+  "task_id": "JORB-V3-002",
+  "title": "Expose SearchRun via API",
+  "status": "refined",
+  "attempt": 1,
+  "started_at": "2026-03-29T22:53:21.446552+00:00",
+  "completed_at": "2026-03-29T22:58:34.917741+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T225318Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T225318Z-JORB-V3-002",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T225318Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T225318Z-JORB-V3-002"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T225318Z-JORB-V3-002/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T225318Z-JORB-V3-002/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T225318Z-JORB-V3-002/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T225318Z-JORB-V3-002/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T225318Z-JORB-V3-002/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T225318Z-JORB-V3-002/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T225318Z-JORB-V3-002/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T225318Z-JORB-V3-002/executor.json"
+    }
+  ],
+  "files_changed": [
+    "api/main.py",
+    "services/search_runs.py",
+    "tests/test_production_runtime.py",
+    "api/routes/search_runs.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.325.31654-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T225318Z-JORB-V3-002/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "refined"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "VM smoke validation failed after local validation and git push succeeded."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "VM smoke validation failed after local validation and git push succeeded.",
+    "accepted": false,
+    "acceptance_met": [],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\nAdded a new FastAPI endpoint at `/search-runs/latest` that returns the most recent `SearchRun` as a `SearchRunResponse` or `null` when no runs exist yet. The implementation reuses a new `get_latest_search_run()` service helper, and backend tests now cover route registration plus empty and populated latest-run behavior.\n\n2. Exact files changed\n\n- `api/main.py`\n- `api/routes/search_runs.py`\n- `services/search_runs.py`\n- `tests/test_production_runtime.py`\n\n3. Exact tests added or updated\n\nUpdated `tests/test_production_runtime.py` with:\n\n- `test_search_runs_latest_endpoint_is_registered`\n- `test_search_runs_latest_endpoint_returns_null_when_no_runs_exist`\n- `test_search_runs_latest_endpoint_returns_most_recent_run`\n\nAlso updated that file\u2019s `build_session()` helper to use `StaticPool` for deterministic in-memory SQLite behavior.\n\n4. Exact commands run\n\n- `find api core services tests -type f | sort`\n- `grep -RIn \"SearchRun\\|search_run\\|search-runs\\|search_runs\" api core services tests`\n- `sed -n '1,220p' api/main.py`\n- `sed -n '1,220p' api/routes/opportunities.py`\n- `sed -n '1,220p' services/search_runs.py`\n- `sed -n '820,940p' core/schemas.py`\n- `sed -n '1,220p' tests/test_production_runtime.py`\n- `sed -n '1,260p' tests/test_workbench.py`\n- `sed -n '1,220p' api/routes/health.py`\n- `sed -n '1,220p' core/db.py`\n- `sed -n '260,360p' core/models.py`\n- `git diff -- api/main.py api/routes/search_runs.py services/search_runs.py tests/test_production_runtime.py`\n- `pytest tests/test_production_runtime.py tests/test_workbench.py`\n- `./scripts/preflight_check.sh`\n\n5. Exact results\n\n- `pytest tests/test_production_runtime.py tests/test_workbench.py`\n  Result: `51 passed in 2.93s`\n- `./scripts/preflight_check.sh`\n  Result: `189 passed in 11.23s`\n  Result: `Preflight checks passed.`\n\nNotable intermediate failures I fixed before the final passing runs:\n\n- `pytest` initially failed because in-memory SQLite state was not shared across FastAPI test threads.\n- `preflight_check.sh` initially failed because `response_model=SearchRunResponse | None` was incompatible in that environment.\n- `preflight_check.sh` then failed again because its Python environment lacked `httpx`, so I removed `TestClient` usage from the new tests.\n\n6. Honest note on what remains unproven\n\nI did not run `python scripts/reset_demo.py`, boot FastAPI locally, boot Streamlit locally, verify the changed workflow against a live app/API, or run the VM-only check `curl -s http://127.0.0.1:8000/search-runs/latest`. The new endpoint is covered by local tests and preflight only; live runtime proof is still unproven."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 27 vulnerabilities on sekrystal/Jorb's default branch (20 moderate, 7 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   628528f..89b3f98  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "refined",
+        "detail": "VM smoke commands failed."
+      }
+    ],
+    "changed_files_count": 4,
+    "changed_files": [
+      "api/main.py",
+      "services/search_runs.py",
+      "tests/test_production_runtime.py",
+      "api/routes/search_runs.py"
+    ],
+    "unproven_runtime_gaps": [
+      "VM smoke validation failed after local validation and git push succeeded."
+    ],
+    "ux_conformance": {
+      "required": false,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": null,
+      "intentional_design_deviations": null,
+      "product_first_checklist": null,
+      "primary_ux_prohibited_surfaces": []
+    }
+  },
+  "unproven_runtime_gaps": [
+    "VM smoke validation failed after local validation and git push succeeded."
+  ]
+}

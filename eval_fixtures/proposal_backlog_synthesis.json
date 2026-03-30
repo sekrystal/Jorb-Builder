@@ -1,0 +1,43 @@
+{
+  "fixture_id": "proposal_backlog_synthesis_v1",
+  "fixture_family": "proposal_backlog_synthesis",
+  "description": "Synthesized backlog entries must be evidence-backed, operator-approved, and precise enough to become canonical work without silent ambiguity.",
+  "selector": {
+    "task_family": "JORB-INFRA",
+    "area": "builder"
+  },
+  "mandatory_artifacts": [],
+  "rubric_dimensions": [
+    {
+      "name": "backlog_synthesis_quality",
+      "weight": 0.4,
+      "threshold": 0.75,
+      "description": "The synthesized entry must have concrete acceptance criteria, validation expectations, and approval metadata."
+    },
+    {
+      "name": "evidence_quality",
+      "weight": 0.25,
+      "threshold": 0.75,
+      "description": "The entry must preserve evidence links and provenance back to the source proposal."
+    },
+    {
+      "name": "operator_handoff_quality",
+      "weight": 0.2,
+      "threshold": 0.7,
+      "description": "Operator review context and intended action should be explicit."
+    },
+    {
+      "name": "planning_quality",
+      "weight": 0.15,
+      "threshold": 0.6,
+      "description": "The rationale and task framing should be strong enough to support later implementation planning."
+    }
+  ],
+  "pass_threshold": 0.8,
+  "historical_examples": [],
+  "known_failure_cases": [
+    "accepted proposal without evidence links",
+    "generic or empty acceptance criteria",
+    "canonical apply attempted without explicit operator approval"
+  ]
+}

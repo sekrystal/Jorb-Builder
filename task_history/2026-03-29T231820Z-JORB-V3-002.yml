@@ -1,0 +1,118 @@
+{
+  "task_id": "JORB-V3-002",
+  "title": "Expose SearchRun via API",
+  "status": "refined",
+  "attempt": 4,
+  "started_at": "2026-03-29T23:13:30.691686+00:00",
+  "completed_at": "2026-03-29T23:18:20.916073+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T231330Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T231330Z-JORB-V3-002",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T231330Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T231330Z-JORB-V3-002"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T231330Z-JORB-V3-002/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T231330Z-JORB-V3-002/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T231330Z-JORB-V3-002/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T231330Z-JORB-V3-002/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T231330Z-JORB-V3-002/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T231330Z-JORB-V3-002/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T231330Z-JORB-V3-002/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T231330Z-JORB-V3-002/executor.json"
+    }
+  ],
+  "files_changed": [
+    "tests/test_production_runtime.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.325.31654-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-29T231330Z-JORB-V3-002/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "refined"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "VM smoke validation failed after local validation and git push succeeded."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "VM smoke validation failed after local validation and git push succeeded.",
+    "accepted": false,
+    "acceptance_met": [],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\n`/search-runs/latest` was already implemented in the backend. I updated `tests/test_production_runtime.py` to verify that this endpoint is exposed as part of the FastAPI API surface by asserting it is both registered on `app.routes` and present in the generated OpenAPI schema.\n\n2. Exact files changed\n\n`/Users/samuelkrystal/projects/jorb/tests/test_production_runtime.py`\n\n3. Exact tests added or updated\n\nUpdated `test_search_runs_latest_endpoint_is_registered` in `/Users/samuelkrystal/projects/jorb/tests/test_production_runtime.py` to assert:\n- `/search-runs/latest` is registered\n- `/search-runs/latest` appears in `app.openapi()[\"paths\"]`\n- the path exposes a `get` operation\n\n4. Exact commands run\n\n`find api core services tests -type f \\( -path 'tests/test_production_runtime.py' -o -path 'tests/test_workbench.py' -o -name '*.py' \\) | sort`\n\n`grep -RIn \"SearchRun\\|search run\\|search-runs\\|search_runs\" api core services tests/test_production_runtime.py tests/test_workbench.py`\n\n`grep -RIn \"FastAPI\\|APIRouter\\|@router\\|@app\" api`\n\n`sed -n '1,220p' api/routes/search_runs.py`\n\n`sed -n '1,220p' services/search_runs.py`\n\n`sed -n '840,930p' core/schemas.py`\n\n`sed -n '80,170p' tests/test_production_runtime.py`\n\n`sed -n '1,260p' tests/test_workbench.py`\n\n`grep -RIn \"search-runs/latest\\|recent_search_runs\\|latest_search_run\" .`\n\n`sed -n '1,220p' api/main.py`\n\n`sed -n '1080,1325p' services/company_discovery.py`\n\n`pytest tests/test_production_runtime.py tests/test_workbench.py`\n\n`./scripts/preflight_check.sh`\n\n`sed -n '1,220p' scripts/preflight_check.sh`\n\n`grep -RIn \"curl -s http://127.0.0.1:8000/search-runs/latest\\|search-runs/latest\" scripts tests api core services ui`\n\n`sed -n '1,220p' tests/test_production_runtime.py`\n\n`sed -n '260,360p' core/models.py`\n\n`sed -n '1,220p' core/db.py`\n\n`python scripts/reset_demo.py`\n\n`python3 scripts/reset_demo.py`\n\n`.venv_validation/bin/python scripts/reset_demo.py`\n\n`grep -RIn \"streamlit run\\|uvicorn\\|api.main:app\" README* scripts .`\n\n`sed -n '510,545p' README.md`\n\n`.venv_j1/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000`\n\n`.venv_j1/bin/streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500`\n\n`curl -s http://127.0.0.1:8000/search-runs/latest`\n\n`git diff -- tests/test_production_runtime.py`\n\n`git status --short`\n\n`pytest tests/test_production_runtime.py tests/test_workbench.py`\n\n5. Exact results\n\n`pytest tests/test_production_runtime.py tests/test_workbench.py`\n- Passed: `51 passed`\n\n`./scripts/preflight_check.sh`\n- Passed: `189 passed`\n- Output ended with `Preflight checks passed.`\n\n`.venv_validation/bin/python scripts/reset_demo.py`\n- Passed\n- Demo reset output included `signals_ingested: 4`, `listings_ingested: 7`, `surfaced_count: 5`\n\n`python scripts/reset_demo.py`\n- Failed: `zsh:1: command not found: python`\n\n`python3 scripts/reset_demo.py`\n- Failed: `ModuleNotFoundError: No module named 'sqlalchemy'`\n\n`.venv_j1/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000`\n- Failed at bind time: `[Errno 1] operation not permitted`\n\n`.venv_j1/bin/streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500`\n- Failed at bind time: `PermissionError: [Errno 1] Operation not permitted`\n\n`curl -s http://127.0.0.1:8000/search-runs/latest`\n- Failed: curl exit code `7` because the API could not bind to `127.0.0.1:8000` in this sandbox\n\n6. Honest note on what remains unproven\n\nLive runtime verification remains unproven here. I could not complete the required FastAPI boot, Streamlit boot, or the VM-style `curl http://127.0.0.1:8000/search-runs/latest` check because this sandbox denied local port binding on both `8000` and `8500`."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 27 vulnerabilities on sekrystal/Jorb's default branch (20 moderate, 7 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   89b3f98..3b8ce7e  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "refined",
+        "detail": "VM smoke commands failed."
+      }
+    ],
+    "changed_files_count": 1,
+    "changed_files": [
+      "tests/test_production_runtime.py"
+    ],
+    "unproven_runtime_gaps": [
+      "VM smoke validation failed after local validation and git push succeeded."
+    ],
+    "ux_conformance": {
+      "required": false,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": null,
+      "intentional_design_deviations": null,
+      "product_first_checklist": null,
+      "primary_ux_prohibited_surfaces": []
+    }
+  },
+  "unproven_runtime_gaps": [
+    "VM smoke validation failed after local validation and git push succeeded."
+  ]
+}

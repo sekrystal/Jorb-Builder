@@ -1,0 +1,21 @@
+{
+  "id": "BLK-JORB-V3-002",
+  "title": "Task JORB-V3-002 blocked during automated execution",
+  "severity": "high",
+  "opened_at": "2026-03-29T22:27:18.940801+00:00",
+  "related_tasks": [
+    "JORB-V3-002"
+  ],
+  "status": "resolved",
+  "symptoms": [
+    "Missing automation configuration: vm.runtime_validation_commands or task.vm_verification"
+  ],
+  "diagnosis": "Missing automation configuration: vm.runtime_validation_commands or task.vm_verification",
+  "evidence": [
+    "vm.runtime_validation_commands or task.vm_verification"
+  ],
+  "next_actions": [
+    "Runtime proof contract added globally and at the task level; rerun the task fresh."
+  ],
+  "human_needed": false
+}

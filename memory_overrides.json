@@ -1,0 +1,28 @@
+{
+  "memory_status": {},
+  "manual_entries": [
+    {
+      "memory_id": "proposal-prop-c967a7d8242d",
+      "memory_type": "operator_feedback",
+      "ticket_family": "JORB-INFRA",
+      "observation": "run_ledger.json records repeated blocked judge events for JORB-INFRA-010 citing missing compiled_feature_spec.md, proposal.md, tradeoff_matrix.md, and research_brief.md, while show_status.py currently reports run_state dry_run, current_blocker none, and artifact_missing only judge_decision.md and evidence_bundle.json.",
+      "inference": "The builder should not show a clean dry-run surface when repeated Phase 4 judge failures for missing artifacts are the strongest recent truth. Tighten operator status truth so artifact-enforcement failures, current blocker, and artifact completeness stay coherent across blocked and dry-run transitions.",
+      "primary_basis": "inference",
+      "origin": "operator",
+      "role_fit": [
+        "planner",
+        "judge"
+      ],
+      "relevance_tags": [
+        "proposal_review",
+        "accepted"
+      ],
+      "status": "active",
+      "status_reason": "proposal_accepted",
+      "source_artifact": "/Users/samuelkrystal/projects/jorb-builder/backlog_proposals.json",
+      "confidence": 0.88,
+      "content": "Harden operator truth for Phase 4 artifact enforcement state"
+    }
+  ],
+  "pins": []
+}

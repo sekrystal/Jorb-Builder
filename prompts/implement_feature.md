@@ -34,6 +34,15 @@ Deterministic acceptance criteria:
 Verification commands you must run:
 {verification_commands}
 
+Repo-local standards you must honor:
+{repo_local_standards}
+
+Phase 4 enforcement requirements:
+{phase4_enforcement_requirements}
+
+Retrieved role-specific memory you should consult before planning and design:
+{memory_context}
+
 Return exactly:
 1. Concise summary of exactly what changed
 2. Exact files changed

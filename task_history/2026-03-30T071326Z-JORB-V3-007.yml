@@ -1,0 +1,127 @@
+{
+  "task_id": "JORB-V3-007",
+  "title": "Jobs-first UI rewrite",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-30T07:06:30.327905+00:00",
+  "completed_at": "2026-03-30T07:13:26.643963+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T070630Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T070630Z-JORB-V3-007",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T070630Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T070630Z-JORB-V3-007"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T070630Z-JORB-V3-007/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T070630Z-JORB-V3-007/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T070630Z-JORB-V3-007/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T070630Z-JORB-V3-007/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T070630Z-JORB-V3-007/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T070630Z-JORB-V3-007/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T070630Z-JORB-V3-007/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T070630Z-JORB-V3-007/executor.json"
+    }
+  ],
+  "files_changed": [
+    "tests/test_workbench.py",
+    "ui/app.py",
+    "ui/components/job_card.py",
+    "ui/components/topbar.py",
+    "ui/screens/jobs.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.325.31654-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T070630Z-JORB-V3-007/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\nUX Design Section Mapping: matched the canonical Jobs shell at `/Users/samuelkrystal/projects/jorb/design/figma` by aligning the Streamlit product shell to the same sidebar, top bar, vertical card list, and right-hand detail hierarchy.\n\nUX Intentional Design Deviations: none\n\nUX Product-First Checklist: hierarchy=yes, prohibited_surfaces=yes, backend_wiring_only=no\n\nThe jobs shell is now more jobs-first and closer to the canonical hierarchy: the top bar is a single control row, the list auto-selects into the right-side detail panel, refresh owns the jobs reload path, and product-facing cards/details no longer surface internal provenance-heavy or debug UI. I also removed the product-shell advanced filters sidebar, the standalone manual-search button, and the backend-gap expander, while updating the workbench tests to lock those constraints.\n\n2. Exact files changed\n\n- [ui/app.py](/Users/samuelkrystal/projects/jorb/ui/app.py)\n- [ui/components/job_card.py](/Users/samuelkrystal/projects/jorb/ui/components/job_card.py)\n- [ui/components/topbar.py](/Users/samuelkrystal/projects/jorb/ui/components/topbar.py)\n- [ui/screens/jobs.py](/Users/samuelkrystal/projects/jorb/ui/screens/jobs.py)\n- [tests/test_workbench.py](/Users/samuelkrystal/projects/jorb/tests/test_workbench.py)\n\n3. Exact tests added or updated\n\nNo new tests were added.\n\nUpdated in [tests/test_workbench.py](/Users/samuelkrystal/projects/jorb/tests/test_workbench.py):\n- `test_streamlit_jobs_shell_demotes_job_link_and_moves_operator_access_out_of_primary_nav`\n- `test_build_job_view_model_exposes_explicit_source_and_provenance_fields`\n- `test_build_search_state_view_model_reports_manual_trigger_when_no_run_exists`\n- `test_build_manual_search_feedback_reports_surfaced_jobs`\n- `test_build_manual_search_feedback_reports_zero_yield_summary`\n\n4. Exact commands run\n\n```bash\npytest tests/test_production_runtime.py tests/test_workbench.py\npython3 -m py_compile ui/app.py ui/components/sidebar.py ui/components/topbar.py ui/components/job_card.py ui/screens/jobs.py\n./scripts/preflight_check.sh\npython3 scripts/reset_demo.py\n./.venv_validation/bin/python scripts/reset_demo.py\n./.venv_validation/bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8000\n./.venv_validation/bin/streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500\ncurl -s http://127.0.0.1:8000/search-runs/latest\ncurl -s 'http://127.0.0.1:8000/leads?freshness_window_days=14'\ncurl -I http://127.0.0.1:8500\n```\n\n5. Exact results\n\n- `pytest tests/test_production_runtime.py tests/test_workbench.py`: passed, `66 passed in 2.80s`\n- `python3 -m py_compile ...`: passed\n- `./scripts/preflight_check.sh`: passed, `207 passed in 8.17s`\n- `python3 scripts/reset_demo.py`: failed with `ModuleNotFoundError: No module named 'sqlalchemy'`\n- `./.venv_validation/bin/python scripts/reset_demo.py`: passed; demo reset reported `signals_ingested=4`, `listings_ingested=7`, `leads_updated=8`, `surfaced_count=5`, `live_mode_used=false`\n- `./.venv_validation/bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8000`: failed to bind `127.0.0.1:8000` with `operation not permitted`\n- `./.venv_validation/bin/streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500`: failed to bind `127.0.0.1:8500` with `PermissionError: [Errno 1] Operation not permitted`\n- `curl -s http://127.0.0.1:8000/search-runs/latest`: failed, exit code `7`\n- `curl -s 'http://127.0.0.1:8000/leads?freshness_window_days=14'`: failed, exit code `56`\n- `curl -I http://127.0.0.1:8500`: failed with `curl: (56) Recv failure: Connection reset by peer`\n\n6. Honest note on what remains unproven\n\nLive runtime proof remains unproven in this environment because the sandbox would not allow FastAPI or Streamlit to bind to `127.0.0.1:8000` or `127.0.0.1:8500`. That means I could not complete the repo-required local boot verification or directly verify the changed jobs workflow in a running app/API from this session."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 27 vulnerabilities on sekrystal/Jorb's default branch (20 moderate, 7 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   df27c2f..4c153a0  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 5,
+    "changed_files": [
+      "tests/test_workbench.py",
+      "ui/app.py",
+      "ui/components/job_card.py",
+      "ui/components/topbar.py",
+      "ui/screens/jobs.py"
+    ],
+    "unproven_runtime_gaps": [],
+    "ux_conformance": {
+      "required": true,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": "matched the canonical Jobs shell at `/Users/samuelkrystal/projects/jorb/design/figma` by aligning the Streamlit product shell to the same sidebar, top bar, vertical card list, and right-hand detail hierarchy.",
+      "intentional_design_deviations": "none",
+      "product_first_checklist": "hierarchy=yes, prohibited_surfaces=yes, backend_wiring_only=no",
+      "primary_ux_prohibited_surfaces": [
+        "discovery",
+        "autonomy",
+        "connectors",
+        "source matrix"
+      ]
+    }
+  },
+  "unproven_runtime_gaps": []
+}

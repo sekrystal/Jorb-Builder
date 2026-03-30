@@ -1,0 +1,116 @@
+{
+  "task_id": "JORB-V3-012",
+  "title": "Scrape fallback",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-30T06:34:52.363886+00:00",
+  "completed_at": "2026-03-30T06:48:45.803281+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T063451Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T063452Z-JORB-V3-012",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T063451Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T063452Z-JORB-V3-012"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T063452Z-JORB-V3-012/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T063452Z-JORB-V3-012/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T063452Z-JORB-V3-012/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T063452Z-JORB-V3-012/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T063452Z-JORB-V3-012/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T063452Z-JORB-V3-012/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T063452Z-JORB-V3-012/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T063452Z-JORB-V3-012/executor.json"
+    }
+  ],
+  "files_changed": [
+    "services/sync.py",
+    "tests/test_pipeline.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.325.31654-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T063452Z-JORB-V3-012/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\nScrape fallback in [`services/sync.py`](/Users/samuelkrystal/projects/jorb/services/sync.py) now triggers when structured Greenhouse/Ashby expansion yields zero verified jobs, not just zero raw connector payloads. The fallback state is carried into final expansion diagnostics after verification, and post-fallback discovery metrics/runtime truth now reflect the recovered results. I also added a regression in [`tests/test_pipeline.py`](/Users/samuelkrystal/projects/jorb/tests/test_pipeline.py) covering the case where primary structured fetch returns jobs but verification drops them all and scraping recovers a usable listing.\n\n2. Exact files changed\n\n[`services/sync.py`](/Users/samuelkrystal/projects/jorb/services/sync.py)  \n[`tests/test_pipeline.py`](/Users/samuelkrystal/projects/jorb/tests/test_pipeline.py)\n\n3. Exact tests added or updated\n\nUpdated [`tests/test_pipeline.py`](/Users/samuelkrystal/projects/jorb/tests/test_pipeline.py) with `test_sync_all_uses_scrape_fallback_when_structured_jobs_verify_to_zero`.\n\n4. Exact commands run\n\n`pytest tests/test_search_discovery.py tests/test_pipeline.py tests/test_workbench.py`  \n`./scripts/preflight_check.sh`  \n`python3 scripts/reset_demo.py`  \n`.venv_validation/bin/python scripts/reset_demo.py`  \n`.venv_j1/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000`  \n`.venv_j1/bin/streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500`\n\n5. Exact results\n\n`pytest tests/test_search_discovery.py tests/test_pipeline.py tests/test_workbench.py`  \nPassed: `87 passed`\n\n`./scripts/preflight_check.sh`  \nPassed: `206 passed` and `Preflight checks passed.`\n\n`python3 scripts/reset_demo.py`  \nFailed: `ModuleNotFoundError: No module named 'sqlalchemy'`\n\n`.venv_validation/bin/python scripts/reset_demo.py`  \nPassed. Demo reset completed and returned a JSON summary with `live_mode_used: false`, `search_web.verified: 0`, `greenhouse.verified: 4`, `ashby.verified: 3`, `surfaced_count: 5`.\n\n`.venv_j1/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000`  \nBoot sequence started, then failed to bind: `[Errno 1] operation not permitted`\n\n`.venv_j1/bin/streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500`  \nFailed to bind: `PermissionError: [Errno 1] Operation not permitted`\n\n6. Honest note on what remains unproven\n\nLive runtime verification remains unproven in this environment. I could not bind FastAPI or Streamlit to localhost, so I could not run `curl -s http://127.0.0.1:8000/search-runs/latest`, `curl -s http://127.0.0.1:8000/discovery-status`, or verify the changed workflow through the live API/UI."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 27 vulnerabilities on sekrystal/Jorb's default branch (20 moderate, 7 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   39469bb..7292c02  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 2,
+    "changed_files": [
+      "services/sync.py",
+      "tests/test_pipeline.py"
+    ],
+    "unproven_runtime_gaps": [],
+    "ux_conformance": {
+      "required": false,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": null,
+      "intentional_design_deviations": null,
+      "product_first_checklist": null,
+      "primary_ux_prohibited_surfaces": []
+    }
+  },
+  "unproven_runtime_gaps": []
+}

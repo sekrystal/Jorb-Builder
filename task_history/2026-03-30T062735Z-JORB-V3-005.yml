@@ -1,0 +1,124 @@
+{
+  "task_id": "JORB-V3-005",
+  "title": "Manual search mode",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-30T06:21:31.510199+00:00",
+  "completed_at": "2026-03-30T06:27:35.676190+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T062131Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T062131Z-JORB-V3-005",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T062131Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T062131Z-JORB-V3-005"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T062131Z-JORB-V3-005/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T062131Z-JORB-V3-005/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T062131Z-JORB-V3-005/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T062131Z-JORB-V3-005/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T062131Z-JORB-V3-005/local_validation.json"
+    },
+    {
+      "label": "vm_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T062131Z-JORB-V3-005/vm_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T062131Z-JORB-V3-005/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T062131Z-JORB-V3-005/executor.json"
+    }
+  ],
+  "files_changed": [
+    "api/routes/search_runs.py",
+    "scripts/preflight_check.sh",
+    "tests/test_production_runtime.py",
+    "tests/test_workbench.py",
+    "ui/app.py",
+    "ui/screens/jobs.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.325.31654-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T062131Z-JORB-V3-005/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "accepted"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with VM validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with VM validation success.",
+    "accepted": true,
+    "acceptance_met": [],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\nAdded a dedicated `POST /search-runs/manual` API trigger that reuses the existing bounded sync path, committed it, and exposed it in OpenAPI. In the Jobs workbench, the \u201cno search yet\u201d state now explicitly tells the operator to run a manual search, and the Jobs screen now has a real `Run manual search` action that calls the new endpoint and shows outcome feedback instead of implying a page refresh performs discovery. I also extended preflight route smoke coverage and added focused runtime/workbench tests for the new behavior.\n\n2. Exact files changed\n\n- `api/routes/search_runs.py`\n- `ui/app.py`\n- `ui/screens/jobs.py`\n- `tests/test_production_runtime.py`\n- `tests/test_workbench.py`\n- `scripts/preflight_check.sh`\n\n3. Exact tests added or updated\n\nAdded:\n- `test_manual_search_http_endpoint_runs_sync_and_returns_payload`\n- `test_build_search_state_view_model_reports_manual_trigger_when_no_run_exists`\n- `test_build_manual_search_feedback_reports_surfaced_jobs`\n- `test_build_manual_search_feedback_reports_zero_yield_summary`\n\nUpdated:\n- `test_search_runs_latest_endpoint_is_registered`\n\n4. Exact commands run\n\n```bash\npytest tests/test_production_runtime.py tests/test_workbench.py\n./scripts/preflight_check.sh\nif [ -x .venv_validation/bin/python ]; then .venv_validation/bin/python scripts/reset_demo.py; elif [ -x .venv/bin/python ]; then .venv/bin/python scripts/reset_demo.py; else python3 scripts/reset_demo.py; fi\nif [ -x .venv_validation/bin/python ]; then .venv_validation/bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8000; elif [ -x .venv/bin/python ]; then .venv.bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8000; else python3 -m uvicorn api.main:app --host 127.0.0.1 --port 8000; fi\nif [ -x .venv_validation/bin/python ]; then .venv_validation/bin/python -m streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500; elif [ -x .venv/bin/python ]; then .venv/bin/python -m streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500; else python3 -m streamlit run ui/app.py --server.headless true --server.address 127.0.0.1 --server.port 8500; fi\ncurl -s http://127.0.0.1:8000/search-runs/latest\ncurl -I http://127.0.0.1:8500\n```\n\n5. Exact results\n\n- `pytest tests/test_production_runtime.py tests/test_workbench.py`\n  - Passed: `65 passed in 5.37s`\n- `./scripts/preflight_check.sh`\n  - Passed\n  - Included full repo pytest pass: `203 passed in 9.70s`\n  - Confirmed route smoke for `/search-runs/latest` and `/search-runs/manual`\n- `scripts/reset_demo.py`\n  - Succeeded\n  - Returned seeded/demo sync payload with `surfaced_count: 5` and `discovery_summary: \"Jobs found and surfaced normally.\"`\n- Uvicorn boot attempt\n  - Failed\n  - Error: `error while attempting to bind on address ('127.0.0.1', 8000): operation not permitted`\n- Streamlit boot attempt\n  - Failed\n  - Error: `PermissionError: [Errno 1] Operation not permitted` while binding `127.0.0.1:8500`\n- `curl -s http://127.0.0.1:8000/search-runs/latest`\n  - Failed with exit code `7`\n- `curl -I http://127.0.0.1:8500`\n  - Failed with exit code `56` and `Recv failure: Connection reset by peer`\n\n6. Honest note on what remains unproven\n\nThe code path, route registration, and UI/state logic are covered by tests and preflight, but I could not prove live local API/UI runtime behavior or click through the manual-search workflow end to end because this sandbox does not allow binding to `127.0.0.1:8000` or `127.0.0.1:8500`. As a result, the required live app/API verification and curl success remain unproven in this environment."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "remote: This repository moved. Please use the new location:        \nremote:   git@github.com:sekrystal/Jorb.git        \nremote: \nremote: GitHub found 27 vulnerabilities on sekrystal/Jorb's default branch (20 moderate, 7 low). To find out more, visit:        \nremote:      https://github.com/sekrystal/Jorb/security/dependabot        \nremote: \nTo github.com:sekrystal/jorb.git\n   1114396..0e4ba10  main -> main\n"
+      },
+      {
+        "name": "vm_validation",
+        "outcome": "accepted",
+        "detail": "All VM validation commands passed."
+      }
+    ],
+    "changed_files_count": 6,
+    "changed_files": [
+      "api/routes/search_runs.py",
+      "scripts/preflight_check.sh",
+      "tests/test_production_runtime.py",
+      "tests/test_workbench.py",
+      "ui/app.py",
+      "ui/screens/jobs.py"
+    ],
+    "unproven_runtime_gaps": [],
+    "ux_conformance": {
+      "required": false,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": null,
+      "intentional_design_deviations": null,
+      "product_first_checklist": null,
+      "primary_ux_prohibited_surfaces": []
+    }
+  },
+  "unproven_runtime_gaps": []
+}

@@ -1,0 +1,251 @@
+{
+  "task_id": "JORB-INFRA-010",
+  "title": "Feature understanding compiler",
+  "status": "blocked",
+  "attempt": 1,
+  "started_at": "2026-03-30T19:23:36.966554+00:00",
+  "completed_at": "2026-03-30T19:23:37.080311+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T192336Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T192336Z-JORB-INFRA-010",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T192336Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T192336Z-JORB-INFRA-010"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T192336Z-JORB-INFRA-010/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T192336Z-JORB-INFRA-010/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T192336Z-JORB-INFRA-010/progress.jsonl"
+    },
+    {
+      "label": "eval_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T192336Z-JORB-INFRA-010/eval_result.json"
+    },
+    {
+      "label": "judge_memory_context",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T192336Z-JORB-INFRA-010/judge_memory_context.json"
+    },
+    {
+      "label": "judge_decision",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T192336Z-JORB-INFRA-010/judge_decision.md"
+    },
+    {
+      "label": "evidence_bundle",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T192336Z-JORB-INFRA-010/evidence_bundle.json"
+    }
+  ],
+  "files_changed": [
+    "config.yml",
+    "prompts/implement_feature.md",
+    "roadmap.yml",
+    "scripts/automate_task_loop.py",
+    "scripts/common.py",
+    "scripts/render_packet.py",
+    "scripts/show_status.py",
+    "tests/test_automate_task_loop.py",
+    "AGENTS.md",
+    "backlog_apply_audit.json",
+    "backlog_entry_schema.md",
+    "backlog_proposal_schema.md",
+    "backlog_proposals.json",
+    "backlog_synthesis_spec.md",
+    "builder_hardening_spec.md",
+    "canonical_mutation_policy.md",
+    "eval_architecture.md",
+    "eval_comparison.json",
+    "eval_fixture_schema.md",
+    "eval_fixtures/infra_hardening.json",
+    "eval_fixtures/product_ux.json",
+    "eval_fixtures/proposal_backlog_synthesis.json",
+    "eval_fixtures/repo_recovery.json",
+    "eval_fixtures/runtime_vm.json",
+    "feedback_interpretation_spec.md",
+    "feedback_signals.json",
+    "implementation_plan.md",
+    "memory_model.md",
+    "memory_overrides.json",
+    "memory_schema.json",
+    "memory_store.json",
+    "observability_model.md",
+    "operator_memory_controls.md",
+    "operator_review_flow.md",
+    "preflight_contract.md",
+    "private_eval_suite_spec.md",
+    "proposal_guardrails.md",
+    "ranking_and_decay.md",
+    "recovery_taxonomy.md",
+    "regression_runner_design.md",
+    "replay_summary.json",
+    "retrieval_profiles.md",
+    "run_ledger.json",
+    "run_lock.json",
+    "scripts/backlog_synthesis.py",
+    "scripts/feedback_engine.py",
+    "scripts/memory_controls.py",
+    "scripts/private_eval_suite.py",
+    "skills/README.md",
+    "synthesized_backlog_entries.json"
+  ],
+  "commands_run": [],
+  "results": [
+    "blocked"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Builder repo is dirty before automated execution; refusing to continue."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Builder repo is dirty before automated execution; refusing to continue.",
+    "accepted": false,
+    "acceptance_met": [],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "git_status_before",
+        "outcome": "blocked",
+        "detail": "config.yml\nprompts/implement_feature.md\nroadmap.yml\nscripts/automate_task_loop.py\nscripts/common.py\nscripts/render_packet.py\nscripts/show_status.py\ntests/test_automate_task_loop.py\nAGENTS.md\nbacklog_apply_audit.json\nbacklog_entry_schema.md\nbacklog_proposal_schema.md\nbacklog_proposals.json\nbacklog_synthesis_spec.md\nbuilder_hardening_spec.md\ncanonical_mutation_policy.md\neval_architecture.md\neval_comparison.json\neval_fixture_schema.md\neval_fixtures/infra_hardening.json\neval_fixtures/product_ux.json\neval_fixtures/proposal_backlog_synthesis.json\neval_fixtures/repo_recovery.json\neval_fixtures/runtime_vm.json\nfeedback_interpretation_spec.md\nfeedback_signals.json\nimplementation_plan.md\nmemory_model.md\nmemory_overrides.json\nmemory_schema.json\nmemory_store.json\nobservability_model.md\noperator_memory_controls.md\noperator_review_flow.md\npreflight_contract.md\nprivate_eval_suite_spec.md\nproposal_guardrails.md\nranking_and_decay.md\nrecovery_taxonomy.md\nregression_runner_design.md\nreplay_summary.json\nretrieval_profiles.md\nrun_ledger.json\nrun_lock.json\nscripts/backlog_synthesis.py\nscripts/feedback_engine.py\nscripts/memory_controls.py\nscripts/private_eval_suite.py\nskills/README.md\nsynthesized_backlog_entries.json"
+      }
+    ],
+    "changed_files_count": 50,
+    "changed_files": [
+      "config.yml",
+      "prompts/implement_feature.md",
+      "roadmap.yml",
+      "scripts/automate_task_loop.py",
+      "scripts/common.py",
+      "scripts/render_packet.py",
+      "scripts/show_status.py",
+      "tests/test_automate_task_loop.py",
+      "AGENTS.md",
+      "backlog_apply_audit.json",
+      "backlog_entry_schema.md",
+      "backlog_proposal_schema.md",
+      "backlog_proposals.json",
+      "backlog_synthesis_spec.md",
+      "builder_hardening_spec.md",
+      "canonical_mutation_policy.md",
+      "eval_architecture.md",
+      "eval_comparison.json",
+      "eval_fixture_schema.md",
+      "eval_fixtures/infra_hardening.json",
+      "eval_fixtures/product_ux.json",
+      "eval_fixtures/proposal_backlog_synthesis.json",
+      "eval_fixtures/repo_recovery.json",
+      "eval_fixtures/runtime_vm.json",
+      "feedback_interpretation_spec.md",
+      "feedback_signals.json",
+      "implementation_plan.md",
+      "memory_model.md",
+      "memory_overrides.json",
+      "memory_schema.json",
+      "memory_store.json",
+      "observability_model.md",
+      "operator_memory_controls.md",
+      "operator_review_flow.md",
+      "preflight_contract.md",
+      "private_eval_suite_spec.md",
+      "proposal_guardrails.md",
+      "ranking_and_decay.md",
+      "recovery_taxonomy.md",
+      "regression_runner_design.md",
+      "replay_summary.json",
+      "retrieval_profiles.md",
+      "run_ledger.json",
+      "run_lock.json",
+      "scripts/backlog_synthesis.py",
+      "scripts/feedback_engine.py",
+      "scripts/memory_controls.py",
+      "scripts/private_eval_suite.py",
+      "skills/README.md",
+      "synthesized_backlog_entries.json"
+    ],
+    "unproven_runtime_gaps": [
+      "Builder repo is dirty before automated execution; refusing to continue."
+    ],
+    "ux_conformance": {
+      "required": false,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": null,
+      "intentional_design_deviations": null,
+      "product_first_checklist": null,
+      "primary_ux_prohibited_surfaces": []
+    }
+  },
+  "unproven_runtime_gaps": [
+    "Builder repo is dirty before automated execution; refusing to continue."
+  ],
+  "failure_taxonomy": {
+    "failure_class": "repo_state_failure",
+    "recovery_action": "block_pending_operator_decision",
+    "retryable": false
+  },
+  "eval_result": {
+    "suite_version": 1,
+    "mode": "private_fixture",
+    "fixture_id": "infra_hardening_v1",
+    "fixture_family": "infra_hardening",
+    "task_id": "JORB-INFRA-010",
+    "scores": {
+      "planning_quality": 1.0,
+      "implementation_quality": 0.2,
+      "test_adequacy": 0.2,
+      "evidence_quality": 0.5,
+      "operator_handoff_quality": 0.6,
+      "recovery_quality": 0.2
+    },
+    "overall_score": 0.484,
+    "threshold": 0.78,
+    "passed": false,
+    "mandatory_artifacts": {
+      "present": [
+        "compiled_feature_spec.md",
+        "research_brief.md",
+        "proposal.md",
+        "tradeoff_matrix.md",
+        "judge_decision.md",
+        "evidence_bundle.json",
+        "runtime_proof.log"
+      ],
+      "missing": []
+    },
+    "dimension_failures": [
+      "implementation_quality",
+      "test_adequacy",
+      "evidence_quality",
+      "operator_handoff_quality",
+      "recovery_quality"
+    ],
+    "fixture_path": "/Users/samuelkrystal/projects/jorb-builder/eval_fixtures/infra_hardening.json",
+    "regression_vs_prior": {
+      "previous_task_id": "JORB-INFRA-009",
+      "current_task_id": "JORB-INFRA-010",
+      "overall_delta": -0.128,
+      "category_deltas": {
+        "evidence_quality": 0.0,
+        "implementation_quality": -0.8,
+        "operator_handoff_quality": 0.0,
+        "planning_quality": 1.0,
+        "recovery_quality": -0.6,
+        "test_adequacy": -0.8
+      },
+      "trend": "regressed",
+      "baseline_history_path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-29T220236Z-JORB-INFRA-009.yml"
+    },
+    "blocked_acceptance": false
+  }
+}

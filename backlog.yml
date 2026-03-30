@@ -2944,8 +2944,8 @@
       "area": "backend",
       "milestone": "M6",
       "priority": 1,
-      "status": "ready",
-      "retries_used": 0,
+      "status": "accepted",
+      "retries_used": 4,
       "depends_on": [
         "JORB-V3-001"
       ],
@@ -2967,6 +2967,9 @@
         "pytest tests/test_production_runtime.py tests/test_workbench.py",
         "./scripts/preflight_check.sh"
       ],
+      "vm_verification": [
+        "curl -s http://127.0.0.1:8000/search-runs/latest"
+      ],
       "acceptance_criteria": [
         "GET /search-runs/latest returns the latest SearchRun with status, timestamps, sources_attempted, results_found, and errors",
         "The endpoint truthfully differentiates idle, running, success, zero_results, and failed states",
@@ -2974,7 +2977,18 @@
       ],
       "repo_path": "~/projects/jorb",
       "description": "Add GET /search-runs/latest so the current search state is directly observable. The response must reflect the latest persisted SearchRun and must not fake a zero-results state when no search has actually run.",
-      "allow_noop_completion": false
+      "requires_vm_runtime_proof": true,
+      "allow_noop_completion": false,
+      "notes": [
+        "Missing automation configuration: vm.runtime_validation_commands or task.vm_verification",
+        "VM smoke validation failed after local validation and git push succeeded.",
+        "VM smoke validation failed after local validation and git push succeeded.",
+        "Retry-ready task has no product repo changes to continue from.",
+        "Repaired from stale retry-without-changes state; no in-flight repo edits remain, so the task should rerun fresh from ready.",
+        "VM smoke validation failed after local validation and git push succeeded.",
+        "VM bootstrap now aligns the UI port with runtime_self_check.sh so the next rerun should use a consistent smoke contract.",
+        "Automated loop completed with VM validation success."
+      ]
     },
     {
       "id": "JORB-V3-003",
@@ -2983,8 +2997,8 @@
       "area": "ux",
       "milestone": "M6",
       "priority": 1,
-      "status": "ready",
-      "retries_used": 0,
+      "status": "accepted",
+      "retries_used": 4,
       "depends_on": [
         "JORB-V3-002"
       ],
@@ -3005,6 +3019,10 @@
         "pytest tests/test_production_runtime.py tests/test_workbench.py",
         "./scripts/preflight_check.sh"
       ],
+      "vm_verification": [
+        "curl -s http://127.0.0.1:8000/search-runs/latest",
+        "curl -I http://127.0.0.1:8500"
+      ],
       "acceptance_criteria": [
         "The Jobs screen visibly shows Searching while a run is active",
         "The Jobs screen shows result count or explicit failed or zero-results state plus last run timestamp after completion",
@@ -3012,6 +3030,7 @@
       ],
       "repo_path": "~/projects/jorb",
       "description": "Show SearchRun status directly in the primary Jobs screen so runtime truth is visible. The UI must display searching, success, zero_results, or failed states with result count or explicit failure messaging and last-run timing.",
+      "requires_vm_runtime_proof": true,
       "design_section_mapping": [
         "Use /Users/samuelkrystal/projects/jorb/design/figma Jobs screen hierarchy for the primary jobs surface and its status messaging region."
       ],
@@ -3028,7 +3047,17 @@
         "source matrix"
       ],
       "allow_noop_completion": false,
-      "product_facing_ux": true
+      "product_facing_ux": true,
+      "notes": [
+        "VM smoke validation failed after local validation and git push succeeded.",
+        "Task-level UI smoke port now matches the VM runtime contract on 8500.",
+        "UX conformance evidence is incomplete for this product-facing UX task.",
+        "Retry-ready task has no product repo changes to continue from.",
+        "Retry-ready task has no product repo changes to continue from.",
+        "Repaired from stale retry-without-changes state; no in-flight repo edits remain, so the task should rerun fresh from ready.",
+        "executor_transport_failure",
+        "Automated loop completed with VM validation success."
+      ]
     },
     {
       "id": "JORB-V3-004",
@@ -3037,7 +3066,7 @@
       "area": "ux",
       "milestone": "M6",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V3-003"
@@ -3059,6 +3088,10 @@
         "pytest tests/test_production_runtime.py tests/test_workbench.py",
         "./scripts/preflight_check.sh"
       ],
+      "vm_verification": [
+        "curl -s http://127.0.0.1:8000/search-runs/latest",
+        "curl -I http://127.0.0.1:8500"
+      ],
       "acceptance_criteria": [
         "The product does not show no jobs found unless SearchRun completed with zero_results and results_found equals 0",
         "Idle and failed states render distinct messaging rather than collapsing into the same empty state",
@@ -3066,6 +3099,7 @@
       ],
       "repo_path": "~/projects/jorb",
       "description": "Replace the primary empty-state logic with SearchRun-driven truth. Idle, running, zero_results, and failed must be visually distinct, and no jobs found must only appear after a completed zero-results run.",
+      "requires_vm_runtime_proof": true,
       "design_section_mapping": [
         "Use /Users/samuelkrystal/projects/jorb/design/figma Jobs empty and loading states as the source of truth."
       ],
@@ -3082,7 +3116,10 @@
         "source matrix"
       ],
       "allow_noop_completion": false,
-      "product_facing_ux": true
+      "product_facing_ux": true,
+      "notes": [
+        "Automated loop completed with VM validation success."
+      ]
     },
     {
       "id": "JORB-V3-005",
@@ -3091,7 +3128,7 @@
       "area": "product",
       "milestone": "M6",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V3-004"
@@ -3115,6 +3152,10 @@
         "pytest tests/test_production_runtime.py tests/test_workbench.py",
         "./scripts/preflight_check.sh"
       ],
+      "vm_verification": [
+        "curl -s http://127.0.0.1:8000/search-runs/latest",
+        "curl -I http://127.0.0.1:8500"
+      ],
       "acceptance_criteria": [
         "A user-visible or operator-visible manual search trigger starts a SearchRun",
         "Manual trigger updates SearchRun status through running to success, zero_results, or failed",
@@ -3122,7 +3163,11 @@
       ],
       "repo_path": "~/projects/jorb",
       "description": "Introduce a manual search mode that can be triggered intentionally and observed through SearchRun state. This is a validation-first capability so real runtime search can be exercised on demand before later UX polish.",
-      "allow_noop_completion": false
+      "requires_vm_runtime_proof": true,
+      "allow_noop_completion": false,
+      "notes": [
+        "Automated loop completed with VM validation success."
+      ]
     },
     {
       "id": "JORB-V3-006",
@@ -3131,8 +3176,8 @@
       "area": "product",
       "milestone": "M6",
       "priority": 1,
-      "status": "ready",
-      "retries_used": 0,
+      "status": "accepted",
+      "retries_used": 1,
       "depends_on": [
         "JORB-V3-005",
         "JORB-V3-011",
@@ -3163,21 +3208,13 @@
         "pytest tests/test_search_discovery.py tests/test_pipeline.py tests/test_production_runtime.py tests/test_workbench.py",
         "./scripts/preflight_check.sh"
       ],
-      "vm_bootstrap": [
-        "cd /home/gargantua1/projects/jorb && pkill -f uvicorn || true",
-        "cd /home/gargantua1/projects/jorb && pkill -f streamlit || true",
-        "cd /home/gargantua1/projects/jorb && pkill -f run_worker.py || true",
-        "cd /home/gargantua1/projects/jorb && nohup bash -lc 'if [ -d \".venv_j1\" ]; then source .venv_j1/bin/activate; elif [ -d \".venv\" ]; then source .venv/bin/activate; fi; uvicorn api.main:app --host 0.0.0.0 --port 8000' >/tmp/jorb_api.log 2>&1 &",
-        "cd /home/gargantua1/projects/jorb && nohup bash -lc 'if [ -d \".venv_j1\" ]; then source .venv_j1/bin/activate; elif [ -d \".venv\" ]; then source .venv/bin/activate; fi; python scripts/run_worker.py' >/tmp/jorb_worker.log 2>&1 &",
-        "cd /home/gargantua1/projects/jorb && nohup bash -lc 'if [ -d \".venv_j1\" ]; then source .venv_j1/bin/activate; elif [ -d \".venv\" ]; then source .venv/bin/activate; fi; streamlit run ui/app.py --server.port 8501 --server.address 0.0.0.0' >/tmp/jorb_ui.log 2>&1 &",
-        "cd /home/gargantua1/projects/jorb && lsof -i :8000",
-        "cd /home/gargantua1/projects/jorb && lsof -i :8501"
-      ],
+      "requires_vm_runtime_proof": true,
       "vm_verification": [
-        "cd /home/gargantua1/projects/jorb && bash scripts/runtime_self_check.sh",
+        "bash scripts/runtime_self_check.sh",
         "curl -s http://127.0.0.1:8000/health",
         "curl -s http://127.0.0.1:8000/autonomy-status",
-        "curl -s http://127.0.0.1:8000/discovery-status"
+        "curl -s http://127.0.0.1:8000/discovery-status",
+        "curl -I http://127.0.0.1:8500"
       ],
       "acceptance_criteria": [
         "The VM proves SearchIntent to fetch to parse to normalize to store to display with at least one real job or an explicit observable failure state",
@@ -3186,7 +3223,11 @@
       ],
       "repo_path": "~/projects/jorb",
       "description": "Deliver a strict end-to-end vertical slice that proves the runtime can fetch real jobs and display them. The task fails unless the VM shows observable search execution, live stack startup, and real jobs or an explicit truthful failure state.",
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "notes": [
+        "VM bootstrap failed after local validation and git push succeeded.",
+        "Automated loop completed with VM validation success."
+      ]
     },
     {
       "id": "JORB-V3-007",
@@ -3195,7 +3236,7 @@
       "area": "ux",
       "milestone": "M6",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V3-006",
@@ -3218,6 +3259,11 @@
         "pytest tests/test_production_runtime.py tests/test_workbench.py",
         "./scripts/preflight_check.sh"
       ],
+      "vm_verification": [
+        "curl -s http://127.0.0.1:8000/search-runs/latest",
+        "curl -s http://127.0.0.1:8000/leads?freshness_window_days=14",
+        "curl -I http://127.0.0.1:8500"
+      ],
       "acceptance_criteria": [
         "The primary screen is Jobs and its layout, hierarchy, and component arrangement match /Users/samuelkrystal/projects/jorb/design/figma",
         "Jobs appear above secondary controls, and no dominant non-core form sits above the fold",
@@ -3225,6 +3271,7 @@
       ],
       "repo_path": "~/projects/jorb",
       "description": "Implement the Jobs-first rewrite strictly from the Figma source of truth. Do not reinterpret layout or hierarchy; the delivered shell must follow the canonical Jobs screen structure.",
+      "requires_vm_runtime_proof": true,
       "design_section_mapping": [
         "Match the canonical Jobs shell in /Users/samuelkrystal/projects/jorb/design/figma, including sidebar, top bar, list, and detail hierarchy."
       ],
@@ -3241,7 +3288,10 @@
         "source matrix"
       ],
       "allow_noop_completion": false,
-      "product_facing_ux": true
+      "product_facing_ux": true,
+      "notes": [
+        "Automated loop completed with VM validation success."
+      ]
     },
     {
       "id": "JORB-V3-008",
@@ -3250,7 +3300,7 @@
       "area": "ux",
       "milestone": "M6",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V3-007",
@@ -3273,6 +3323,10 @@
         "pytest tests/test_production_runtime.py tests/test_workbench.py",
         "./scripts/preflight_check.sh"
       ],
+      "vm_verification": [
+        "curl -s http://127.0.0.1:8000/leads?freshness_window_days=14",
+        "curl -I http://127.0.0.1:8500"
+      ],
       "acceptance_criteria": [
         "Each job card shows title, company, location, short description, prominent match score, tags, explanation, and save/apply/dismiss actions",
         "Card structure and prominence match the Figma Jobs design rather than a generic list rendering",
@@ -3280,6 +3334,7 @@
       ],
       "repo_path": "~/projects/jorb",
       "description": "Implement the canonical job cards from Figma. The cards must visibly contain title, company, location, short description, match score, tags, why-this-matches explanation, and actions without collapsing into a generic admin table or debug list.",
+      "requires_vm_runtime_proof": true,
       "design_section_mapping": [
         "Match the job card component and card list structure in /Users/samuelkrystal/projects/jorb/design/figma."
       ],
@@ -3296,7 +3351,10 @@
         "source matrix"
       ],
       "allow_noop_completion": false,
-      "product_facing_ux": true
+      "product_facing_ux": true,
+      "notes": [
+        "Automated loop completed with VM validation success."
+      ]
     },
     {
       "id": "JORB-V3-009",
@@ -3305,7 +3363,7 @@
       "area": "ux",
       "milestone": "M6",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V3-007",
@@ -3328,6 +3386,11 @@
         "pytest tests/test_production_runtime.py tests/test_workbench.py",
         "./scripts/preflight_check.sh"
       ],
+      "vm_verification": [
+        "curl -s http://127.0.0.1:8000/search-runs/latest",
+        "curl -s http://127.0.0.1:8000/leads?freshness_window_days=14",
+        "curl -I http://127.0.0.1:8500"
+      ],
       "acceptance_criteria": [
         "The filters panel matches the Figma structure and uses product language such as search, results, and filters",
         "Changing filters visibly affects the jobs list or active search state",
@@ -3335,6 +3398,7 @@
       ],
       "repo_path": "~/projects/jorb",
       "description": "Implement the Jobs filters panel from the Figma source of truth. The panel must feel like product search controls rather than admin instrumentation and must visibly affect results or the active SearchRun state.",
+      "requires_vm_runtime_proof": true,
       "design_section_mapping": [
         "Match the filters panel and its relationship to the jobs list in /Users/samuelkrystal/projects/jorb/design/figma."
       ],
@@ -3351,7 +3415,10 @@
         "source matrix"
       ],
       "allow_noop_completion": false,
-      "product_facing_ux": true
+      "product_facing_ux": true,
+      "notes": [
+        "Automated loop completed with VM validation success."
+      ]
     },
     {
       "id": "JORB-V3-010",
@@ -3360,7 +3427,7 @@
       "area": "ux",
       "milestone": "M6",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V3-007",
@@ -3385,6 +3452,10 @@
         "pytest tests/test_production_runtime.py tests/test_workbench.py",
         "./scripts/preflight_check.sh"
       ],
+      "vm_verification": [
+        "curl -s http://127.0.0.1:8000/search-runs/latest",
+        "curl -I http://127.0.0.1:8500"
+      ],
       "acceptance_criteria": [
         "Discovery, autonomy, connectors, and source matrix language no longer appear in the primary user-facing UX",
         "Any remaining internal diagnostics are limited to logs or admin-only surfaces outside the main jobs flow",
@@ -3392,6 +3463,7 @@
       ],
       "repo_path": "~/projects/jorb",
       "description": "Remove internal UX leakage from the product shell so the primary experience speaks in jobs, search, results, and filters rather than internal operating concepts.",
+      "requires_vm_runtime_proof": true,
       "design_section_mapping": [
         "Conform all visible primary-shell copy and labels to the Jobs-focused product language in /Users/samuelkrystal/projects/jorb/design/figma."
       ],
@@ -3408,7 +3480,10 @@
         "source matrix"
       ],
       "allow_noop_completion": false,
-      "product_facing_ux": true
+      "product_facing_ux": true,
+      "notes": [
+        "Automated loop completed with VM validation success."
+      ]
     },
     {
       "id": "JORB-V3-011",
@@ -3417,7 +3492,7 @@
       "area": "backend",
       "milestone": "M6",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V3-005"
@@ -3442,6 +3517,10 @@
         "pytest tests/test_search_discovery.py tests/test_pipeline.py tests/test_workbench.py",
         "./scripts/preflight_check.sh"
       ],
+      "vm_verification": [
+        "curl -s http://127.0.0.1:8000/search-runs/latest",
+        "curl -s http://127.0.0.1:8000/discovery-status"
+      ],
       "acceptance_criteria": [
         "At least two real acquisition paths can contribute candidates to a search run",
         "SearchRun sources_attempted truthfully records which sources actually ran and what they returned",
@@ -3449,7 +3528,11 @@
       ],
       "repo_path": "~/projects/jorb",
       "description": "Implement multi-source acquisition so search can pull candidates from more than one real path and SearchRun records exactly which sources were attempted and what they yielded.",
-      "allow_noop_completion": false
+      "requires_vm_runtime_proof": true,
+      "allow_noop_completion": false,
+      "notes": [
+        "Automated loop completed with VM validation success."
+      ]
     },
     {
       "id": "JORB-V3-012",
@@ -3458,7 +3541,7 @@
       "area": "backend",
       "milestone": "M6",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-V3-011"
@@ -3483,6 +3566,10 @@
         "pytest tests/test_search_discovery.py tests/test_pipeline.py tests/test_workbench.py",
         "./scripts/preflight_check.sh"
       ],
+      "vm_verification": [
+        "curl -s http://127.0.0.1:8000/search-runs/latest",
+        "curl -s http://127.0.0.1:8000/discovery-status"
+      ],
       "acceptance_criteria": [
         "Scrape fallback triggers only after structured acquisition yields zero useful jobs",
         "Fallback results are normalized and counted in SearchRun results_found or errors",
@@ -3490,7 +3577,11 @@
       ],
       "repo_path": "~/projects/jorb",
       "description": "Add scrape fallback to zero-yield scenarios so the product can either produce additional candidates or truthfully report that fallback also failed.",
-      "allow_noop_completion": false
+      "requires_vm_runtime_proof": true,
+      "allow_noop_completion": false,
+      "notes": [
+        "Automated loop completed with VM validation success."
+      ]
     },
     {
       "id": "JORB-INFRA-007",
@@ -3574,7 +3665,7 @@
       "area": "builder",
       "milestone": "M6",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [],
       "prompt": "implement_feature",
@@ -3597,6 +3688,907 @@
       ],
       "repo_path": "~/projects/jorb-builder",
       "description": "Harden VM validation sequencing so runtime smoke checks only run after the required stack is actually started and verified.",
+      "allow_noop_completion": false,
+      "notes": [
+        "Automated loop completed with builder-side local validation success."
+      ]
+    },
+    {
+      "id": "JORB-INFRA-010",
+      "title": "Feature understanding compiler",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M7",
+      "priority": 1,
+      "status": "blocked",
+      "retries_used": 0,
+      "depends_on": [],
+      "prompt": "implement_feature",
+      "objective": "Compile each nontrivial task into a machine-checkable feature-understanding artifact before implementation begins.",
+      "why_it_matters": "Builder cannot operate at company grade quality unless it can restate user story, triggers, inputs, state transitions, failure modes, observability, and acceptance in product terms before coding.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "Builder emits a required feature understanding artifact before implementation for nontrivial work",
+        "The artifact captures user story, trigger, data inputs, state transitions, backend and frontend surfaces, failure modes, observability, out-of-scope items, and product-level acceptance",
+        "Implementation cannot begin when the understanding artifact is missing or incomplete"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Restore the canonical Phase 4 feature understanding compiler so builder can machine-check whether a task is understood end to end before implementation starts.",
+      "allow_noop_completion": false,
+      "notes": [
+        "Builder repo is dirty before automated execution; refusing to continue."
+      ]
+    },
+    {
+      "id": "JORB-INFRA-011",
+      "title": "Proposal + tradeoff engine with decision checkpoint",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M7",
+      "priority": 1,
+      "status": "accepted",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-010"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Require explicit options, tradeoffs, and a human decision checkpoint for materially ambiguous work.",
+      "why_it_matters": "Builder must stop guessing between meaningful approaches and instead compare viable options, explain risks, and ask for direction when ambiguity matters.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "Builder emits proposal artifacts with at least two viable approaches for nontrivial or ambiguous work",
+        "Tradeoffs cover complexity, maintainability, risk, runtime implications, and product implications",
+        "Implementation is blocked until the decision checkpoint is satisfied when ambiguity is material"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Restore the proposal and tradeoff engine so builder compares solution paths explicitly and requires a decision checkpoint when stakes or ambiguity justify it.",
+      "allow_noop_completion": false,
+      "notes": []
+    },
+    {
+      "id": "JORB-INFRA-012",
+      "title": "Multi-stage execution pipeline (planner \u2192 architect \u2192 implementer \u2192 validator \u2192 judge)",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M7",
+      "priority": 1,
+      "status": "accepted",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-011"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Enforce a distinct multi-stage builder pipeline with explicit roles and artifacts from planning through judgment.",
+      "why_it_matters": "Company grade execution requires separated concerns and machine-checkable stage contracts so planning, implementation, validation, and acceptance cannot collapse into one optimistic narrative.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "Planner, architect, implementer, validator, and judge stages each emit distinct artifacts",
+        "Stage gates are machine-checkable and cannot be skipped silently",
+        "Acceptance requires the judge stage rather than implementation confidence"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Restore the canonical multi-stage builder execution pipeline so roles are real enforced process stages rather than narrative labels.",
+      "allow_noop_completion": false,
+      "notes": []
+    },
+    {
+      "id": "JORB-INFRA-013",
+      "title": "Analog + research grounding requirement",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M7",
+      "priority": 1,
+      "status": "accepted",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-012"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Require analog and research grounding for nontrivial work before solution recommendation or implementation.",
+      "why_it_matters": "Builder should borrow from relevant real-world system patterns instead of inventing shallow analogies or coding from vibes.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "Builder emits grounded analog and research artifacts for nontrivial work",
+        "Artifacts specify what patterns are borrowed, what patterns are intentionally not borrowed, and why they fit",
+        "Solution recommendation is blocked when required grounding is missing"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Restore the research grounding mechanism so builder recommendations are informed by relevant system and product patterns rather than generic analogy.",
+      "allow_noop_completion": false,
+      "notes": []
+    },
+    {
+      "id": "JORB-INFRA-014",
+      "title": "Figma structure map and UI conformance engine",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M7",
+      "priority": 1,
+      "status": "accepted",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-013"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Require explicit structure maps and mismatch reports against the canonical Figma source for product-facing UI work.",
+      "why_it_matters": "Builder must prove design conformance through actual comparison artifacts instead of accepting vague claims about fidelity.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "Design conformance emits required sections, forbidden sections, ordering, hierarchy, and content-block structure maps",
+        "Design conformance emits a mismatch report and fails material violations",
+        "Builder treats /Users/samuelkrystal/projects/jorb/design/figma as canonical unless a future task changes the source of truth"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Restore the Phase 4 Figma structure map and UI conformance engine so product-facing UX tasks rise or fall on explicit comparison artifacts.",
+      "allow_noop_completion": false,
+      "notes": []
+    },
+    {
+      "id": "JORB-INFRA-015",
+      "title": "Product policy engine (no internal/debug UX, no fake empty states)",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M7",
+      "priority": 1,
+      "status": "accepted",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-014"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Enforce product policy checks for forbidden internal language, fake empty states, and misleading UX outcomes.",
+      "why_it_matters": "Builder must reject product-facing work that leaks internal/debug surfaces or claims empty-state truth without a real completed search run.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "Builder fails product-facing tasks that expose prohibited internal language or debug surfaces in primary UX",
+        "Builder fails fake or premature empty-state claims unless runtime truth proves zero results",
+        "Policy enforcement is automatic rather than documentation-only"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Restore the product policy engine so builder can automatically reject fake empty states and internal/debug UX leakage.",
+      "allow_noop_completion": false,
+      "notes": []
+    },
+    {
+      "id": "JORB-INFRA-016",
+      "title": "Runtime proof orchestrator (VM boot + validation required)",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M7",
+      "priority": 1,
+      "status": "accepted",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-015"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Require synced VM runtime proof with bootstrap, process checks, smoke checks, and explicit failure classification.",
+      "why_it_matters": "Builder cannot claim company grade execution unless it can prove runtime truth in the VM and distinguish sync, bootstrap, process, smoke, and behavior mismatches.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "Builder supports VM sync, runtime bootstrap, process verification, runtime self check, and task-specific smoke checks",
+        "Failure classification distinguishes sync failure, bootstrap failure, process missing, smoke failure, and product behavior mismatch",
+        "Runtime proof captures commands, outputs, timestamps, process health, and result classification"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Restore the runtime proof orchestrator so VM proof is a hard gate with explicit evidence and failure taxonomy.",
+      "allow_noop_completion": false,
+      "notes": []
+    },
+    {
+      "id": "JORB-INFRA-017",
+      "title": "Evidence bundle + acceptance gate enforcement",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M7",
+      "priority": 1,
+      "status": "accepted",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-016"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Require complete evidence bundles and make acceptance impossible when required artifacts are missing.",
+      "why_it_matters": "Another engineer or future agent should be able to understand what happened without guessing from memory or narrative summaries.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "Evidence bundles include metadata snapshot, planner, architect, implementation summary, tests, runtime proof, judge decision, and scorecard where applicable",
+        "Acceptance fails automatically when the required evidence bundle is incomplete",
+        "Evidence artifacts are replayable and sufficient for diagnosis without rerunning the whole task from memory"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Restore evidence bundle enforcement so acceptance depends on complete artifacts rather than narrative confidence.",
+      "allow_noop_completion": false,
+      "notes": []
+    },
+    {
+      "id": "JORB-INFRA-018",
+      "title": "Judge stage (separate from implementation)",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M7",
+      "priority": 1,
+      "status": "accepted",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-017"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Separate final acceptance judgment from planning, implementation, and validation.",
+      "why_it_matters": "Tasks should pass because evidence proves the intended behavior, not because implementation sounded confident.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "Judge artifacts are distinct from implementation artifacts",
+        "Judge asks whether intended behavior was actually proven, artifacts are complete, runtime truth matched intent, and no hidden failures remain",
+        "Acceptance is blocked whenever judge requirements are unresolved"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Restore the distinct judge stage so final acceptance is adversarial enough to reject misleading success.",
+      "allow_noop_completion": false,
+      "notes": []
+    },
+    {
+      "id": "JORB-INFRA-019",
+      "title": "Failure taxonomy + postmortem system",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M7",
+      "priority": 1,
+      "status": "accepted",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-018"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Classify failures into actionable categories and emit a postmortem artifact that explains what failed and why.",
+      "why_it_matters": "Builder recovery and trust depend on distinguishing code, environment, configuration, dependency-ordering, product-gap, and UX-mismatch failures.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "Failure artifacts distinguish code defect, environment defect, configuration defect, dependency ordering defect, unresolved product gap, and unresolved UX mismatch",
+        "Postmortem artifacts are emitted for failed tasks and capture evidence and diagnosis",
+        "Failure classification feeds later recovery and retry policy"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Restore the failure taxonomy and postmortem system so failures become structured operating signals rather than ad hoc messages.",
+      "allow_noop_completion": false,
+      "notes": []
+    },
+    {
+      "id": "JORB-INFRA-020",
+      "title": "Recovery controller (blocked \u2192 retry-ready)",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M7",
+      "priority": 1,
+      "status": "accepted",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-019"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Automate safe state recovery and retry transitions when external blockers are resolved.",
+      "why_it_matters": "Queue truth should not require manual surgery in ordinary recoverable cases, but irrecoverable failures must remain blocked until implementation changes.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "Recoverable blockers can move from blocked to retry-ready or ready automatically when the blocking condition changes",
+        "Irrecoverable product or UX failures remain blocked until implementation changes",
+        "Recovery actions preserve queue truth and are test covered"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Restore the recovery controller so builder can recover from external blockers without corrupting queue truth.",
+      "allow_noop_completion": false,
+      "notes": []
+    },
+    {
+      "id": "JORB-INFRA-021",
+      "title": "Vertical slice enforcement (no downstream work without real proof)",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M7",
+      "priority": 1,
+      "status": "accepted",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-020"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Block downstream work until a real end-to-end vertical slice has been proven with runtime truth.",
+      "why_it_matters": "Later UX and feature work is invalid unless the system has already proven a real path from intent to runtime behavior.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "Builder can block downstream work when required runtime vertical slice proof is missing",
+        "Vertical slice enforcement is automatic and task-gated rather than advisory",
+        "Future product work cannot become runnable before proof gates are satisfied"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Restore vertical slice enforcement so builder refuses to advance downstream work without real proof.",
+      "allow_noop_completion": false,
+      "notes": []
+    },
+    {
+      "id": "JORB-INFRA-022",
+      "title": "Builder UX conformance enforcement",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M7",
+      "priority": 1,
+      "status": "accepted",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-021"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Enforce the full builder-side UX conformance rule set for future product-facing work.",
+      "why_it_matters": "Builder must automatically reject product-facing tasks that claim compliance without structure evidence, mismatch analysis, and policy adherence.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "Builder emits UX structure maps and mismatch reports for applicable work",
+        "Builder fails tasks that materially violate required structure, ordering, hierarchy, or required content blocks",
+        "Judge and evidence bundle stages consume UX conformance artifacts automatically"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Restore builder UX conformance enforcement as the final Phase 4 governance layer before intelligence extensions.",
+      "allow_noop_completion": false,
+      "notes": []
+    },
+    {
+      "id": "JORB-INFRA-023",
+      "title": "Private builder eval suite",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M8",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-022"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Add a private builder eval suite that measures execution quality and regression risk across builder mechanisms.",
+      "why_it_matters": "Builder intelligence and self-improvement require repeatable evals rather than anecdotal confidence.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "Builder can run private eval cases against core execution mechanisms",
+        "Eval outputs are captured as artifacts and can detect regressions",
+        "Eval suite is reusable beyond JORB-specific tasks"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Add a private eval suite so builder hardening and intelligence work can be measured and regressed automatically.",
+      "allow_noop_completion": false,
+      "notes": []
+    },
+    {
+      "id": "JORB-INFRA-024",
+      "title": "Artifact memory store + metadata index",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M8",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-023"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Persist builder artifacts in a searchable memory store with structured metadata.",
+      "why_it_matters": "Replayability and future intelligence require retrieval over prior artifacts instead of fragile implicit history.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "Builder stores emitted artifacts with metadata sufficient for retrieval and replay",
+        "Metadata indexes support later planner, architect, and judge lookups",
+        "Artifact memory is reusable for future products"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Add artifact memory and indexing so builder intelligence can retrieve prior evidence and decisions cleanly.",
+      "allow_noop_completion": false,
+      "notes": []
+    },
+    {
+      "id": "JORB-INFRA-025",
+      "title": "Retrieval layer (planner / architect / judge)",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M8",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-024"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Expose retrieval capabilities so planner, architect, and judge stages can ground themselves in prior artifacts.",
+      "why_it_matters": "Builder intelligence must reuse past evidence, decisions, and failure patterns rather than acting statelessly.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "Planner, architect, and judge can retrieve relevant past artifacts by metadata",
+        "Retrieval behavior is explicit, testable, and reusable",
+        "Retrieval improves grounding without bypassing current repo truth"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Add a retrieval layer that lets core builder roles query prior artifacts and evidence deliberately.",
+      "allow_noop_completion": false,
+      "notes": []
+    },
+    {
+      "id": "JORB-INFRA-026",
+      "title": "Repo-local standards (AGENTS.md + skills consumption)",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M8",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-025"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Teach builder to consume repo-local standards and skills as formal inputs to planning and execution.",
+      "why_it_matters": "Company grade behavior should respect repo-local engineering rules and reusable skills rather than relying only on global prompts.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "Builder ingests AGENTS.md and skill context as structured planning inputs",
+        "Repo-local standards influence planning and execution explicitly",
+        "Repo-local consumption is test covered and reusable"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Add repo-local standards consumption so builder planning and execution honor AGENTS.md and available skills explicitly.",
+      "allow_noop_completion": false,
+      "notes": []
+    },
+    {
+      "id": "JORB-INFRA-027",
+      "title": "Objective compiler (user intent \u2192 structured objective)",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M8",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-026"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Compile raw user intent into a structured objective artifact that can drive backlog synthesis and execution.",
+      "why_it_matters": "SPRE begins by turning ambiguous user goals into explicit objectives, success criteria, constraints, failure conditions, and unknowns.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "Builder emits objective_spec.md from high-level user intent",
+        "Objective artifacts capture inferred goals, constraints, success criteria, failure conditions, and ambiguities",
+        "Nontrivial work cannot proceed without objective compilation"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Add the objective compiler as the first SPRE capability so raw user intent becomes structured builder input.",
+      "allow_noop_completion": false,
+      "notes": []
+    },
+    {
+      "id": "JORB-INFRA-028",
+      "title": "Solution space generator + research briefs",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M8",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-027"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Generate multiple grounded solution directions and supporting research briefs before architectural commitment.",
+      "why_it_matters": "Builder should explore plausible solution spaces and grounded research rather than jumping straight from intent to implementation.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "Builder emits solution_space.md with at least two viable approaches for nontrivial objectives",
+        "Builder emits research_brief.md with relevant patterns, tradeoffs, and applicability",
+        "Architectural work is blocked when required solution-space or research artifacts are missing"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Add SPRE solution-space generation and research briefs so builder explores real options before committing.",
+      "allow_noop_completion": false,
+      "notes": []
+    },
+    {
+      "id": "JORB-INFRA-029",
+      "title": "Decision proposal + human checkpoint engine",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M8",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-028"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Synthesize options and research into a decision proposal that can pause for human approval when tradeoffs are material.",
+      "why_it_matters": "SPRE must not silently choose between materially different product or architecture directions.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "Builder emits decision_proposal.md with comparison matrix, recommendation, and rejected alternatives",
+        "Builder pauses for user approval when tradeoffs materially affect product or architecture",
+        "Ambiguous work cannot proceed without the decision checkpoint"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Add the SPRE decision proposal and human checkpoint engine so builder can recommend without silently overreaching.",
+      "allow_noop_completion": false,
+      "notes": []
+    },
+    {
+      "id": "JORB-INFRA-030",
+      "title": "Backlog synthesis engine",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M8",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-029"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Convert selected approaches into structured backlog entries, dependency graphs, and execution order.",
+      "why_it_matters": "SPRE must be able to turn chosen directions into real machine-executable work rather than vague follow-up ideas.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "Builder emits YAML-compliant backlog entries and dependency graphs from selected approaches",
+        "Generated tasks map to real system boundaries and are independently testable",
+        "Backlog expansion cannot occur without synthesis artifacts"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Add the SPRE backlog synthesis engine so builder can turn chosen approaches into structured executable work.",
+      "allow_noop_completion": false,
+      "notes": []
+    },
+    {
+      "id": "JORB-INFRA-031",
+      "title": "Feedback interpretation engine",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M8",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-030"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Interpret user feedback as structured signals that identify system gaps and corrective work.",
+      "why_it_matters": "Builder should turn feedback into diagnosis and corrective backlog evolution instead of treating it as raw correction text.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "Builder emits feedback_interpretation.md that classifies what dimension is wrong and what gaps it implies",
+        "Feedback can drive corrective backlog proposals automatically",
+        "User feedback is not ignored or treated as a raw string when corrective work is required"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Add feedback interpretation so builder can transform user feedback into structured corrective planning inputs.",
+      "allow_noop_completion": false,
+      "notes": []
+    },
+    {
+      "id": "JORB-INFRA-032",
+      "title": "Self-improving backlog system",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M8",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-031"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Continuously refine backlog structure based on failures, feedback, runtime outcomes, and missing capabilities.",
+      "why_it_matters": "Builder becomes a factory only if it can evolve its own work graph based on evidence instead of treating backlog shape as static.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "Builder can propose new tasks, refine existing tasks, and reorder priorities from evidence",
+        "Backlog evolution remains explicit, testable, and machine-readable",
+        "Self-improving behavior remains constrained by user intent and existing governance gates"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Add self-improving backlog behavior so builder can evolve future work from evidence and feedback.",
+      "allow_noop_completion": false,
+      "notes": []
+    },
+    {
+      "id": "JORB-INFRA-033",
+      "title": "Builder performance profiling + optimization plan",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M8",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-032"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Profile builder performance and produce a plan to improve latency, determinism, and scalability without weakening gates.",
+      "why_it_matters": "A company-grade builder must remain usable and scalable as its planning, judging, and evidence systems become more sophisticated.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "Builder emits a profiling artifact with bottlenecks, measurements, and optimization recommendations",
+        "Optimization planning preserves governance and evidence gates",
+        "Performance work is grounded in measured behavior rather than guesswork"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Add builder performance profiling and optimization planning as the final Phase 4B intelligence task.",
+      "allow_noop_completion": false,
+      "notes": []
+    },
+    {
+      "id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
+      "title": "Harden operator truth for Phase 4 artifact enforcement state",
+      "type": "infrastructure",
+      "area": "builder",
+      "priority": 2,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-010"
+      ],
+      "prompt": "implement_feature",
+      "objective": "The builder should not show a clean dry-run surface when repeated Phase 4 judge failures for missing artifacts are the strongest recent truth. Tighten operator status truth so artifact-enforcement failures, current blocker, and artifact completeness stay coherent across blocked and dry-run transitions.",
+      "why_it_matters": "run_ledger.json records repeated blocked judge events for JORB-INFRA-010 citing missing compiled_feature_spec.md, proposal.md, tradeoff_matrix.md, and research_brief.md, while show_status.py currently reports run_state dry_run, current_blocker none, and artifact_missing only judge_decision.md and evidence_bundle.json.",
+      "acceptance_criteria": [
+        "Automated validation proves the recurring issue is handled explicitly: run_ledger.json records repeated blocked judge events for JORB-INFRA-010 citing missing compiled_feature_spec.md, proposal.md, tradeoff_matrix.md, and research_brief.md, while show_status.py currently reports run_state dry_run, current_blocker none, and artifact_missing only judge_decision.md and evidence_bundle.json.",
+        "Operator-visible status or artifacts show the new routing or decision boundary without relying on narrative summary.",
+        "Evidence artifacts include judge_decision.md and evidence_bundle.json with provenance back to the triggering proposal.",
+        "The implementation remains scoped to one builder mechanism and does not silently mutate backlog or roadmap state.",
+        "The change preserves provenance back to the source proposal and evidence links."
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "required_artifacts": [
+        "compiled_feature_spec.md",
+        "proposal.md",
+        "tradeoff_matrix.md",
+        "judge_decision.md",
+        "evidence_bundle.json"
+      ],
+      "requires_vm_runtime_proof": false,
+      "provenance": {
+        "source_proposal_id": "prop-c967a7d8242d",
+        "evidence_links": [
+          "/Users/samuelkrystal/projects/jorb-builder/run_ledger.json",
+          "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T182652Z-JORB-INFRA-010/automation_result.json",
+          "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-29T213725Z-JORB-INFRA-007.yml"
+        ],
+        "confidence": 0.88,
+        "recurrence_count": 5,
+        "generated_at": "2026-03-30T19:19:27.739230+00:00"
+      },
+      "operator_approval": {
+        "required": true,
+        "approved": true,
+        "review_status": "accepted",
+        "reviewed_at": "2026-03-30T19:15:51.748069+00:00",
+        "review_note": "approved for narrow JORB-INFRA synthesis lifecycle"
+      },
+      "notes": [
+        "Synthesized from proposal prop-c967a7d8242d"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "The builder should not show a clean dry-run surface when repeated Phase 4 judge failures for missing artifacts are the strongest recent truth. Tighten operator status truth so artifact-enforcement failures, current blocker, and artifact completeness stay coherent across blocked and dry-run transitions.\n\nrun_ledger.json records repeated blocked judge events for JORB-INFRA-010 citing missing compiled_feature_spec.md, proposal.md, tradeoff_matrix.md, and research_brief.md, while show_status.py currently reports run_state dry_run, current_blocker none, and artifact_missing only judge_decision.md and evidence_bundle.json.",
       "allow_noop_completion": false
     }
   ],

@@ -32,6 +32,18 @@
   "git": {
     "require_clean_worktree": true,
     "ignored_dirty_paths": {
+      "builder": [
+        "backlog_apply_audit.json",
+        "backlog_proposals.json",
+        "eval_comparison.json",
+        "feedback_signals.json",
+        "memory_overrides.json",
+        "memory_store.json",
+        "replay_summary.json",
+        "run_ledger.json",
+        "run_lock.json",
+        "synthesized_backlog_entries.json"
+      ],
       "product": [
         "design/figma_old/"
       ]
@@ -48,7 +60,29 @@
       "source .venv/bin/activate && pytest tests/test_search_discovery.py tests/test_company_discovery.py tests/test_sync.py tests/test_workbench.py",
       "bash scripts/preflight_check.sh"
     ],
-    "runtime_validation_commands": []
+    "bootstrap_commands": [
+      "if [ -f /tmp/jorb_api.pid ] && kill -0 \"$(cat /tmp/jorb_api.pid)\" 2>/dev/null; then kill \"$(cat /tmp/jorb_api.pid)\" || true; fi; rm -f /tmp/jorb_api.pid",
+      "if [ -f /tmp/jorb_worker.pid ] && kill -0 \"$(cat /tmp/jorb_worker.pid)\" 2>/dev/null; then kill \"$(cat /tmp/jorb_worker.pid)\" || true; fi; rm -f /tmp/jorb_worker.pid",
+      "if [ -f /tmp/jorb_ui.pid ] && kill -0 \"$(cat /tmp/jorb_ui.pid)\" 2>/dev/null; then kill \"$(cat /tmp/jorb_ui.pid)\" || true; fi; rm -f /tmp/jorb_ui.pid",
+      "if [ -d \".venv_j1\" ]; then . .venv_j1/bin/activate; elif [ -d \".venv\" ]; then . .venv/bin/activate; fi; nohup uvicorn api.main:app --host 0.0.0.0 --port 8000 >/tmp/jorb_api.log 2>&1 & echo $! >/tmp/jorb_api.pid",
+      "for attempt in 1 2 3 4 5 6 7 8 9 10; do curl -sf http://127.0.0.1:8000/health >/dev/null && exit 0; sleep 2; done; echo 'api failed to start' >&2; tail -n 80 /tmp/jorb_api.log >&2; exit 1",
+      "if [ -d \".venv_j1\" ]; then . .venv_j1/bin/activate; elif [ -d \".venv\" ]; then . .venv/bin/activate; fi; nohup python scripts/run_worker.py >/tmp/jorb_worker.log 2>&1 & echo $! >/tmp/jorb_worker.pid",
+      "for attempt in 1 2 3 4 5 6 7 8 9 10; do if [ -f /tmp/jorb_worker.pid ] && kill -0 \"$(cat /tmp/jorb_worker.pid)\" 2>/dev/null; then exit 0; fi; sleep 2; done; echo 'worker failed to start' >&2; tail -n 80 /tmp/jorb_worker.log >&2; exit 1",
+      "if [ -d \".venv_j1\" ]; then . .venv_j1/bin/activate; elif [ -d \".venv\" ]; then . .venv/bin/activate; fi; nohup streamlit run ui/app.py --server.port 8500 --server.address 0.0.0.0 >/tmp/jorb_ui.log 2>&1 & echo $! >/tmp/jorb_ui.pid",
+      "for attempt in 1 2 3 4 5 6 7 8 9 10; do curl -sfI http://127.0.0.1:8500 >/dev/null && exit 0; sleep 2; done; echo 'ui failed to start' >&2; tail -n 80 /tmp/jorb_ui.log >&2; exit 1"
+    ],
+    "runtime_validation_commands": [
+      "bash scripts/runtime_self_check.sh",
+      "curl -s http://127.0.0.1:8000/health",
+      "curl -s http://127.0.0.1:8000/autonomy-status",
+      "curl -s http://127.0.0.1:8000/discovery-status",
+      "curl -I http://127.0.0.1:8500"
+    ],
+    "cleanup_commands": [
+      "if [ -f /tmp/jorb_ui.pid ] && kill -0 \"$(cat /tmp/jorb_ui.pid)\" 2>/dev/null; then kill \"$(cat /tmp/jorb_ui.pid)\" || true; fi; rm -f /tmp/jorb_ui.pid",
+      "if [ -f /tmp/jorb_worker.pid ] && kill -0 \"$(cat /tmp/jorb_worker.pid)\" 2>/dev/null; then kill \"$(cat /tmp/jorb_worker.pid)\" || true; fi; rm -f /tmp/jorb_worker.pid",
+      "if [ -f /tmp/jorb_api.pid ] && kill -0 \"$(cat /tmp/jorb_api.pid)\" 2>/dev/null; then kill \"$(cat /tmp/jorb_api.pid)\" || true; fi; rm -f /tmp/jorb_api.pid"
+    ]
   },
   "verification": {
     "default_check_group": "targeted",

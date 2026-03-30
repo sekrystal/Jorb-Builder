@@ -11,6 +11,10 @@ import time
 
 
 SCRIPT = Path("/Users/samuelkrystal/projects/jorb-builder/scripts/automate_task_loop.py")
+PRIVATE_EVAL_SCRIPT = Path("/Users/samuelkrystal/projects/jorb-builder/scripts/private_eval_suite.py")
+MEMORY_CONTROLS_SCRIPT = Path("/Users/samuelkrystal/projects/jorb-builder/scripts/memory_controls.py")
+FEEDBACK_ENGINE_SCRIPT = Path("/Users/samuelkrystal/projects/jorb-builder/scripts/feedback_engine.py")
+BACKLOG_SYNTHESIS_SCRIPT = Path("/Users/samuelkrystal/projects/jorb-builder/scripts/backlog_synthesis.py")
 LIVE_BUILDER_ROOT = Path("/Users/samuelkrystal/projects/jorb-builder")
 CANONICAL_FIGMA_SOURCE = "/Users/samuelkrystal/projects/jorb/design/figma"
 
@@ -58,7 +62,121 @@ def _load_script_module(builder_root: Path | None = None):
                 os.environ["JORB_BUILDER_ROOT"] = previous_root
 
 
+def _load_common_module(builder_root: Path | None = None):
+    common_path = SCRIPT.parent / "common.py"
+    common_dir = str(SCRIPT.parent)
+    inserted = False
+    previous_root = os.environ.get("JORB_BUILDER_ROOT")
+    if builder_root is not None:
+        os.environ["JORB_BUILDER_ROOT"] = str(builder_root)
+    if common_dir not in sys.path:
+        sys.path.insert(0, common_dir)
+        inserted = True
+    try:
+        sys.modules.pop("common", None)
+        spec = importlib.util.spec_from_file_location("common_test_module", common_path)
+        assert spec is not None and spec.loader is not None
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+    finally:
+        if inserted and sys.path and sys.path[0] == common_dir:
+            sys.path.pop(0)
+        if builder_root is not None:
+            if previous_root is None:
+                os.environ.pop("JORB_BUILDER_ROOT", None)
+            else:
+                os.environ["JORB_BUILDER_ROOT"] = previous_root
+
+
+def _load_private_eval_module(builder_root: Path | None = None):
+    common_dir = str(SCRIPT.parent)
+    inserted = False
+    previous_root = os.environ.get("JORB_BUILDER_ROOT")
+    if builder_root is not None:
+        os.environ["JORB_BUILDER_ROOT"] = str(builder_root)
+    if common_dir not in sys.path:
+        sys.path.insert(0, common_dir)
+        inserted = True
+    try:
+        sys.modules.pop("common", None)
+        sys.modules.pop("private_eval_suite_test_module", None)
+        spec = importlib.util.spec_from_file_location("private_eval_suite_test_module", PRIVATE_EVAL_SCRIPT)
+        assert spec is not None and spec.loader is not None
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+    finally:
+        if inserted and sys.path and sys.path[0] == common_dir:
+            sys.path.pop(0)
+        if builder_root is not None:
+            if previous_root is None:
+                os.environ.pop("JORB_BUILDER_ROOT", None)
+            else:
+                os.environ["JORB_BUILDER_ROOT"] = previous_root
+
+
+def _load_feedback_module(builder_root: Path | None = None):
+    common_dir = str(SCRIPT.parent)
+    inserted = False
+    previous_root = os.environ.get("JORB_BUILDER_ROOT")
+    if builder_root is not None:
+        os.environ["JORB_BUILDER_ROOT"] = str(builder_root)
+    if common_dir not in sys.path:
+        sys.path.insert(0, common_dir)
+        inserted = True
+    try:
+        sys.modules.pop("common", None)
+        sys.modules.pop("feedback_engine_test_module", None)
+        spec = importlib.util.spec_from_file_location("feedback_engine_test_module", FEEDBACK_ENGINE_SCRIPT)
+        assert spec is not None and spec.loader is not None
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+    finally:
+        if inserted and sys.path and sys.path[0] == common_dir:
+            sys.path.pop(0)
+        if builder_root is not None:
+            if previous_root is None:
+                os.environ.pop("JORB_BUILDER_ROOT", None)
+            else:
+                os.environ["JORB_BUILDER_ROOT"] = previous_root
+
+
+def _load_backlog_synthesis_module(builder_root: Path | None = None):
+    common_dir = str(SCRIPT.parent)
+    inserted = False
+    previous_root = os.environ.get("JORB_BUILDER_ROOT")
+    if builder_root is not None:
+        os.environ["JORB_BUILDER_ROOT"] = str(builder_root)
+    if common_dir not in sys.path:
+        sys.path.insert(0, common_dir)
+        inserted = True
+    try:
+        sys.modules.pop("common", None)
+        sys.modules.pop("private_eval_suite", None)
+        sys.modules.pop("backlog_synthesis_test_module", None)
+        spec = importlib.util.spec_from_file_location("backlog_synthesis_test_module", BACKLOG_SYNTHESIS_SCRIPT)
+        assert spec is not None and spec.loader is not None
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+    finally:
+        if inserted and sys.path and sys.path[0] == common_dir:
+            sys.path.pop(0)
+        if builder_root is not None:
+            if previous_root is None:
+                os.environ.pop("JORB_BUILDER_ROOT", None)
+            else:
+                os.environ["JORB_BUILDER_ROOT"] = previous_root
+
+
 def _write_json(path: Path, payload) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
+def _write_eval_fixture(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
@@ -563,6 +681,9 @@ def _setup_builder_fixture(tmp_path: Path, *, task_id: str, area: str, allowlist
                 "",
                 "Failure summary:",
                 "{failure_summary}",
+                "",
+                "Retrieved memory:",
+                "{memory_context}",
                 "",
             ]
         ),
@@ -1412,7 +1533,7 @@ def test_product_task_blocks_when_vm_runtime_proof_is_not_configured(tmp_path: P
 
     result = _run([sys.executable, str(SCRIPT)], builder_root)
 
-    assert result.returncode == 2
+    assert result.returncode == 1
     assert "Missing automation configuration: vm.runtime_validation_commands or task.vm_verification" in result.stdout
     payload = _json(_active_run_dir(builder_root) / "automation_result.json")
     assert payload["classification"] == "blocked"
@@ -1464,7 +1585,7 @@ def test_retry_ready_product_task_blocks_out_of_allowlist_dirty_files(tmp_path: 
 
     result = _run([sys.executable, str(SCRIPT)], builder_root)
 
-    assert result.returncode == 2
+    assert result.returncode == 1
     assert "dirty before automated execution" not in result.stdout
     assert "outside the task allowlist" in result.stdout
     payload = _json(_active_run_dir(builder_root) / "automation_result.json")
@@ -1584,6 +1705,49 @@ def test_vm_bootstrap_commands_run_before_smoke_check(tmp_path: Path) -> None:
     assert phases == ["vm_validation", "vm_bootstrap", "vm_bootstrap", "vm_smoke", "vm_cleanup"]
 
 
+def test_vm_uses_config_default_bootstrap_when_task_does_not_override(tmp_path: Path) -> None:
+    builder_root, _, run_log_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="discovery",
+        allowlist=["services/company_discovery.py"],
+    )
+    _mark_retry_ready(builder_root)
+    _write_prior_vm_refined_result(run_log_dir, changed_files=["services/company_discovery.py"])
+
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["vm_bootstrap"] = []
+    backlog["tasks"][0]["vm_verification"] = ["echo smoke-check"]
+    _write_json(builder_root / "backlog.yml", backlog)
+
+    config = _json(builder_root / "config.yml")
+    config["vm"]["ssh_target"] = "vm.example"
+    config["vm"]["ssh_options"] = []
+    config["vm"]["validation_commands"] = ["echo vm-preflight"]
+    config["vm"]["bootstrap_commands"] = ["echo config-bootstrap"]
+    config["vm"]["runtime_validation_commands"] = ["echo runtime-default"]
+    config["vm"]["cleanup_commands"] = ["echo cleanup-default"]
+    _write_json(builder_root / "config.yml", config)
+
+    fake_bin = tmp_path / "fake-bin"
+    fake_bin.mkdir(parents=True, exist_ok=True)
+    fake_ssh = fake_bin / "ssh"
+    _write_fake_ssh(fake_ssh)
+    env = {
+        "PATH": f"{fake_bin}:{os.environ['PATH']}",
+    }
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root, extra_env=env)
+
+    assert result.returncode == 0
+    vm_validation = _json(_active_run_dir(builder_root) / "vm_validation.json")
+    commands = [item["command"] for item in vm_validation["results"]]
+    assert "echo config-bootstrap" in commands[2]
+    assert "echo runtime-default" in commands[3]
+    assert "echo smoke-check" in commands[4]
+    assert "echo cleanup-default" in commands[5]
+
+
 def test_vm_bootstrap_failure_surfaces_clear_summary(tmp_path: Path) -> None:
     builder_root, _, run_log_dir, _ = _setup_builder_fixture(
         tmp_path,
@@ -1656,11 +1820,90 @@ def test_product_task_blocks_when_vm_bootstrap_is_not_configured(tmp_path: Path)
     result = _run([sys.executable, str(SCRIPT)], builder_root, extra_env=env)
 
     assert result.returncode == 2
-    assert "Missing automation configuration: task.vm_bootstrap" in result.stdout
+    assert "Missing automation configuration: vm.bootstrap_commands or task.vm_bootstrap" in result.stdout
     payload = _json(_active_run_dir(builder_root) / "automation_result.json")
     assert payload["classification"] == "blocked"
-    assert payload["summary"] == "Missing automation configuration: task.vm_bootstrap"
-    assert payload["unproven_runtime_gaps"] == ["Missing automation configuration: task.vm_bootstrap"]
+    assert payload["summary"] == "Missing automation configuration: vm.bootstrap_commands or task.vm_bootstrap"
+    assert payload["unproven_runtime_gaps"] == ["Missing automation configuration: vm.bootstrap_commands or task.vm_bootstrap"]
+
+
+def test_inspect_backlog_rejects_ready_task_missing_vm_runtime_contract(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="discovery",
+        allowlist=["services/company_discovery.py"],
+    )
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "ready"
+    backlog["tasks"][0]["requires_vm_runtime_proof"] = True
+    backlog["tasks"][0]["verification"] = ["echo local-ok"]
+    backlog["tasks"][0]["vm_bootstrap"] = []
+    backlog["tasks"][0]["vm_verification"] = []
+    _write_json(builder_root / "backlog.yml", backlog)
+
+    active = _json(builder_root / "active_task.yml")
+    active["task_id"] = None
+    active["state"] = "idle"
+    active["title"] = None
+    active["prompt_file"] = None
+    active["run_log_dir"] = None
+    _write_json(builder_root / "active_task.yml", active)
+
+    status = _json(builder_root / "status.yml")
+    status["active_task_id"] = None
+    status["state"] = "idle"
+    _write_json(builder_root / "status.yml", status)
+
+    config = _json(builder_root / "config.yml")
+    config["vm"]["runtime_validation_commands"] = []
+    config["vm"]["bootstrap_commands"] = []
+    _write_json(builder_root / "config.yml", config)
+
+    result = _run([sys.executable, str(SCRIPT), "--inspect-backlog"], builder_root)
+
+    assert result.returncode == 1
+    assert "BACKLOG_INVALID" in result.stdout
+    assert "missing VM runtime proof fields: vm_verification, vm_bootstrap_or_config_vm.bootstrap_commands" in result.stdout
+
+
+def test_inspect_backlog_rejects_ready_task_with_vm_ui_port_drift(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="discovery",
+        allowlist=["services/company_discovery.py"],
+    )
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "ready"
+    backlog["tasks"][0]["requires_vm_runtime_proof"] = True
+    backlog["tasks"][0]["verification"] = ["echo local-ok"]
+    backlog["tasks"][0]["vm_bootstrap"] = []
+    backlog["tasks"][0]["vm_verification"] = ["curl -I http://127.0.0.1:8501"]
+    _write_json(builder_root / "backlog.yml", backlog)
+
+    active = _json(builder_root / "active_task.yml")
+    active["task_id"] = None
+    active["state"] = "idle"
+    active["title"] = None
+    active["prompt_file"] = None
+    active["run_log_dir"] = None
+    _write_json(builder_root / "active_task.yml", active)
+
+    status = _json(builder_root / "status.yml")
+    status["active_task_id"] = None
+    status["state"] = "idle"
+    _write_json(builder_root / "status.yml", status)
+
+    config = _json(builder_root / "config.yml")
+    config["vm"]["bootstrap_commands"] = ["streamlit run ui/app.py --server.port 8500 --server.address 0.0.0.0"]
+    _write_json(builder_root / "config.yml", config)
+
+    result = _run([sys.executable, str(SCRIPT), "--inspect-backlog"], builder_root)
+
+    assert result.returncode == 1
+    assert "BACKLOG_INVALID" in result.stdout
+    assert "missing VM runtime proof fields: vm_ui_port_mismatch:http://127.0.0.1:8500!=http://127.0.0.1:8501" in result.stdout
 
 
 def test_vm_cleanup_does_not_override_prior_bootstrap_failure(tmp_path: Path) -> None:
@@ -1798,6 +2041,154 @@ def test_retry_ready_product_task_recovers_vm_retry_from_stage_files(tmp_path: P
     assert payload["summary"] == "VM validation failed after local validation and git push succeeded."
 
 
+def test_retry_ready_product_task_recovers_second_vm_retry_from_prior_retry_result(tmp_path: Path) -> None:
+    builder_root, _, run_log_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="discovery",
+        allowlist=["services/company_discovery.py"],
+    )
+    _mark_retry_ready(builder_root)
+    _write_json(
+        run_log_dir / "automation_result.json",
+        {
+            "task_id": "TASK-PRODUCT",
+            "classification": "refined",
+            "finished_at": "2026-03-29T00:00:00+00:00",
+            "summary": "VM smoke validation failed after local validation and git push succeeded.",
+            "steps": [
+                {"name": "retry_check", "outcome": "passed", "detail": "No current dirty repo changes; continuing from prior post-push VM retry context."},
+                {"name": "vm_validation", "outcome": "refined", "detail": "VM smoke commands failed."},
+            ],
+            "changed_files": ["services/company_discovery.py"],
+            "blocker_evidence": [],
+            "unproven_runtime_gaps": ["VM smoke validation failed after local validation and git push succeeded."],
+        },
+    )
+
+    config = _json(builder_root / "config.yml")
+    config["vm"]["ssh_target"] = "127.0.0.1"
+    config["vm"]["ssh_options"] = ["-o", "ConnectTimeout=1"]
+    _write_json(builder_root / "config.yml", config)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 1
+    assert "Retry-ready task has no product repo changes to continue from." not in result.stdout
+    payload = _json(_active_run_dir(builder_root) / "automation_result.json")
+    step_names = [step["name"] for step in payload["steps"]]
+    assert "retry_check" in step_names
+    assert "vm_validation" in step_names
+    assert payload["summary"] == "VM validation failed after local validation and git push succeeded."
+
+
+def test_retry_ready_product_facing_ux_task_recovers_from_prior_ux_evidence_retry_chain(tmp_path: Path) -> None:
+    builder_root, _, run_log_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-UX",
+        area="discovery",
+        allowlist=["ui/screens/jobs.py", "tests/test_workbench.py"],
+    )
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "retry_ready"
+    _apply_product_facing_ux_fields(
+        backlog["tasks"][0],
+        mapping=[f"Jobs screen in {CANONICAL_FIGMA_SOURCE} -> search status region and jobs list"],
+    )
+    _write_json(builder_root / "backlog.yml", backlog)
+
+    fake_codex = tmp_path / "fake-codex-ux-retry-noop"
+    _write_fake_codex_no_change(
+        fake_codex,
+        last_message=(
+            "1. Concise summary of exactly what changed\n"
+            f"UX Design Section Mapping: Jobs screen in {CANONICAL_FIGMA_SOURCE} -> search status region and jobs list\n"
+            "UX Intentional Design Deviations: none\n"
+            "UX Product-First Checklist: hierarchy=yes; prohibited_surfaces=yes; backend_wiring_only=no\n"
+        ),
+    )
+    config = _json(builder_root / "config.yml")
+    config["executor"]["mode"] = "codex_exec"
+    config["executor"]["codex_cli"] = str(fake_codex)
+    config["vm"]["ssh_target"] = "127.0.0.1"
+    config["vm"]["ssh_options"] = ["-o", "ConnectTimeout=1"]
+    _write_json(builder_root / "config.yml", config)
+
+    prior_ux_run_dir = builder_root / "run_logs" / "run-0"
+    prior_ux_run_dir.mkdir(parents=True, exist_ok=True)
+    _write_json(
+        prior_ux_run_dir / "automation_result.json",
+        {
+            "task_id": "TASK-UX",
+            "classification": "refined",
+            "finished_at": "2026-03-29T23:46:56+00:00",
+            "summary": "UX conformance evidence is incomplete for this product-facing UX task.",
+            "steps": [
+                {"name": "executor", "outcome": "passed", "detail": "executor ok"},
+                {"name": "local_validation", "outcome": "passed", "detail": "local ok"},
+                {"name": "git", "outcome": "passed", "detail": "git ok"},
+                {"name": "vm_validation", "outcome": "accepted", "detail": "vm ok"},
+                {"name": "ux_conformance", "outcome": "refined", "detail": "Missing figma source"},
+            ],
+            "changed_files": ["ui/screens/jobs.py", "tests/test_workbench.py"],
+            "blocker_evidence": [],
+            "unproven_runtime_gaps": [],
+        },
+    )
+
+    _mark_retry_ready(builder_root)
+    active = _json(builder_root / "active_task.yml")
+    active["previous_run_log_dir"] = str(prior_ux_run_dir)
+    active["failure_summary"] = "Retry-ready task has no product repo changes to continue from."
+    _write_json(builder_root / "active_task.yml", active)
+    _write_no_changes_refined_result(run_log_dir)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 1
+    assert "Retry-ready task has no product repo changes to continue from." not in result.stdout
+    payload = _json(_active_run_dir(builder_root) / "automation_result.json")
+    assert payload["summary"] != "Retry-ready task has no product repo changes to continue from."
+    assert payload["summary"] == "Executor completed with no new product repo changes because this rerun only repaired UX conformance evidence."
+
+
+def test_active_task_vm_commands_are_resynced_from_current_backlog_truth(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="discovery",
+        allowlist=["services/company_discovery.py"],
+    )
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "selected"
+    backlog["tasks"][0]["verification"] = []
+    backlog["tasks"][0]["vm_bootstrap"] = []
+    backlog["tasks"][0]["vm_verification"] = ["echo task-smoke"]
+    _write_json(builder_root / "backlog.yml", backlog)
+
+    config = _json(builder_root / "config.yml")
+    config["vm"]["bootstrap_commands"] = ["echo default-bootstrap"]
+    config["vm"]["runtime_validation_commands"] = []
+    _write_json(builder_root / "config.yml", config)
+
+    active = _json(builder_root / "active_task.yml")
+    active["vm_bootstrap_commands"] = ["echo stale-bootstrap"]
+    active["vm_verification_commands"] = ["echo stale-smoke"]
+    _write_json(builder_root / "active_task.yml", active)
+
+    result = _run([sys.executable, str(SCRIPT), "--dry-run"], builder_root)
+
+    assert result.returncode == 0
+    run_dir = sorted(
+        (path for path in (builder_root / "run_logs").glob("*") if (path / "automation_result.json").exists()),
+        key=lambda path: path.name,
+    )[-1]
+    payload = _json(run_dir / "automation_result.json")
+    plan = json.loads(payload["steps"][0]["detail"])
+    assert plan["vm_bootstrap_commands"] == ["echo default-bootstrap"]
+    assert plan["vm_smoke_commands"] == ["echo task-smoke"]
+
+
 def test_fresh_product_execution_still_blocks_on_dirty_repo(tmp_path: Path) -> None:
     builder_root, product_repo, _, _ = _setup_builder_fixture(
         tmp_path,
@@ -1889,6 +2280,61 @@ def test_dirty_repo_blocks_and_preserves_active_task(tmp_path: Path) -> None:
     payload = _json(_active_run_dir(builder_root) / "automation_result.json")
     assert payload["classification"] == "blocked"
     assert "Builder repo is dirty" in payload["summary"]
+
+
+def test_builder_dirty_repo_ignores_generated_state_files(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    fake_codex = tmp_path / "fake-codex-builder-ignore"
+    _write_fake_codex(fake_codex, relative_output="worker.py", last_message="builder ignore ok\n")
+
+    active = _json(builder_root / "active_task.yml")
+    active.update(
+        {
+            "task_id": None,
+            "title": None,
+            "state": "idle",
+            "attempt": 0,
+            "started_at": None,
+            "handed_to_codex_at": None,
+            "prompt_file": None,
+            "run_log_dir": None,
+            "verification_commands": [],
+            "allowlist": [],
+            "failure_summary": None,
+            "notes": [],
+            "target_repo": None,
+            "target_kind": None,
+        }
+    )
+    _write_json(builder_root / "active_task.yml", active)
+
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "ready"
+    _write_json(builder_root / "backlog.yml", backlog)
+
+    config = _json(builder_root / "config.yml")
+    config["executor"]["mode"] = "codex_exec"
+    config["executor"]["codex_cli"] = str(fake_codex)
+    _write_json(builder_root / "config.yml", config)
+
+    (builder_root / "run_ledger.json").write_text('{"state":"idle"}\n', encoding="utf-8")
+    (builder_root / "backlog_proposals.json").write_text('{"proposals":[]}\n', encoding="utf-8")
+    (builder_root / "synthesized_backlog_entries.json").write_text('{"entries":[]}\n', encoding="utf-8")
+
+    _git(["add", "active_task.yml", "backlog.yml", "config.yml", "prompts/implement_feature.md"], builder_root)
+    _git(["commit", "-m", "prepare builder ignore test"], builder_root)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 0
+    assert "dirty before automated execution" not in result.stdout
+    payload = _json(_active_run_dir(builder_root) / "automation_result.json")
+    assert "dirty before automated execution" not in payload["summary"]
 
 
 def test_codex_exec_builder_task_runs_in_builder_repo(tmp_path: Path) -> None:
@@ -2632,6 +3078,7 @@ def test_transient_codex_transport_failure_reopens_task(tmp_path: Path) -> None:
     assert result.returncode == 1
     assert "INTERRUPTED" in result.stdout
     assert "executor_transport_failure" in result.stdout
+    assert "Codex lost its upstream connection before completion" in result.stdout
     backlog = _json(builder_root / "backlog.yml")
     assert backlog["tasks"][0]["status"] == "ready"
     active = _json(builder_root / "active_task.yml")
@@ -2645,7 +3092,7 @@ def test_transient_codex_transport_failure_reopens_task(tmp_path: Path) -> None:
     )[-1]
     payload = _json(run_dir / "automation_result.json")
     assert payload["classification"] == "interrupted"
-    assert payload["summary"] == "executor_transport_failure"
+    assert payload["summary"] == "executor_transport_failure: Codex lost its upstream connection before completion"
 
 
 def test_repair_state_reopens_transient_executor_failure(tmp_path: Path) -> None:
@@ -3024,6 +3471,39 @@ def test_dry_run_routes_task_vm_verification_to_vm_plan_only(tmp_path: Path) -> 
     assert plan["local_validation_commands"] != plan["vm_commands"]
 
 
+def test_product_task_blocks_when_runtime_self_check_ui_port_mismatches_bootstrap(tmp_path: Path) -> None:
+    builder_root, _, run_log_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="discovery",
+        allowlist=["services/company_discovery.py"],
+    )
+    _mark_retry_ready(builder_root)
+    _write_prior_vm_refined_result(run_log_dir, changed_files=["services/company_discovery.py"])
+
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["vm_bootstrap"] = []
+    backlog["tasks"][0]["vm_verification"] = ["bash scripts/runtime_self_check.sh"]
+    _write_json(builder_root / "backlog.yml", backlog)
+
+    config = _json(builder_root / "config.yml")
+    config["vm"]["ssh_target"] = "vm.example"
+    config["vm"]["validation_commands"] = ["echo vm-preflight"]
+    config["vm"]["bootstrap_commands"] = [
+        "nohup streamlit run ui/app.py --server.port 8501 --server.address 0.0.0.0 >/tmp/jorb_ui.log 2>&1 &"
+    ]
+    config["vm"]["runtime_validation_commands"] = []
+    _write_json(builder_root / "config.yml", config)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 2
+    assert "vm runtime UI mismatch: bootstrap uses http://127.0.0.1:8501 but runtime_self_check expects http://127.0.0.1:8500" in result.stdout
+    payload = _json(_active_run_dir(builder_root) / "automation_result.json")
+    assert payload["classification"] == "blocked"
+    assert payload["summary"] == "Missing automation configuration: vm runtime UI mismatch: bootstrap uses http://127.0.0.1:8501 but runtime_self_check expects http://127.0.0.1:8500"
+
+
 def test_repair_state_clears_stale_dry_run_active_state(tmp_path: Path) -> None:
     builder_root, _, run_log_dir, _ = _setup_builder_fixture(
         tmp_path,
@@ -3196,6 +3676,8 @@ def test_repair_state_clears_stale_retry_without_changes_when_task_is_retry_read
     assert active_after["state"] == "idle"
     assert status_after["state"] == "idle"
     assert status_after["active_task_id"] is None
+    backlog_after = _json(builder_root / "backlog.yml")
+    assert backlog_after["tasks"][0]["status"] == "ready"
     assert 'next_selected_task: "TASK-PRODUCT"' in inspect.stdout
 
 
@@ -3267,3 +3749,1311 @@ def test_repair_state_clears_blocked_active_slot_when_other_task_is_runnable(tmp
     assert status_after["state"] == "idle"
     assert status_after["active_task_id"] is None
     assert 'next_selected_task: "TASK-NEXT"' in inspect.stdout
+
+
+def test_repair_state_reopens_builder_task_when_only_generated_state_files_remain(tmp_path: Path) -> None:
+    builder_root, _, run_log_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "blocked"
+    _write_json(builder_root / "backlog.yml", backlog)
+
+    active = _json(builder_root / "active_task.yml")
+    active["state"] = "blocked"
+    active["failure_summary"] = "Builder repo is dirty before automated execution; refusing to continue."
+    _write_json(builder_root / "active_task.yml", active)
+
+    status = _json(builder_root / "status.yml")
+    status["state"] = "blocked"
+    status["last_result"] = "blocked"
+    _write_json(builder_root / "status.yml", status)
+
+    _write_json(
+        run_log_dir / "automation_result.json",
+        {
+            "task_id": "TASK-BUILDER",
+            "classification": "blocked",
+            "finished_at": "2026-03-27T00:00:00+00:00",
+            "summary": "Builder repo is dirty before automated execution; refusing to continue.",
+            "steps": [{"name": "git_status_before", "outcome": "blocked", "detail": "run_ledger.json"}],
+            "changed_files": ["run_ledger.json"],
+            "blocker_evidence": ["run_ledger.json"],
+            "unproven_runtime_gaps": ["Builder repo is dirty before automated execution; refusing to continue."],
+        },
+    )
+
+    (builder_root / "run_ledger.json").write_text('{"state":"idle"}\n', encoding="utf-8")
+    (builder_root / "backlog_proposals.json").write_text('{"proposals":[]}\n', encoding="utf-8")
+
+    repair = _run([sys.executable, str(SCRIPT), "--repair-state"], builder_root)
+    active_after = _json(builder_root / "active_task.yml")
+    status_after = _json(builder_root / "status.yml")
+    backlog_after = _json(builder_root / "backlog.yml")
+    inspect = _run([sys.executable, str(SCRIPT), "--inspect-backlog"], builder_root)
+
+    assert repair.returncode == 0
+    assert "backlog task TASK-BUILDER blocked -> ready" in repair.stdout
+    assert active_after["task_id"] is None
+    assert active_after["state"] == "idle"
+    assert status_after["state"] == "idle"
+    assert status_after["active_task_id"] is None
+    assert backlog_after["tasks"][0]["status"] == "ready"
+    assert 'next_selected_task: "TASK-BUILDER"' in inspect.stdout
+
+
+def test_phase4_dry_run_emits_stage_plan_and_repo_local_standards(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-010",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    (builder_root / "AGENTS.md").write_text("# Agents\n", encoding="utf-8")
+    skills_dir = builder_root / "skills"
+    skills_dir.mkdir(exist_ok=True)
+    (skills_dir / "README.md").write_text("# Skills\n", encoding="utf-8")
+
+    dry_run = _run([sys.executable, str(SCRIPT), "--dry-run"], builder_root)
+    assert dry_run.returncode == 0, dry_run.stdout + dry_run.stderr
+
+    run_dir = max((builder_root / "run_logs").glob("*"), key=lambda path: path.stat().st_mtime)
+    payload = _json(run_dir / "automation_result.json")
+    planned_steps = [step["name"] for step in payload["steps"]]
+    assert planned_steps[:7] == [
+        "planner",
+        "architect",
+        "research_grounding",
+        "decision_checkpoint",
+        "implementer",
+        "validator",
+        "judge",
+    ]
+    assert any(path.endswith("compiled_feature_spec.md") for path in payload["planned_artifacts"])
+    plan_detail = next(step["detail"] for step in payload["steps"] if step["name"] == "plan")
+    assert '"phase4_stage_order"' in plan_detail
+    assert '"repo_local_standards"' in plan_detail
+
+
+def test_phase4_result_persistence_blocks_accepted_run_when_required_artifacts_are_missing(tmp_path: Path) -> None:
+    module = _load_script_module()
+    run_dir = tmp_path / "run"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    task = {"id": "JORB-INFRA-010", "title": "Feature understanding compiler", "area": "builder"}
+    automation_result = {
+        "task_id": "JORB-INFRA-010",
+        "classification": "accepted",
+        "finished_at": "2026-03-30T00:00:00+00:00",
+        "summary": "ok",
+        "steps": [],
+        "changed_files": [],
+    }
+    standards = {
+        "agents_exists": True,
+        "agents_path": str(tmp_path / "AGENTS.md"),
+        "skills_exists": True,
+        "skills_dir": str(tmp_path / "skills"),
+        "skill_files": ["skills/README.md"],
+    }
+
+    persisted = module.persist_result_with_phase4_artifacts(
+        run_dir,
+        task,
+        automation_result,
+        standards=standards,
+        require_runtime_proof=True,
+        local_validation_payload=None,
+        vm_validation_payload=None,
+    )
+
+    assert persisted["classification"] == "blocked"
+    assert persisted["summary"].startswith("Phase 4 artifact enforcement failed:")
+    assert (run_dir / "evidence_bundle.json").exists()
+    assert (run_dir / "judge_decision.md").exists()
+    assert (run_dir / "runtime_proof.log").exists()
+
+
+def test_phase4_infra_task_blocks_without_repo_local_standards(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-010",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+    assert result.returncode == 2
+    assert "Missing automation configuration: AGENTS.md, skills/" in result.stdout
+    payload = _json(_active_run_dir(builder_root) / "automation_result.json")
+    assert payload["classification"] == "blocked"
+    assert "Missing automation configuration: AGENTS.md, skills/" in payload["summary"]
+
+
+def test_memory_store_retrieval_is_relevant_and_has_provenance(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-010",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    common = _load_common_module(builder_root)
+    history_path = builder_root / "task_history" / "2026-03-30T000000Z-JORB-INFRA-011.yml"
+    _write_json(
+        history_path,
+        {
+            "task_id": "JORB-INFRA-011",
+            "status": "accepted",
+            "completed_at": "2026-03-30T00:00:00+00:00",
+            "notes": ["proposal engine landed cleanly"],
+            "operator_diagnostics": {"accepted": True, "decision_summary": "proposal engine landed cleanly"},
+        },
+    )
+    blocker_path = builder_root / "blockers" / "BLK-JORB-INFRA-010.yml"
+    _write_json(
+        blocker_path,
+        {
+            "related_tasks": ["JORB-INFRA-010"],
+            "status": "open",
+            "opened_at": "2026-03-30T00:00:00+00:00",
+            "diagnosis": "known blocker pattern",
+        },
+    )
+
+    store = common.build_memory_store(builder_root)
+    retrieved = common.retrieve_memory_for_role({"id": "JORB-INFRA-010", "area": "builder"}, store, role="planner", limit=5)
+
+    assert retrieved["selected"]
+    assert all(entry["provenance"] for entry in retrieved["selected"])
+    assert retrieved["selected"][0]["ticket_family"] == "JORB-INFRA"
+    assert retrieved["selected"][0]["selection_reasons"]
+
+
+def test_memory_store_schema_and_observation_inference_are_explicit(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-010",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    common = _load_common_module(builder_root)
+    _write_json(
+        builder_root / "task_history" / "2026-03-30T000000Z-JORB-INFRA-010.yml",
+        {
+            "task_id": "JORB-INFRA-010",
+            "status": "blocked",
+            "completed_at": "2026-03-30T00:00:00+00:00",
+            "notes": ["VM smoke validation failed after local validation and git push succeeded."],
+            "failure_taxonomy": {"failure_class": "runtime_vm_failure"},
+            "operator_diagnostics": {"accepted": False, "decision_summary": "VM smoke validation failed after local validation and git push succeeded."},
+        },
+    )
+
+    store = common.build_memory_store(builder_root)
+    issues = common.validate_memory_store_schema(store)
+
+    assert issues == []
+    entry = store["entries"][0]
+    assert entry["observation"]
+    assert entry["inference"]
+    assert entry["primary_basis"] == "observation"
+    assert entry["source_artifact"].endswith(".yml")
+
+
+def test_memory_store_deduplicates_similar_entries_and_preserves_provenance(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-010",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    common = _load_common_module(builder_root)
+    for suffix in ("a", "b"):
+        _write_json(
+            builder_root / "task_history" / f"2026-03-30T00000{suffix}Z-JORB-INFRA-010.yml",
+            {
+                "task_id": "JORB-INFRA-010",
+                "status": "blocked",
+                "completed_at": "2026-03-30T00:00:00+00:00",
+                "notes": ["Builder repo is dirty before automated execution; refusing to continue."],
+                "operator_diagnostics": {"accepted": False, "decision_summary": "Builder repo is dirty before automated execution; refusing to continue."},
+            },
+        )
+
+    store = common.build_memory_store(builder_root)
+    matching = [entry for entry in store["entries"] if "dirty before automated execution" in entry["observation"]]
+
+    assert len(matching) == 1
+    assert matching[0]["support_count"] == 2
+    assert len(matching[0]["provenance"]) == 2
+
+
+def test_memory_decay_and_operator_invalidation_change_retrieval(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-010",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    common = _load_common_module(builder_root)
+    _write_json(
+        builder_root / "task_history" / "2026-01-01T000000Z-JORB-INFRA-010.yml",
+        {
+            "task_id": "JORB-INFRA-010",
+            "status": "accepted",
+            "completed_at": "2026-01-01T00:00:00+00:00",
+            "notes": ["old accepted pattern"],
+            "operator_diagnostics": {"accepted": True, "decision_summary": "old accepted pattern"},
+        },
+    )
+    _write_json(
+        builder_root / "task_history" / "2026-03-30T000000Z-JORB-INFRA-010.yml",
+        {
+            "task_id": "JORB-INFRA-010",
+            "status": "accepted",
+            "completed_at": "2026-03-30T00:00:00+00:00",
+            "notes": ["fresh accepted pattern"],
+            "operator_diagnostics": {"accepted": True, "decision_summary": "fresh accepted pattern"},
+        },
+    )
+
+    store = common.build_memory_store(builder_root)
+    selected_before = common.retrieve_memory_for_role({"id": "JORB-INFRA-010", "area": "builder"}, store, role="planner")["selected"]
+    stale_entry = next(entry for entry in store["entries"] if entry["observation"] == "old accepted pattern")
+    fresh_entry = next(entry for entry in store["entries"] if entry["observation"] == "fresh accepted pattern")
+
+    assert stale_entry["freshness"]["freshness_state"] == "stale"
+    assert fresh_entry["freshness"]["freshness_state"] == "fresh"
+    assert selected_before[0]["observation"] == "fresh accepted pattern"
+
+    invalidate = _run([sys.executable, str(MEMORY_CONTROLS_SCRIPT), "invalidate", fresh_entry["memory_id"], "--reason", "bad memory"], builder_root)
+    assert invalidate.returncode == 0
+
+    store_after = common.build_memory_store(builder_root)
+    selected_after = common.retrieve_memory_for_role({"id": "JORB-INFRA-010", "area": "builder"}, store_after, role="planner")["selected"]
+    assert all(entry["memory_id"] != fresh_entry["memory_id"] for entry in selected_after)
+
+
+def test_role_specific_retrieval_differs_between_planner_architect_and_judge(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-V3-003",
+        area="frontend",
+        allowlist=["../jorb-builder/**"],
+    )
+    common = _load_common_module(builder_root)
+    _write_json(
+        builder_root / "task_history" / "2026-03-30T000000Z-JORB-V3-003.yml",
+        {
+            "task_id": "JORB-V3-003",
+            "status": "refined",
+            "completed_at": "2026-03-30T00:00:00+00:00",
+            "notes": ["UX conformance evidence is incomplete for this product-facing UX task."],
+            "failure_taxonomy": {"failure_class": "artifact_completeness_failure"},
+            "operator_diagnostics": {
+                "accepted": False,
+                "decision_summary": "UX conformance evidence is incomplete for this product-facing UX task.",
+                "ux_conformance": {"required": True},
+            },
+        },
+    )
+    _write_json(
+        builder_root / "memory_overrides.json",
+        {
+            "memory_status": {},
+            "manual_entries": [
+                {
+                    "memory_id": "mem-playbook-ux",
+                    "memory_type": "playbook",
+                    "ticket_family": "JORB-V3",
+                    "observation": "Jobs-first UI work must carry explicit figma-source mapping.",
+                    "inference": "Treat figma mapping as a hard acceptance boundary.",
+                    "primary_basis": "inference",
+                    "origin": "operator",
+                    "role_fit": ["planner", "judge"],
+                    "relevance_tags": ["ux", "playbook", "acceptance_boundary"],
+                    "status": "pinned"
+                }
+            ],
+            "pins": []
+        },
+    )
+
+    store = common.build_memory_store(builder_root)
+    planner = common.retrieve_memory_for_role({"id": "JORB-V3-003", "area": "frontend", "product_facing_ux": True}, store, role="planner")
+    architect = common.retrieve_memory_for_role({"id": "JORB-V3-003", "area": "frontend", "product_facing_ux": True}, store, role="architect")
+    judge = common.retrieve_memory_for_role({"id": "JORB-V3-003", "area": "frontend", "product_facing_ux": True}, store, role="judge")
+
+    assert planner["selected"]
+    assert architect["selected"]
+    assert judge["selected"]
+    assert planner["selected"][0]["memory_type"] in {"playbook", "failure_mode"}
+    assert judge["selected"][0]["memory_type"] in {"playbook", "failure_mode"}
+    assert planner["profile"]["preferred_types"] != architect["profile"]["preferred_types"]
+
+
+def test_render_packet_emits_role_specific_memory_bundles_and_bounded_prompt_context(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-010",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    _write_json(builder_root / "active_task.yml", _base_active("JORB-INFRA-010", builder_root / "run_logs" / "run-1" / "codex_prompt.md", builder_root / "run_logs" / "run-1", ["../jorb-builder/**"]))
+    _write_json(
+        builder_root / "task_history" / "2026-03-30T000000Z-JORB-INFRA-010.yml",
+        {
+            "task_id": "JORB-INFRA-010",
+            "status": "accepted",
+            "completed_at": "2026-03-30T00:00:00+00:00",
+            "notes": ["feature spec compiler landed"],
+            "operator_diagnostics": {"accepted": True, "decision_summary": "feature spec compiler landed"},
+        },
+    )
+    (builder_root / "AGENTS.md").write_text("# Agents\n", encoding="utf-8")
+    skills_dir = builder_root / "skills"
+    skills_dir.mkdir(exist_ok=True)
+    (skills_dir / "README.md").write_text("# Skills\n", encoding="utf-8")
+
+    result = _run([sys.executable, str(SCRIPT.parent / "render_packet.py")], builder_root)
+
+    assert result.returncode == 0
+    active = _json(builder_root / "active_task.yml")
+    run_dir = Path(active["run_log_dir"])
+    memory_context = _json(run_dir / "memory_context.json")
+    prompt_text = (run_dir / "codex_prompt.md").read_text(encoding="utf-8")
+    assert "planner_bundle" in memory_context
+    assert "architect_bundle" in memory_context
+    assert len(memory_context["planner_bundle"]["selected"]) <= memory_context["planner_bundle"]["profile"]["limit"]
+    assert "Planner memory bundle:" in prompt_text
+    assert "Architect memory bundle:" in prompt_text
+
+
+def test_memory_controls_can_supersede_and_pin_entries(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-010",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    common = _load_common_module(builder_root)
+    _write_json(
+        builder_root / "task_history" / "2026-03-30T000000Z-JORB-INFRA-010.yml",
+        {
+            "task_id": "JORB-INFRA-010",
+            "status": "accepted",
+            "completed_at": "2026-03-30T00:00:00+00:00",
+            "notes": ["feature spec compiler landed"],
+            "operator_diagnostics": {"accepted": True, "decision_summary": "feature spec compiler landed"},
+        },
+    )
+    entry = common.build_memory_store(builder_root)["entries"][0]
+
+    pin = _run([sys.executable, str(MEMORY_CONTROLS_SCRIPT), "pin", entry["memory_id"]], builder_root)
+    supersede = _run([sys.executable, str(MEMORY_CONTROLS_SCRIPT), "supersede", entry["memory_id"], "--by", "manual-playbook"], builder_root)
+
+    assert pin.returncode == 0
+    assert supersede.returncode == 0
+    store = common.build_memory_store(builder_root)
+    updated = next(item for item in store["entries"] if item["memory_id"] == entry["memory_id"])
+    assert updated["status"] == "superseded"
+    assert updated["superseded_by"] == "manual-playbook"
+
+
+def test_judge_path_emits_role_specific_memory_context(tmp_path: Path) -> None:
+    builder_root, _, run_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-010",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    module = _load_script_module(builder_root)
+    _write_json(
+        builder_root / "task_history" / "2026-03-30T000000Z-JORB-INFRA-010.yml",
+        {
+            "task_id": "JORB-INFRA-010",
+            "status": "refined",
+            "completed_at": "2026-03-30T00:00:00+00:00",
+            "notes": ["Local validation failed after executor changes."],
+            "failure_taxonomy": {"failure_class": "local_test_failure"},
+            "operator_diagnostics": {"accepted": False, "decision_summary": "Local validation failed after executor changes."},
+        },
+    )
+    for name in ("compiled_feature_spec.md", "proposal.md", "tradeoff_matrix.md", "research_brief.md"):
+        (run_dir / name).write_text("ok\n", encoding="utf-8")
+    task = _json(builder_root / "backlog.yml")["tasks"][0]
+    standards = {"agents_exists": True, "skills_exists": True, "agents_path": "AGENTS.md", "skills_dir": "skills", "skill_files": []}
+    automation_result = {
+        "task_id": "JORB-INFRA-010",
+        "classification": "blocked",
+        "summary": "Local validation failed after executor changes.",
+        "finished_at": "2026-03-30T00:00:00+00:00",
+        "steps": [{"name": "local_validation", "outcome": "refined", "detail": "failed"}],
+        "changed_files": [],
+    }
+
+    module.persist_result_with_phase4_artifacts(
+        run_dir,
+        task,
+        automation_result,
+        standards=standards,
+        require_runtime_proof=False,
+        local_validation_payload={"results": [{"command": "pytest", "passed": False}]},
+        vm_validation_payload=None,
+    )
+
+    judge_memory = _json(run_dir / "judge_memory_context.json")
+    evidence_bundle = _json(run_dir / "evidence_bundle.json")
+    assert judge_memory["role"] == "judge"
+    assert "judge_memory_selected" in evidence_bundle
+
+
+def test_eval_scoring_writes_machine_readable_result_with_threshold(tmp_path: Path) -> None:
+    module = _load_script_module()
+    run_dir = tmp_path / "run"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    for name in ("compiled_feature_spec.md", "proposal.md", "tradeoff_matrix.md", "research_brief.md", "evidence_bundle.json", "judge_decision.md"):
+        (run_dir / name).write_text("ok\n", encoding="utf-8")
+    (run_dir / "runtime_proof.log").write_text("ok\n", encoding="utf-8")
+
+    eval_result = module.score_run_eval(
+        {"id": "JORB-INFRA-010"},
+        {"classification": "accepted", "steps": [{"name": "local_validation", "outcome": "passed"}]},
+        run_dir=run_dir,
+        standards={"agents_exists": True, "skills_exists": True},
+    )
+    module.write_eval_result(run_dir, eval_result)
+
+    assert eval_result["passed"] is True
+    assert eval_result["overall_score"] >= eval_result["threshold"]
+    assert _json(run_dir / "eval_result.json")["scores"]["planning_quality"] == 1.0
+
+
+def test_retry_loop_detection_blocks_repeated_same_failure_class(tmp_path: Path) -> None:
+    builder_root, _, run_log_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-010",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    module = _load_script_module(builder_root)
+    task = _json(builder_root / "backlog.yml")["tasks"][0]
+    task["status"] = "selected"
+    active = _json(builder_root / "active_task.yml")
+    status = _json(builder_root / "status.yml")
+    for index in range(2):
+        _write_json(
+            builder_root / "task_history" / f"2026-03-30T00000{index}Z-JORB-INFRA-010.yml",
+            {
+                "task_id": "JORB-INFRA-010",
+                "status": "refined",
+                "failure_taxonomy": {"failure_class": "local_test_failure"},
+                "operator_diagnostics": {"accepted": False},
+            },
+        )
+    automation_result = {
+        "task_id": "JORB-INFRA-010",
+        "classification": "refined",
+        "finished_at": "2026-03-30T00:00:00+00:00",
+        "summary": "Local validation failed after executor changes.",
+        "steps": [{"name": "local_validation", "outcome": "refined", "detail": "failed"}],
+        "changed_files": [],
+    }
+
+    module.classify_and_update_state("refined", automation_result["summary"], task, {"tasks": [task]}, active, status, automation_result)
+
+    assert task["status"] == "blocked"
+    assert "Retry loop detected" in task["notes"][-1]
+
+
+def test_run_lock_blocks_second_controller(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-010",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    (builder_root / "AGENTS.md").write_text("# Agents\n", encoding="utf-8")
+    skills_dir = builder_root / "skills"
+    skills_dir.mkdir(exist_ok=True)
+    (skills_dir / "README.md").write_text("# Skills\n", encoding="utf-8")
+    _write_json(builder_root / "run_lock.json", {"pid": os.getpid(), "task_id": "OTHER", "acquired_at": "2026-03-30T00:00:00+00:00"})
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 2
+    assert "run_lock held by pid" in result.stdout
+
+
+def test_show_status_reads_canonical_run_ledger(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-010",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    _write_json(
+        builder_root / "run_ledger.json",
+        {
+            "current_task": "JORB-INFRA-010",
+            "current_stage": "judge",
+            "run_state": "blocked",
+            "current_blocker": "artifact gate",
+            "last_successful_checkpoint": "validator",
+            "artifact_completeness": {"present": ["compiled_feature_spec.md"], "missing": ["judge_decision.md"]},
+            "failure_taxonomy": {"failure_class": "artifact_completeness_failure", "recovery_action": "replan_required"},
+            "eval_result": {
+                "overall_score": 0.5,
+                "fixture_family": "infra_hardening",
+                "threshold": 0.78,
+                "passed": False,
+                "regression_vs_prior": {"trend": "regressed", "overall_delta": -0.2},
+            },
+            "eval_blocked_acceptance": True,
+            "next_recommended_action": "Inspect judge artifact",
+        },
+    )
+
+    result = _run([sys.executable, str(SCRIPT.parent / "show_status.py")], builder_root)
+
+    assert result.returncode == 0
+    assert "Canonical operator view:" in result.stdout
+    assert "- current_stage: judge" in result.stdout
+    assert "- failure_class: artifact_completeness_failure" in result.stdout
+    assert "- eval_fixture_family: infra_hardening" in result.stdout
+    assert "- eval_regression_trend: regressed" in result.stdout
+    assert "- eval_blocked_acceptance: True" in result.stdout
+
+
+def test_private_eval_fixture_schema_validation_rejects_missing_fields(tmp_path: Path) -> None:
+    module = _load_private_eval_module(tmp_path)
+
+    issues = module.validate_fixture_schema({"fixture_id": "bad"})
+
+    assert "missing:fixture_family" in issues
+    assert "missing:selector" in issues
+
+
+def test_private_eval_scores_fixture_with_real_rubric_dimensions(tmp_path: Path) -> None:
+    builder_root, _, run_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-010",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    module = _load_private_eval_module(builder_root)
+    fixture = {
+        "fixture_id": "infra_test",
+        "fixture_family": "infra_hardening",
+        "description": "test fixture",
+        "selector": {"task_family": "JORB-INFRA", "area": "builder"},
+        "mandatory_artifacts": ["compiled_feature_spec.md", "proposal.md", "judge_decision.md", "evidence_bundle.json", "runtime_proof.log"],
+        "rubric_dimensions": [
+            {"name": "planning_quality", "weight": 0.3, "threshold": 0.6, "description": "plan"},
+            {"name": "evidence_quality", "weight": 0.3, "threshold": 0.6, "description": "evidence"},
+            {"name": "operator_handoff_quality", "weight": 0.4, "threshold": 0.6, "description": "handoff"},
+        ],
+        "pass_threshold": 0.7,
+    }
+    for name in ("compiled_feature_spec.md", "proposal.md", "tradeoff_matrix.md", "research_brief.md", "judge_decision.md", "evidence_bundle.json", "runtime_proof.log", "automation_summary.md"):
+        (run_dir / name).write_text("ok\n", encoding="utf-8")
+
+    subject = module.build_eval_subject(
+        {"id": "JORB-INFRA-010", "title": "Feature understanding compiler", "area": "builder"},
+        {"classification": "accepted", "summary": "ok", "steps": [], "changed_files": ["scripts/foo.py"]},
+        run_dir=run_dir,
+        standards={"agents_exists": True, "skills_exists": True},
+    )
+    result = module.score_fixture_subject(fixture, subject)
+
+    assert result["passed"] is True
+    assert result["scores"]["planning_quality"] >= 0.6
+    assert result["overall_score"] >= result["threshold"]
+
+
+def test_private_eval_replay_scores_historical_artifacts_and_aggregates(tmp_path: Path) -> None:
+    builder_root, _, run_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-010",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    module = _load_private_eval_module(builder_root)
+    _write_eval_fixture(
+        builder_root / "eval_fixtures" / "infra.json",
+        {
+            "fixture_id": "infra_hardening_v1",
+            "fixture_family": "infra_hardening",
+            "description": "infra fixture",
+            "selector": {"task_family": "JORB-INFRA", "area": "builder"},
+            "mandatory_artifacts": ["compiled_feature_spec.md", "proposal.md", "tradeoff_matrix.md", "judge_decision.md", "evidence_bundle.json", "runtime_proof.log"],
+            "rubric_dimensions": [
+                {"name": "planning_quality", "weight": 0.2, "threshold": 0.7, "description": "plan"},
+                {"name": "test_adequacy", "weight": 0.2, "threshold": 0.7, "description": "tests"},
+                {"name": "runtime_proof_quality", "weight": 0.2, "threshold": 0.7, "description": "runtime"},
+                {"name": "evidence_quality", "weight": 0.2, "threshold": 0.7, "description": "evidence"},
+                {"name": "operator_handoff_quality", "weight": 0.2, "threshold": 0.6, "description": "handoff"},
+            ],
+            "pass_threshold": 0.78,
+        },
+    )
+    for name in ("compiled_feature_spec.md", "proposal.md", "tradeoff_matrix.md", "research_brief.md", "judge_decision.md", "evidence_bundle.json", "runtime_proof.log", "automation_summary.md", "local_validation.json"):
+        (run_dir / name).write_text("{}\n" if name.endswith(".json") else "ok\n", encoding="utf-8")
+    _write_json(
+        run_dir / "automation_result.json",
+        {
+            "task_id": "JORB-INFRA-010",
+            "classification": "accepted",
+            "summary": "ok",
+            "steps": [
+                {"name": "local_validation", "outcome": "passed"},
+                {"name": "vm_validation", "outcome": "accepted"},
+            ],
+            "changed_files": ["scripts/automate_task_loop.py"],
+        },
+    )
+    history_path = builder_root / "task_history" / "2026-03-30T000000Z-JORB-INFRA-010.yml"
+    _write_json(
+        history_path,
+        {
+            "task_id": "JORB-INFRA-010",
+            "title": "Feature understanding compiler",
+            "status": "accepted",
+            "run_log_dir": str(run_dir),
+            "notes": ["ok"],
+            "operator_diagnostics": {"step_outcomes": [{"name": "local_validation", "outcome": "passed"}]},
+        },
+    )
+
+    replay = module.replay_history_eval(history_path, root=builder_root)
+    aggregate = module.aggregate_replay_results([replay])
+
+    assert replay["fixture_family"] == "infra_hardening"
+    assert replay["passed"] is True
+    assert aggregate["families"][0]["pass_rate"] == 1.0
+
+
+def test_private_eval_compare_two_attempts_reports_regression(tmp_path: Path) -> None:
+    module = _load_private_eval_module(tmp_path)
+
+    comparison = module.compare_eval_results(
+        {"task_id": "A", "scores": {"planning_quality": 1.0, "evidence_quality": 1.0}, "overall_score": 0.9},
+        {"task_id": "B", "scores": {"planning_quality": 0.6, "evidence_quality": 0.7}, "overall_score": 0.65},
+    )
+
+    assert comparison["trend"] == "regressed"
+    assert comparison["category_deltas"]["planning_quality"] == -0.4
+
+
+def test_eval_gate_blocks_acceptance_when_fixture_threshold_fails(tmp_path: Path) -> None:
+    builder_root, _, run_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-010",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    module = _load_script_module(builder_root)
+    _write_eval_fixture(
+        builder_root / "eval_fixtures" / "infra.json",
+        {
+            "fixture_id": "infra_hardening_v1",
+            "fixture_family": "infra_hardening",
+            "description": "infra fixture",
+            "selector": {"task_family": "JORB-INFRA", "area": "builder"},
+            "mandatory_artifacts": ["compiled_feature_spec.md", "proposal.md", "tradeoff_matrix.md", "judge_decision.md", "evidence_bundle.json", "runtime_proof.log"],
+            "rubric_dimensions": [
+                {"name": "planning_quality", "weight": 0.2, "threshold": 0.7, "description": "plan"},
+                {"name": "implementation_quality", "weight": 0.3, "threshold": 0.9, "description": "impl"},
+                {"name": "test_adequacy", "weight": 0.2, "threshold": 0.9, "description": "tests"},
+                {"name": "evidence_quality", "weight": 0.2, "threshold": 0.7, "description": "evidence"},
+                {"name": "operator_handoff_quality", "weight": 0.1, "threshold": 0.6, "description": "handoff"},
+            ],
+            "pass_threshold": 0.85,
+        },
+    )
+    for name in ("compiled_feature_spec.md", "proposal.md", "tradeoff_matrix.md", "research_brief.md"):
+        (run_dir / name).write_text("ok\n", encoding="utf-8")
+    task = _json(builder_root / "backlog.yml")["tasks"][0]
+    standards = {"agents_exists": True, "skills_exists": True, "agents_path": "AGENTS.md", "skills_dir": "skills", "skill_files": []}
+    automation_result = {
+        "task_id": "JORB-INFRA-010",
+        "classification": "accepted",
+        "summary": "accepted in narrative only",
+        "finished_at": "2026-03-30T00:00:00+00:00",
+        "steps": [],
+        "changed_files": [],
+    }
+
+    persisted = module.persist_result_with_phase4_artifacts(
+        run_dir,
+        task,
+        automation_result,
+        standards=standards,
+        require_runtime_proof=False,
+        local_validation_payload=None,
+        vm_validation_payload=None,
+    )
+
+    assert persisted["classification"] == "blocked"
+    assert "Eval threshold not met" in persisted["summary"]
+    assert _json(run_dir / "eval_result.json")["blocked_acceptance"] is True
+
+
+def test_feedback_normalization_separates_observation_inference_and_recommendation(tmp_path: Path) -> None:
+    module = _load_feedback_module(tmp_path)
+
+    signal = module.normalize_operator_feedback(
+        {
+            "feedback": "This UX is wrong and the builder keeps missing the real structure.",
+            "subsystem": "ui",
+            "ticket_family": "JORB-V3",
+            "recommendation": "Create a focused refinement ticket.",
+        }
+    )
+
+    assert signal["raw_observation"] == "This UX is wrong and the builder keeps missing the real structure."
+    assert signal["observation"] == signal["raw_observation"]
+    assert signal["interpreted_issue"] == "ux_mismatch"
+    assert "suggests ux mismatch" in signal["inference"]
+    assert signal["recommendation"] == "Create a focused refinement ticket."
+
+
+def test_feedback_duplicate_proposals_are_suppressed(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-031", area="builder", allowlist=["scripts/**"])
+    module = _load_feedback_module(builder_root)
+    _write_json(
+        builder_root / "task_history" / "2026-03-30T000000Z-JORB-INFRA-031.yml",
+        {
+            "task_id": "JORB-INFRA-031",
+            "status": "refined",
+            "completed_at": "2026-03-30T00:00:00+00:00",
+            "notes": ["Artifact enforcement failed for the same reason."],
+            "failure_taxonomy": {"failure_class": "artifact_completeness_failure"},
+        },
+    )
+    _write_json(
+        builder_root / "task_history" / "2026-03-30T010000Z-JORB-INFRA-031.yml",
+        {
+            "task_id": "JORB-INFRA-031",
+            "status": "refined",
+            "completed_at": "2026-03-30T01:00:00+00:00",
+            "notes": ["Artifact enforcement failed for the same reason."],
+            "failure_taxonomy": {"failure_class": "artifact_completeness_failure"},
+        },
+    )
+
+    first = module.generate_backlog_proposals(builder_root, dry_run=False)
+    second = module.generate_backlog_proposals(builder_root, dry_run=False)
+
+    assert len(first["proposals"]["proposals"]) >= 1
+    assert len(second["proposals"]["proposals"]) == len(first["proposals"]["proposals"])
+
+
+def test_feedback_recurrence_threshold_and_weak_evidence_are_enforced(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-031", area="builder", allowlist=["scripts/**"])
+    module = _load_feedback_module(builder_root)
+    backlog = _json(builder_root / "backlog.yml")
+
+    low_signal = {
+        "signal_id": "sig-low",
+        "interpreted_issue": "artifact_gap_pattern",
+        "affected_ticket_family": "JORB-INFRA",
+        "proposed_action_type": "add_missing_acceptance_criteria",
+        "recommendation": "Tighten acceptance criteria.",
+        "inference": "Observed once with low confidence.",
+        "evidence_links": ["task_history/one.yml"],
+        "confidence": 0.55,
+        "recurrence_count": 1,
+        "severity": "medium",
+    }
+    assert module._proposal_from_signal(low_signal, backlog) is None
+
+    severe_signal = {
+        "signal_id": "sig-severe",
+        "interpreted_issue": "eval_regression",
+        "affected_ticket_family": "JORB-INFRA",
+        "proposed_action_type": "add_missing_eval_coverage",
+        "recommendation": "Strengthen eval coverage.",
+        "inference": "A high-severity regression was observed.",
+        "evidence_links": ["task_history/two.yml"],
+        "confidence": 0.8,
+        "recurrence_count": 1,
+        "severity": "high",
+    }
+    proposal = module._proposal_from_signal(severe_signal, backlog)
+    assert proposal is not None
+    assert proposal["priority_recommendation"] == "high"
+
+
+def test_feedback_generates_evidence_backed_backlog_proposal_from_repeated_pattern(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-031", area="builder", allowlist=["scripts/**"])
+    module = _load_feedback_module(builder_root)
+    for index in range(2):
+        _write_json(
+            builder_root / "task_history" / f"2026-03-30T0{index}0000Z-JORB-INFRA-031.yml",
+            {
+                "task_id": "JORB-INFRA-031",
+                "status": "refined",
+                "completed_at": f"2026-03-30T0{index}:00:00+00:00",
+                "notes": ["Retry loop detected after repeated planner failure."],
+                "failure_taxonomy": {"failure_class": "prompt_or_planning_failure"},
+            },
+        )
+
+    payload = module.generate_backlog_proposals(builder_root, dry_run=False)
+    proposals = payload["proposals"]["proposals"]
+    assert len(proposals) >= 1
+    retry_loop_proposals = [proposal for proposal in proposals if proposal["proposed_action_type"] == "split_oversized_ticket"]
+    assert retry_loop_proposals
+    proposal = retry_loop_proposals[0]
+    assert proposal["source_signal_id"].startswith("sig-")
+    assert proposal["status"] == "draft"
+    assert proposal["evidence_links"]
+    assert proposal["draft_ticket"]["id_placeholder"].startswith("DRAFT-JORB-INFRA")
+
+
+def test_feedback_operator_review_status_transitions_persist_to_memory(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-031", area="builder", allowlist=["scripts/**"])
+    module = _load_feedback_module(builder_root)
+    common = _load_common_module(builder_root)
+    _write_json(
+        builder_root / "backlog_proposals.json",
+        {
+            "generated_at": "2026-03-30T00:00:00+00:00",
+            "proposals": [
+                {
+                    "proposal_id": "prop-1",
+                    "status": "draft",
+                    "title": "Harden builder retries",
+                    "confidence": 0.8,
+                    "affected_ticket_family": "JORB-INFRA",
+                    "evidence_summary": "Repeated retry loop.",
+                    "rationale": "Create a hardening task.",
+                }
+            ],
+        },
+    )
+
+    updated = module.update_proposal_status("prop-1", "accepted", note="good proposal", root=builder_root)
+    assert updated["status"] == "accepted"
+    assert updated["review_note"] == "good proposal"
+
+    store = common.build_memory_store(builder_root)
+    proposal_entries = [entry for entry in store["entries"] if entry["memory_id"] == "proposal-prop-1"]
+    assert proposal_entries
+    assert proposal_entries[0]["status"] == "active"
+    assert "accepted" in proposal_entries[0]["relevance_tags"]
+
+
+def test_feedback_dry_run_does_not_mutate_canonical_files(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-031", area="builder", allowlist=["scripts/**"])
+    module = _load_feedback_module(builder_root)
+    backlog_before = (builder_root / "backlog.yml").read_text(encoding="utf-8")
+
+    _write_json(
+        builder_root / "task_history" / "2026-03-30T000000Z-JORB-INFRA-031.yml",
+        {
+            "task_id": "JORB-INFRA-031",
+            "status": "refined",
+            "completed_at": "2026-03-30T00:00:00+00:00",
+            "notes": ["Artifact enforcement failed for the same reason."],
+            "failure_taxonomy": {"failure_class": "artifact_completeness_failure"},
+        },
+    )
+    _write_json(
+        builder_root / "task_history" / "2026-03-30T010000Z-JORB-INFRA-031.yml",
+        {
+            "task_id": "JORB-INFRA-031",
+            "status": "refined",
+            "completed_at": "2026-03-30T01:00:00+00:00",
+            "notes": ["Artifact enforcement failed for the same reason."],
+            "failure_taxonomy": {"failure_class": "artifact_completeness_failure"},
+        },
+    )
+
+    payload = module.generate_backlog_proposals(builder_root, dry_run=True)
+    assert payload["proposals"]["proposals"]
+    assert not (builder_root / "feedback_signals.json").exists()
+    assert not (builder_root / "backlog_proposals.json").exists()
+    assert (builder_root / "backlog.yml").read_text(encoding="utf-8") == backlog_before
+
+
+def test_feedback_summary_appears_in_operator_surface(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-031", area="builder", allowlist=["scripts/**"])
+    _write_json(
+        builder_root / "feedback_signals.json",
+        {"generated_at": "2026-03-30T00:00:00+00:00", "signals": [{"signal_id": "sig-1"}]},
+    )
+    _write_json(
+        builder_root / "backlog_proposals.json",
+        {
+            "generated_at": "2026-03-30T00:00:00+00:00",
+            "proposals": [{"proposal_id": "prop-1", "status": "draft", "title": "Harden retries"}],
+        },
+    )
+
+    result = _run([sys.executable, str(SCRIPT.parent / "show_status.py")], builder_root)
+
+    assert result.returncode == 0
+    assert "Feedback loop:" in result.stdout
+    assert "- signal_count: 1" in result.stdout
+    assert "- proposal_count: 1" in result.stdout
+    assert "- draft_proposals: 1" in result.stdout
+    assert "- top_draft_title: Harden retries" in result.stdout
+
+
+def test_feedback_engine_integration_emits_proposals_without_backlog_mutation(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-031", area="builder", allowlist=["scripts/**"])
+    module = _load_script_module(builder_root)
+    backlog_before = (builder_root / "backlog.yml").read_text(encoding="utf-8")
+    _write_json(
+        builder_root / "task_history" / "2026-03-30T000000Z-JORB-INFRA-031.yml",
+        {
+            "task_id": "JORB-INFRA-031",
+            "status": "refined",
+            "completed_at": "2026-03-30T00:00:00+00:00",
+            "notes": ["Retry loop detected after repeated planner failure."],
+            "failure_taxonomy": {"failure_class": "prompt_or_planning_failure"},
+        },
+    )
+    _write_json(
+        builder_root / "task_history" / "2026-03-30T010000Z-JORB-INFRA-031.yml",
+        {
+            "task_id": "JORB-INFRA-031",
+            "status": "refined",
+            "completed_at": "2026-03-30T01:00:00+00:00",
+            "notes": ["Retry loop detected after repeated planner failure."],
+            "failure_taxonomy": {"failure_class": "prompt_or_planning_failure"},
+        },
+    )
+    _write_json(
+        builder_root / "task_history" / "2026-03-30T020000Z-JORB-INFRA-031.yml",
+        {
+            "task_id": "JORB-INFRA-031",
+            "status": "refined",
+            "completed_at": "2026-03-30T02:00:00+00:00",
+            "notes": ["Retry loop detected after repeated planner failure."],
+            "failure_taxonomy": {"failure_class": "prompt_or_planning_failure"},
+        },
+    )
+
+    module.generate_backlog_proposals(builder_root, dry_run=False)
+
+    proposals = _json(builder_root / "backlog_proposals.json")["proposals"]
+    assert proposals
+    assert (builder_root / "backlog.yml").read_text(encoding="utf-8") == backlog_before
+
+
+def test_private_eval_fixture_schema_accepts_backlog_synthesis_dimension(tmp_path: Path) -> None:
+    module = _load_private_eval_module(tmp_path)
+    fixture = {
+        "fixture_id": "proposal_backlog_synthesis_v1",
+        "fixture_family": "proposal_backlog_synthesis",
+        "description": "synthesis",
+        "selector": {"task_family": "JORB-INFRA", "area": "builder"},
+        "mandatory_artifacts": [],
+        "rubric_dimensions": [
+            {"name": "backlog_synthesis_quality", "weight": 1.0, "threshold": 0.8, "description": "quality"},
+        ],
+        "pass_threshold": 0.8,
+    }
+    assert module.validate_fixture_schema(fixture) == []
+
+
+def test_approved_proposal_becomes_structured_synthesized_entry(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    module = _load_backlog_synthesis_module(builder_root)
+    _write_json(
+        builder_root / "backlog_proposals.json",
+        {
+            "generated_at": "2026-03-30T00:00:00+00:00",
+            "proposals": [
+                {
+                    "proposal_id": "prop-1",
+                    "status": "accepted",
+                    "title": "Harden builder retries",
+                    "rationale": "Add a follow-up hardening task.",
+                    "evidence_summary": "Repeated retry loop observed 3 times.",
+                    "evidence_links": ["task_history/one.yml", "task_history/two.yml"],
+                    "affected_ticket_family": "JORB-INFRA",
+                    "priority_recommendation": "high",
+                    "confidence": 0.9,
+                    "recurrence_count": 3,
+                    "proposed_action_type": "create_follow_up_hardening_ticket",
+                    "dependencies": ["JORB-INFRA-030"],
+                    "reviewed_at": "2026-03-30T01:00:00+00:00",
+                    "review_note": "approved",
+                }
+            ],
+        },
+    )
+
+    payload = module.generate_synthesized_entries(builder_root, dry_run=False)
+    assert len(payload["entries"]) == 1
+    entry = payload["entries"][0]
+    assert entry["ticket_id_placeholder"].startswith("DRAFT-JORB-INFRA")
+    assert len(entry["acceptance_criteria"]) >= 3
+    assert entry["provenance"]["source_proposal_id"] == "prop-1"
+    assert entry["operator_approval"]["approved"] is True
+
+
+def test_unapproved_proposal_does_not_synthesize_entry(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    module = _load_backlog_synthesis_module(builder_root)
+    _write_json(
+        builder_root / "backlog_proposals.json",
+        {
+            "generated_at": "2026-03-30T00:00:00+00:00",
+            "proposals": [
+                {
+                    "proposal_id": "prop-1",
+                    "status": "draft",
+                    "title": "Harden builder retries",
+                    "rationale": "Add a follow-up hardening task.",
+                    "evidence_summary": "Repeated retry loop observed 3 times.",
+                    "evidence_links": ["task_history/one.yml"],
+                    "affected_ticket_family": "JORB-INFRA",
+                    "priority_recommendation": "high",
+                    "confidence": 0.9,
+                    "recurrence_count": 3,
+                    "proposed_action_type": "create_follow_up_hardening_ticket",
+                    "dependencies": ["JORB-INFRA-030"],
+                }
+            ],
+        },
+    )
+
+    payload = module.generate_synthesized_entries(builder_root, dry_run=False)
+    assert payload["entries"] == []
+
+
+def test_non_builder_family_proposal_is_not_synthesized_in_minimal_slice(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    module = _load_backlog_synthesis_module(builder_root)
+    _write_json(
+        builder_root / "backlog_proposals.json",
+        {
+            "generated_at": "2026-03-30T00:00:00+00:00",
+            "proposals": [
+                {
+                    "proposal_id": "prop-1",
+                    "status": "accepted",
+                    "title": "Refine product UX follow-up",
+                    "rationale": "product follow-up",
+                    "evidence_summary": "Repeated UX mismatch observed.",
+                    "evidence_links": ["task_history/one.yml"],
+                    "affected_ticket_family": "JORB-V3",
+                    "priority_recommendation": "high",
+                    "confidence": 0.9,
+                    "recurrence_count": 3,
+                    "proposed_action_type": "refine_existing_ticket",
+                    "dependencies": ["JORB-INFRA-030"],
+                    "reviewed_at": "2026-03-30T01:00:00+00:00",
+                }
+            ],
+        },
+    )
+
+    payload = module.generate_synthesized_entries(builder_root, dry_run=False)
+    assert payload["entries"] == []
+
+
+def test_synthesized_entry_duplicate_and_dependency_validation(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    module = _load_backlog_synthesis_module(builder_root)
+    backlog = _json(builder_root / "backlog.yml")
+    entry = {
+        "synthesis_id": "syn-1",
+        "ticket_id_placeholder": "JORB-INFRA-030",
+        "title": "JORB-INFRA-030",
+        "status_default": "pending",
+        "priority_recommendation": "high",
+        "rationale": "reason",
+        "evidence_summary": "evidence",
+        "evidence_links": ["task_history/one.yml"],
+        "dependencies": ["MISSING-ID"],
+        "affected_ticket_family": "JORB-INFRA",
+        "acceptance_criteria": ["works correctly"],
+        "required_artifacts": ["judge_decision.md"],
+        "validation_expectations": ["pytest tests/test_automate_task_loop.py"],
+        "requires_vm_runtime_proof": False,
+        "provenance": {"source_proposal_id": "prop-1", "evidence_links": ["task_history/one.yml"]},
+        "operator_approval": {"approved": True},
+    }
+    validation = module.validate_synthesized_entry(entry, backlog=backlog, synthesized_payload={"entries": []})
+    assert "acceptance_criteria:generic" in validation["issues"]
+    assert "invalid_dependency:MISSING-ID" in validation["issues"]
+    assert validation["duplicate_matches"]
+
+
+def test_synthesis_dry_run_does_not_mutate_canonical_files(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    module = _load_backlog_synthesis_module(builder_root)
+    backlog_before = (builder_root / "backlog.yml").read_text(encoding="utf-8")
+    _write_json(
+        builder_root / "backlog_proposals.json",
+        {
+            "generated_at": "2026-03-30T00:00:00+00:00",
+            "proposals": [
+                {
+                    "proposal_id": "prop-1",
+                    "status": "accepted",
+                    "title": "Harden builder retries",
+                    "rationale": "Add a follow-up hardening task.",
+                    "evidence_summary": "Repeated retry loop observed 3 times.",
+                    "evidence_links": ["task_history/one.yml", "task_history/two.yml"],
+                    "affected_ticket_family": "JORB-INFRA",
+                    "priority_recommendation": "high",
+                    "confidence": 0.9,
+                    "recurrence_count": 3,
+                    "proposed_action_type": "create_follow_up_hardening_ticket",
+                    "dependencies": ["JORB-INFRA-030"],
+                    "reviewed_at": "2026-03-30T01:00:00+00:00",
+                    "review_note": "approved",
+                }
+            ],
+        },
+    )
+
+    payload = module.generate_synthesized_entries(builder_root, dry_run=True)
+    assert payload["entries"]
+    assert not (builder_root / "synthesized_backlog_entries.json").exists()
+    assert (builder_root / "backlog.yml").read_text(encoding="utf-8") == backlog_before
+
+
+def test_apply_synthesized_entry_requires_explicit_approval_and_audit(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    module = _load_backlog_synthesis_module(builder_root)
+    status_before = _json(builder_root / "status.yml")
+    active_before = _json(builder_root / "active_task.yml")
+    _write_json(
+        builder_root / "backlog_proposals.json",
+        {
+            "generated_at": "2026-03-30T00:00:00+00:00",
+            "proposals": [
+                {
+                    "proposal_id": "prop-1",
+                    "status": "accepted",
+                    "title": "Harden builder retries",
+                    "rationale": "Add a follow-up hardening task.",
+                    "evidence_summary": "Repeated retry loop observed 3 times.",
+                    "evidence_links": ["task_history/one.yml", "task_history/two.yml"],
+                    "affected_ticket_family": "JORB-INFRA",
+                    "priority_recommendation": "high",
+                    "confidence": 0.9,
+                    "recurrence_count": 3,
+                    "proposed_action_type": "create_follow_up_hardening_ticket",
+                    "dependencies": ["JORB-INFRA-030"],
+                    "reviewed_at": "2026-03-30T01:00:00+00:00",
+                    "review_note": "approved",
+                }
+            ],
+        },
+    )
+    payload = module.generate_synthesized_entries(builder_root, dry_run=False)
+    entry = payload["entries"][0]
+
+    applied = module.apply_synthesized_entry(entry["synthesis_id"], root=builder_root)
+
+    backlog = _json(builder_root / "backlog.yml")
+    assert any(task["id"] == applied["ticket_id_placeholder"] for task in backlog["tasks"])
+    audit = _json(builder_root / "backlog_apply_audit.json")
+    assert audit["events"]
+    assert audit["events"][0]["synthesis_id"] == entry["synthesis_id"]
+    assert audit["events"][0]["synthesized_entry_sha1"]
+    assert _json(builder_root / "status.yml") == status_before
+    assert _json(builder_root / "active_task.yml") == active_before
+
+
+def test_low_quality_synthesized_entry_is_eval_blocked(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    synthesis = _load_backlog_synthesis_module(builder_root)
+    _write_eval_fixture(
+        builder_root / "eval_fixtures" / "proposal_backlog_synthesis.json",
+        {
+            "fixture_id": "proposal_backlog_synthesis_v1",
+            "fixture_family": "proposal_backlog_synthesis",
+            "description": "synthesis",
+            "selector": {"task_family": "JORB-INFRA", "area": "builder"},
+            "mandatory_artifacts": [],
+            "rubric_dimensions": [
+                {"name": "backlog_synthesis_quality", "weight": 0.4, "threshold": 0.75, "description": "quality"},
+                {"name": "evidence_quality", "weight": 0.25, "threshold": 0.75, "description": "evidence"},
+                {"name": "operator_handoff_quality", "weight": 0.2, "threshold": 0.7, "description": "handoff"},
+                {"name": "planning_quality", "weight": 0.15, "threshold": 0.6, "description": "planning"},
+            ],
+            "pass_threshold": 0.8,
+        },
+    )
+    _write_json(
+        builder_root / "backlog_proposals.json",
+        {
+            "generated_at": "2026-03-30T00:00:00+00:00",
+            "proposals": [
+                    {
+                        "proposal_id": "prop-1",
+                        "status": "accepted",
+                        "title": "Weak ticket",
+                        "rationale": "",
+                        "evidence_summary": "",
+                        "evidence_links": ["task_history/one.yml"],
+                        "affected_ticket_family": "JORB-INFRA",
+                        "priority_recommendation": "high",
+                    "confidence": 0.9,
+                    "recurrence_count": 3,
+                    "proposed_action_type": "create_follow_up_hardening_ticket",
+                    "dependencies": ["JORB-INFRA-030"],
+                    "reviewed_at": "2026-03-30T01:00:00+00:00",
+                }
+            ],
+        },
+    )
+
+    payload = synthesis.generate_synthesized_entries(builder_root, dry_run=False)
+    entry = payload["entries"][0]
+    assert entry["synthesis_eval_blocked"] is True
+    assert entry["synthesis_eval"]["passed"] is False
+
+
+def test_operator_surface_shows_synthesis_truth(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    _write_json(
+        builder_root / "synthesized_backlog_entries.json",
+        {
+            "generated_at": "2026-03-30T00:00:00+00:00",
+            "entries": [
+                {"synthesis_id": "syn-1", "status": "draft", "title": "Draft follow-up", "synthesis_eval_blocked": False, "synthesis_eval": {"overall_score": 0.92}},
+                {"synthesis_id": "syn-2", "status": "applied", "title": "Applied follow-up", "synthesis_eval_blocked": False},
+                {"synthesis_id": "syn-3", "status": "draft", "title": "Blocked follow-up", "synthesis_eval_blocked": True},
+            ],
+        },
+    )
+    result = _run([sys.executable, str(SCRIPT.parent / "show_status.py")], builder_root)
+    assert result.returncode == 0
+    assert "Backlog synthesis:" in result.stdout
+    assert "- synthesized_entries: 3" in result.stdout
+    assert "- draft_entries: 2" in result.stdout
+    assert "- applied_entries: 1" in result.stdout
+    assert "- eval_blocked_entries: 1" in result.stdout
+    assert "- top_synthesized_eval_score: 0.92" in result.stdout
+    assert "- top_synthesized_eval_passed: True" in result.stdout
+
+
+def test_replay_can_compare_synthesis_quality_between_attempts(tmp_path: Path) -> None:
+    module = _load_private_eval_module(tmp_path)
+    previous = {
+        "task_id": "DRAFT-JORB-INFRA-ONE",
+        "scores": {"backlog_synthesis_quality": 0.5, "evidence_quality": 0.5},
+        "overall_score": 0.5,
+    }
+    current = {
+        "task_id": "DRAFT-JORB-INFRA-ONE",
+        "scores": {"backlog_synthesis_quality": 0.9, "evidence_quality": 0.8},
+        "overall_score": 0.85,
+    }
+    comparison = module.compare_eval_results(previous, current)
+    assert comparison["trend"] == "improved"
+    assert comparison["category_deltas"]["backlog_synthesis_quality"] > 0

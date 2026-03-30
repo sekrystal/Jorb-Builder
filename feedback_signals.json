@@ -1,0 +1,80 @@
+{
+  "generated_at": "2026-03-30T19:23:37.107804+00:00",
+  "signals": [
+    {
+      "signal_id": "sig-508834552f75",
+      "signal_type": "preflight_failure",
+      "raw_observation": "Missing automation configuration: executor.codex_cli; Authentication preflight indicates repeated or interactive prompts are likely.; Authentication preflight indicates repeated or interactive prompts are likely.",
+      "interpreted_issue": "repeated_preflight_failure",
+      "confidence": 0.9,
+      "evidence_links": [
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-25T013237Z-JORB-V1-003.yml",
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-25T050715Z-JORB-V1-007.yml",
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-25T050925Z-JORB-V1-007.yml"
+      ],
+      "affected_ticket_family": "JORB-V1",
+      "affected_subsystem": "jorb-v1",
+      "proposed_action_type": "refine_existing_ticket",
+      "observation": "Missing automation configuration: executor.codex_cli; Authentication preflight indicates repeated or interactive prompts are likely.; Authentication preflight indicates repeated or interactive prompts are likely.",
+      "inference": "Pattern observed 3 times in JORB-V1.",
+      "recommendation": "Consider refine existing ticket for JORB-V1.",
+      "recurrence_count": 3,
+      "severity": "high",
+      "source_artifacts": [
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-25T013237Z-JORB-V1-003.yml",
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-25T050715Z-JORB-V1-007.yml",
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-25T050925Z-JORB-V1-007.yml"
+      ],
+      "created_at": "2026-03-30T19:23:37.107774+00:00",
+      "status": "active"
+    },
+    {
+      "signal_id": "sig-6b2d51e1aaf6",
+      "signal_type": "preflight_failure",
+      "raw_observation": "Missing automation configuration: executor.codex_cli; Missing automation configuration: vm.runtime_validation_commands or task.vm_verification",
+      "interpreted_issue": "repeated_preflight_failure",
+      "confidence": 0.8,
+      "evidence_links": [
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-29T190200Z-JORB-V3-001.yml",
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-29T222718Z-JORB-V3-002.yml"
+      ],
+      "affected_ticket_family": "JORB-V3",
+      "affected_subsystem": "jorb-v3",
+      "proposed_action_type": "refine_existing_ticket",
+      "observation": "Missing automation configuration: executor.codex_cli; Missing automation configuration: vm.runtime_validation_commands or task.vm_verification",
+      "inference": "Pattern observed 2 times in JORB-V3.",
+      "recommendation": "Consider refine existing ticket for JORB-V3.",
+      "recurrence_count": 2,
+      "severity": "high",
+      "source_artifacts": [
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-29T190200Z-JORB-V3-001.yml",
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-29T222718Z-JORB-V3-002.yml"
+      ],
+      "created_at": "2026-03-30T19:23:37.107786+00:00",
+      "status": "active"
+    },
+    {
+      "signal_id": "sig-9fcb38c88c74",
+      "signal_type": "eval_regression",
+      "raw_observation": "Builder repo is dirty before automated execution; refusing to continue.",
+      "interpreted_issue": "eval_regression",
+      "confidence": 0.7,
+      "evidence_links": [
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T192337Z-JORB-INFRA-010.yml"
+      ],
+      "affected_ticket_family": "JORB-INFRA",
+      "affected_subsystem": "jorb-infra",
+      "proposed_action_type": "add_missing_eval_coverage",
+      "observation": "Builder repo is dirty before automated execution; refusing to continue.",
+      "inference": "Pattern observed 1 times in JORB-INFRA.",
+      "recommendation": "Consider add missing eval coverage for JORB-INFRA.",
+      "recurrence_count": 1,
+      "severity": "high",
+      "source_artifacts": [
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T192337Z-JORB-INFRA-010.yml"
+      ],
+      "created_at": "2026-03-30T19:23:37.107793+00:00",
+      "status": "active"
+    }
+  ]
+}

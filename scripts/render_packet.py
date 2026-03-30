@@ -2,12 +2,19 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import json
 import textwrap
 from common import (
+    build_memory_store,
     builder_root,
+    format_memory_bundle_text,
     is_product_facing_ux_task,
+    is_phase4_builder_task,
     load_config,
     load_data,
+    load_repo_local_standards,
+    retrieve_memory_for_role,
+    validate_memory_store_schema,
     write_data,
     product_repo_path,
 )
@@ -49,6 +56,7 @@ def ux_requirements_block(task: dict) -> str:
         "  - UX Design Section Mapping:",
         "  - UX Intentional Design Deviations:",
         "  - UX Product-First Checklist:",
+        "The UX Design Section Mapping line must explicitly cite the exact canonical Figma source path shown above; do not refer to it generically as only 'figma'.",
         "Set the checklist line to include hierarchy=yes, prohibited_surfaces=yes, and backend_wiring_only=no when justified by the work.",
     ]
     return "\n".join(lines)
@@ -61,6 +69,59 @@ def target_kind_for_task(task: dict, builder_label: str) -> str:
     if any(str(entry).startswith("../jorb-builder") for entry in allowlist):
         return "builder"
     return "product"
+
+
+def repo_local_standards_block() -> str:
+    standards = load_repo_local_standards(ROOT)
+    return "\n".join(
+        [
+            "Repo-local standards:",
+            f"- AGENTS.md: {'present' if standards.get('agents_exists') else 'missing'}",
+            f"- skills/: {'present' if standards.get('skills_exists') else 'missing'}",
+            f"- skill files: {', '.join(standards.get('skill_files', [])) or 'none'}",
+        ]
+    )
+
+
+def phase4_enforcement_block(task: dict) -> str:
+    if not is_phase4_builder_task(task):
+        return "- none"
+    return "\n".join(
+        [
+            "Phase 4 builder enforcement artifacts:",
+            "- compiled_feature_spec.md",
+            "- research_brief.md",
+            "- proposal.md",
+            "- tradeoff_matrix.md",
+            "- runtime_proof.log",
+            "- evidence_bundle.json",
+            "- judge_decision.md",
+            "Decision checkpoint behavior:",
+            "- pause if materially different implementation options exist without a selected approach.",
+        ]
+    )
+
+
+def memory_context_block(task: dict) -> tuple[str, dict]:
+    store = build_memory_store(ROOT)
+    (ROOT / "memory_store.json").write_text(json.dumps(store, indent=2) + "\n", encoding="utf-8")
+    planner_bundle = retrieve_memory_for_role(task, store, role="planner")
+    architect_bundle = retrieve_memory_for_role(task, store, role="architect")
+    schema_issues = validate_memory_store_schema(store)
+    lines = [
+        "Retrieved memory context:",
+        format_memory_bundle_text(planner_bundle),
+        "",
+        format_memory_bundle_text(architect_bundle),
+    ]
+    if schema_issues:
+        lines.extend(["", "Memory schema issues:", *[f"- {issue}" for issue in schema_issues]])
+    return "\n".join(lines), {
+        "store": store,
+        "planner_bundle": planner_bundle,
+        "architect_bundle": architect_bundle,
+        "schema_issues": schema_issues,
+    }
 
 
 def main() -> int:
@@ -89,6 +150,8 @@ def main() -> int:
     run_dir = RUN_LOGS / timestamp
     run_dir.mkdir(parents=True, exist_ok=True)
     prompt_file = run_dir / "codex_prompt.md"
+    memory_block, memory_payload = memory_context_block(task)
+    (run_dir / "memory_context.json").write_text(json.dumps(memory_payload, indent=2) + "\n", encoding="utf-8")
 
     repo_context = textwrap.dedent(
         f"""\
@@ -127,6 +190,9 @@ def main() -> int:
         failure_summary=active.get("failure_summary") or "No failure summary recorded.",
         builder_edit_constraint="- Do not edit product files." if target_kind_label == "builder" else "- Do not edit builder files.",
         ux_conformance_requirements=ux_requirements_block(task),
+        repo_local_standards=repo_local_standards_block(),
+        phase4_enforcement_requirements=phase4_enforcement_block(task),
+        memory_context=memory_block,
     )
 
     header = textwrap.dedent(

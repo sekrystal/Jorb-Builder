@@ -277,9 +277,88 @@
       "JORB-V3-010"
     ]
   },
+  "phase_4_builder_hardening_and_enforcement_layer": {
+    "status": "active",
+    "goal": "Restore the canonical builder hardening and enforcement layer so future work is specification-first, role-driven, evidence-backed, and acceptance-gated.",
+    "task_ids": [
+      "JORB-INFRA-010",
+      "JORB-INFRA-011",
+      "JORB-INFRA-012",
+      "JORB-INFRA-013",
+      "JORB-INFRA-014",
+      "JORB-INFRA-015",
+      "JORB-INFRA-016",
+      "JORB-INFRA-017",
+      "JORB-INFRA-018",
+      "JORB-INFRA-019",
+      "JORB-INFRA-020",
+      "JORB-INFRA-021",
+      "JORB-INFRA-022"
+    ],
+    "description": "Phase 4 is the builder governance and enforcement layer. It restores feature understanding, proposals and tradeoffs, multi-stage roles, research grounding, Figma conformance, product policy checks, VM runtime proof, evidence bundles, judge gating, failure taxonomy, recovery control, vertical slice enforcement, and builder UX conformance.",
+    "ready_task_ids": [
+      "JORB-INFRA-010"
+    ],
+    "accepted_task_ids": [
+      "JORB-INFRA-011",
+      "JORB-INFRA-012",
+      "JORB-INFRA-013",
+      "JORB-INFRA-014",
+      "JORB-INFRA-015",
+      "JORB-INFRA-016",
+      "JORB-INFRA-017",
+      "JORB-INFRA-018",
+      "JORB-INFRA-019",
+      "JORB-INFRA-020",
+      "JORB-INFRA-021",
+      "JORB-INFRA-022"
+    ]
+  },
+  "phase_4b_builder_intelligence_memory_evals_and_strategic_planning": {
+    "status": "pending",
+    "goal": "Extend the hardened builder with intelligence, memory, evals, backlog synthesis, feedback interpretation, and strategic planning capabilities.",
+    "task_ids": [
+      "JORB-INFRA-023",
+      "JORB-INFRA-024",
+      "JORB-INFRA-025",
+      "JORB-INFRA-026",
+      "JORB-INFRA-027",
+      "JORB-INFRA-028",
+      "JORB-INFRA-029",
+      "JORB-INFRA-030",
+      "JORB-INFRA-031",
+      "JORB-INFRA-032",
+      "JORB-INFRA-033"
+    ],
+    "description": "Phase 4B is the builder intelligence and self-direction layer. It adds evals, artifact memory, retrieval, repo-local standards consumption, objective compilation, solution-space and research generation, decision proposals with checkpoints, backlog synthesis, feedback interpretation, self-improving backlog behavior, and performance profiling.",
+    "pending_task_ids": [
+      "JORB-INFRA-023",
+      "JORB-INFRA-024",
+      "JORB-INFRA-025",
+      "JORB-INFRA-026",
+      "JORB-INFRA-027",
+      "JORB-INFRA-028",
+      "JORB-INFRA-029",
+      "JORB-INFRA-030",
+      "JORB-INFRA-031",
+      "JORB-INFRA-032",
+      "JORB-INFRA-033"
+    ]
+  },
+  "phase_sequence": [
+    "phase_1_wedge",
+    "phase_2_foundation",
+    "phase_2a_search_truth",
+    "phase_2b_robust_discovery_and_verification",
+    "phase_2c_builder_hardening_and_streamlit_cleanup",
+    "phase_3_strict_product_reality",
+    "phase_4_builder_hardening_and_enforcement_layer",
+    "phase_4b_builder_intelligence_memory_evals_and_strategic_planning",
+    "phase_4_js_frontend"
+  ],
   "phase_4_js_frontend": {
     "status": "pending",
-    "goal": "Any later JS product UX work must happen only after Phase 3 proves trustworthy search behavior, real jobs in the VM, and Figma-aligned jobs-first structure.",
+    "goal": "Any later JS product UX work must happen only after Phase 4 and Phase 4B harden the builder and the earlier product phases prove trustworthy search behavior, real jobs in the VM, and Figma-aligned jobs-first structure.",
     "task_ids": [
       "JORB-V2-013",
       "JORB-V2-014",

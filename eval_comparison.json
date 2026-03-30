@@ -1,0 +1,98 @@
+{
+  "previous": {
+    "suite_version": 1,
+    "mode": "private_fixture",
+    "fixture_id": "infra_hardening_v1",
+    "fixture_family": "infra_hardening",
+    "task_id": "JORB-INFRA-007",
+    "scores": {
+      "planning_quality": 0.0,
+      "implementation_quality": 0.2,
+      "test_adequacy": 0.2,
+      "evidence_quality": 0.5,
+      "operator_handoff_quality": 0.6,
+      "recovery_quality": 0.2
+    },
+    "overall_score": 0.264,
+    "threshold": 0.78,
+    "passed": false,
+    "mandatory_artifacts": {
+      "present": [],
+      "missing": [
+        "compiled_feature_spec.md",
+        "research_brief.md",
+        "proposal.md",
+        "tradeoff_matrix.md",
+        "judge_decision.md",
+        "evidence_bundle.json",
+        "runtime_proof.log"
+      ]
+    },
+    "dimension_failures": [
+      "planning_quality",
+      "implementation_quality",
+      "test_adequacy",
+      "evidence_quality",
+      "operator_handoff_quality",
+      "recovery_quality"
+    ],
+    "fixture_path": "/Users/samuelkrystal/projects/jorb-builder/eval_fixtures/infra_hardening.json",
+    "history_path": "task_history/2026-03-29T212609Z-JORB-INFRA-007.yml",
+    "history_status": "interrupted"
+  },
+  "current": {
+    "suite_version": 1,
+    "mode": "private_fixture",
+    "fixture_id": "infra_hardening_v1",
+    "fixture_family": "infra_hardening",
+    "task_id": "JORB-INFRA-008",
+    "scores": {
+      "planning_quality": 0.0,
+      "implementation_quality": 0.2,
+      "test_adequacy": 0.2,
+      "evidence_quality": 0.5,
+      "operator_handoff_quality": 0.6,
+      "recovery_quality": 0.2
+    },
+    "overall_score": 0.264,
+    "threshold": 0.78,
+    "passed": false,
+    "mandatory_artifacts": {
+      "present": [],
+      "missing": [
+        "compiled_feature_spec.md",
+        "research_brief.md",
+        "proposal.md",
+        "tradeoff_matrix.md",
+        "judge_decision.md",
+        "evidence_bundle.json",
+        "runtime_proof.log"
+      ]
+    },
+    "dimension_failures": [
+      "planning_quality",
+      "implementation_quality",
+      "test_adequacy",
+      "evidence_quality",
+      "operator_handoff_quality",
+      "recovery_quality"
+    ],
+    "fixture_path": "/Users/samuelkrystal/projects/jorb-builder/eval_fixtures/infra_hardening.json",
+    "history_path": "task_history/2026-03-29T214102Z-JORB-INFRA-008.yml",
+    "history_status": "blocked"
+  },
+  "comparison": {
+    "previous_task_id": "JORB-INFRA-007",
+    "current_task_id": "JORB-INFRA-008",
+    "overall_delta": 0.0,
+    "category_deltas": {
+      "evidence_quality": 0.0,
+      "implementation_quality": 0.0,
+      "operator_handoff_quality": 0.0,
+      "planning_quality": 0.0,
+      "recovery_quality": 0.0,
+      "test_adequacy": 0.0
+    },
+    "trend": "unchanged"
+  }
+}
