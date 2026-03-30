@@ -3726,7 +3726,10 @@
       "allow_noop_completion": false,
       "notes": [
         "Builder repo is dirty before automated execution; refusing to continue.",
-        "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again."
+        "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again.",
+        "Eval threshold not met: overall_score=0.832",
+        "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again.",
+        "executor_transport_failure: DNS/network resolution failed while Codex tried to reach chatgpt.com"
       ]
     },
     {

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-30T19:23:37.107804+00:00",
+  "generated_at": "2026-03-30T20:06:09.797254+00:00",
   "signals": [
     {
       "signal_id": "sig-508834552f75",
@@ -25,7 +25,7 @@
         "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-25T050715Z-JORB-V1-007.yml",
         "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-25T050925Z-JORB-V1-007.yml"
       ],
-      "created_at": "2026-03-30T19:23:37.107774+00:00",
+      "created_at": "2026-03-30T20:06:09.797220+00:00",
       "status": "active"
     },
     {
@@ -50,30 +50,32 @@
         "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-29T190200Z-JORB-V3-001.yml",
         "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-29T222718Z-JORB-V3-002.yml"
       ],
-      "created_at": "2026-03-30T19:23:37.107786+00:00",
+      "created_at": "2026-03-30T20:06:09.797231+00:00",
       "status": "active"
     },
     {
       "signal_id": "sig-9fcb38c88c74",
       "signal_type": "eval_regression",
-      "raw_observation": "Builder repo is dirty before automated execution; refusing to continue.",
+      "raw_observation": "Builder repo is dirty before automated execution; refusing to continue.; executor_transport_failure: DNS/network resolution failed while Codex tried to reach chatgpt.com",
       "interpreted_issue": "eval_regression",
-      "confidence": 0.7,
+      "confidence": 0.8,
       "evidence_links": [
-        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T192337Z-JORB-INFRA-010.yml"
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T192337Z-JORB-INFRA-010.yml",
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T200609Z-JORB-INFRA-010.yml"
       ],
       "affected_ticket_family": "JORB-INFRA",
       "affected_subsystem": "jorb-infra",
       "proposed_action_type": "add_missing_eval_coverage",
-      "observation": "Builder repo is dirty before automated execution; refusing to continue.",
-      "inference": "Pattern observed 1 times in JORB-INFRA.",
+      "observation": "Builder repo is dirty before automated execution; refusing to continue.; executor_transport_failure: DNS/network resolution failed while Codex tried to reach chatgpt.com",
+      "inference": "Pattern observed 2 times in JORB-INFRA.",
       "recommendation": "Consider add missing eval coverage for JORB-INFRA.",
-      "recurrence_count": 1,
+      "recurrence_count": 2,
       "severity": "high",
       "source_artifacts": [
-        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T192337Z-JORB-INFRA-010.yml"
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T192337Z-JORB-INFRA-010.yml",
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T200609Z-JORB-INFRA-010.yml"
       ],
-      "created_at": "2026-03-30T19:23:37.107793+00:00",
+      "created_at": "2026-03-30T20:06:09.797237+00:00",
       "status": "active"
     }
   ]

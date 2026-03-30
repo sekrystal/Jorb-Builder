@@ -58,6 +58,7 @@ RENDER_PACKET = SCRIPTS_DIR / "render_packet.py"
 RESULT_FILE = "automation_result.json"
 SUMMARY_FILE = "automation_summary.md"
 PROGRESS_FILE = "progress.jsonl"
+FEATURE_SPEC_ALLOW_EMPTY_KEYS = {"verification_commands"}
 PHASE4_REQUIRED_ARTIFACTS = (
     "compiled_feature_spec.md",
     "proposal.md",
@@ -69,6 +70,10 @@ PHASE4_FEATURE_SPEC_REQUIRED_KEYS = (
     "task_id",
     "task_title",
     "task_area",
+    "task_type",
+    "task_nontrivial",
+    "objective",
+    "why_it_matters",
     "user_story",
     "initiating_trigger",
     "data_inputs",
@@ -76,6 +81,8 @@ PHASE4_FEATURE_SPEC_REQUIRED_KEYS = (
     "failure_modes",
     "observability_requirements",
     "acceptance_tests",
+    "verification_commands",
+    "repo_bounds",
     "repo_local_standards",
 )
 PHASE4_OPTION_SET = (
@@ -251,34 +258,134 @@ def phase4_decision_checkpoint_issue(task: dict[str, Any]) -> str | None:
     return None
 
 
+def task_is_nontrivial(task: dict[str, Any]) -> bool:
+    list_signals = (
+        task.get("acceptance"),
+        task.get("acceptance_criteria"),
+        task.get("verification"),
+        task.get("vm_verification"),
+        task.get("vm_bootstrap"),
+        task.get("implementation_options"),
+        task.get("depends_on"),
+        task.get("allowlist"),
+        task.get("forbid"),
+        task.get("denylist"),
+    )
+    if any(isinstance(items, list) and any(str(item).strip() for item in items) for items in list_signals):
+        return True
+    scalar_signals = (
+        task.get("objective"),
+        task.get("why_it_matters"),
+        task.get("selected_approach"),
+    )
+    return any(str(value or "").strip() for value in scalar_signals)
+
+
+def compile_feature_spec_trigger(task: dict[str, Any]) -> str:
+    status = str(task.get("status") or "").strip()
+    if status:
+        return f"Backlog task {task['id']} entered automation with status {status}."
+    return f"Backlog task {task['id']} entered automation."
+
+
+def compile_feature_spec_inputs(task: dict[str, Any]) -> list[str]:
+    inputs = [
+        f"Task identity: id={task['id']}, title={task['title']}, area={task.get('area')}, type={task.get('type')}",
+    ]
+    if str(task.get("objective") or "").strip():
+        inputs.append(f"Objective: {str(task.get('objective')).strip()}")
+    if str(task.get("why_it_matters") or "").strip():
+        inputs.append(f"Why it matters: {str(task.get('why_it_matters')).strip()}")
+    for label, key in (
+        ("acceptance", "acceptance"),
+        ("acceptance_criteria", "acceptance_criteria"),
+        ("verification", "verification"),
+        ("vm_verification", "vm_verification"),
+        ("vm_bootstrap", "vm_bootstrap"),
+        ("allowlist", "allowlist"),
+        ("denylist", "denylist"),
+        ("forbid", "forbid"),
+        ("depends_on", "depends_on"),
+    ):
+        values = task.get(key)
+        if isinstance(values, list):
+            normalized = [str(item).strip() for item in values if str(item).strip()]
+            if normalized:
+                inputs.append(f"{label}: {', '.join(normalized)}")
+    inputs.append("Builder config, backlog truth, active task state, and repo-local standards")
+    return inputs
+
+
+def compile_feature_spec_state_transitions(task: dict[str, Any]) -> list[str]:
+    transitions = [
+        "selected -> packet_rendered -> implementing -> verifying -> completed/blocked/refined/interrupted",
+    ]
+    if task_is_nontrivial(task):
+        transitions.insert(0, "selected -> compiled_feature_spec_ready -> packet_rendered")
+    if phase4_requires_artifact_enforcement(task):
+        transitions.append("acceptance is allowed only after judge/evidence enforcement succeeds")
+    return transitions
+
+
+def compile_feature_spec_failure_modes(task: dict[str, Any]) -> list[str]:
+    modes = [
+        "task intent compiled incorrectly or incompletely",
+        "implementation changes exceed repo bounds or allowlist",
+        "verification coverage does not match the task packet",
+    ]
+    if phase4_requires_artifact_enforcement(task):
+        modes.extend(
+            [
+                "missing required artifacts",
+                "unresolved decision checkpoint",
+                "missing runtime proof when required",
+                "misleading success without judge evidence",
+            ]
+        )
+    return modes
+
+
+def compile_feature_spec_observability(task: dict[str, Any]) -> list[str]:
+    observability = [
+        "compiled_feature_spec.md written before implementation begins",
+        "task inputs and repo bounds reflected in machine payload",
+        "run_logs preserve prompt, progress, and result artifacts",
+    ]
+    if phase4_requires_artifact_enforcement(task):
+        observability.extend(
+            [
+                "explicit stage plan",
+                "evidence bundle and judge decision",
+            ]
+        )
+    return observability
+
+
 def phase4_feature_spec_payload(task: dict[str, Any], standards: dict[str, Any]) -> dict[str, Any]:
     acceptance = task.get("acceptance", []) or task.get("acceptance_criteria", [])
+    verification = [str(item).strip() for item in task.get("verification", []) if str(item).strip()]
+    repo_bounds = {
+        "allowlist": [str(item).strip() for item in task.get("allowlist", []) if str(item).strip()],
+        "denylist": [str(item).strip() for item in (task.get("denylist", []) or task.get("forbid", [])) if str(item).strip()],
+        "target_repo_scope": "builder-only" if str(task.get("area") or "").strip().lower() == "builder" else "task-defined",
+    }
     return {
         "task_id": task["id"],
         "task_title": task["title"],
         "task_area": task.get("area"),
-        "user_story": f"A builder operator needs {task['title'].lower()} so the builder can execute work with explicit and reviewable discipline.",
-        "initiating_trigger": f"Backlog task {task['id']} enters execution as part of the builder hardening program.",
-        "data_inputs": [
-            f"Task metadata: {task['id']}, title, objective, acceptance, verification, allowlist",
-            "Builder config, backlog truth, active task state, and repo-local standards",
-        ],
-        "state_transitions": [
-            "selected -> packet_rendered -> implementing -> verifying -> completed/blocked/refined/interrupted",
-            "acceptance is allowed only after judge/evidence enforcement succeeds",
-        ],
-        "failure_modes": [
-            "missing required artifacts",
-            "unresolved decision checkpoint",
-            "missing runtime proof when required",
-            "misleading success without judge evidence",
-        ],
-        "observability_requirements": [
-            "explicit stage plan",
-            "artifact files written to run_logs",
-            "evidence bundle and judge decision",
-        ],
+        "task_type": task.get("type"),
+        "task_nontrivial": task_is_nontrivial(task),
+        "objective": str(task.get("objective") or "").strip(),
+        "why_it_matters": str(task.get("why_it_matters") or "").strip(),
+        "user_story": str(task.get("objective") or "").strip() or f"Complete {task['title']} within the stated repo bounds and verification plan.",
+        "initiating_trigger": compile_feature_spec_trigger(task),
+        "data_inputs": compile_feature_spec_inputs(task),
+        "state_transitions": compile_feature_spec_state_transitions(task),
+        "failure_modes": compile_feature_spec_failure_modes(task),
+        "observability_requirements": compile_feature_spec_observability(task),
         "acceptance_tests": acceptance or ["Acceptance criteria are taken directly from backlog task metadata."],
+        "verification_commands": verification,
+        "repo_bounds": repo_bounds,
         "repo_local_standards": {
             "agents_loaded": bool(standards.get("agents_exists")),
             "skill_files": list(standards.get("skill_files", [])),
@@ -412,8 +519,10 @@ def write_phase4_preimplementation_artifacts(
     standards: dict[str, Any],
 ) -> list[str]:
     created: list[str] = []
+    feature_spec_path = write_compiled_feature_spec(run_dir, task, standards)
+    if feature_spec_path:
+        created.append(feature_spec_path)
     artifacts = {
-        "compiled_feature_spec.md": phase4_feature_spec_text(task, standards),
         "research_brief.md": phase4_research_brief_text(task),
         "tradeoff_matrix.md": phase4_tradeoff_matrix_text(task),
         "proposal.md": phase4_proposal_text(task, standards),
@@ -570,13 +679,28 @@ def phase4_feature_spec_issues(run_dir: Path, task: dict[str, Any]) -> list[str]
         return ["compiled_feature_spec.md:invalid_machine_payload"]
     issues: list[str] = []
     for key in PHASE4_FEATURE_SPEC_REQUIRED_KEYS:
-        if payload.get(key) in (None, "", []):
+        value = payload.get(key)
+        if key in FEATURE_SPEC_ALLOW_EMPTY_KEYS:
+            if value in (None, ""):
+                issues.append(f"compiled_feature_spec.md:missing_{key}")
+            continue
+        if value in (None, "", []):
             issues.append(f"compiled_feature_spec.md:missing_{key}")
     if payload.get("task_id") != task.get("id"):
         issues.append("compiled_feature_spec.md:task_id_mismatch")
     if payload.get("task_title") != task.get("title"):
         issues.append("compiled_feature_spec.md:task_title_mismatch")
+    if payload.get("task_nontrivial") is not True:
+        issues.append("compiled_feature_spec.md:task_nontrivial_mismatch")
     return issues
+
+
+def write_compiled_feature_spec(run_dir: Path, task: dict[str, Any], standards: dict[str, Any]) -> str | None:
+    if not task_is_nontrivial(task):
+        return None
+    path = run_dir / "compiled_feature_spec.md"
+    path.write_text(phase4_feature_spec_text(task, standards) + "\n", encoding="utf-8")
+    return str(path)
 
 
 def phase4_artifact_issues(run_dir: Path, task: dict[str, Any], *, require_runtime_proof: bool) -> list[str]:
@@ -3162,6 +3286,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         "ssh_options": effective_vm_ssh_options if use_vm_flow else [],
         "missing_configuration": [],
         "retry_continuation": retry_continuation,
+        "feature_understanding_required": task_is_nontrivial(task),
     }
     if phase4_enforcement:
         plan["phase4_stage_order"] = phase4_stage_order(task, use_vm_flow=use_vm_flow)
@@ -3208,9 +3333,19 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
                     f"vm runtime UI mismatch: bootstrap uses {expected_ui_url} but runtime_self_check expects {runtime_self_check_ui_url}"
                 )
 
+    feature_spec_required = task_is_nontrivial(task)
+
     if args.dry_run:
         planned_artifacts: list[str] = []
         planned_steps: list[dict[str, Any]] = []
+        trailing_planned_steps: list[dict[str, Any]] = []
+        if feature_spec_required and not phase4_enforcement:
+            feature_spec_path = write_compiled_feature_spec(run_dir, task, standards)
+            if feature_spec_path:
+                planned_artifacts.append(feature_spec_path)
+                trailing_planned_steps.append(
+                    {"name": "planner", "outcome": "planned", "detail": f"compiled_feature_spec.md -> {run_dir / 'compiled_feature_spec.md'}"}
+                )
         if phase4_enforcement:
             planned_artifacts = write_phase4_preimplementation_artifacts(run_dir, task, standards)
             planned_steps.extend(
@@ -3229,7 +3364,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             "classification": "dry_run",
             "finished_at": now_iso(),
             "summary": "Dry run only. No executor, git, or VM commands were executed.",
-            "steps": planned_steps + [{"name": "plan", "outcome": "planned", "detail": json.dumps(plan, indent=2)}],
+            "steps": planned_steps + [{"name": "plan", "outcome": "planned", "detail": json.dumps(plan, indent=2)}] + trailing_planned_steps,
             "changed_files": [],
             "planned_artifacts": planned_artifacts,
             "unproven_runtime_gaps": ["Automation loop not executed; this was a dry run."],
@@ -3350,6 +3485,9 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
     blocker_evidence: list[str] = []
     continue_from_prior_vm_retry = False
     continue_from_prior_ux_evidence_retry = False
+
+    if feature_spec_required and not phase4_enforcement:
+        write_compiled_feature_spec(run_dir, task, standards)
 
     if phase4_enforcement:
         write_phase4_preimplementation_artifacts(run_dir, task, standards)
