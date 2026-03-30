@@ -132,37 +132,43 @@
       "run_state": "blocked",
       "stage_name": null,
       "detail": "Builder repo is dirty before automated execution; refusing to continue."
+    },
+    {
+      "at": "2026-03-30T19:33:12.878804+00:00",
+      "task_id": null,
+      "run_state": "idle",
+      "stage_name": null,
+      "detail": null
     }
   ],
-  "updated_at": "2026-03-30T19:23:37.110778+00:00",
-  "current_task": "JORB-INFRA-010",
-  "current_title": "Feature understanding compiler",
+  "updated_at": "2026-03-30T19:33:12.878640+00:00",
+  "current_task": null,
+  "current_title": null,
   "current_stage": null,
-  "run_state": "blocked",
-  "current_blocker": "Builder repo is dirty before automated execution; refusing to continue.",
+  "run_state": "idle",
+  "current_blocker": null,
   "last_successful_checkpoint": null,
   "artifact_completeness": {
-    "present": [
+    "present": [],
+    "missing": [
       "compiled_feature_spec.md",
       "proposal.md",
       "tradeoff_matrix.md",
       "judge_decision.md",
-      "evidence_bundle.json",
-      "runtime_proof.log"
-    ],
-    "missing": []
+      "evidence_bundle.json"
+    ]
   },
   "failure_taxonomy": null,
   "eval_result": null,
-  "runtime_proof_summary": "# Runtime Proof\n\nsummary: Builder repo is dirty before automated execution; refusing to continue.\n\n",
-  "next_recommended_action": null,
-  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T192336Z-JORB-INFRA-010",
+  "runtime_proof_summary": null,
+  "next_recommended_action": "Inspect backlog truth and rerun automation when ready.",
+  "run_log_dir": null,
   "event": {
-    "at": "2026-03-30T19:23:37.110834+00:00",
-    "task_id": "JORB-INFRA-010",
-    "run_state": "blocked",
+    "at": "2026-03-30T19:33:12.878804+00:00",
+    "task_id": null,
+    "run_state": "idle",
     "stage_name": null,
-    "detail": "Builder repo is dirty before automated execution; refusing to continue."
+    "detail": null
   },
   "eval_blocked_acceptance": false
 }

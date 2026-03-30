@@ -6,7 +6,7 @@
   "related_tasks": [
     "JORB-INFRA-010"
   ],
-  "status": "open",
+  "status": "resolved",
   "symptoms": [
     "Builder repo is dirty before automated execution; refusing to continue."
   ],
@@ -66,5 +66,7 @@
   "next_actions": [
     "Inspect automation_result.json and narrow the next bounded refinement."
   ],
-  "human_needed": true
+  "human_needed": true,
+  "resolved_at": "2026-03-30T19:30:54.611536+00:00",
+  "resolution": "Resolved by state repair: prior dirty-repo blocker is no longer current and the task is runnable again."
 }

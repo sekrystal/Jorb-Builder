@@ -1,28 +1,21 @@
 {
-  "task_id": "JORB-INFRA-010",
-  "title": "Feature understanding compiler",
-  "state": "blocked",
-  "attempt": 1,
-  "started_at": "2026-03-30T19:23:36.966554+00:00",
+  "task_id": null,
+  "title": null,
+  "state": "idle",
+  "attempt": 0,
+  "started_at": null,
   "handed_to_codex_at": null,
-  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T192336Z/codex_prompt.md",
-  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T192336Z-JORB-INFRA-010",
-  "verification_commands": [
-    "python3 -m py_compile scripts/*.py",
-    "pytest tests/test_automate_task_loop.py"
-  ],
+  "prompt_file": null,
+  "run_log_dir": null,
+  "verification_commands": [],
   "vm_verification_commands": [],
   "vm_bootstrap_commands": [],
   "vm_cleanup_commands": [],
-  "allowlist": [
-    "../jorb-builder/**"
-  ],
-  "failure_summary": "Builder repo is dirty before automated execution; refusing to continue.",
+  "allowlist": [],
+  "failure_summary": null,
   "notes": [],
-  "prior_run_log_dirs": [
-    "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T192336Z"
-  ],
-  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T192336Z",
-  "target_repo": "/Users/samuelkrystal/projects/jorb-builder",
-  "target_kind": "builder"
+  "target_repo": null,
+  "target_kind": null,
+  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T192336Z-JORB-INFRA-010",
+  "prior_run_log_dirs": []
 }

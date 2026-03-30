@@ -652,6 +652,18 @@ def update_run_ledger(
     write_run_ledger(payload)
 
 
+def clear_run_ledger_after_repair(*, next_action: str | None = None) -> None:
+    update_run_ledger(
+        task_id=None,
+        title=None,
+        run_state="idle",
+        stage_name=None,
+        run_log_dir=None,
+        detail=None,
+        next_action=next_action or "Inspect backlog truth and rerun automation when ready.",
+    )
+
+
 def detect_failure_taxonomy(summary: str, automation_result: dict[str, Any]) -> dict[str, Any]:
     normalized = summary.lower()
     if "auth" in normalized or "interactive prompts" in normalized or "ssh" in normalized or "executor_transport_failure" in normalized:
@@ -2337,6 +2349,7 @@ def repair_legacy_state() -> int:
         status["last_result"] = "blocked"
         status["last_run_at"] = now_iso()
         write_data(STATUS, status)
+        clear_run_ledger_after_repair()
         repaired.append("preflight-only blocked run -> idle fresh rerun state")
 
         if task is not None and task.get("status") == "blocked":
@@ -2376,6 +2389,7 @@ def repair_legacy_state() -> int:
         status["last_result"] = status.get("last_result")
         status["last_run_at"] = now_iso()
         write_data(STATUS, status)
+        clear_run_ledger_after_repair()
         repaired.append("stale dry-run active state -> idle")
         print("STATE_REPAIRED")
         for line in repaired:
@@ -2399,6 +2413,7 @@ def repair_legacy_state() -> int:
         status["last_result"] = "refined"
         status["last_run_at"] = now_iso()
         write_data(STATUS, status)
+        clear_run_ledger_after_repair()
         task.setdefault("notes", []).append(
             "Repaired from stale retry-without-changes state; no in-flight repo edits remain, so the task should rerun fresh from ready."
         )
@@ -2426,6 +2441,7 @@ def repair_legacy_state() -> int:
             status["last_result"] = "interrupted"
             status["last_run_at"] = now_iso()
             write_data(STATUS, status)
+            clear_run_ledger_after_repair()
             repaired.append(f"backlog task {task_id} blocked -> ready")
             resolved = resolve_blocker_for_task(
                 str(task_id),
@@ -2466,6 +2482,7 @@ def repair_legacy_state() -> int:
                 status["last_result"] = "blocked"
                 status["last_run_at"] = now_iso()
                 write_data(STATUS, status)
+                clear_run_ledger_after_repair()
                 write_data(BACKLOG, backlog)
                 repaired.append(f"{task_id} remains blocked: current dirty files still exist in {target_repo}")
                 repaired.append(f"{blocker_path.name} evidence refreshed")
@@ -2506,6 +2523,7 @@ def repair_legacy_state() -> int:
         status["last_result"] = "interrupted"
         status["last_run_at"] = now_iso()
         write_data(STATUS, status)
+        clear_run_ledger_after_repair()
         repaired.append(f"backlog task {task_id} blocked -> ready")
         resolved = resolve_blocker_for_task(
             str(task_id),
@@ -2546,6 +2564,7 @@ def repair_legacy_state() -> int:
                 status["last_result"] = "blocked"
                 status["last_run_at"] = now_iso()
                 write_data(STATUS, status)
+                clear_run_ledger_after_repair()
                 write_data(BACKLOG, backlog)
                 repaired.append(f"{task_id} remains blocked: current dirty files still exist in {target_repo}")
                 repaired.append(f"{blocker_path.name} evidence refreshed")
@@ -2586,6 +2605,7 @@ def repair_legacy_state() -> int:
         status["last_result"] = "blocked"
         status["last_run_at"] = now_iso()
         write_data(STATUS, status)
+        clear_run_ledger_after_repair()
         repaired.append(f"backlog task {task_id} blocked -> ready")
         resolved = resolve_blocker_for_task(
             str(task_id),

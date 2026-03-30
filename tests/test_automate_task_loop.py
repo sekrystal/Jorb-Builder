@@ -3795,6 +3795,7 @@ def test_repair_state_reopens_builder_task_when_only_generated_state_files_remai
     status_after = _json(builder_root / "status.yml")
     backlog_after = _json(builder_root / "backlog.yml")
     inspect = _run([sys.executable, str(SCRIPT), "--inspect-backlog"], builder_root)
+    status_view = _run([sys.executable, str(SCRIPT.parent / "show_status.py")], builder_root)
 
     assert repair.returncode == 0
     assert "backlog task TASK-BUILDER blocked -> ready" in repair.stdout
@@ -3804,6 +3805,8 @@ def test_repair_state_reopens_builder_task_when_only_generated_state_files_remai
     assert status_after["active_task_id"] is None
     assert backlog_after["tasks"][0]["status"] == "ready"
     assert 'next_selected_task: "TASK-BUILDER"' in inspect.stdout
+    assert "- run_state: idle" in status_view.stdout
+    assert "- current_blocker: none" in status_view.stdout
 
 
 def test_phase4_dry_run_emits_stage_plan_and_repo_local_standards(tmp_path: Path) -> None:

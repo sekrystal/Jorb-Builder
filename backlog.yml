@@ -3700,7 +3700,7 @@
       "area": "builder",
       "milestone": "M7",
       "priority": 1,
-      "status": "blocked",
+      "status": "ready",
       "retries_used": 0,
       "depends_on": [],
       "prompt": "implement_feature",
@@ -3725,7 +3725,8 @@
       "description": "Restore the canonical Phase 4 feature understanding compiler so builder can machine-check whether a task is understood end to end before implementation starts.",
       "allow_noop_completion": false,
       "notes": [
-        "Builder repo is dirty before automated execution; refusing to continue."
+        "Builder repo is dirty before automated execution; refusing to continue.",
+        "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again."
       ]
     },
     {
