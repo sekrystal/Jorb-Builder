@@ -1,27 +1,6 @@
 {
   "events": [
     {
-      "at": "2026-03-30T22:46:59.581112+00:00",
-      "task_id": "JORB-INFRA-024",
-      "run_state": "running",
-      "stage_name": "Codex execution running",
-      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=70507 | elapsed=468s | timeout_remaining=1331s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T223911Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T223911Z-JORB-INFRA-024/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=27s | stdout_seen=false | stderr_seen=true | poll=running"
-    },
-    {
-      "at": "2026-03-30T22:47:14.736070+00:00",
-      "task_id": "JORB-INFRA-024",
-      "run_state": "running",
-      "stage_name": "Codex execution running",
-      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=70507 | elapsed=483s | timeout_remaining=1316s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T223911Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T223911Z-JORB-INFRA-024/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=10s | stdout_seen=false | stderr_seen=true | poll=running"
-    },
-    {
-      "at": "2026-03-30T22:47:29.825864+00:00",
-      "task_id": "JORB-INFRA-024",
-      "run_state": "running",
-      "stage_name": "Codex execution running",
-      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=70507 | elapsed=498s | timeout_remaining=1301s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T223911Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T223911Z-JORB-INFRA-024/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=25s | stdout_seen=false | stderr_seen=true | poll=running"
-    },
-    {
       "at": "2026-03-30T22:47:35.907934+00:00",
       "task_id": "JORB-INFRA-010",
       "run_state": "blocked",
@@ -174,13 +153,34 @@
       "run_state": "running",
       "stage_name": "Git commit and push",
       "detail": "Running git add/commit/push."
+    },
+    {
+      "at": "2026-03-30T22:50:59.202344+00:00",
+      "task_id": "JORB-INFRA-024",
+      "run_state": "completed",
+      "stage_name": "Classification",
+      "detail": "Automated loop completed with builder-side local validation success."
+    },
+    {
+      "at": "2026-03-30T22:50:59.249928+00:00",
+      "task_id": "JORB-INFRA-024",
+      "run_state": "accepted",
+      "stage_name": "judge",
+      "detail": "Automated loop completed with builder-side local validation success."
+    },
+    {
+      "at": "2026-03-30T22:50:59.261721+00:00",
+      "task_id": null,
+      "run_state": "completed",
+      "stage_name": null,
+      "detail": null
     }
   ],
-  "updated_at": "2026-03-30T22:50:57.160726+00:00",
-  "current_task": "JORB-INFRA-024",
+  "updated_at": "2026-03-30T22:50:59.261678+00:00",
+  "current_task": null,
   "current_title": null,
-  "current_stage": "Git commit and push",
-  "run_state": "running",
+  "current_stage": null,
+  "run_state": "completed",
   "current_blocker": null,
   "last_successful_checkpoint": null,
   "artifact_completeness": {
@@ -188,25 +188,24 @@
       "compiled_feature_spec.md",
       "proposal.md",
       "tradeoff_matrix.md",
-      "research_brief.md"
-    ],
-    "missing": [
+      "research_brief.md",
       "judge_decision.md",
       "evidence_bundle.json",
       "runtime_proof.log"
-    ]
+    ],
+    "missing": []
   },
   "failure_taxonomy": null,
   "eval_result": null,
-  "runtime_proof_summary": null,
+  "runtime_proof_summary": "# Runtime Proof\n\nsummary: Automated loop completed with builder-side local validation success.\n\n## Local Validation\n- command: python3 -m py_compile scripts/*.py\n  passed: True\n- command: pytest tests/test_automate_task_loop.py\n  passed: True\n",
   "next_recommended_action": null,
   "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T223911Z-JORB-INFRA-024",
   "event": {
-    "at": "2026-03-30T22:50:57.160744+00:00",
-    "task_id": "JORB-INFRA-024",
-    "run_state": "running",
-    "stage_name": "Git commit and push",
-    "detail": "Running git add/commit/push."
+    "at": "2026-03-30T22:50:59.261721+00:00",
+    "task_id": null,
+    "run_state": "completed",
+    "stage_name": null,
+    "detail": null
   },
   "eval_blocked_acceptance": false
 }

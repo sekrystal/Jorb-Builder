@@ -1,7 +1,7 @@
 {
-  "task_id": "JORB-INFRA-024",
-  "title": "Artifact memory store + metadata index",
-  "state": "verifying",
+  "task_id": null,
+  "title": null,
+  "state": "completed",
   "attempt": 1,
   "started_at": "2026-03-30T22:39:11.379340+00:00",
   "handed_to_codex_at": null,

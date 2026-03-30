@@ -4197,7 +4197,7 @@
       "area": "builder",
       "milestone": "M8",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-023"
@@ -4223,7 +4223,9 @@
       "repo_path": "~/projects/jorb-builder",
       "description": "Add artifact memory and indexing so builder intelligence can retrieve prior evidence and decisions cleanly.",
       "allow_noop_completion": false,
-      "notes": []
+      "notes": [
+        "Automated loop completed with builder-side local validation success."
+      ]
     },
     {
       "id": "JORB-INFRA-025",
@@ -4232,7 +4234,7 @@
       "area": "builder",
       "milestone": "M8",
       "priority": 1,
-      "status": "pending",
+      "status": "ready",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-024"
@@ -4267,7 +4269,7 @@
       "area": "builder",
       "milestone": "M8",
       "priority": 1,
-      "status": "pending",
+      "status": "ready",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-025"
@@ -4302,7 +4304,7 @@
       "area": "builder",
       "milestone": "M8",
       "priority": 1,
-      "status": "pending",
+      "status": "ready",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-026"
@@ -4337,7 +4339,7 @@
       "area": "builder",
       "milestone": "M8",
       "priority": 1,
-      "status": "pending",
+      "status": "ready",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-027"
@@ -4372,7 +4374,7 @@
       "area": "builder",
       "milestone": "M8",
       "priority": 1,
-      "status": "pending",
+      "status": "ready",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-028"
@@ -4407,7 +4409,7 @@
       "area": "builder",
       "milestone": "M8",
       "priority": 1,
-      "status": "pending",
+      "status": "ready",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-029"
@@ -4442,7 +4444,7 @@
       "area": "builder",
       "milestone": "M8",
       "priority": 1,
-      "status": "pending",
+      "status": "ready",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-030"
@@ -4477,7 +4479,7 @@
       "area": "builder",
       "milestone": "M8",
       "priority": 1,
-      "status": "pending",
+      "status": "ready",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-031"
@@ -4512,7 +4514,7 @@
       "area": "builder",
       "milestone": "M8",
       "priority": 1,
-      "status": "pending",
+      "status": "ready",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-032"

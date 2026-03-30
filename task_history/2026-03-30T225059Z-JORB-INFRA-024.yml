@@ -1,0 +1,195 @@
+{
+  "task_id": "JORB-INFRA-024",
+  "title": "Artifact memory store + metadata index",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-30T22:39:11.379340+00:00",
+  "completed_at": "2026-03-30T22:50:59.196706+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T223911Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T223911Z-JORB-INFRA-024",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T223911Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T223911Z-JORB-INFRA-024"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T223911Z-JORB-INFRA-024/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T223911Z-JORB-INFRA-024/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T223911Z-JORB-INFRA-024/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T223911Z-JORB-INFRA-024/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T223911Z-JORB-INFRA-024/local_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T223911Z-JORB-INFRA-024/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T223911Z-JORB-INFRA-024/executor.json"
+    },
+    {
+      "label": "eval_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T223911Z-JORB-INFRA-024/eval_result.json"
+    },
+    {
+      "label": "judge_memory_context",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T223911Z-JORB-INFRA-024/judge_memory_context.json"
+    },
+    {
+      "label": "judge_decision",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T223911Z-JORB-INFRA-024/judge_decision.md"
+    },
+    {
+      "label": "evidence_bundle",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T223911Z-JORB-INFRA-024/evidence_bundle.json"
+    }
+  ],
+  "files_changed": [
+    "memory_model.md",
+    "memory_schema.json",
+    "scripts/automate_task_loop.py",
+    "scripts/common.py",
+    "tests/test_automate_task_loop.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.325.31654-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T223911Z-JORB-INFRA-024/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "passed",
+    "passed",
+    "passed"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with builder-side local validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with builder-side local validation success.",
+    "accepted": true,
+    "acceptance_met": [],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "planner",
+        "outcome": "passed",
+        "detail": "compiled_feature_spec.md written to /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T223911Z-JORB-INFRA-024/compiled_feature_spec.md"
+      },
+      {
+        "name": "architect",
+        "outcome": "passed",
+        "detail": "proposal.md and tradeoff_matrix.md written to /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T223911Z-JORB-INFRA-024"
+      },
+      {
+        "name": "research_grounding",
+        "outcome": "passed",
+        "detail": "research_brief.md written to /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T223911Z-JORB-INFRA-024/research_brief.md"
+      },
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed  \nAdded `artifact_index` generation to the builder memory store so `memory_store.json` now includes searchable artifact metadata derived from `task_history` and run-log artifacts, with lookup maps by task id, label, and filename. Updated memory-store validation/schema/docs to cover the new index, added a focused regression test for artifact indexing, and fixed `--repair-state` null-handling and stale-retry precedence so the required suite stays green.\n\n2. Exact files changed  \n- [scripts/common.py](/Users/samuelkrystal/projects/jorb-builder/scripts/common.py)  \n- [scripts/automate_task_loop.py](/Users/samuelkrystal/projects/jorb-builder/scripts/automate_task_loop.py)  \n- [tests/test_automate_task_loop.py](/Users/samuelkrystal/projects/jorb-builder/tests/test_automate_task_loop.py)  \n- [memory_schema.json](/Users/samuelkrystal/projects/jorb-builder/memory_schema.json)  \n- [memory_model.md](/Users/samuelkrystal/projects/jorb-builder/memory_model.md)  \n\n3. Exact tests added or updated  \n- Added `test_memory_store_builds_artifact_metadata_index_from_task_history` in [tests/test_automate_task_loop.py](/Users/samuelkrystal/projects/jorb-builder/tests/test_automate_task_loop.py)  \n- Updated the same suite indirectly by fixing the code paths exercised by existing `--repair-state` tests\n\n4. Exact commands run  \n- `pwd`  \n- `git status --short`  \n- `find . -maxdepth 3 -type f | sort`  \n- `grep -RIn \"memory_store\\|artifact\\|evidence_bundle\\|compiled_feature_spec\\|research_brief\\|proposal\\|tradeoff_matrix\\|judge_decision\\|runtime_proof\" scripts tests . | head -n 400`  \n- `sed -n '1,220p' AGENTS.md`  \n- `sed -n '1,220p' skills/README.md`  \n- `sed -n '1,260p' tests/test_automate_task_loop.py`  \n- `ls -1 scripts`  \n- `sed -n '520,860p' scripts/common.py`  \n- `sed -n '1,180p' scripts/show_status.py`  \n- `sed -n '90,140p' scripts/render_packet.py`  \n- `python3 - <<'PY' ...` to inspect `memory_store.json`  \n- `sed -n '320,560p' scripts/common.py`  \n- `grep -n \"evidence_artifacts\\|planned_artifacts\\|artifact_completeness\\|task_history\" -n tests/test_automate_task_loop.py | head -n 80`  \n- `python3 - <<'PY' ...` to inspect recent `task_history` payloads  \n- `grep -n \"evidence_artifacts\\|run_log_dir\\|planned_artifacts\" scripts/automate_task_loop.py | head -n 120`  \n- `sed -n '900,1160p' scripts/automate_task_loop.py`  \n- `sed -n '1080,1150p' tests/test_automate_task_loop.py`  \n- `grep -n \"build_memory_store\\|validate_memory_store_schema\\|memory_store\" tests/test_automate_task_loop.py | head -n 120`  \n- `sed -n '4060,4620p' tests/test_automate_task_loop.py`  \n- `grep -RIn \"artifact index\\|artifact_index\\|metadata index\\|searchable memory\\|memory store\" *.md scripts tests | head -n 200`  \n- `sed -n '1,220p' memory_model.md`  \n- `sed -n '1,220p' memory_schema.json`  \n- `python3 -m py_compile scripts/*.py`  \n- `pytest tests/test_automate_task_loop.py`  \n- `grep -n \"run_result.get(\\\"classification\\\")\\|stale retry-ready continuation\\|terminal automation_result\\|retry_ready\" scripts/automate_task_loop.py | head -n 120`  \n- `sed -n '2520,2795p' scripts/automate_task_loop.py`  \n- `sed -n '2795,3015p' scripts/automate_task_loop.py`  \n- `sed -n '3680,3755p' tests/test_automate_task_loop.py`  \n- `git diff --name-only -- scripts/common.py scripts/automate_task_loop.py tests/test_automate_task_loop.py memory_schema.json memory_model.md`  \n- `git diff --stat -- scripts/common.py scripts/automate_task_loop.py tests/test_automate_task_loop.py memory_schema.json memory_model.md`  \n\n5. Exact results  \n- `python3 -m py_compile scripts/*.py`: passed  \n- First `pytest tests/test_automate_task_loop.py` run: failed with 4 failures in existing `--repair-state` paths due to `AttributeError: 'NoneType' object has no attribute 'get'` and stale retry-state precedence  \n- After patching `scripts/automate_task_loop.py`, second `pytest tests/test_automate_task_loop.py` run: `142 passed in 148.09s (0:02:28)`  \n\n6. Honest note on what remains unproven  \nNo live runtime or VM proof was performed, and I did not regenerate the repo\u2019s checked-in [memory_store.json](/Users/samuelkrystal/projects/jorb-builder/memory_store.json) because the worktree already had unrelated dirty builder-state files. The new artifact index is proven by local tests and schema validation, not by a full live builder run."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "To github.com:sekrystal/Jorb-Builder.git\n   b67855d..62990f4  main -> main\n"
+      }
+    ],
+    "changed_files_count": 5,
+    "changed_files": [
+      "memory_model.md",
+      "memory_schema.json",
+      "scripts/automate_task_loop.py",
+      "scripts/common.py",
+      "tests/test_automate_task_loop.py"
+    ],
+    "unproven_runtime_gaps": [],
+    "ux_conformance": {
+      "required": false,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": null,
+      "intentional_design_deviations": null,
+      "product_first_checklist": null,
+      "primary_ux_prohibited_surfaces": []
+    }
+  },
+  "unproven_runtime_gaps": [],
+  "failure_taxonomy": null,
+  "eval_result": {
+    "suite_version": 1,
+    "mode": "private_fixture",
+    "fixture_id": "infra_hardening_v1",
+    "fixture_family": "infra_hardening",
+    "task_id": "JORB-INFRA-024",
+    "scores": {
+      "planning_quality": 1.0,
+      "implementation_quality": 1.0,
+      "test_adequacy": 1.0,
+      "evidence_quality": 1.0,
+      "operator_handoff_quality": 1.0,
+      "recovery_quality": 0.8
+    },
+    "overall_score": 0.98,
+    "threshold": 0.78,
+    "passed": true,
+    "mandatory_artifacts": {
+      "present": [
+        "compiled_feature_spec.md",
+        "research_brief.md",
+        "proposal.md",
+        "tradeoff_matrix.md",
+        "judge_decision.md",
+        "evidence_bundle.json",
+        "runtime_proof.log"
+      ],
+      "missing": []
+    },
+    "dimension_failures": [],
+    "fixture_path": "/Users/samuelkrystal/projects/jorb-builder/eval_fixtures/infra_hardening.json",
+    "regression_vs_prior": {
+      "previous_task_id": "JORB-INFRA-023",
+      "current_task_id": "JORB-INFRA-024",
+      "overall_delta": 0.0,
+      "category_deltas": {
+        "evidence_quality": 0.0,
+        "implementation_quality": 0.0,
+        "operator_handoff_quality": 0.0,
+        "planning_quality": 0.0,
+        "recovery_quality": 0.0,
+        "test_adequacy": 0.0
+      },
+      "trend": "unchanged",
+      "baseline_history_path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T222211Z-JORB-INFRA-023.yml"
+    },
+    "blocked_acceptance": false
+  }
+}
