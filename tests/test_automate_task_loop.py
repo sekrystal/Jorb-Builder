@@ -4575,6 +4575,67 @@ def test_eval_gate_blocks_acceptance_when_fixture_threshold_fails(tmp_path: Path
     assert _json(run_dir / "eval_result.json")["blocked_acceptance"] is True
 
 
+def test_phase4_eval_scores_final_operator_handoff_and_evidence_artifacts(tmp_path: Path) -> None:
+    builder_root, _, run_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-010",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    module = _load_script_module(builder_root)
+    _write_eval_fixture(
+        builder_root / "eval_fixtures" / "infra.json",
+        {
+            "fixture_id": "infra_hardening_v1",
+            "fixture_family": "infra_hardening",
+            "description": "infra fixture",
+            "selector": {"task_family": "JORB-INFRA", "area": "builder"},
+            "mandatory_artifacts": ["compiled_feature_spec.md", "proposal.md", "tradeoff_matrix.md", "judge_decision.md", "evidence_bundle.json", "runtime_proof.log"],
+            "rubric_dimensions": [
+                {"name": "planning_quality", "weight": 0.2, "threshold": 0.7, "description": "plan"},
+                {"name": "implementation_quality", "weight": 0.2, "threshold": 0.7, "description": "impl"},
+                {"name": "test_adequacy", "weight": 0.2, "threshold": 0.7, "description": "tests"},
+                {"name": "evidence_quality", "weight": 0.2, "threshold": 0.8, "description": "evidence"},
+                {"name": "operator_handoff_quality", "weight": 0.2, "threshold": 0.7, "description": "handoff"},
+            ],
+            "pass_threshold": 0.78,
+        },
+    )
+    task = _json(builder_root / "backlog.yml")["tasks"][0]
+    standards = {"agents_exists": True, "skills_exists": True, "agents_path": "AGENTS.md", "skills_dir": "skills", "skill_files": []}
+    _write_valid_phase4_feature_spec(module, run_dir, task, standards)
+    for name in ("proposal.md", "tradeoff_matrix.md", "research_brief.md"):
+        (run_dir / name).write_text("ok\n", encoding="utf-8")
+    _write_json(run_dir / "local_validation.json", {"results": [{"command": "pytest", "passed": True}]})
+    automation_result = {
+        "task_id": "JORB-INFRA-010",
+        "classification": "accepted",
+        "summary": "Automated loop completed with builder-side local validation success.",
+        "finished_at": "2026-03-30T00:00:00+00:00",
+        "steps": [{"name": "local_validation", "outcome": "passed", "detail": "All local verification commands passed."}],
+        "changed_files": ["scripts/automate_task_loop.py"],
+    }
+
+    persisted = module.persist_result_with_phase4_artifacts(
+        run_dir,
+        task,
+        automation_result,
+        standards=standards,
+        require_runtime_proof=False,
+        local_validation_payload={"results": [{"command": "pytest", "passed": True}]},
+        vm_validation_payload=None,
+    )
+
+    eval_result = _json(run_dir / "eval_result.json")
+    judge_text = (run_dir / "judge_decision.md").read_text(encoding="utf-8")
+
+    assert persisted["classification"] == "accepted"
+    assert eval_result["passed"] is True
+    assert eval_result["scores"]["evidence_quality"] == 1.0
+    assert eval_result["scores"]["operator_handoff_quality"] == 1.0
+    assert "required artifacts present: yes" in judge_text
+
+
 def test_feedback_normalization_separates_observation_inference_and_recommendation(tmp_path: Path) -> None:
     module = _load_feedback_module(tmp_path)
 

@@ -486,6 +486,53 @@ def write_phase4_judge_decision(
     return path
 
 
+def write_phase4_evidence_bundle(
+    run_dir: Path,
+    *,
+    task: dict[str, Any],
+    automation_result: dict[str, Any],
+    standards: dict[str, Any],
+    memory_store: dict[str, Any],
+    judge_memory_bundle: dict[str, Any],
+    judge_memory_path: Path,
+) -> Path:
+    evidence_path = run_dir / "evidence_bundle.json"
+    evidence_payload = {
+        "task_id": task["id"],
+        "classification": automation_result.get("classification"),
+        "summary": automation_result.get("summary"),
+        "artifacts": {
+            "compiled_feature_spec": str(run_dir / "compiled_feature_spec.md"),
+            "research_brief": str(phase4_research_brief_path(run_dir)),
+            "proposal": str(run_dir / "proposal.md"),
+            "tradeoff_matrix": str(run_dir / "tradeoff_matrix.md"),
+            "runtime_proof": str(phase4_runtime_proof_path(run_dir)),
+            "eval_result": str(run_dir / "eval_result.json"),
+            "judge_memory_context": str(judge_memory_path),
+            "judge_decision": str(run_dir / "judge_decision.md"),
+            "postmortem": str(phase4_postmortem_path(run_dir)) if phase4_postmortem_path(run_dir).exists() else None,
+        },
+        "repo_local_standards": {
+            "agents_path": standards.get("agents_path"),
+            "skills_dir": standards.get("skills_dir"),
+            "skill_files": standards.get("skill_files", []),
+        },
+        "memory_schema_issues": validate_memory_store_schema(memory_store),
+        "judge_memory_selected": [
+            {
+                "memory_id": entry.get("memory_id"),
+                "memory_type": entry.get("memory_type"),
+                "selection_score": entry.get("selection_score"),
+                "selection_reasons": entry.get("selection_reasons"),
+            }
+            for entry in judge_memory_bundle.get("selected", [])
+        ],
+        "steps": automation_result.get("steps", []),
+    }
+    evidence_path.write_text(json.dumps(evidence_payload, indent=2) + "\n", encoding="utf-8")
+    return evidence_path
+
+
 def write_phase4_postmortem(run_dir: Path, *, summary: str, automation_result: dict[str, Any]) -> Path:
     path = phase4_postmortem_path(run_dir)
     path.write_text(
@@ -574,40 +621,15 @@ def persist_result_with_phase4_artifacts(
             standards=standards,
             judge_memory_bundle=judge_memory_bundle,
         )
-        evidence_path = run_dir / "evidence_bundle.json"
-        evidence_payload = {
-            "task_id": task["id"],
-            "classification": automation_result.get("classification"),
-            "summary": automation_result.get("summary"),
-            "artifacts": {
-                "compiled_feature_spec": str(run_dir / "compiled_feature_spec.md"),
-                "research_brief": str(phase4_research_brief_path(run_dir)),
-                "proposal": str(run_dir / "proposal.md"),
-                "tradeoff_matrix": str(run_dir / "tradeoff_matrix.md"),
-                "runtime_proof": str(phase4_runtime_proof_path(run_dir)),
-                "eval_result": str(run_dir / "eval_result.json"),
-                "judge_memory_context": str(judge_memory_path),
-                "judge_decision": str(run_dir / "judge_decision.md"),
-                "postmortem": str(phase4_postmortem_path(run_dir)) if phase4_postmortem_path(run_dir).exists() else None,
-            },
-            "repo_local_standards": {
-                "agents_path": standards.get("agents_path"),
-                "skills_dir": standards.get("skills_dir"),
-                "skill_files": standards.get("skill_files", []),
-            },
-            "memory_schema_issues": validate_memory_store_schema(memory_store),
-            "judge_memory_selected": [
-                {
-                    "memory_id": entry.get("memory_id"),
-                    "memory_type": entry.get("memory_type"),
-                    "selection_score": entry.get("selection_score"),
-                    "selection_reasons": entry.get("selection_reasons"),
-                }
-                for entry in judge_memory_bundle.get("selected", [])
-            ],
-            "steps": automation_result.get("steps", []),
-        }
-        evidence_path.write_text(json.dumps(evidence_payload, indent=2) + "\n", encoding="utf-8")
+        write_phase4_evidence_bundle(
+            run_dir,
+            task=task,
+            automation_result=automation_result,
+            standards=standards,
+            memory_store=memory_store,
+            judge_memory_bundle=judge_memory_bundle,
+            judge_memory_path=judge_memory_path,
+        )
         issues = phase4_artifact_issues(run_dir, task, require_runtime_proof=require_runtime_proof)
         if issues and automation_result.get("classification") == "accepted":
             automation_result["classification"] = "blocked"
@@ -619,6 +641,8 @@ def persist_result_with_phase4_artifacts(
                     "detail": "Missing required artifacts: " + ", ".join(issues),
                 }
             )
+        write_json(run_dir / RESULT_FILE, automation_result)
+        write_summary(run_dir, automation_result)
         eval_result = score_run_eval(task, automation_result, run_dir=run_dir, standards=standards)
         prior_eval = latest_comparable_history_eval(task, eval_result, exclude_run_dir=run_dir, root=ROOT)
         if prior_eval is not None:
@@ -637,10 +661,31 @@ def persist_result_with_phase4_artifacts(
             eval_result["blocked_acceptance"] = True
         else:
             eval_result["blocked_acceptance"] = False
+        if automation_result.get("classification") != "accepted" and not phase4_postmortem_path(run_dir).exists():
+            write_phase4_postmortem(run_dir, summary=automation_result.get("summary", ""), automation_result=automation_result)
         write_eval_result(run_dir, eval_result)
         automation_result["eval_result"] = eval_result
-    write_json(run_dir / RESULT_FILE, automation_result)
-    write_summary(run_dir, automation_result)
+        write_json(run_dir / RESULT_FILE, automation_result)
+        write_summary(run_dir, automation_result)
+        write_phase4_judge_decision(
+            run_dir,
+            task=task,
+            automation_result=automation_result,
+            standards=standards,
+            judge_memory_bundle=judge_memory_bundle,
+        )
+        write_phase4_evidence_bundle(
+            run_dir,
+            task=task,
+            automation_result=automation_result,
+            standards=standards,
+            memory_store=memory_store,
+            judge_memory_bundle=judge_memory_bundle,
+            judge_memory_path=judge_memory_path,
+        )
+    else:
+        write_json(run_dir / RESULT_FILE, automation_result)
+        write_summary(run_dir, automation_result)
     update_run_ledger(
         task_id=task.get("id"),
         title=task.get("title"),
