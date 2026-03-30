@@ -83,6 +83,16 @@ MEMORY_ROLE_PROFILES = {
         "tag_biases": {"acceptance_boundary": 1.1, "proof_pattern": 1.0, "regression": 0.8},
     },
 }
+PHASE4_OPERATOR_ARTIFACTS = (
+    "compiled_feature_spec.md",
+    "proposal.md",
+    "tradeoff_matrix.md",
+    "research_brief.md",
+    "judge_decision.md",
+    "evidence_bundle.json",
+    "runtime_proof.log",
+)
+PHASE4_ARTIFACT_FAILURE_PREFIX = "Phase 4 artifact enforcement failed:"
 
 
 def expand_path(value: str) -> Path:
@@ -184,6 +194,73 @@ def parse_iso_datetime(value: Any) -> datetime | None:
         return datetime.fromisoformat(text.replace("Z", "+00:00"))
     except ValueError:
         return None
+
+
+def parse_phase4_artifact_failure_detail(detail: Any) -> list[str]:
+    text = str(detail or "").strip()
+    if PHASE4_ARTIFACT_FAILURE_PREFIX not in text:
+        return []
+    suffix = text.split(PHASE4_ARTIFACT_FAILURE_PREFIX, 1)[1].strip()
+    artifacts: list[str] = []
+    for raw_item in suffix.split(","):
+        candidate = raw_item.strip()
+        if not candidate:
+            continue
+        name = candidate.split(":", 1)[0].strip()
+        if name.endswith((".md", ".json", ".log")):
+            artifacts.append(name)
+    return artifacts
+
+
+def derive_phase4_operator_truth(ledger: dict[str, Any] | None) -> dict[str, Any]:
+    payload = dict(ledger or {})
+    task_id = payload.get("current_task")
+    if not task_id or payload.get("run_state") not in {"blocked", "dry_run"}:
+        return payload
+    events = list(payload.get("events") or [])
+    artifact_events: list[dict[str, Any]] = []
+    for event in reversed(events):
+        if event.get("task_id") != task_id:
+            continue
+        run_state = str(event.get("run_state") or "")
+        if run_state in {"accepted", "completed"}:
+            if artifact_events:
+                break
+            return payload
+        missing = parse_phase4_artifact_failure_detail(event.get("detail"))
+        if run_state == "blocked" and missing:
+            artifact_events.append({"detail": event.get("detail"), "missing": missing})
+    if not artifact_events:
+        return payload
+
+    artifact_state = payload.get("artifact_completeness") or {}
+    present = [str(name) for name in artifact_state.get("present", [])]
+    missing = [str(name) for name in artifact_state.get("missing", [])]
+    missing_set = set(missing)
+    present_set = set(present)
+    for event in artifact_events:
+        for name in event["missing"]:
+            missing_set.add(name)
+            present_set.discard(name)
+
+    ordered_missing = [name for name in PHASE4_OPERATOR_ARTIFACTS if name in missing_set]
+    ordered_missing.extend(sorted(name for name in missing_set if name not in PHASE4_OPERATOR_ARTIFACTS))
+    ordered_present = [name for name in PHASE4_OPERATOR_ARTIFACTS if name in present_set]
+    ordered_present.extend(sorted(name for name in present_set if name not in PHASE4_OPERATOR_ARTIFACTS))
+
+    payload["run_state"] = "blocked"
+    payload["current_stage"] = "judge"
+    payload["current_blocker"] = artifact_events[0]["detail"]
+    payload["artifact_completeness"] = {
+        "present": ordered_present,
+        "missing": ordered_missing,
+    }
+    payload["failure_taxonomy"] = payload.get("failure_taxonomy") or {
+        "failure_class": "artifact_completeness_failure",
+        "recovery_action": "replan_required",
+        "retryable": True,
+    }
+    return payload
 
 
 def task_area(task_id: str) -> str:

@@ -2,21 +2,25 @@
   "id": "BLK-DRAFT-JORB-INFRA-STATUS-TRUTH",
   "title": "Task DRAFT-JORB-INFRA-STATUS-TRUTH blocked during automated execution",
   "severity": "high",
-  "opened_at": "2026-03-30T20:47:23.403474+00:00",
+  "opened_at": "2026-03-30T20:58:25.638444+00:00",
   "related_tasks": [
     "DRAFT-JORB-INFRA-STATUS-TRUTH"
   ],
-  "status": "open",
+  "status": "resolved",
   "symptoms": [
-    "Builder repo is dirty before automated execution; refusing to continue."
+    "Executor changed files outside the task allowlist."
   ],
-  "diagnosis": "Builder repo is dirty before automated execution; refusing to continue.",
+  "diagnosis": "Executor changed files outside the task allowlist.",
   "evidence": [
     "scripts/automate_task_loop.py",
+    "scripts/common.py",
+    "scripts/show_status.py",
     "tests/test_automate_task_loop.py"
   ],
   "next_actions": [
     "Inspect automation_result.json and narrow the next bounded refinement."
   ],
-  "human_needed": true
+  "human_needed": true,
+  "resolved_at": "2026-03-30T21:04:30+00:00",
+  "resolution": "Resolved after synthesized builder repo bounds were restored and stale blocked state was cleared; the task is ready for a fresh rerun."
 }

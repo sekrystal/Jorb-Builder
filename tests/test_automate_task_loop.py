@@ -4431,6 +4431,120 @@ def test_show_status_reads_canonical_run_ledger(tmp_path: Path) -> None:
     assert "- eval_blocked_acceptance: True" in result.stdout
 
 
+def test_update_run_ledger_preserves_recent_phase4_artifact_blocker_truth_across_dry_run(tmp_path: Path) -> None:
+    builder_root, _, run_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-010",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    module = _load_script_module(builder_root)
+    for name in ("compiled_feature_spec.md", "proposal.md", "tradeoff_matrix.md", "research_brief.md"):
+        (run_dir / name).write_text(f"{name}\n", encoding="utf-8")
+    _write_json(
+        builder_root / "run_ledger.json",
+        {
+            "current_task": "JORB-INFRA-010",
+            "current_stage": "judge",
+            "run_state": "blocked",
+            "current_blocker": "Phase 4 artifact enforcement failed: compiled_feature_spec.md, proposal.md, tradeoff_matrix.md, research_brief.md",
+            "artifact_completeness": {
+                "present": [],
+                "missing": ["compiled_feature_spec.md", "proposal.md", "tradeoff_matrix.md", "research_brief.md"],
+            },
+            "events": [
+                {
+                    "at": "2026-03-30T20:21:35+00:00",
+                    "task_id": "JORB-INFRA-010",
+                    "run_state": "blocked",
+                    "stage_name": "judge",
+                    "detail": "Phase 4 artifact enforcement failed: compiled_feature_spec.md, proposal.md, tradeoff_matrix.md, research_brief.md",
+                }
+            ],
+        },
+    )
+
+    module.update_run_ledger(
+        task_id="JORB-INFRA-010",
+        title="Feature understanding compiler",
+        run_state="dry_run",
+        stage_name="plan",
+        run_log_dir=run_dir,
+        detail="Dry run only. No executor, git, or VM commands were executed.",
+        next_action="Inspect automation_result.json for the planned stages and artifacts.",
+    )
+
+    ledger = _json(builder_root / "run_ledger.json")
+    assert ledger["run_state"] == "blocked"
+    assert ledger["current_stage"] == "judge"
+    assert ledger["current_blocker"] == "Phase 4 artifact enforcement failed: compiled_feature_spec.md, proposal.md, tradeoff_matrix.md, research_brief.md"
+    assert ledger["failure_taxonomy"]["failure_class"] == "artifact_completeness_failure"
+    assert ledger["artifact_completeness"]["missing"] == [
+        "compiled_feature_spec.md",
+        "proposal.md",
+        "tradeoff_matrix.md",
+        "research_brief.md",
+        "judge_decision.md",
+        "evidence_bundle.json",
+        "runtime_proof.log",
+    ]
+
+
+def test_show_status_prefers_recent_phase4_artifact_blocker_truth_over_stale_dry_run_surface(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-010",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    _write_json(
+        builder_root / "run_ledger.json",
+        {
+            "current_task": "JORB-INFRA-010",
+            "current_stage": "plan",
+            "run_state": "dry_run",
+            "current_blocker": None,
+            "artifact_completeness": {
+                "present": [
+                    "compiled_feature_spec.md",
+                    "proposal.md",
+                    "tradeoff_matrix.md",
+                    "research_brief.md",
+                ],
+                "missing": [
+                    "judge_decision.md",
+                    "evidence_bundle.json",
+                    "runtime_proof.log",
+                ],
+            },
+            "events": [
+                {
+                    "at": "2026-03-30T20:21:35+00:00",
+                    "task_id": "JORB-INFRA-010",
+                    "run_state": "blocked",
+                    "stage_name": "judge",
+                    "detail": "Phase 4 artifact enforcement failed: compiled_feature_spec.md, proposal.md, tradeoff_matrix.md, research_brief.md",
+                },
+                {
+                    "at": "2026-03-30T20:30:00+00:00",
+                    "task_id": "JORB-INFRA-010",
+                    "run_state": "dry_run",
+                    "stage_name": "plan",
+                    "detail": "Dry run only. No executor, git, or VM commands were executed.",
+                },
+            ],
+        },
+    )
+
+    result = _run([sys.executable, str(SCRIPT.parent / "show_status.py")], builder_root)
+
+    assert result.returncode == 0
+    assert "- current_stage: judge" in result.stdout
+    assert "- run_state: blocked" in result.stdout
+    assert "- current_blocker: Phase 4 artifact enforcement failed: compiled_feature_spec.md, proposal.md, tradeoff_matrix.md, research_brief.md" in result.stdout
+    assert "- artifact_missing: compiled_feature_spec.md, proposal.md, tradeoff_matrix.md, research_brief.md, judge_decision.md, evidence_bundle.json, runtime_proof.log" in result.stdout
+
+
 def test_private_eval_fixture_schema_validation_rejects_missing_fields(tmp_path: Path) -> None:
     module = _load_private_eval_module(tmp_path)
 
@@ -4968,6 +5082,9 @@ def test_approved_proposal_becomes_structured_synthesized_entry(tmp_path: Path) 
     assert len(entry["acceptance_criteria"]) >= 3
     assert entry["provenance"]["source_proposal_id"] == "prop-1"
     assert entry["operator_approval"]["approved"] is True
+    assert entry["repo_path"] == "~/projects/jorb-builder"
+    assert entry["allowlist"] == ["../jorb-builder/**"]
+    assert entry["forbid"] == ["../jorb/**"]
 
 
 def test_unapproved_proposal_does_not_synthesize_entry(tmp_path: Path) -> None:
@@ -5160,13 +5277,87 @@ def test_apply_synthesized_entry_requires_explicit_approval_and_audit(tmp_path: 
     applied = module.apply_synthesized_entry(entry["synthesis_id"], root=builder_root)
 
     backlog = _json(builder_root / "backlog.yml")
-    assert any(task["id"] == applied["ticket_id_placeholder"] for task in backlog["tasks"])
+    applied_task = next(task for task in backlog["tasks"] if task["id"] == applied["ticket_id_placeholder"])
+    assert applied_task["repo_path"] == "~/projects/jorb-builder"
+    assert applied_task["allowlist"] == ["../jorb-builder/**"]
+    assert applied_task["forbid"] == ["../jorb/**"]
     audit = _json(builder_root / "backlog_apply_audit.json")
     assert audit["events"]
     assert audit["events"][0]["synthesis_id"] == entry["synthesis_id"]
     assert audit["events"][0]["synthesized_entry_sha1"]
     assert _json(builder_root / "status.yml") == status_before
     assert _json(builder_root / "active_task.yml") == active_before
+
+
+def test_repair_state_reopens_stale_allowlist_blocker_when_canonical_task_has_repo_bounds(tmp_path: Path) -> None:
+    builder_root, _, run_log_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="DRAFT-JORB-INFRA-STATUS-TRUTH",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "blocked"
+    backlog["tasks"][0]["allowlist"] = ["../jorb-builder/**"]
+    backlog["tasks"][0]["forbid"] = ["../jorb/**"]
+    backlog["tasks"][0]["repo_path"] = "~/projects/jorb-builder"
+    _write_json(builder_root / "backlog.yml", backlog)
+
+    active = _json(builder_root / "active_task.yml")
+    active["state"] = "blocked"
+    active["failure_summary"] = "Executor changed files outside the task allowlist."
+    active["allowlist"] = []
+    _write_json(builder_root / "active_task.yml", active)
+
+    status = _json(builder_root / "status.yml")
+    status["state"] = "blocked"
+    status["last_result"] = "blocked"
+    _write_json(builder_root / "status.yml", status)
+
+    _write_json(
+        run_log_dir / "automation_result.json",
+        {
+            "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
+            "classification": "blocked",
+            "finished_at": "2026-03-30T00:00:00+00:00",
+            "summary": "Executor changed files outside the task allowlist.",
+            "steps": [{"name": "allowlist_check", "outcome": "blocked", "detail": "scripts/show_status.py"}],
+            "changed_files": ["scripts/show_status.py"],
+            "blocker_evidence": ["scripts/show_status.py"],
+            "unproven_runtime_gaps": ["Executor changed files outside the task allowlist."],
+        },
+    )
+    _write_json(
+        builder_root / "blockers" / "BLK-DRAFT-JORB-INFRA-STATUS-TRUTH.yml",
+        {
+            "id": "BLK-DRAFT-JORB-INFRA-STATUS-TRUTH",
+            "title": "Task DRAFT-JORB-INFRA-STATUS-TRUTH blocked during automated execution",
+            "status": "open",
+            "related_tasks": ["DRAFT-JORB-INFRA-STATUS-TRUTH"],
+            "symptoms": ["Executor changed files outside the task allowlist."],
+        },
+    )
+
+    repair = _run([sys.executable, str(SCRIPT), "--repair-state"], builder_root)
+    active_after = _json(builder_root / "active_task.yml")
+    status_after = _json(builder_root / "status.yml")
+    backlog_after = _json(builder_root / "backlog.yml")
+    blocker_after = _json(builder_root / "blockers" / "BLK-DRAFT-JORB-INFRA-STATUS-TRUTH.yml")
+    inspect = _run([sys.executable, str(SCRIPT), "--inspect-backlog"], builder_root)
+    status_view = _run([sys.executable, str(SCRIPT.parent / "show_status.py")], builder_root)
+
+    assert repair.returncode == 0
+    assert "backlog task DRAFT-JORB-INFRA-STATUS-TRUTH blocked -> ready" in repair.stdout
+    assert active_after["task_id"] is None
+    assert active_after["state"] == "idle"
+    assert status_after["state"] == "idle"
+    assert status_after["active_task_id"] is None
+    assert backlog_after["tasks"][0]["status"] == "ready"
+    assert blocker_after["status"] == "resolved"
+    assert 'next_selected_task: "DRAFT-JORB-INFRA-STATUS-TRUTH"' in inspect.stdout
+    assert "- run_state: idle" in status_view.stdout
+    assert "- current_blocker: none" in status_view.stdout
 
 
 def test_low_quality_synthesized_entry_is_eval_blocked(tmp_path: Path) -> None:

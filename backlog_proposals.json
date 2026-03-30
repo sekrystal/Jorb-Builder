@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-30T20:47:23.402625+00:00",
+  "generated_at": "2026-03-30T20:58:25.637331+00:00",
   "proposals": [
     {
       "proposal_id": "prop-c967a7d8242d",
@@ -136,6 +136,38 @@
         ]
       },
       "created_at": "2026-03-30T19:23:37.108960+00:00"
+    },
+    {
+      "proposal_id": "prop-7e0224a17051",
+      "dedupe_key": "repeated_repo_state_failure::DRAFT-JORB::create_follow_up_hardening_ticket",
+      "status": "draft",
+      "source_signal_id": "sig-39686ff0f8a3",
+      "title": "Harden DRAFT-JORB against repeated repo state failure",
+      "rationale": "Consider create follow up hardening ticket for DRAFT-JORB.",
+      "evidence_summary": "Pattern observed 2 times in DRAFT-JORB.",
+      "evidence_links": [
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T204723Z-DRAFT-JORB-INFRA-STATUS-TRUTH.yml",
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T205825Z-DRAFT-JORB-INFRA-STATUS-TRUTH.yml"
+      ],
+      "affected_ticket_family": "DRAFT-JORB",
+      "priority_recommendation": "medium",
+      "confidence": 0.65,
+      "recurrence_count": 2,
+      "proposed_action_type": "create_follow_up_hardening_ticket",
+      "dependencies": [],
+      "operator_approval_required": true,
+      "draft_ticket": {
+        "id_placeholder": "DRAFT-DRAFT-JORB-REPEATED_REPO_STATE_FAILURE",
+        "title": "Harden DRAFT-JORB against repeated repo state failure",
+        "type": "hardening",
+        "area": "product",
+        "objective": "Consider create follow up hardening ticket for DRAFT-JORB.",
+        "evidence_basis": [
+          "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T204723Z-DRAFT-JORB-INFRA-STATUS-TRUTH.yml",
+          "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T205825Z-DRAFT-JORB-INFRA-STATUS-TRUTH.yml"
+        ]
+      },
+      "created_at": "2026-03-30T20:58:25.637321+00:00"
     }
   ]
 }

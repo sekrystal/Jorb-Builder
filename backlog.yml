@@ -4544,7 +4544,7 @@
       "type": "infrastructure",
       "area": "builder",
       "priority": 2,
-      "status": "blocked",
+      "status": "ready",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-010"
@@ -4591,9 +4591,18 @@
       },
       "notes": [
         "Synthesized from proposal prop-c967a7d8242d",
-        "Builder repo is dirty before automated execution; refusing to continue."
+        "Builder repo is dirty before automated execution; refusing to continue.",
+        "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again.",
+        "Executor changed files outside the task allowlist.",
+        "Repaired from stale synthesized allowlist blocker; canonical builder repo bounds are now present and the task is runnable again."
       ],
       "repo_path": "~/projects/jorb-builder",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
       "description": "The builder should not show a clean dry-run surface when repeated Phase 4 judge failures for missing artifacts are the strongest recent truth. Tighten operator status truth so artifact-enforcement failures, current blocker, and artifact completeness stay coherent across blocked and dry-run transitions.\n\nrun_ledger.json records repeated blocked judge events for JORB-INFRA-010 citing missing compiled_feature_spec.md, proposal.md, tradeoff_matrix.md, and research_brief.md, while show_status.py currently reports run_state dry_run, current_blocker none, and artifact_missing only judge_decision.md and evidence_bundle.json.",
       "allow_noop_completion": false
     }

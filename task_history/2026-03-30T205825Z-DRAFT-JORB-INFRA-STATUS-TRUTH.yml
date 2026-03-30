@@ -1,0 +1,106 @@
+{
+  "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
+  "title": "Harden operator truth for Phase 4 artifact enforcement state",
+  "status": "blocked",
+  "attempt": 1,
+  "started_at": "2026-03-30T20:50:20.874135+00:00",
+  "completed_at": "2026-03-30T20:58:25.549639+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z-DRAFT-JORB-INFRA-STATUS-TRUTH",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z-DRAFT-JORB-INFRA-STATUS-TRUTH"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z-DRAFT-JORB-INFRA-STATUS-TRUTH/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z-DRAFT-JORB-INFRA-STATUS-TRUTH/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z-DRAFT-JORB-INFRA-STATUS-TRUTH/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z-DRAFT-JORB-INFRA-STATUS-TRUTH/executor.json"
+    }
+  ],
+  "files_changed": [
+    "scripts/automate_task_loop.py",
+    "scripts/common.py",
+    "scripts/show_status.py",
+    "tests/test_automate_task_loop.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.325.31654-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T205020Z-DRAFT-JORB-INFRA-STATUS-TRUTH/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "blocked"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Executor changed files outside the task allowlist."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Executor changed files outside the task allowlist.",
+    "accepted": false,
+    "acceptance_met": [],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\nI hardened Phase 4 operator truth by adding shared reconciliation logic that detects recent `Phase 4 artifact enforcement failed:` judge events, parses the missing-artifact set, and prefers that stronger blocked truth over a later cleaner dry-run snapshot. I also expanded artifact completeness tracking to include the full Phase 4 set, including `research_brief.md` and `runtime_proof.log`, and applied the same truth view in both ledger writes and `show_status.py`.\n\n2. Exact files changed\n\n- [scripts/common.py](/Users/samuelkrystal/projects/jorb-builder/scripts/common.py)\n- [scripts/automate_task_loop.py](/Users/samuelkrystal/projects/jorb-builder/scripts/automate_task_loop.py)\n- [scripts/show_status.py](/Users/samuelkrystal/projects/jorb-builder/scripts/show_status.py)\n- [tests/test_automate_task_loop.py](/Users/samuelkrystal/projects/jorb-builder/tests/test_automate_task_loop.py)\n\n3. Exact tests added or updated\n\nAdded:\n- `test_update_run_ledger_preserves_recent_phase4_artifact_blocker_truth_across_dry_run`\n- `test_show_status_prefers_recent_phase4_artifact_blocker_truth_over_stale_dry_run_surface`\n\nUpdated:\n- none\n\n4. Exact commands run\n\n- `pwd && git status --short && rg -n \"show_status|run_state|current_blocker|artifact_missing|run_ledger|judge\" scripts tests`\n- `rg --files scripts tests`\n- `find scripts tests -type f | sort`\n- `grep -RInE \"show_status|run_state|current_blocker|artifact_missing|run_ledger|judge\" scripts tests`\n- `sed -n '1,220p' scripts/show_status.py`\n- `sed -n '876,970p' scripts/automate_task_loop.py`\n- `sed -n '1399,1465p' scripts/automate_task_loop.py`\n- `sed -n '4388,4448p' tests/test_automate_task_loop.py`\n- `sed -n '4848,4898p' tests/test_automate_task_loop.py`\n- `sed -n '5210,5265p' tests/test_automate_task_loop.py`\n- `grep -n \"def current_artifact_completeness\\|MANDATORY_ARTIFACT\\|required_artifacts\\|artifact_completeness\" -n scripts/automate_task_loop.py`\n- `sed -n '3300,3455p' scripts/automate_task_loop.py`\n- `sed -n '970,1060p' scripts/automate_task_loop.py`\n- `sed -n '848,905p' scripts/automate_task_loop.py`\n- `python3 - <<'PY'\nimport json, pathlib\nroot = pathlib.Path('/Users/samuelkrystal/projects/jorb-builder')\nprint((root/'run_ledger.json').read_text())\nPY`\n- `find task_history -type f | sort | tail -n 8`\n- `python3 - <<'PY'\nimport pathlib, yaml, json\nroot = pathlib.Path('/Users/samuelkrystal/projects/jorb-builder')\nfor path in sorted((root/'task_history').glob('*JORB-INFRA-010.yml'))[-5:]:\n    print('FILE', path.name)\n    data = yaml.safe_load(path.read_text())\n    keep = {k:data.get(k) for k in ['task_id','status','completed_at','failure_taxonomy','notes','summary'] if k in data}\n    print(json.dumps(keep, indent=2))\nPY`\n- `for f in $(find task_history -type f -name '*JORB-INFRA-010.yml' | sort | tail -n 4); do echo \"FILE ${f}\"; sed -n '1,220p' \"$f\"; done`\n- `grep -RInE \"missing_machine_payload|artifact enforcement failed|artifact_completeness_failure|judge_decision.md\" task_history run_logs | tail -n 80`\n- `grep -n \"PHASE4_REQUIRED_ARTIFACTS\\|RESEARCH\\|runtime_proof.log\" scripts/automate_task_loop.py | head -n 40`\n- `sed -n '1,110p' scripts/automate_task_loop.py`\n- `grep -n \"is_stale_dry_run_state\\|dry_run\" tests/test_automate_task_loop.py | tail -n 40`\n- `sed -n '3410,3555p' tests/test_automate_task_loop.py`\n- `sed -n '3822,3905p' tests/test_automate_task_loop.py`\n- `sed -n '1,220p' scripts/common.py`\n- `grep -n \"def _load_script_module\\|def _setup_builder_fixture\\|importlib\" tests/test_automate_task_loop.py | head -n 40`\n- `sed -n '1,140p' tests/test_automate_task_loop.py`\n- `pytest tests/test_automate_task_loop.py::test_update_run_ledger_preserves_recent_phase4_artifact_blocker_truth_across_dry_run tests/test_automate_task_loop.py::test_show_status_prefers_recent_phase4_artifact_blocker_truth_over_stale_dry_run_surface tests/test_automate_task_loop.py::test_show_status_reads_canonical_run_ledger tests/test_automate_task_loop.py::test_phase4_dry_run_emits_stage_plan_and_repo_local_standards -q`\n- `git diff -- scripts/common.py scripts/automate_task_loop.py scripts/show_status.py tests/test_automate_task_loop.py`\n- `python3 -m py_compile scripts/*.py`\n- `pytest tests/test_automate_task_loop.py`\n- `git status --short -- scripts/common.py scripts/automate_task_loop.py scripts/show_status.py tests/test_automate_task_loop.py`\n- `nl -ba scripts/common.py | sed -n '80,280p'`\n- `nl -ba scripts/automate_task_loop.py | sed -n '18,95p;860,890p'`\n- `nl -ba scripts/show_status.py | sed -n '1,40p'`\n- `nl -ba tests/test_automate_task_loop.py | sed -n '4394,4555p'`\n\n5. Exact results\n\n- The two `rg` commands failed immediately because `rg` is not installed in this environment.\n- The inline Python command that imported `yaml` failed with `ModuleNotFoundError: No module named 'yaml'`.\n- The focused pytest command passed: `4 passed in 1.95s`.\n- `python3 -m py_compile scripts/*.py` passed with exit code `0`.\n- `pytest tests/test_automate_task_loop.py` passed with exit code `0` and final output `135 passed in 152.54s (0:02:32)`.\n\n6. Honest note on what remains unproven\n\nThis is proven by local code inspection, targeted regression tests, `py_compile`, and the full `tests/test_automate_task_loop.py` suite only. I did not run a live builder automation cycle against the current dirty repo state, so I did not directly prove the patched surface against a real post-failure dry-run ledger outside the test harness."
+      },
+      {
+        "name": "allowlist_check",
+        "outcome": "blocked",
+        "detail": "scripts/automate_task_loop.py\nscripts/common.py\nscripts/show_status.py\ntests/test_automate_task_loop.py"
+      }
+    ],
+    "changed_files_count": 4,
+    "changed_files": [
+      "scripts/automate_task_loop.py",
+      "scripts/common.py",
+      "scripts/show_status.py",
+      "tests/test_automate_task_loop.py"
+    ],
+    "unproven_runtime_gaps": [
+      "Executor changed files outside the task allowlist."
+    ],
+    "ux_conformance": {
+      "required": false,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": null,
+      "intentional_design_deviations": null,
+      "product_first_checklist": null,
+      "primary_ux_prohibited_surfaces": []
+    }
+  },
+  "unproven_runtime_gaps": [
+    "Executor changed files outside the task allowlist."
+  ],
+  "failure_taxonomy": {
+    "failure_class": "repo_state_failure",
+    "recovery_action": "block_pending_operator_decision",
+    "retryable": false
+  },
+  "eval_result": null
+}

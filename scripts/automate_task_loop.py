@@ -21,6 +21,7 @@ from common import (
     builder_path_from_config,
     references_canonical_figma_source,
     compute_backlog_diagnostics,
+    derive_phase4_operator_truth,
     expand_path,
     format_memory_bundle_text,
     is_product_facing_ux_task,
@@ -63,8 +64,10 @@ PHASE4_REQUIRED_ARTIFACTS = (
     "compiled_feature_spec.md",
     "proposal.md",
     "tradeoff_matrix.md",
+    "research_brief.md",
     "judge_decision.md",
     "evidence_bundle.json",
+    "runtime_proof.log",
 )
 PHASE4_FEATURE_SPEC_REQUIRED_KEYS = (
     "task_id",
@@ -863,13 +866,11 @@ def current_artifact_completeness(run_dir: Path | None) -> dict[str, Any]:
     present: list[str] = []
     missing: list[str] = []
     for name in PHASE4_REQUIRED_ARTIFACTS:
-        path = run_dir / name
+        path = phase4_runtime_proof_path(run_dir) if name == "runtime_proof.log" else run_dir / name
         if path.exists():
             present.append(name)
         else:
             missing.append(name)
-    if phase4_runtime_proof_path(run_dir).exists():
-        present.append("runtime_proof.log")
     return {"present": present, "missing": missing}
 
 
@@ -882,6 +883,7 @@ def write_run_ledger(snapshot: dict[str, Any]) -> None:
         events = events[-25:]
     payload = {**previous, **snapshot}
     payload["events"] = events
+    payload = derive_phase4_operator_truth(payload)
     write_data(RUN_LEDGER, payload)
 
 
@@ -2598,6 +2600,17 @@ def blocked_dirty_repo_truth(task: dict[str, Any], active: dict[str, Any]) -> tu
     return target_kind, target_repo, files
 
 
+def stale_allowlist_block_repaired(task: dict[str, Any], active: dict[str, Any]) -> bool:
+    summary = str(active.get("failure_summary") or "").lower()
+    if "allowlist" not in summary:
+        return False
+    active_allowlist = [str(item).strip() for item in active.get("allowlist", []) if str(item).strip()]
+    task_allowlist = [str(item).strip() for item in task.get("allowlist", []) if str(item).strip()]
+    if active_allowlist:
+        return False
+    return bool(task_allowlist)
+
+
 def repair_legacy_state() -> int:
     active = load_data(ACTIVE)
     status = load_data(STATUS)
@@ -2729,6 +2742,34 @@ def repair_legacy_state() -> int:
             resolved = resolve_blocker_for_task(
                 str(task_id),
                 resolution="Resolved by state repair: prior executor failure matched a transient Codex transport error and the task is ready for a fresh rerun.",
+            )
+            if resolved is not None:
+                repaired.append(f"{resolved.name} resolved")
+            print("STATE_REPAIRED")
+            for line in repaired:
+                print(f"- {line}")
+            return 0
+
+        if stale_allowlist_block_repaired(task, active):
+            task["status"] = "ready"
+            task.setdefault("notes", []).append(
+                "Repaired from stale synthesized allowlist blocker; canonical builder repo bounds are now present and the task is runnable again."
+            )
+            write_data(BACKLOG, backlog)
+            repaired_active = reset_active()
+            repaired_active["previous_run_log_dir"] = str(terminal_run_dir) if terminal_run_dir is not None else active.get("run_log_dir")
+            write_data(ACTIVE, repaired_active)
+            status["state"] = "idle"
+            status["active_task_id"] = None
+            status["last_task_id"] = task_id
+            status["last_result"] = "blocked"
+            status["last_run_at"] = now_iso()
+            write_data(STATUS, status)
+            clear_run_ledger_after_repair()
+            repaired.append(f"backlog task {task_id} blocked -> ready")
+            resolved = resolve_blocker_for_task(
+                str(task_id),
+                resolution="Resolved by state repair: prior allowlist blocker came from a stale packet without canonical builder repo bounds.",
             )
             if resolved is not None:
                 repaired.append(f"{resolved.name} resolved")
@@ -2901,7 +2942,7 @@ def repair_legacy_state() -> int:
             print(f"- {line}")
         return 0
 
-    if task is not None and task.get("status") in {"pending", "accepted"} and active.get("task_id"):
+    if task is not None and task.get("status") in {"pending", "accepted", "ready"} and active.get("task_id"):
         repaired_active = reset_active()
         repaired_active["previous_run_log_dir"] = active.get("run_log_dir")
         write_data(ACTIVE, repaired_active)
@@ -2911,9 +2952,17 @@ def repair_legacy_state() -> int:
         status["last_result"] = status.get("last_result")
         status["last_run_at"] = now_iso()
         write_data(STATUS, status)
+        clear_run_ledger_after_repair()
         repaired.append(
             f"stale active task {task_id} cleared because backlog truth is {task.get('status')}"
         )
+        if task.get("status") == "ready":
+            resolved = resolve_blocker_for_task(
+                str(task_id),
+                resolution="Resolved by state repair: canonical backlog truth is ready and the prior blocked run no longer represents the current task state.",
+            )
+            if resolved is not None:
+                repaired.append(f"{resolved.name} resolved")
         print("STATE_REPAIRED")
         for line in repaired:
             print(f"- {line}")

@@ -40,6 +40,13 @@
       "requires_vm_runtime_proof": false,
       "type": "infrastructure",
       "area": "builder",
+      "repo_path": "~/projects/jorb-builder",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
       "provenance": {
         "source_proposal_id": "prop-c967a7d8242d",
         "evidence_links": [

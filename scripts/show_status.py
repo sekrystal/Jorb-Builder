@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-from common import build_memory_store, builder_root, load_data
+from common import build_memory_store, builder_root, derive_phase4_operator_truth, load_data
 from backlog_synthesis import synthesis_summary_for_operator
 from feedback_engine import feedback_summary_for_operator
 
@@ -20,6 +20,7 @@ def main() -> int:
     status = load_data(STATUS)
     active = load_data(ACTIVE)
     ledger = load_data(RUN_LEDGER) if RUN_LEDGER.exists() else {}
+    ledger = derive_phase4_operator_truth(ledger)
     memory_store = build_memory_store(ROOT)
     feedback = feedback_summary_for_operator(ROOT)
     synthesis = synthesis_summary_for_operator(ROOT)

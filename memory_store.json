@@ -1,6 +1,53 @@
 {
-  "generated_at": "2026-03-30T20:47:23.100223+00:00",
+  "generated_at": "2026-03-30T20:50:20.645499+00:00",
   "entries": [
+    {
+      "memory_id": "mem-9de0aeac2a5b",
+      "memory_type": "environment_assumption",
+      "ticket_family": "DRAFT-JORB",
+      "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
+      "area": "unknown",
+      "summary": "Builder repo is dirty before automated execution; refusing to continue.",
+      "source_artifact": "/Users/samuelkrystal/projects/jorb-builder/blockers/BLK-DRAFT-JORB-INFRA-STATUS-TRUTH.yml",
+      "timestamp": "2026-03-30T20:47:23.403474+00:00",
+      "confidence": 0.65,
+      "freshness": {
+        "observed_at": "2026-03-30T20:47:23.403474+00:00",
+        "age_days": 0,
+        "decay_factor": 1.0,
+        "stale_after_days": 21,
+        "freshness_state": "fresh"
+      },
+      "observation": "Builder repo is dirty before automated execution; refusing to continue.",
+      "inference": "Known blocker pattern",
+      "primary_basis": "observation",
+      "relevance_tags": [
+        "DRAFT-JORB",
+        "acceptance_boundary",
+        "constraint",
+        "failure_avoidance"
+      ],
+      "origin": "operator",
+      "status": "superseded",
+      "status_reason": "blocker:resolved",
+      "provenance": [
+        {
+          "path": "/Users/samuelkrystal/projects/jorb-builder/blockers/BLK-DRAFT-JORB-INFRA-STATUS-TRUTH.yml",
+          "kind": "blocker"
+        }
+      ],
+      "signature": "5d28fbf289e8d932ef4d2f1444e7041e35e95a64",
+      "support_count": 1,
+      "superseded_by": null,
+      "supersedes": [],
+      "manual": false,
+      "role_fit": [
+        "planner",
+        "architect",
+        "judge"
+      ],
+      "content": "Builder repo is dirty before automated execution; refusing to continue."
+    },
     {
       "memory_id": "mem-fb3d40505dc7",
       "memory_type": "environment_assumption",
@@ -712,10 +759,10 @@
       "area": "builder",
       "summary": "Harden operator truth for Phase 4 artifact enforcement state",
       "source_artifact": "/Users/samuelkrystal/projects/jorb-builder/backlog_proposals.json",
-      "timestamp": "2026-03-30T20:47:23.100062+00:00",
+      "timestamp": "2026-03-30T20:50:20.645306+00:00",
       "confidence": 0.88,
       "freshness": {
-        "observed_at": "2026-03-30T20:47:23.100062+00:00",
+        "observed_at": "2026-03-30T20:50:20.645306+00:00",
         "age_days": 0,
         "decay_factor": 1.0,
         "stale_after_days": 45,
@@ -747,6 +794,54 @@
         "judge"
       ],
       "content": "Harden operator truth for Phase 4 artifact enforcement state"
+    },
+    {
+      "memory_id": "mem-5eab122909c3",
+      "memory_type": "environment_assumption",
+      "ticket_family": "DRAFT-JORB",
+      "task_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
+      "area": "unknown",
+      "summary": "Builder repo is dirty before automated execution; refusing to continue.",
+      "source_artifact": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T204723Z-DRAFT-JORB-INFRA-STATUS-TRUTH.yml",
+      "timestamp": "2026-03-30T20:47:23.390640+00:00",
+      "confidence": 0.72,
+      "freshness": {
+        "observed_at": "2026-03-30T20:47:23.390640+00:00",
+        "age_days": 0,
+        "decay_factor": 1.0,
+        "stale_after_days": 21,
+        "freshness_state": "fresh"
+      },
+      "observation": "Builder repo is dirty before automated execution; refusing to continue.",
+      "inference": "Past failure or refinement pattern",
+      "primary_basis": "observation",
+      "relevance_tags": [
+        "DRAFT-JORB",
+        "acceptance_boundary",
+        "failure_avoidance",
+        "harden_operator_truth_for_phase_4_artifact_enforcement_state",
+        "repo_state_failure"
+      ],
+      "origin": "validator",
+      "status": "active",
+      "status_reason": "derived_from_history",
+      "provenance": [
+        {
+          "path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T204723Z-DRAFT-JORB-INFRA-STATUS-TRUTH.yml",
+          "kind": "task_history"
+        }
+      ],
+      "signature": "4c6d4612dffecf869f08e57fe17d3606c109199a",
+      "support_count": 1,
+      "superseded_by": null,
+      "supersedes": [],
+      "manual": false,
+      "role_fit": [
+        "planner",
+        "architect",
+        "judge"
+      ],
+      "content": "Builder repo is dirty before automated execution; refusing to continue."
     },
     {
       "memory_id": "mem-2e36b09aa62c",
@@ -6182,12 +6277,12 @@
     }
   },
   "counts_by_status": {
-    "superseded": 15,
-    "active": 111
+    "superseded": 16,
+    "active": 112
   },
   "source_counts": {
-    "task_history": 110,
-    "blockers": 15,
+    "task_history": 111,
+    "blockers": 16,
     "manual": 1
   }
 }
