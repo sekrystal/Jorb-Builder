@@ -23,6 +23,7 @@ from common import (
     compute_backlog_diagnostics,
     derive_phase4_operator_truth,
     expand_path,
+    format_artifact_bundle_text,
     format_memory_bundle_text,
     is_product_facing_ux_task,
     is_phase4_builder_task,
@@ -31,6 +32,7 @@ from common import (
     load_repo_local_standards,
     load_validated_backlog,
     product_repo_path,
+    retrieve_artifacts_for_role,
     retrieve_memory_for_role,
     ux_conformance_planning_issues,
     validate_memory_store_schema,
@@ -602,6 +604,7 @@ def write_phase4_judge_decision(
     automation_result: dict[str, Any],
     standards: dict[str, Any],
     judge_memory_bundle: dict[str, Any] | None = None,
+    judge_artifact_bundle: dict[str, Any] | None = None,
 ) -> Path:
     required_artifacts = phase4_required_artifact_paths(run_dir)
     lines = [
@@ -626,6 +629,14 @@ def write_phase4_judge_decision(
                 format_memory_bundle_text(judge_memory_bundle),
             ]
         )
+    if judge_artifact_bundle:
+        lines.extend(
+            [
+                "",
+                "## Judge Artifact Context",
+                format_artifact_bundle_text(judge_artifact_bundle),
+            ]
+        )
     path = run_dir / "judge_decision.md"
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return path
@@ -639,6 +650,7 @@ def write_phase4_evidence_bundle(
     standards: dict[str, Any],
     memory_store: dict[str, Any],
     judge_memory_bundle: dict[str, Any],
+    judge_artifact_bundle: dict[str, Any],
     judge_memory_path: Path,
 ) -> Path:
     evidence_path = run_dir / "evidence_bundle.json"
@@ -671,6 +683,16 @@ def write_phase4_evidence_bundle(
                 "selection_reasons": entry.get("selection_reasons"),
             }
             for entry in judge_memory_bundle.get("selected", [])
+        ],
+        "judge_artifact_selected": [
+            {
+                "artifact_id": entry.get("artifact_id"),
+                "artifact_name": entry.get("artifact_name"),
+                "relative_path": entry.get("relative_path"),
+                "selection_score": entry.get("selection_score"),
+                "selection_reasons": entry.get("selection_reasons"),
+            }
+            for entry in judge_artifact_bundle.get("selected", [])
         ],
         "steps": automation_result.get("steps", []),
     }
@@ -763,8 +785,11 @@ def persist_result_with_phase4_artifacts(
     if phase4_requires_artifact_enforcement(task):
         memory_store = build_memory_store(ROOT)
         judge_memory_bundle = retrieve_memory_for_role(task, memory_store, role="judge")
+        judge_artifact_bundle = retrieve_artifacts_for_role(task, memory_store, role="judge")
         judge_memory_path = run_dir / "judge_memory_context.json"
-        judge_memory_path.write_text(json.dumps(judge_memory_bundle, indent=2) + "\n", encoding="utf-8")
+        judge_memory_payload = dict(judge_memory_bundle)
+        judge_memory_payload["artifact_bundle"] = judge_artifact_bundle
+        judge_memory_path.write_text(json.dumps(judge_memory_payload, indent=2) + "\n", encoding="utf-8")
         if not phase4_runtime_proof_path(run_dir).exists():
             write_phase4_runtime_proof_log(
                 run_dir,
@@ -780,6 +805,7 @@ def persist_result_with_phase4_artifacts(
             automation_result=automation_result,
             standards=standards,
             judge_memory_bundle=judge_memory_bundle,
+            judge_artifact_bundle=judge_artifact_bundle,
         )
         write_phase4_evidence_bundle(
             run_dir,
@@ -788,6 +814,7 @@ def persist_result_with_phase4_artifacts(
             standards=standards,
             memory_store=memory_store,
             judge_memory_bundle=judge_memory_bundle,
+            judge_artifact_bundle=judge_artifact_bundle,
             judge_memory_path=judge_memory_path,
         )
         issues = phase4_artifact_issues(run_dir, task, require_runtime_proof=require_runtime_proof)
@@ -833,6 +860,7 @@ def persist_result_with_phase4_artifacts(
             automation_result=automation_result,
             standards=standards,
             judge_memory_bundle=judge_memory_bundle,
+            judge_artifact_bundle=judge_artifact_bundle,
         )
         write_phase4_evidence_bundle(
             run_dir,
@@ -841,6 +869,7 @@ def persist_result_with_phase4_artifacts(
             standards=standards,
             memory_store=memory_store,
             judge_memory_bundle=judge_memory_bundle,
+            judge_artifact_bundle=judge_artifact_bundle,
             judge_memory_path=judge_memory_path,
         )
     else:

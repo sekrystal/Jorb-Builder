@@ -7,12 +7,14 @@ import textwrap
 from common import (
     build_memory_store,
     builder_root,
+    format_artifact_bundle_text,
     format_memory_bundle_text,
     is_product_facing_ux_task,
     is_phase4_builder_task,
     load_config,
     load_data,
     load_repo_local_standards,
+    retrieve_artifacts_for_role,
     retrieve_memory_for_role,
     validate_memory_store_schema,
     write_data,
@@ -107,19 +109,27 @@ def memory_context_block(task: dict) -> tuple[str, dict]:
     (ROOT / "memory_store.json").write_text(json.dumps(store, indent=2) + "\n", encoding="utf-8")
     planner_bundle = retrieve_memory_for_role(task, store, role="planner")
     architect_bundle = retrieve_memory_for_role(task, store, role="architect")
+    planner_artifacts = retrieve_artifacts_for_role(task, store, role="planner")
+    architect_artifacts = retrieve_artifacts_for_role(task, store, role="architect")
     schema_issues = validate_memory_store_schema(store)
     lines = [
         "Retrieved memory context:",
         format_memory_bundle_text(planner_bundle),
         "",
+        format_artifact_bundle_text(planner_artifacts),
+        "",
         format_memory_bundle_text(architect_bundle),
+        "",
+        format_artifact_bundle_text(architect_artifacts),
     ]
     if schema_issues:
         lines.extend(["", "Memory schema issues:", *[f"- {issue}" for issue in schema_issues]])
     return "\n".join(lines), {
         "store": store,
         "planner_bundle": planner_bundle,
+        "planner_artifacts": planner_artifacts,
         "architect_bundle": architect_bundle,
+        "architect_artifacts": architect_artifacts,
         "schema_issues": schema_issues,
     }
 

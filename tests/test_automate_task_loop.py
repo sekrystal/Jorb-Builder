@@ -4319,6 +4319,58 @@ def test_role_specific_retrieval_differs_between_planner_architect_and_judge(tmp
     assert planner["profile"]["preferred_types"] != architect["profile"]["preferred_types"]
 
 
+def test_role_specific_artifact_retrieval_differs_between_planner_architect_and_judge(tmp_path: Path) -> None:
+    builder_root, _, run_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-024",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    common = _load_common_module(builder_root)
+    prompt_path = builder_root / "run_logs" / "packet" / "codex_prompt.md"
+    prompt_path.parent.mkdir(parents=True, exist_ok=True)
+    prompt_path.write_text("prompt\n", encoding="utf-8")
+    for name in (
+        "compiled_feature_spec.md",
+        "research_brief.md",
+        "proposal.md",
+        "tradeoff_matrix.md",
+        "runtime_proof.log",
+        "evidence_bundle.json",
+        "judge_decision.md",
+        "eval_result.json",
+    ):
+        (run_dir / name).write_text(f"{name}\n", encoding="utf-8")
+    _write_json(
+        builder_root / "task_history" / "2026-03-30T000000Z-JORB-INFRA-024.yml",
+        {
+            "task_id": "JORB-INFRA-024",
+            "status": "accepted",
+            "completed_at": "2026-03-30T00:00:00+00:00",
+            "prompt": str(prompt_path),
+            "run_log_dir": str(run_dir),
+            "operator_diagnostics": {"accepted": True, "decision_summary": "phase4 artifacts captured cleanly"},
+        },
+    )
+
+    store = common.build_memory_store(builder_root)
+    planner = common.retrieve_artifacts_for_role({"id": "JORB-INFRA-024", "area": "builder"}, store, role="planner")
+    architect = common.retrieve_artifacts_for_role({"id": "JORB-INFRA-024", "area": "builder"}, store, role="architect")
+    judge = common.retrieve_artifacts_for_role({"id": "JORB-INFRA-024", "area": "builder"}, store, role="judge")
+
+    assert planner["selected"]
+    assert architect["selected"]
+    assert judge["selected"]
+    planner_names = {entry["artifact_name"] for entry in planner["selected"]}
+    architect_names = {entry["artifact_name"] for entry in architect["selected"]}
+    judge_names = {entry["artifact_name"] for entry in judge["selected"]}
+    assert {"compiled_feature_spec.md", "research_brief.md"} & planner_names
+    assert {"proposal.md", "tradeoff_matrix.md"} & architect_names
+    assert {"judge_decision.md", "evidence_bundle.json", "runtime_proof.log", "eval_result.json"} & judge_names
+    assert planner["profile"]["preferred_names"] != architect["profile"]["preferred_names"]
+    assert architect["profile"]["preferred_names"] != judge["profile"]["preferred_names"]
+
+
 def test_render_packet_emits_role_specific_memory_bundles_and_bounded_prompt_context(tmp_path: Path) -> None:
     builder_root, _, _, _ = _setup_builder_fixture(
         tmp_path,
@@ -4350,10 +4402,14 @@ def test_render_packet_emits_role_specific_memory_bundles_and_bounded_prompt_con
     memory_context = _json(run_dir / "memory_context.json")
     prompt_text = (run_dir / "codex_prompt.md").read_text(encoding="utf-8")
     assert "planner_bundle" in memory_context
+    assert "planner_artifacts" in memory_context
     assert "architect_bundle" in memory_context
+    assert "architect_artifacts" in memory_context
     assert len(memory_context["planner_bundle"]["selected"]) <= memory_context["planner_bundle"]["profile"]["limit"]
     assert "Planner memory bundle:" in prompt_text
+    assert "Planner artifact retrieval:" in prompt_text
     assert "Architect memory bundle:" in prompt_text
+    assert "Architect artifact retrieval:" in prompt_text
 
 
 def test_memory_controls_can_supersede_and_pin_entries(tmp_path: Path) -> None:
@@ -4433,7 +4489,9 @@ def test_judge_path_emits_role_specific_memory_context(tmp_path: Path) -> None:
     judge_memory = _json(run_dir / "judge_memory_context.json")
     evidence_bundle = _json(run_dir / "evidence_bundle.json")
     assert judge_memory["role"] == "judge"
+    assert "artifact_bundle" in judge_memory
     assert "judge_memory_selected" in evidence_bundle
+    assert "judge_artifact_selected" in evidence_bundle
 
 
 def test_eval_scoring_writes_machine_readable_result_with_threshold(tmp_path: Path) -> None:

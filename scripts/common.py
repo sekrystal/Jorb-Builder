@@ -83,6 +83,60 @@ MEMORY_ROLE_PROFILES = {
         "tag_biases": {"acceptance_boundary": 1.1, "proof_pattern": 1.0, "regression": 0.8},
     },
 }
+MEMORY_ARTIFACT_ROLE_PROFILES = {
+    "planner": {
+        "limit": 4,
+        "preferred_names": {
+            "compiled_feature_spec.md",
+            "research_brief.md",
+            "automation_summary.md",
+        },
+        "preferred_labels": {
+            "phase4:compiled_feature_spec.md",
+            "phase4:research_brief.md",
+            "automation_summary",
+        },
+    },
+    "architect": {
+        "limit": 4,
+        "preferred_names": {
+            "proposal.md",
+            "tradeoff_matrix.md",
+            "research_brief.md",
+            "compiled_feature_spec.md",
+        },
+        "preferred_labels": {
+            "phase4:proposal.md",
+            "phase4:tradeoff_matrix.md",
+            "phase4:research_brief.md",
+            "phase4:compiled_feature_spec.md",
+        },
+    },
+    "judge": {
+        "limit": 5,
+        "preferred_names": {
+            "judge_decision.md",
+            "evidence_bundle.json",
+            "runtime_proof.log",
+            "eval_result.json",
+            "compiled_feature_spec.md",
+            "proposal.md",
+            "tradeoff_matrix.md",
+            "research_brief.md",
+        },
+        "preferred_labels": {
+            "judge_decision",
+            "phase4:judge_decision.md",
+            "phase4:evidence_bundle.json",
+            "phase4:runtime_proof.log",
+            "eval_result",
+            "phase4:compiled_feature_spec.md",
+            "phase4:proposal.md",
+            "phase4:tradeoff_matrix.md",
+            "phase4:research_brief.md",
+        },
+    },
+}
 PHASE4_OPERATOR_ARTIFACTS = (
     "compiled_feature_spec.md",
     "proposal.md",
@@ -733,6 +787,10 @@ def _role_profile(role: str) -> dict[str, Any]:
     return MEMORY_ROLE_PROFILES.get(role, {"limit": DEFAULT_MEMORY_PROFILE_BUDGET, "preferred_types": set(), "preferred_origins": set(), "tag_biases": {}})
 
 
+def _artifact_role_profile(role: str) -> dict[str, Any]:
+    return MEMORY_ARTIFACT_ROLE_PROFILES.get(role, {"limit": DEFAULT_MEMORY_PROFILE_BUDGET, "preferred_names": set(), "preferred_labels": set()})
+
+
 def _task_relevance_tags(task: dict) -> set[str]:
     tags = {task_family(str(task.get("id") or "")), str(task.get("area") or "").lower()}
     if is_product_facing_ux_task(task):
@@ -847,6 +905,106 @@ def retrieve_memory_for_task(task: dict, store: dict, *, limit: int = 5) -> list
     return retrieve_memory_for_role(task, store, role="planner", limit=limit)["selected"]
 
 
+def retrieve_artifacts_for_role(
+    task: dict,
+    store: dict,
+    *,
+    role: str,
+    limit: int | None = None,
+) -> dict[str, Any]:
+    task_id = str(task.get("id") or "")
+    family = task_family(task_id)
+    task_tags = _task_relevance_tags(task)
+    profile = _artifact_role_profile(role)
+    budget = int(limit or profile.get("limit") or DEFAULT_MEMORY_PROFILE_BUDGET)
+    memory_bundle = retrieve_memory_for_role(task, store, role=role, limit=budget)
+    supporting_history_paths = {
+        str(item.get("path"))
+        for entry in memory_bundle.get("selected", [])
+        for item in entry.get("provenance", [])
+        if item.get("kind") == "task_history"
+    }
+    supporting_task_ids = {str(entry.get("task_id")) for entry in memory_bundle.get("selected", []) if entry.get("task_id")}
+    scored: list[dict[str, Any]] = []
+    excluded: list[dict[str, Any]] = []
+    artifact_index = store.get("artifact_index") or {}
+    for entry in artifact_index.get("entries", []):
+        if str(entry.get("kind")) != "file":
+            continue
+        reasons: list[str] = []
+        score = 0.0
+        entry_task_id = str(entry.get("task_id") or "")
+        if entry_task_id == task_id:
+            score += 5.0
+            reasons.append("exact_task_match")
+        elif str(entry.get("ticket_family") or "") == family:
+            score += 3.0
+            reasons.append("same_ticket_family")
+        if entry_task_id and entry_task_id in supporting_task_ids:
+            score += 1.2
+            reasons.append("memory_task_link")
+        if str(entry.get("history_path") or "") in supporting_history_paths:
+            score += 1.2
+            reasons.append("memory_history_link")
+        labels = set(str(label) for label in entry.get("labels", []))
+        if str(entry.get("artifact_name")) in set(profile.get("preferred_names", set())):
+            score += 1.4
+            reasons.append("role_name_fit")
+        label_overlap = labels & set(profile.get("preferred_labels", set()))
+        if label_overlap:
+            score += 1.1 + (0.1 * len(label_overlap))
+            reasons.append(f"role_label_fit:{','.join(sorted(label_overlap))}")
+        token_overlap = task_tags & set(str(token) for token in entry.get("search_tokens", []))
+        if token_overlap:
+            score += 0.35 * len(token_overlap)
+            reasons.append(f"tag_overlap:{','.join(sorted(token_overlap))}")
+        freshness = _freshness_metadata(entry.get("timestamp"))
+        decay = float(freshness.get("decay_factor") or 0.6)
+        score += decay
+        reasons.append(f"decay:{decay}")
+        if entry.get("phase4_artifact"):
+            score += 0.25
+            reasons.append("phase4_artifact")
+        if str(entry.get("history_status") or "") == "accepted":
+            score += 0.4
+            reasons.append("accepted_history")
+        scored.append(
+            {
+                "artifact_id": entry.get("artifact_id"),
+                "entry": entry,
+                "score": round(score, 3),
+                "reasons": reasons,
+            }
+        )
+    scored.sort(key=lambda item: (item["score"], str(item["entry"].get("timestamp") or ""), str(item["entry"].get("path") or "")), reverse=True)
+    selected = scored[:budget]
+    for item in scored[budget : min(len(scored), budget + 10)]:
+        excluded.append(
+            {
+                "artifact_id": item["artifact_id"],
+                "excluded_reason": "budget",
+                "score": item["score"],
+            }
+        )
+    return {
+        "role": role,
+        "profile": {
+            "limit": budget,
+            "preferred_names": sorted(profile.get("preferred_names", set())),
+            "preferred_labels": sorted(profile.get("preferred_labels", set())),
+        },
+        "selected": [
+            {
+                **item["entry"],
+                "selection_score": item["score"],
+                "selection_reasons": item["reasons"],
+            }
+            for item in selected
+        ],
+        "excluded": excluded,
+    }
+
+
 def format_memory_bundle_text(bundle: dict[str, Any], *, max_items: int | None = None) -> str:
     role = str(bundle.get("role") or "planner")
     selected = list(bundle.get("selected", []))
@@ -861,6 +1019,24 @@ def format_memory_bundle_text(bundle: dict[str, Any], *, max_items: int | None =
             "- "
             + f"[{entry.get('memory_type')}] {entry.get('ticket_family')} :: {entry.get('observation') or entry.get('content')} "
             + f"(status={entry.get('status')}, confidence={entry.get('confidence')}, score={entry.get('selection_score')}, provenance={entry.get('source_artifact')})"
+        )
+    return "\n".join(lines)
+
+
+def format_artifact_bundle_text(bundle: dict[str, Any], *, max_items: int | None = None) -> str:
+    role = str(bundle.get("role") or "planner")
+    selected = list(bundle.get("selected", []))
+    if max_items is not None:
+        selected = selected[:max_items]
+    lines = [f"{role.title()} artifact retrieval:"]
+    if not selected:
+        lines.append("- none")
+        return "\n".join(lines)
+    for entry in selected:
+        lines.append(
+            "- "
+            + f"{entry.get('artifact_name')} ({entry.get('relative_path')}, labels={','.join(entry.get('labels', [])) or 'none'}, "
+            + f"status={entry.get('history_status')}, score={entry.get('selection_score')})"
         )
     return "\n".join(lines)
 
