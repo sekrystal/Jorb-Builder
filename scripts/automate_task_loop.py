@@ -426,7 +426,10 @@ def phase4_feature_spec_payload(task: dict[str, Any], standards: dict[str, Any])
         "repo_bounds": repo_bounds,
         "repo_local_standards": {
             "agents_loaded": bool(standards.get("agents_exists")),
+            "core_expectations": list(standards.get("agents_core_expectations", [])),
+            "execution_roles": dict(standards.get("agents_execution_roles", {})),
             "skill_files": list(standards.get("skill_files", [])),
+            "skill_entries": list(standards.get("skill_entries", [])),
         },
     }
 
@@ -475,7 +478,16 @@ def phase4_feature_spec_text(task: dict[str, Any], standards: dict[str, Any]) ->
             "",
             "## Repo-Local Standards",
             f"- AGENTS.md loaded: {'yes' if payload['repo_local_standards']['agents_loaded'] else 'no'}",
+            *[f"- core expectation: {item}" for item in payload["repo_local_standards"]["core_expectations"]],
+            *[
+                f"- execution role: {role} => {detail}"
+                for role, detail in payload["repo_local_standards"]["execution_roles"].items()
+            ],
             f"- skills loaded: {', '.join(payload['repo_local_standards']['skill_files']) or 'none'}",
+            *[
+                f"- repo skill: {entry.get('name')} => {entry.get('summary')}"
+                for entry in payload["repo_local_standards"]["skill_entries"]
+            ],
         ]
     )
 
@@ -672,7 +684,10 @@ def write_phase4_evidence_bundle(
         "repo_local_standards": {
             "agents_path": standards.get("agents_path"),
             "skills_dir": standards.get("skills_dir"),
+            "core_expectations": standards.get("agents_core_expectations", []),
+            "execution_roles": standards.get("agents_execution_roles", {}),
             "skill_files": standards.get("skill_files", []),
+            "skill_entries": standards.get("skill_entries", []),
         },
         "memory_schema_issues": validate_memory_store_schema(memory_store),
         "judge_memory_selected": [
@@ -3432,7 +3447,10 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         plan["repo_local_standards"] = {
             "agents_path": standards.get("agents_path"),
             "skills_dir": standards.get("skills_dir"),
+            "core_expectations": standards.get("agents_core_expectations", []),
+            "execution_roles": standards.get("agents_execution_roles", {}),
             "skill_files": standards.get("skill_files", []),
+            "skill_entries": standards.get("skill_entries", []),
         }
     executor_result: dict[str, Any] = {}
     local_validation_payload: dict[str, Any] | None = None

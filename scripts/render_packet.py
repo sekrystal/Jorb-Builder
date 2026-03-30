@@ -75,14 +75,19 @@ def target_kind_for_task(task: dict, builder_label: str) -> str:
 
 def repo_local_standards_block() -> str:
     standards = load_repo_local_standards(ROOT)
-    return "\n".join(
-        [
-            "Repo-local standards:",
-            f"- AGENTS.md: {'present' if standards.get('agents_exists') else 'missing'}",
-            f"- skills/: {'present' if standards.get('skills_exists') else 'missing'}",
-            f"- skill files: {', '.join(standards.get('skill_files', [])) or 'none'}",
-        ]
-    )
+    lines = [
+        "Repo-local standards:",
+        f"- AGENTS.md: {'present' if standards.get('agents_exists') else 'missing'}",
+        f"- skills/: {'present' if standards.get('skills_exists') else 'missing'}",
+        f"- skill files: {', '.join(standards.get('skill_files', [])) or 'none'}",
+    ]
+    for expectation in standards.get("agents_core_expectations", []):
+        lines.append(f"- AGENTS core expectation: {expectation}")
+    for role, detail in standards.get("agents_execution_roles", {}).items():
+        lines.append(f"- AGENTS execution role: {role} => {detail}")
+    for entry in standards.get("skill_entries", []):
+        lines.append(f"- repo skill: {entry.get('name')} => {entry.get('summary')}")
+    return "\n".join(lines)
 
 
 def phase4_enforcement_block(task: dict) -> str:

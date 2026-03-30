@@ -33,6 +33,30 @@ def _write_valid_phase4_feature_spec(module, run_dir: Path, task: dict, standard
     )
 
 
+def _repo_local_standards_payload(tmp_path: Path) -> dict:
+    return {
+        "agents_exists": True,
+        "agents_path": str(tmp_path / "AGENTS.md"),
+        "agents_core_expectations": [
+            "Treat backlog truth, config, run logs, and generated artifacts as first-class system inputs."
+        ],
+        "agents_execution_roles": {
+            "Planner": "compile the feature/system understanding artifact.",
+            "Judge": "accept or reject only from evidence.",
+        },
+        "skills_exists": True,
+        "skills_dir": str(tmp_path / "skills"),
+        "skill_files": ["skills/README.md"],
+        "skill_entries": [
+            {
+                "file": "skills/README.md",
+                "name": "phase4_enforcement",
+                "summary": "require planner/architect/judge artifacts and evidence before acceptance.",
+            }
+        ],
+    }
+
+
 def _active_run_dir(builder_root: Path) -> Path:
     active = _json(builder_root / "active_task.yml")
     run_log_dir = active.get("run_log_dir")
@@ -685,6 +709,9 @@ def _setup_builder_fixture(tmp_path: Path, *, task_id: str, area: str, allowlist
                 "",
                 "Verification commands:",
                 "{verification_commands}",
+                "",
+                "Repo-local standards:",
+                "{repo_local_standards}",
                 "",
                 "UX conformance requirements:",
                 "{ux_conformance_requirements}",
@@ -3910,10 +3937,16 @@ def test_phase4_dry_run_emits_stage_plan_and_repo_local_standards(tmp_path: Path
         area="builder",
         allowlist=["../jorb-builder/**"],
     )
-    (builder_root / "AGENTS.md").write_text("# Agents\n", encoding="utf-8")
+    (builder_root / "AGENTS.md").write_text(
+        "# Builder Agents\n\nCore expectations:\n- Treat backlog truth, config, run logs, and generated artifacts as first-class system inputs.\n\nExecution roles:\n- Planner: compile the feature/system understanding artifact.\n- Judge: accept or reject only from evidence.\n",
+        encoding="utf-8",
+    )
     skills_dir = builder_root / "skills"
     skills_dir.mkdir(exist_ok=True)
-    (skills_dir / "README.md").write_text("# Skills\n", encoding="utf-8")
+    (skills_dir / "README.md").write_text(
+        "# Builder Skills\n\nCurrent skills:\n- `phase4_enforcement`: require planner/architect/judge artifacts and evidence before acceptance.\n",
+        encoding="utf-8",
+    )
 
     dry_run = _run([sys.executable, str(SCRIPT), "--dry-run"], builder_root)
     assert dry_run.returncode == 0, dry_run.stdout + dry_run.stderr
@@ -3948,6 +3981,11 @@ def test_phase4_dry_run_emits_stage_plan_and_repo_local_standards(tmp_path: Path
     assert machine_payload["observability_requirements"]
     assert machine_payload["repo_bounds"]["allowlist"] == ["../jorb-builder/**"]
     assert machine_payload["verification_commands"] == []
+    assert machine_payload["repo_local_standards"]["core_expectations"] == [
+        "Treat backlog truth, config, run logs, and generated artifacts as first-class system inputs."
+    ]
+    assert machine_payload["repo_local_standards"]["execution_roles"]["Planner"] == "compile the feature/system understanding artifact."
+    assert machine_payload["repo_local_standards"]["skill_entries"][0]["name"] == "phase4_enforcement"
 
 
 def test_non_phase4_nontrivial_task_compiles_feature_spec_before_implementation(tmp_path: Path) -> None:
@@ -4389,10 +4427,16 @@ def test_render_packet_emits_role_specific_memory_bundles_and_bounded_prompt_con
             "operator_diagnostics": {"accepted": True, "decision_summary": "feature spec compiler landed"},
         },
     )
-    (builder_root / "AGENTS.md").write_text("# Agents\n", encoding="utf-8")
+    (builder_root / "AGENTS.md").write_text(
+        "# Builder Agents\n\nCore expectations:\n- Treat backlog truth, config, run logs, and generated artifacts as first-class system inputs.\n\nExecution roles:\n- Planner: compile the feature/system understanding artifact.\n",
+        encoding="utf-8",
+    )
     skills_dir = builder_root / "skills"
     skills_dir.mkdir(exist_ok=True)
-    (skills_dir / "README.md").write_text("# Skills\n", encoding="utf-8")
+    (skills_dir / "README.md").write_text(
+        "# Builder Skills\n\nCurrent skills:\n- `phase4_enforcement`: require planner/architect/judge artifacts and evidence before acceptance.\n",
+        encoding="utf-8",
+    )
 
     result = _run([sys.executable, str(SCRIPT.parent / "render_packet.py")], builder_root)
 
@@ -4410,6 +4454,8 @@ def test_render_packet_emits_role_specific_memory_bundles_and_bounded_prompt_con
     assert "Planner artifact retrieval:" in prompt_text
     assert "Architect memory bundle:" in prompt_text
     assert "Architect artifact retrieval:" in prompt_text
+    assert "AGENTS core expectation: Treat backlog truth, config, run logs, and generated artifacts as first-class system inputs." in prompt_text
+    assert "repo skill: phase4_enforcement => require planner/architect/judge artifacts and evidence before acceptance." in prompt_text
 
 
 def test_memory_controls_can_supersede_and_pin_entries(tmp_path: Path) -> None:
@@ -4463,7 +4509,7 @@ def test_judge_path_emits_role_specific_memory_context(tmp_path: Path) -> None:
         },
     )
     task = _json(builder_root / "backlog.yml")["tasks"][0]
-    standards = {"agents_exists": True, "skills_exists": True, "agents_path": "AGENTS.md", "skills_dir": "skills", "skill_files": []}
+    standards = _repo_local_standards_payload(tmp_path)
     _write_valid_phase4_feature_spec(module, run_dir, task, standards)
     for name in ("proposal.md", "tradeoff_matrix.md", "research_brief.md"):
         (run_dir / name).write_text("ok\n", encoding="utf-8")
@@ -4492,6 +4538,8 @@ def test_judge_path_emits_role_specific_memory_context(tmp_path: Path) -> None:
     assert "artifact_bundle" in judge_memory
     assert "judge_memory_selected" in evidence_bundle
     assert "judge_artifact_selected" in evidence_bundle
+    assert evidence_bundle["repo_local_standards"]["execution_roles"]["Judge"] == "accept or reject only from evidence."
+    assert evidence_bundle["repo_local_standards"]["skill_entries"][0]["name"] == "phase4_enforcement"
 
 
 def test_eval_scoring_writes_machine_readable_result_with_threshold(tmp_path: Path) -> None:

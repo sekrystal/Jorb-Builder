@@ -1,12 +1,12 @@
 {
-  "task_id": "JORB-INFRA-025",
-  "title": "Retrieval layer (planner / architect / judge)",
+  "task_id": "JORB-INFRA-026",
+  "title": "Repo-local standards (AGENTS.md + skills consumption)",
   "state": "verifying",
   "attempt": 1,
-  "started_at": "2026-03-30T23:26:44.910622+00:00",
+  "started_at": "2026-03-30T23:38:32.053416+00:00",
   "handed_to_codex_at": null,
-  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T232644Z/codex_prompt.md",
-  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T232644Z-JORB-INFRA-025",
+  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026",
   "verification_commands": [
     "python3 -m py_compile scripts/*.py",
     "pytest tests/test_automate_task_loop.py"
@@ -20,9 +20,9 @@
   "failure_summary": null,
   "notes": [],
   "prior_run_log_dirs": [
-    "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T232644Z"
+    "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z"
   ],
-  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T232644Z",
+  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z",
   "target_repo": "/Users/samuelkrystal/projects/jorb-builder",
   "target_kind": "builder"
 }

@@ -4234,7 +4234,7 @@
       "area": "builder",
       "milestone": "M8",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-024"
@@ -4260,7 +4260,9 @@
       "repo_path": "~/projects/jorb-builder",
       "description": "Add a retrieval layer that lets core builder roles query prior artifacts and evidence deliberately.",
       "allow_noop_completion": false,
-      "notes": []
+      "notes": [
+        "Automated loop completed with builder-side local validation success."
+      ]
     },
     {
       "id": "JORB-INFRA-026",

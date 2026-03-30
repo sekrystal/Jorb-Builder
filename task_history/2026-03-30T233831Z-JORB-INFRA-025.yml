@@ -1,0 +1,193 @@
+{
+  "task_id": "JORB-INFRA-025",
+  "title": "Retrieval layer (planner / architect / judge)",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-30T23:26:44.910622+00:00",
+  "completed_at": "2026-03-30T23:38:31.439263+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T232644Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T232644Z-JORB-INFRA-025",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T232644Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T232644Z-JORB-INFRA-025"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T232644Z-JORB-INFRA-025/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T232644Z-JORB-INFRA-025/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T232644Z-JORB-INFRA-025/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T232644Z-JORB-INFRA-025/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T232644Z-JORB-INFRA-025/local_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T232644Z-JORB-INFRA-025/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T232644Z-JORB-INFRA-025/executor.json"
+    },
+    {
+      "label": "eval_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T232644Z-JORB-INFRA-025/eval_result.json"
+    },
+    {
+      "label": "judge_memory_context",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T232644Z-JORB-INFRA-025/judge_memory_context.json"
+    },
+    {
+      "label": "judge_decision",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T232644Z-JORB-INFRA-025/judge_decision.md"
+    },
+    {
+      "label": "evidence_bundle",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T232644Z-JORB-INFRA-025/evidence_bundle.json"
+    }
+  ],
+  "files_changed": [
+    "scripts/automate_task_loop.py",
+    "scripts/common.py",
+    "scripts/render_packet.py",
+    "tests/test_automate_task_loop.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.325.31654-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T232644Z-JORB-INFRA-025/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "passed",
+    "passed",
+    "passed"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with builder-side local validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with builder-side local validation success.",
+    "accepted": true,
+    "acceptance_met": [],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "planner",
+        "outcome": "passed",
+        "detail": "compiled_feature_spec.md written to /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T232644Z-JORB-INFRA-025/compiled_feature_spec.md"
+      },
+      {
+        "name": "architect",
+        "outcome": "passed",
+        "detail": "proposal.md and tradeoff_matrix.md written to /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T232644Z-JORB-INFRA-025"
+      },
+      {
+        "name": "research_grounding",
+        "outcome": "passed",
+        "detail": "research_brief.md written to /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T232644Z-JORB-INFRA-025/research_brief.md"
+      },
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\nAdded a bounded, role-specific artifact retrieval layer on top of the existing memory store so planner, architect, and judge can retrieve prior run artifacts as well as prior memory entries. Wired planner/architect artifact bundles into `render_packet.py` prompt/context output, wired judge artifact bundles into `judge_memory_context.json`, `judge_decision.md`, and `evidence_bundle.json`, and added/updated tests to cover role-specific artifact retrieval and these new outputs.\n\n2. Exact files changed\n\nIntended code/test changes:\n- `scripts/common.py`\n- `scripts/render_packet.py`\n- `scripts/automate_task_loop.py`\n- `tests/test_automate_task_loop.py`\n\nWorktree also changed during verification:\n- `active_task.yml`\n- `memory_store.json`\n- `run_ledger.json`\n- `status.yml`\n- `run_lock.json`\n\n3. Exact tests added or updated\n\nAdded:\n- `test_role_specific_artifact_retrieval_differs_between_planner_architect_and_judge`\n\nUpdated:\n- `test_render_packet_emits_role_specific_memory_bundles_and_bounded_prompt_context`\n- `test_judge_path_emits_role_specific_memory_context`\n\n4. Exact commands run\n\n- `python3 -m py_compile scripts/*.py`\n- `pytest tests/test_automate_task_loop.py`\n\n5. Exact results\n\n- `python3 -m py_compile scripts/*.py`\n  - Passed\n- `pytest tests/test_automate_task_loop.py`\n  - Passed: `143 passed in 149.72s (0:02:29)`\n\n6. Honest note on what remains unproven\n\nThis is proven only by local compile/test coverage. It is not proven against live Codex execution behavior, operator workflow usage, or any VM/runtime environment beyond the existing local test suite."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "To github.com:sekrystal/Jorb-Builder.git\n   62990f4..a014a57  main -> main\n"
+      }
+    ],
+    "changed_files_count": 4,
+    "changed_files": [
+      "scripts/automate_task_loop.py",
+      "scripts/common.py",
+      "scripts/render_packet.py",
+      "tests/test_automate_task_loop.py"
+    ],
+    "unproven_runtime_gaps": [],
+    "ux_conformance": {
+      "required": false,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": null,
+      "intentional_design_deviations": null,
+      "product_first_checklist": null,
+      "primary_ux_prohibited_surfaces": []
+    }
+  },
+  "unproven_runtime_gaps": [],
+  "failure_taxonomy": null,
+  "eval_result": {
+    "suite_version": 1,
+    "mode": "private_fixture",
+    "fixture_id": "infra_hardening_v1",
+    "fixture_family": "infra_hardening",
+    "task_id": "JORB-INFRA-025",
+    "scores": {
+      "planning_quality": 1.0,
+      "implementation_quality": 1.0,
+      "test_adequacy": 1.0,
+      "evidence_quality": 1.0,
+      "operator_handoff_quality": 1.0,
+      "recovery_quality": 0.8
+    },
+    "overall_score": 0.98,
+    "threshold": 0.78,
+    "passed": true,
+    "mandatory_artifacts": {
+      "present": [
+        "compiled_feature_spec.md",
+        "research_brief.md",
+        "proposal.md",
+        "tradeoff_matrix.md",
+        "judge_decision.md",
+        "evidence_bundle.json",
+        "runtime_proof.log"
+      ],
+      "missing": []
+    },
+    "dimension_failures": [],
+    "fixture_path": "/Users/samuelkrystal/projects/jorb-builder/eval_fixtures/infra_hardening.json",
+    "regression_vs_prior": {
+      "previous_task_id": "JORB-INFRA-024",
+      "current_task_id": "JORB-INFRA-025",
+      "overall_delta": 0.0,
+      "category_deltas": {
+        "evidence_quality": 0.0,
+        "implementation_quality": 0.0,
+        "operator_handoff_quality": 0.0,
+        "planning_quality": 0.0,
+        "recovery_quality": 0.0,
+        "test_adequacy": 0.0
+      },
+      "trend": "unchanged",
+      "baseline_history_path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T225059Z-JORB-INFRA-024.yml"
+    },
+    "blocked_acceptance": false
+  }
+}

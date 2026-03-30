@@ -228,14 +228,57 @@ def load_repo_local_standards(root: Path | None = None) -> dict:
     skills_dir = repo_root / "skills"
     skill_files = sorted(str(path.relative_to(repo_root)) for path in skills_dir.rglob("*.md")) if skills_dir.exists() else []
     agents_text = agents_path.read_text(encoding="utf-8") if agents_path.exists() else ""
+    agents_lines = [line.rstrip() for line in agents_text.splitlines()]
+    core_expectations: list[str] = []
+    execution_roles: dict[str, str] = {}
+    current_section: str | None = None
+    for raw_line in agents_lines:
+        line = raw_line.strip()
+        if not line:
+            continue
+        if line.endswith(":"):
+            normalized = line[:-1].strip().lower()
+            if normalized in {"core expectations", "execution roles"}:
+                current_section = normalized
+                continue
+        if not line.startswith("- "):
+            continue
+        item = line[2:].strip()
+        if current_section == "core expectations":
+            core_expectations.append(item)
+            continue
+        if current_section == "execution roles" and ":" in item:
+            role, detail = item.split(":", 1)
+            execution_roles[role.strip()] = detail.strip()
+    skill_entries: list[dict[str, str]] = []
+    for relative_path in skill_files:
+        skill_path = repo_root / relative_path
+        skill_text = skill_path.read_text(encoding="utf-8")
+        for raw_line in skill_text.splitlines():
+            line = raw_line.strip()
+            if not line.startswith("- "):
+                continue
+            item = line[2:].strip()
+            match = re.match(r"`([^`]+)`:\s*(.+)", item)
+            if match:
+                skill_entries.append(
+                    {
+                        "file": relative_path,
+                        "name": match.group(1).strip(),
+                        "summary": match.group(2).strip(),
+                    }
+                )
     return {
         "repo_root": str(repo_root),
         "agents_path": str(agents_path),
         "agents_exists": agents_path.exists(),
         "agents_text": agents_text,
+        "agents_core_expectations": core_expectations,
+        "agents_execution_roles": execution_roles,
         "skills_dir": str(skills_dir),
         "skills_exists": skills_dir.exists(),
         "skill_files": skill_files,
+        "skill_entries": skill_entries,
     }
 
 
