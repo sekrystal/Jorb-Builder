@@ -4,6 +4,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import re
 import signal
 import subprocess
 import sys
@@ -21,6 +22,15 @@ CANONICAL_FIGMA_SOURCE = "/Users/samuelkrystal/projects/jorb/design/figma"
 
 def _json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _write_valid_phase4_feature_spec(module, run_dir: Path, task: dict, standards: dict) -> None:
+    if not hasattr(module, "phase4_feature_spec_text"):
+        module = _load_script_module(run_dir.parents[2] if len(run_dir.parents) >= 3 else None)
+    (run_dir / "compiled_feature_spec.md").write_text(
+        module.phase4_feature_spec_text(task, standards),
+        encoding="utf-8",
+    )
 
 
 def _active_run_dir(builder_root: Path) -> Path:
@@ -3840,6 +3850,14 @@ def test_phase4_dry_run_emits_stage_plan_and_repo_local_standards(tmp_path: Path
     plan_detail = next(step["detail"] for step in payload["steps"] if step["name"] == "plan")
     assert '"phase4_stage_order"' in plan_detail
     assert '"repo_local_standards"' in plan_detail
+    feature_spec = (run_dir / "compiled_feature_spec.md").read_text(encoding="utf-8")
+    match = re.search(r"## Machine-Checkable Payload\n```json\n(.*?)\n```", feature_spec, re.DOTALL)
+    assert match is not None
+    machine_payload = json.loads(match.group(1))
+    assert machine_payload["task_id"] == "JORB-INFRA-010"
+    assert machine_payload["task_title"] == "JORB-INFRA-010"
+    assert machine_payload["state_transitions"]
+    assert machine_payload["observability_requirements"]
 
 
 def test_phase4_result_persistence_blocks_accepted_run_when_required_artifacts_are_missing(tmp_path: Path) -> None:
@@ -3878,6 +3896,44 @@ def test_phase4_result_persistence_blocks_accepted_run_when_required_artifacts_a
     assert (run_dir / "evidence_bundle.json").exists()
     assert (run_dir / "judge_decision.md").exists()
     assert (run_dir / "runtime_proof.log").exists()
+
+
+def test_phase4_result_persistence_blocks_invalid_machine_checkable_feature_spec(tmp_path: Path) -> None:
+    module = _load_script_module()
+    run_dir = tmp_path / "run"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    task = {"id": "JORB-INFRA-010", "title": "Feature understanding compiler", "area": "builder"}
+    for name in ("proposal.md", "tradeoff_matrix.md", "research_brief.md"):
+        (run_dir / name).write_text("ok\n", encoding="utf-8")
+    (run_dir / "compiled_feature_spec.md").write_text("# Compiled Feature Spec\n\nmissing machine payload\n", encoding="utf-8")
+    automation_result = {
+        "task_id": "JORB-INFRA-010",
+        "classification": "accepted",
+        "finished_at": "2026-03-30T00:00:00+00:00",
+        "summary": "ok",
+        "steps": [],
+        "changed_files": [],
+    }
+    standards = {
+        "agents_exists": True,
+        "agents_path": str(tmp_path / "AGENTS.md"),
+        "skills_exists": True,
+        "skills_dir": str(tmp_path / "skills"),
+        "skill_files": ["skills/README.md"],
+    }
+
+    persisted = module.persist_result_with_phase4_artifacts(
+        run_dir,
+        task,
+        automation_result,
+        standards=standards,
+        require_runtime_proof=False,
+        local_validation_payload=None,
+        vm_validation_payload=None,
+    )
+
+    assert persisted["classification"] == "blocked"
+    assert "compiled_feature_spec.md:missing_machine_payload" in persisted["summary"]
 
 
 def test_phase4_infra_task_blocks_without_repo_local_standards(tmp_path: Path) -> None:
@@ -4185,10 +4241,11 @@ def test_judge_path_emits_role_specific_memory_context(tmp_path: Path) -> None:
             "operator_diagnostics": {"accepted": False, "decision_summary": "Local validation failed after executor changes."},
         },
     )
-    for name in ("compiled_feature_spec.md", "proposal.md", "tradeoff_matrix.md", "research_brief.md"):
-        (run_dir / name).write_text("ok\n", encoding="utf-8")
     task = _json(builder_root / "backlog.yml")["tasks"][0]
     standards = {"agents_exists": True, "skills_exists": True, "agents_path": "AGENTS.md", "skills_dir": "skills", "skill_files": []}
+    _write_valid_phase4_feature_spec(module, run_dir, task, standards)
+    for name in ("proposal.md", "tradeoff_matrix.md", "research_brief.md"):
+        (run_dir / name).write_text("ok\n", encoding="utf-8")
     automation_result = {
         "task_id": "JORB-INFRA-010",
         "classification": "blocked",
@@ -4215,18 +4272,25 @@ def test_judge_path_emits_role_specific_memory_context(tmp_path: Path) -> None:
 
 
 def test_eval_scoring_writes_machine_readable_result_with_threshold(tmp_path: Path) -> None:
-    module = _load_script_module()
-    run_dir = tmp_path / "run"
-    run_dir.mkdir(parents=True, exist_ok=True)
-    for name in ("compiled_feature_spec.md", "proposal.md", "tradeoff_matrix.md", "research_brief.md", "evidence_bundle.json", "judge_decision.md"):
+    builder_root, _, run_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    module = _load_script_module(builder_root)
+    task = {"id": "JORB-INFRA-010", "title": "Feature understanding compiler", "area": "builder"}
+    standards = {"agents_exists": True, "skills_exists": True}
+    _write_valid_phase4_feature_spec(module, run_dir, task, standards)
+    for name in ("proposal.md", "tradeoff_matrix.md", "research_brief.md", "evidence_bundle.json", "judge_decision.md"):
         (run_dir / name).write_text("ok\n", encoding="utf-8")
     (run_dir / "runtime_proof.log").write_text("ok\n", encoding="utf-8")
 
     eval_result = module.score_run_eval(
-        {"id": "JORB-INFRA-010"},
+        task,
         {"classification": "accepted", "steps": [{"name": "local_validation", "outcome": "passed"}]},
         run_dir=run_dir,
-        standards={"agents_exists": True, "skills_exists": True},
+        standards=standards,
     )
     module.write_eval_result(run_dir, eval_result)
 
@@ -4361,14 +4425,17 @@ def test_private_eval_scores_fixture_with_real_rubric_dimensions(tmp_path: Path)
         ],
         "pass_threshold": 0.7,
     }
-    for name in ("compiled_feature_spec.md", "proposal.md", "tradeoff_matrix.md", "research_brief.md", "judge_decision.md", "evidence_bundle.json", "runtime_proof.log", "automation_summary.md"):
+    task = {"id": "JORB-INFRA-010", "title": "Feature understanding compiler", "area": "builder"}
+    standards = {"agents_exists": True, "skills_exists": True}
+    _write_valid_phase4_feature_spec(module, run_dir, task, standards)
+    for name in ("proposal.md", "tradeoff_matrix.md", "research_brief.md", "judge_decision.md", "evidence_bundle.json", "runtime_proof.log", "automation_summary.md"):
         (run_dir / name).write_text("ok\n", encoding="utf-8")
 
     subject = module.build_eval_subject(
-        {"id": "JORB-INFRA-010", "title": "Feature understanding compiler", "area": "builder"},
+        task,
         {"classification": "accepted", "summary": "ok", "steps": [], "changed_files": ["scripts/foo.py"]},
         run_dir=run_dir,
-        standards={"agents_exists": True, "skills_exists": True},
+        standards=standards,
     )
     result = module.score_fixture_subject(fixture, subject)
 
@@ -4403,7 +4470,9 @@ def test_private_eval_replay_scores_historical_artifacts_and_aggregates(tmp_path
             "pass_threshold": 0.78,
         },
     )
-    for name in ("compiled_feature_spec.md", "proposal.md", "tradeoff_matrix.md", "research_brief.md", "judge_decision.md", "evidence_bundle.json", "runtime_proof.log", "automation_summary.md", "local_validation.json"):
+    task = {"id": "JORB-INFRA-010", "title": "Feature understanding compiler", "area": "builder"}
+    _write_valid_phase4_feature_spec(_load_script_module(builder_root), run_dir, task, {"agents_exists": True, "skills_exists": True})
+    for name in ("proposal.md", "tradeoff_matrix.md", "research_brief.md", "judge_decision.md", "evidence_bundle.json", "runtime_proof.log", "automation_summary.md", "local_validation.json"):
         (run_dir / name).write_text("{}\n" if name.endswith(".json") else "ok\n", encoding="utf-8")
     _write_json(
         run_dir / "automation_result.json",
@@ -4477,10 +4546,11 @@ def test_eval_gate_blocks_acceptance_when_fixture_threshold_fails(tmp_path: Path
             "pass_threshold": 0.85,
         },
     )
-    for name in ("compiled_feature_spec.md", "proposal.md", "tradeoff_matrix.md", "research_brief.md"):
-        (run_dir / name).write_text("ok\n", encoding="utf-8")
     task = _json(builder_root / "backlog.yml")["tasks"][0]
     standards = {"agents_exists": True, "skills_exists": True, "agents_path": "AGENTS.md", "skills_dir": "skills", "skill_files": []}
+    _write_valid_phase4_feature_spec(module, run_dir, task, standards)
+    for name in ("proposal.md", "tradeoff_matrix.md", "research_brief.md"):
+        (run_dir / name).write_text("ok\n", encoding="utf-8")
     automation_result = {
         "task_id": "JORB-INFRA-010",
         "classification": "accepted",

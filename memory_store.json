@@ -1,6 +1,53 @@
 {
-  "generated_at": "2026-03-30T19:23:36.820142+00:00",
+  "generated_at": "2026-03-30T19:35:53.481601+00:00",
   "entries": [
+    {
+      "memory_id": "mem-9bfd3288954e",
+      "memory_type": "environment_assumption",
+      "ticket_family": "JORB-INFRA",
+      "task_id": "JORB-INFRA-010",
+      "area": "builder",
+      "summary": "Builder repo is dirty before automated execution; refusing to continue.",
+      "source_artifact": "/Users/samuelkrystal/projects/jorb-builder/blockers/BLK-JORB-INFRA-010.yml",
+      "timestamp": "2026-03-30T19:23:37.109968+00:00",
+      "confidence": 0.65,
+      "freshness": {
+        "observed_at": "2026-03-30T19:23:37.109968+00:00",
+        "age_days": 0,
+        "decay_factor": 1.0,
+        "stale_after_days": 21,
+        "freshness_state": "fresh"
+      },
+      "observation": "Builder repo is dirty before automated execution; refusing to continue.",
+      "inference": "Known blocker pattern",
+      "primary_basis": "observation",
+      "relevance_tags": [
+        "JORB-INFRA",
+        "acceptance_boundary",
+        "constraint",
+        "failure_avoidance"
+      ],
+      "origin": "operator",
+      "status": "superseded",
+      "status_reason": "blocker:resolved",
+      "provenance": [
+        {
+          "path": "/Users/samuelkrystal/projects/jorb-builder/blockers/BLK-JORB-INFRA-010.yml",
+          "kind": "blocker"
+        }
+      ],
+      "signature": "db3014cdfeacf6137c0097ed5144afaef4ab7cbf",
+      "support_count": 1,
+      "superseded_by": null,
+      "supersedes": [],
+      "manual": false,
+      "role_fit": [
+        "planner",
+        "architect",
+        "judge"
+      ],
+      "content": "Builder repo is dirty before automated execution; refusing to continue."
+    },
     {
       "memory_id": "mem-b5f9d899486f",
       "memory_type": "environment_assumption",
@@ -666,10 +713,10 @@
       "area": "builder",
       "summary": "Harden operator truth for Phase 4 artifact enforcement state",
       "source_artifact": "/Users/samuelkrystal/projects/jorb-builder/backlog_proposals.json",
-      "timestamp": "2026-03-30T19:23:36.819983+00:00",
+      "timestamp": "2026-03-30T19:35:53.481428+00:00",
       "confidence": 0.88,
       "freshness": {
-        "observed_at": "2026-03-30T19:23:36.819983+00:00",
+        "observed_at": "2026-03-30T19:35:53.481428+00:00",
         "age_days": 0,
         "decay_factor": 1.0,
         "stale_after_days": 45,
@@ -701,6 +748,54 @@
         "judge"
       ],
       "content": "Harden operator truth for Phase 4 artifact enforcement state"
+    },
+    {
+      "memory_id": "mem-2bff846ca204",
+      "memory_type": "environment_assumption",
+      "ticket_family": "JORB-INFRA",
+      "task_id": "JORB-INFRA-010",
+      "area": "builder",
+      "summary": "Builder repo is dirty before automated execution; refusing to continue.",
+      "source_artifact": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T192337Z-JORB-INFRA-010.yml",
+      "timestamp": "2026-03-30T19:23:37.080311+00:00",
+      "confidence": 0.72,
+      "freshness": {
+        "observed_at": "2026-03-30T19:23:37.080311+00:00",
+        "age_days": 0,
+        "decay_factor": 1.0,
+        "stale_after_days": 21,
+        "freshness_state": "fresh"
+      },
+      "observation": "Builder repo is dirty before automated execution; refusing to continue.",
+      "inference": "Past failure or refinement pattern",
+      "primary_basis": "observation",
+      "relevance_tags": [
+        "JORB-INFRA",
+        "acceptance_boundary",
+        "failure_avoidance",
+        "feature_understanding_compiler",
+        "repo_state_failure"
+      ],
+      "origin": "validator",
+      "status": "active",
+      "status_reason": "derived_from_history",
+      "provenance": [
+        {
+          "path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T192337Z-JORB-INFRA-010.yml",
+          "kind": "task_history"
+        }
+      ],
+      "signature": "7cc8e522f9509663894e24fbda725f102994550d",
+      "support_count": 1,
+      "superseded_by": null,
+      "supersedes": [],
+      "manual": false,
+      "role_fit": [
+        "planner",
+        "architect",
+        "judge"
+      ],
+      "content": "Builder repo is dirty before automated execution; refusing to continue."
     },
     {
       "memory_id": "mem-3307394355c7",
@@ -3356,9 +3451,9 @@
       "timestamp": "2026-03-26T19:10:01.532228+00:00",
       "confidence": 0.72,
       "freshness": {
-        "observed_at": "2026-03-26T19:32:28.218333+00:00",
-        "age_days": 3,
-        "decay_factor": 0.952,
+        "observed_at": "2026-03-26T19:10:01.532228+00:00",
+        "age_days": 4,
+        "decay_factor": 0.937,
         "stale_after_days": 21,
         "freshness_state": "fresh"
       },
@@ -4292,8 +4387,8 @@
       "confidence": 0.88,
       "freshness": {
         "observed_at": "2026-03-25T19:24:10.227701+00:00",
-        "age_days": 4,
-        "decay_factor": 0.937,
+        "age_days": 5,
+        "decay_factor": 0.921,
         "stale_after_days": 21,
         "freshness_state": "fresh"
       },
@@ -5944,12 +6039,12 @@
     }
   },
   "counts_by_status": {
-    "superseded": 14,
-    "active": 107
+    "superseded": 15,
+    "active": 108
   },
   "source_counts": {
-    "task_history": 106,
-    "blockers": 14,
+    "task_history": 107,
+    "blockers": 15,
     "manual": 1
   }
 }

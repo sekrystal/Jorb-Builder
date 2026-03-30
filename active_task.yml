@@ -1,21 +1,28 @@
 {
-  "task_id": null,
-  "title": null,
-  "state": "idle",
-  "attempt": 0,
-  "started_at": null,
+  "task_id": "JORB-INFRA-010",
+  "title": "Feature understanding compiler",
+  "state": "verifying",
+  "attempt": 1,
+  "started_at": "2026-03-30T19:35:53.696848+00:00",
   "handed_to_codex_at": null,
-  "prompt_file": null,
-  "run_log_dir": null,
-  "verification_commands": [],
+  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T193553Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T193553Z-JORB-INFRA-010",
+  "verification_commands": [
+    "python3 -m py_compile scripts/*.py",
+    "pytest tests/test_automate_task_loop.py"
+  ],
   "vm_verification_commands": [],
   "vm_bootstrap_commands": [],
   "vm_cleanup_commands": [],
-  "allowlist": [],
+  "allowlist": [
+    "../jorb-builder/**"
+  ],
   "failure_summary": null,
   "notes": [],
-  "target_repo": null,
-  "target_kind": null,
-  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T192336Z-JORB-INFRA-010",
-  "prior_run_log_dirs": []
+  "prior_run_log_dirs": [
+    "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T193553Z"
+  ],
+  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T193553Z",
+  "target_repo": "/Users/samuelkrystal/projects/jorb-builder",
+  "target_kind": "builder"
 }

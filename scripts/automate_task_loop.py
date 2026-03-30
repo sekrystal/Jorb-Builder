@@ -65,6 +65,19 @@ PHASE4_REQUIRED_ARTIFACTS = (
     "judge_decision.md",
     "evidence_bundle.json",
 )
+PHASE4_FEATURE_SPEC_REQUIRED_KEYS = (
+    "task_id",
+    "task_title",
+    "task_area",
+    "user_story",
+    "initiating_trigger",
+    "data_inputs",
+    "state_transitions",
+    "failure_modes",
+    "observability_requirements",
+    "acceptance_tests",
+    "repo_local_standards",
+)
 PHASE4_OPTION_SET = (
     {
         "name": "Minimal coherent change",
@@ -238,25 +251,63 @@ def phase4_decision_checkpoint_issue(task: dict[str, Any]) -> str | None:
     return None
 
 
-def phase4_feature_spec_text(task: dict[str, Any], standards: dict[str, Any]) -> str:
+def phase4_feature_spec_payload(task: dict[str, Any], standards: dict[str, Any]) -> dict[str, Any]:
     acceptance = task.get("acceptance", []) or task.get("acceptance_criteria", [])
+    return {
+        "task_id": task["id"],
+        "task_title": task["title"],
+        "task_area": task.get("area"),
+        "user_story": f"A builder operator needs {task['title'].lower()} so the builder can execute work with explicit and reviewable discipline.",
+        "initiating_trigger": f"Backlog task {task['id']} enters execution as part of the builder hardening program.",
+        "data_inputs": [
+            f"Task metadata: {task['id']}, title, objective, acceptance, verification, allowlist",
+            "Builder config, backlog truth, active task state, and repo-local standards",
+        ],
+        "state_transitions": [
+            "selected -> packet_rendered -> implementing -> verifying -> completed/blocked/refined/interrupted",
+            "acceptance is allowed only after judge/evidence enforcement succeeds",
+        ],
+        "failure_modes": [
+            "missing required artifacts",
+            "unresolved decision checkpoint",
+            "missing runtime proof when required",
+            "misleading success without judge evidence",
+        ],
+        "observability_requirements": [
+            "explicit stage plan",
+            "artifact files written to run_logs",
+            "evidence bundle and judge decision",
+        ],
+        "acceptance_tests": acceptance or ["Acceptance criteria are taken directly from backlog task metadata."],
+        "repo_local_standards": {
+            "agents_loaded": bool(standards.get("agents_exists")),
+            "skill_files": list(standards.get("skill_files", [])),
+        },
+    }
+
+
+def phase4_feature_spec_text(task: dict[str, Any], standards: dict[str, Any]) -> str:
+    payload = phase4_feature_spec_payload(task, standards)
     return "\n".join(
         [
             f"# Compiled Feature Spec: {task['id']}",
             "",
+            "## Machine-Checkable Payload",
+            "```json",
+            json.dumps(payload, indent=2),
+            "```",
+            "",
             "## User Story",
-            f"A builder operator needs {task['title'].lower()} so the builder can execute work with explicit and reviewable discipline.",
+            payload["user_story"],
             "",
             "## Initiating Trigger",
-            f"Backlog task {task['id']} enters execution as part of the builder hardening program.",
+            payload["initiating_trigger"],
             "",
             "## Data Inputs",
-            f"- Task metadata: {task['id']}, title, objective, acceptance, verification, allowlist",
-            "- Builder config, backlog truth, active task state, and repo-local standards",
+            *[f"- {item}" for item in payload["data_inputs"]],
             "",
             "## State Transitions",
-            "- selected -> packet_rendered -> implementing -> verifying -> completed/blocked/refined/interrupted",
-            "- acceptance is allowed only after judge/evidence enforcement succeeds",
+            *[f"- {item}" for item in payload["state_transitions"]],
             "",
             "## Backend Changes",
             "- Builder orchestration and enforcement code only",
@@ -265,26 +316,21 @@ def phase4_feature_spec_text(task: dict[str, Any], standards: dict[str, Any]) ->
             "- Builder operator artifacts and run logs",
             "",
             "## Failure Modes",
-            "- missing required artifacts",
-            "- unresolved decision checkpoint",
-            "- missing runtime proof when required",
-            "- misleading success without judge evidence",
+            *[f"- {item}" for item in payload["failure_modes"]],
             "",
             "## Observability Requirements",
-            "- explicit stage plan",
-            "- artifact files written to run_logs",
-            "- evidence bundle and judge decision",
+            *[f"- {item}" for item in payload["observability_requirements"]],
             "",
             "## Out of Scope",
             "- JORB product feature implementation",
             "- product repo edits except runtime-proof interaction when explicitly required",
             "",
             "## Acceptance Test In Product Terms",
-            *([f"- {item}" for item in acceptance] if acceptance else ["- Acceptance criteria are taken directly from backlog task metadata."]),
+            *[f"- {item}" for item in payload["acceptance_tests"]],
             "",
             "## Repo-Local Standards",
-            f"- AGENTS.md loaded: {'yes' if standards.get('agents_exists') else 'no'}",
-            f"- skills loaded: {', '.join(standards.get('skill_files', [])) or 'none'}",
+            f"- AGENTS.md loaded: {'yes' if payload['repo_local_standards']['agents_loaded'] else 'no'}",
+            f"- skills loaded: {', '.join(payload['repo_local_standards']['skill_files']) or 'none'}",
         ]
     )
 
@@ -463,8 +509,32 @@ def write_phase4_postmortem(run_dir: Path, *, summary: str, automation_result: d
     return path
 
 
-def phase4_artifact_issues(run_dir: Path, *, require_runtime_proof: bool) -> list[str]:
+def phase4_feature_spec_issues(run_dir: Path, task: dict[str, Any]) -> list[str]:
+    path = run_dir / "compiled_feature_spec.md"
+    if not path.exists():
+        return []
+    text = path.read_text(encoding="utf-8")
+    match = re.search(r"## Machine-Checkable Payload\n```json\n(.*?)\n```", text, re.DOTALL)
+    if match is None:
+        return ["compiled_feature_spec.md:missing_machine_payload"]
+    try:
+        payload = json.loads(match.group(1))
+    except json.JSONDecodeError:
+        return ["compiled_feature_spec.md:invalid_machine_payload"]
+    issues: list[str] = []
+    for key in PHASE4_FEATURE_SPEC_REQUIRED_KEYS:
+        if payload.get(key) in (None, "", []):
+            issues.append(f"compiled_feature_spec.md:missing_{key}")
+    if payload.get("task_id") != task.get("id"):
+        issues.append("compiled_feature_spec.md:task_id_mismatch")
+    if payload.get("task_title") != task.get("title"):
+        issues.append("compiled_feature_spec.md:task_title_mismatch")
+    return issues
+
+
+def phase4_artifact_issues(run_dir: Path, task: dict[str, Any], *, require_runtime_proof: bool) -> list[str]:
     issues = [name for name, path in phase4_required_artifact_paths(run_dir).items() if not path.exists()]
+    issues.extend(phase4_feature_spec_issues(run_dir, task))
     if not phase4_research_brief_path(run_dir).exists():
         issues.append("research_brief.md")
     if require_runtime_proof and not phase4_runtime_proof_path(run_dir).exists():
@@ -538,7 +608,7 @@ def persist_result_with_phase4_artifacts(
             "steps": automation_result.get("steps", []),
         }
         evidence_path.write_text(json.dumps(evidence_payload, indent=2) + "\n", encoding="utf-8")
-        issues = phase4_artifact_issues(run_dir, require_runtime_proof=require_runtime_proof)
+        issues = phase4_artifact_issues(run_dir, task, require_runtime_proof=require_runtime_proof)
         if issues and automation_result.get("classification") == "accepted":
             automation_result["classification"] = "blocked"
             automation_result["summary"] = "Phase 4 artifact enforcement failed: " + ", ".join(issues)
@@ -771,6 +841,9 @@ def acquire_run_lock(task_id: str) -> tuple[bool, str | None]:
         payload = load_data(RUN_LOCK)
         other_pid = payload.get("pid")
         if isinstance(other_pid, int):
+            if other_pid == os.getpid():
+                write_data(RUN_LOCK, current)
+                return True, None
             try:
                 os.kill(other_pid, 0)
                 return False, f"run_lock held by pid {other_pid} for task {payload.get('task_id')}"
@@ -1750,6 +1823,14 @@ def validation_commands_for_target(
         return commands, None
     wrapped = [f"source {shlex.quote(str(venv_path / 'bin' / 'activate'))} && {command}" for command in commands]
     return wrapped, venv_path
+
+
+def effective_task_command_list(task_commands: Any, active_commands: Any) -> list[str]:
+    if isinstance(task_commands, list) and [item for item in task_commands if str(item).strip()]:
+        return list(task_commands)
+    if isinstance(active_commands, list):
+        return list(active_commands)
+    return []
 
 
 def ssh_command(
@@ -2907,7 +2988,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         except KeyError:
             task = None
     if task is not None:
-        active["verification_commands"] = list(task.get("verification", []))
+        active["verification_commands"] = effective_task_command_list(task.get("verification"), active.get("verification_commands"))
         active["vm_verification_commands"] = list(task.get("vm_verification", []))
         active["vm_bootstrap_commands"] = list(task.get("vm_bootstrap", []))
         active["vm_cleanup_commands"] = list(task.get("vm_cleanup", []))
@@ -3261,6 +3342,8 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         write_data(BACKLOG, backlog)
         write_data(STATUS, status)
         print_result("BLOCKED", summary, "Set the missing config values in config.yml and rerun python3 scripts/automate_task_loop.py.")
+        if "vm.runtime_validation_commands or task.vm_verification" in plan["missing_configuration"]:
+            return 1
         return 2
 
     baseline = git_status_porcelain(target_repo, ignored_prefixes=ignored_git_paths)
@@ -3592,7 +3675,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         write_data(BACKLOG, backlog)
         write_data(STATUS, status)
         print_result("BLOCKED", summary, f"Keep changes within the allowlist or adjust the task packet before rerunning. Current target repo: {target_repo}.")
-        return 2
+        return 1 if retry_continuation else 2
 
     if not changed_files:
         summary = f"Executor completed but no {target_kind} repo changes were detected."
