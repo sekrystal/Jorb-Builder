@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-31T01:42:04.468019+00:00",
+  "generated_at": "2026-03-31T15:29:30.691241+00:00",
   "proposals": [
     {
       "proposal_id": "prop-c967a7d8242d",
@@ -232,6 +232,72 @@
         ]
       },
       "created_at": "2026-03-31T01:42:04.468006+00:00"
+    },
+    {
+      "proposal_id": "prop-6d275f1b10f7",
+      "dedupe_key": "builder_repo_is_dirty_before_automated_execution_refusing_to_continue::JORB-INFRA::create_follow_up_hardening_ticket",
+      "status": "draft",
+      "source_signal_id": "sig-3188672a3ac9",
+      "title": "Harden JORB-INFRA against builder repo is dirty before automated execution refusing to continue",
+      "rationale": "Refine backlog handling for the observed JORB-INFRA runtime evidence.",
+      "evidence_summary": "Canonical run ledger recorded 2 blocked runtime outcome(s) for JORB-INFRA.",
+      "evidence_links": [
+        "/Users/samuelkrystal/projects/jorb-builder/run_ledger.json"
+      ],
+      "affected_ticket_family": "JORB-INFRA",
+      "priority_recommendation": "high",
+      "confidence": 0.8,
+      "recurrence_count": 2,
+      "proposed_action_type": "create_follow_up_hardening_ticket",
+      "dependencies": [
+        "JORB-INFRA-010"
+      ],
+      "operator_approval_required": true,
+      "draft_ticket": {
+        "id_placeholder": "DRAFT-JORB-INFRA-BUILDER_REPO_IS_DIRTY_BEFORE_AUTOMATED_EXECUTION_REFUSING_TO_CONTINUE",
+        "title": "Harden JORB-INFRA against builder repo is dirty before automated execution refusing to continue",
+        "type": "infrastructure",
+        "area": "builder",
+        "objective": "Refine backlog handling for the observed JORB-INFRA runtime evidence.",
+        "evidence_basis": [
+          "/Users/samuelkrystal/projects/jorb-builder/run_ledger.json"
+        ]
+      },
+      "created_at": "2026-03-31T15:29:30.691227+00:00"
+    },
+    {
+      "proposal_id": "prop-16c2a839cb29",
+      "dedupe_key": "repeated_repo_state_failure::JORB-INFRA::create_follow_up_hardening_ticket",
+      "status": "draft",
+      "source_signal_id": "sig-85b731d5275e",
+      "title": "Harden JORB-INFRA against repeated repo state failure",
+      "rationale": "Consider create follow up hardening ticket for JORB-INFRA.",
+      "evidence_summary": "Pattern observed 2 times in JORB-INFRA.",
+      "evidence_links": [
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T192337Z-JORB-INFRA-010.yml",
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-31T152930Z-JORB-INFRA-035.yml"
+      ],
+      "affected_ticket_family": "JORB-INFRA",
+      "priority_recommendation": "medium",
+      "confidence": 0.65,
+      "recurrence_count": 2,
+      "proposed_action_type": "create_follow_up_hardening_ticket",
+      "dependencies": [
+        "JORB-INFRA-010"
+      ],
+      "operator_approval_required": true,
+      "draft_ticket": {
+        "id_placeholder": "DRAFT-JORB-INFRA-REPEATED_REPO_STATE_FAILURE",
+        "title": "Harden JORB-INFRA against repeated repo state failure",
+        "type": "infrastructure",
+        "area": "builder",
+        "objective": "Consider create follow up hardening ticket for JORB-INFRA.",
+        "evidence_basis": [
+          "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T192337Z-JORB-INFRA-010.yml",
+          "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-31T152930Z-JORB-INFRA-035.yml"
+        ]
+      },
+      "created_at": "2026-03-31T15:29:30.691239+00:00"
     }
   ]
 }

@@ -4561,6 +4561,187 @@
       ]
     },
     {
+      "id": "JORB-INFRA-034",
+      "title": "Operator TUI visual hierarchy and state emphasis pass",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M8",
+      "priority": 1,
+      "status": "accepted",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-033"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Make the terminal operator surface clearly communicate run state, stage progress, blockers, next action, and backlog evolution from canonical repo truth.",
+      "why_it_matters": "The operator surface is now functionally real, but it is still too coarse and stale in places for comfortable sustained live use.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "show_status.py and the terminal TUI both read the same canonical operator snapshot instead of maintaining separate task truth",
+        "stage-based progress is rendered as named lifecycle stages instead of percent bars being the primary operator signal",
+        "blocked, ready, completed, and exhausted states are visually distinct and obvious from the terminal surface",
+        "canonical backlog-derived stats replace stale status.yml summary counters in operator output",
+        "the operator surface exposes blocker detail, accepted proposal count, synthesized entry visibility, and next recommended action from canonical repo state"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Build the first operator-focused readability pass for the terminal interface and status surfaces so live builder supervision is legible and trustworthy.",
+      "allow_noop_completion": false,
+      "notes": [
+        "Implemented via operator_state.py, operator_tui.py, and show_status.py snapshot unification.",
+        "Automated loop not required for this slice; proof is terminal launch plus canonical snapshot and action wiring tests."
+      ]
+    },
+    {
+      "id": "JORB-INFRA-035",
+      "title": "Operator TUI event feed deduplication and readability",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M8",
+      "priority": 1,
+      "status": "blocked",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-034"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Reduce operator event-feed noise by deduplicating overlapping run_ledger and progress rows and improving message readability without inventing new state.",
+      "why_it_matters": "The current event feed is useful, but duplicate progress and ledger rows still make the interface harder to scan during live runs.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "event feed groups or suppresses duplicate ledger/progress rows that describe the same underlying event",
+        "event feed messages remain timestamped and provenance-backed",
+        "blocked events visually emphasize blocker cause and recommended operator action",
+        "accepted-completion events are clearly distinguished from in-flight heartbeat updates"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Improve event feed readability and noise control for live operator use without introducing a second state system.",
+      "allow_noop_completion": false,
+      "notes": [
+        "Builder repo is dirty before automated execution; refusing to continue."
+      ]
+    },
+    {
+      "id": "JORB-INFRA-036",
+      "title": "Operator TUI interactive selectors for proposals, syntheses, and blockers",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M8",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-035"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Replace id-typing friction in the operator TUI with keyboard-driven selection for safe existing actions like approve proposal, apply synthesized entry, and inspect blocker.",
+      "why_it_matters": "Typing opaque ids slows operators down and makes the TUI feel rougher than the underlying system deserves.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "operator can select a proposal, synthesized entry, or blocker from the TUI without manually typing its id",
+        "selection UI remains grounded in canonical backlog_proposals.json, synthesized_backlog_entries.json, and blocker files",
+        "operator actions still call the same safe underlying repo commands used today"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Add keyboard-driven selectors for the most important safe operator actions in the terminal UI.",
+      "allow_noop_completion": false
+    },
+    {
+      "id": "JORB-INFRA-037",
+      "title": "Operator TUI artifact and latest run inspection improvements",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M8",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-035"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Make latest run path, artifact presence, missing artifacts, and inspection affordances faster to understand from the terminal surface.",
+      "why_it_matters": "Operators still have too much friction when moving from high-level state to the exact artifacts they need to inspect.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "latest run path is always visible and easy to inspect from the TUI",
+        "artifact panel clearly separates expected, present, and missing artifacts",
+        "operator can trigger a safe artifact inspection action without leaving the terminal surface"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Improve artifact and latest-run inspection ergonomics in the terminal operator interface.",
+      "allow_noop_completion": false
+    },
+    {
+      "id": "JORB-INFRA-038",
+      "title": "Operator TUI keyboard flow and usability polish",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M8",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-036",
+        "JORB-INFRA-037"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Polish keyboard flow, help text, empty states, and section density so the terminal TUI is efficient for repeated operator use.",
+      "why_it_matters": "Once the layout, event feed, and selectors exist, keyboard flow becomes the next biggest source of operator friction.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "help text makes available actions and key bindings obvious",
+        "empty, blocked, and exhausted states remain easy to distinguish",
+        "section spacing and density improve readability without adding non-canonical state"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Polish keyboard flow and usability after the core operator TUI improvements land.",
+      "allow_noop_completion": false
+    },
+    {
       "id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
       "title": "Harden operator truth for Phase 4 artifact enforcement state",
       "type": "infrastructure",
@@ -4636,7 +4817,7 @@
       "area": "builder",
       "repo_path": "~/projects/jorb-builder",
       "priority": 2,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-010"
@@ -4688,7 +4869,8 @@
       "notes": [
         "Synthesized from proposal prop-2d91a8da268e",
         "Builder repo is dirty before automated execution; refusing to continue.",
-        "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again."
+        "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again.",
+        "Automated loop completed with builder-side local validation success."
       ],
       "description": "Refine backlog handling for the observed JORB-INFRA runtime evidence.\n\nCanonical run ledger recorded 4 blocked runtime outcome(s) for JORB-INFRA.",
       "allow_noop_completion": false

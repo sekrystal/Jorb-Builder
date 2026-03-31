@@ -3,9 +3,9 @@
 The feedback interpretation engine converts raw operator feedback and recurring run evidence into structured signals.
 
 ## Summary
-- generated_at: 2026-03-31T01:42:04.466430+00:00
-- signal_count: 6
-- proposal_count: 7
+- generated_at: 2026-03-31T15:29:30.690152+00:00
+- signal_count: 7
+- proposal_count: 9
 
 ## Structured Signals
 ### sig-508834552f75
@@ -64,17 +64,17 @@ The feedback interpretation engine converts raw operator feedback and recurring 
 - raw_observation: Phase 4 artifact enforcement failed: compiled_feature_spec.md, proposal.md, tradeoff_matrix.md, research_brief.md, research_brief.md; Phase 4 artifact enforcement failed: compiled_feature_spec.md:missing_machine_payload
 - evidence_links: /Users/samuelkrystal/projects/jorb-builder/run_ledger.json
 
-### sig-29f8b4e0be19
+### sig-3188672a3ac9
 - signal_type: runtime_outcome
-- feedback_dimension: draft-jorb
+- feedback_dimension: jorb-infra
 - interpreted_issue: builder_repo_is_dirty_before_automated_execution_refusing_to_continue
 - system_gap: Operator feedback indicates a builder-system gap that is not yet categorized more precisely.
 - corrective_work: Review the evidence and convert the gap into a bounded corrective backlog item.
 - proposed_action_type: create_follow_up_hardening_ticket
 - confidence: 0.8
 - recurrence_count: 2
-- affected_ticket_family: DRAFT-JORB
-- affected_subsystem: draft-jorb
+- affected_ticket_family: JORB-INFRA
+- affected_subsystem: jorb-infra
 - raw_observation: Builder repo is dirty before automated execution; refusing to continue.
 - evidence_links: /Users/samuelkrystal/projects/jorb-builder/run_ledger.json
 
@@ -91,3 +91,17 @@ The feedback interpretation engine converts raw operator feedback and recurring 
 - affected_subsystem: draft-jorb
 - raw_observation: Builder repo is dirty before automated execution; refusing to continue.; Executor changed files outside the task allowlist.; Builder repo is dirty before automated execution; refusing to continue.
 - evidence_links: /Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T204723Z-DRAFT-JORB-INFRA-STATUS-TRUTH.yml, /Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T205825Z-DRAFT-JORB-INFRA-STATUS-TRUTH.yml, /Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-31T014204Z-DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED.yml
+
+### sig-85b731d5275e
+- signal_type: failure_class
+- feedback_dimension: jorb-infra
+- interpreted_issue: repeated_repo_state_failure
+- system_gap: Operator feedback indicates a builder-system gap that is not yet categorized more precisely.
+- corrective_work: Review the evidence and convert the gap into a bounded corrective backlog item.
+- proposed_action_type: create_follow_up_hardening_ticket
+- confidence: 0.65
+- recurrence_count: 2
+- affected_ticket_family: JORB-INFRA
+- affected_subsystem: jorb-infra
+- raw_observation: Builder repo is dirty before automated execution; refusing to continue.; Builder repo is dirty before automated execution; refusing to continue.
+- evidence_links: /Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T192337Z-JORB-INFRA-010.yml, /Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-31T152930Z-JORB-INFRA-035.yml

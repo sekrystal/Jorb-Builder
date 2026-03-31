@@ -1,76 +1,6 @@
 {
   "events": [
     {
-      "at": "2026-03-31T01:53:19.322529+00:00",
-      "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
-      "run_state": "running",
-      "stage_name": "Codex execution running",
-      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=90388 | elapsed=241s | timeout_remaining=1558s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T014916Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T014917Z-DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=5s | stdout_seen=false | stderr_seen=true | poll=running"
-    },
-    {
-      "at": "2026-03-31T01:53:34.452331+00:00",
-      "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
-      "run_state": "running",
-      "stage_name": "Codex execution running",
-      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=90388 | elapsed=257s | timeout_remaining=1542s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T014916Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T014917Z-DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=5s | stdout_seen=false | stderr_seen=true | poll=running"
-    },
-    {
-      "at": "2026-03-31T01:53:49.609401+00:00",
-      "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
-      "run_state": "running",
-      "stage_name": "Codex execution running",
-      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=90388 | elapsed=272s | timeout_remaining=1527s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T014916Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T014917Z-DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=3s | stdout_seen=false | stderr_seen=true | poll=running"
-    },
-    {
-      "at": "2026-03-31T01:53:59.015079+00:00",
-      "task_id": "JORB-INFRA-010",
-      "run_state": "blocked",
-      "stage_name": "judge",
-      "detail": "Phase 4 artifact enforcement failed: compiled_feature_spec.md, proposal.md, tradeoff_matrix.md, research_brief.md, research_brief.md"
-    },
-    {
-      "at": "2026-03-31T01:53:59.163683+00:00",
-      "task_id": "JORB-INFRA-010",
-      "run_state": "blocked",
-      "stage_name": "judge",
-      "detail": "Phase 4 artifact enforcement failed: compiled_feature_spec.md:missing_machine_payload"
-    },
-    {
-      "at": "2026-03-31T01:54:04.755442+00:00",
-      "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
-      "run_state": "running",
-      "stage_name": "Codex execution running",
-      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=90388 | elapsed=287s | timeout_remaining=1512s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T014916Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T014917Z-DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=4s | stdout_seen=false | stderr_seen=true | poll=running"
-    },
-    {
-      "at": "2026-03-31T01:54:19.892298+00:00",
-      "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
-      "run_state": "running",
-      "stage_name": "Codex execution running",
-      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=90388 | elapsed=302s | timeout_remaining=1497s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T014916Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T014917Z-DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=5s | stdout_seen=false | stderr_seen=true | poll=running"
-    },
-    {
-      "at": "2026-03-31T01:54:34.715395+00:00",
-      "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
-      "run_state": "running",
-      "stage_name": "Applying changes",
-      "detail": "Detected 2 changed file(s)."
-    },
-    {
-      "at": "2026-03-31T01:54:34.718406+00:00",
-      "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
-      "run_state": "verifying",
-      "stage_name": null,
-      "detail": null
-    },
-    {
-      "at": "2026-03-31T01:54:34.724352+00:00",
-      "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
-      "run_state": "running",
-      "stage_name": "Local validation (pytest)",
-      "detail": "python3 -m py_compile scripts/*.py"
-    },
-    {
       "at": "2026-03-31T01:54:34.941782+00:00",
       "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
       "run_state": "running",
@@ -174,14 +104,84 @@
       "run_state": "running",
       "stage_name": "Git commit and push",
       "detail": "Running git add/commit/push."
+    },
+    {
+      "at": "2026-03-31T01:57:29.323049+00:00",
+      "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
+      "run_state": "completed",
+      "stage_name": "Classification",
+      "detail": "Automated loop completed with builder-side local validation success."
+    },
+    {
+      "at": "2026-03-31T01:57:29.325610+00:00",
+      "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
+      "run_state": "accepted",
+      "stage_name": "classification",
+      "detail": "Automated loop completed with builder-side local validation success."
+    },
+    {
+      "at": "2026-03-31T01:57:29.372841+00:00",
+      "task_id": null,
+      "run_state": "completed",
+      "stage_name": null,
+      "detail": null
+    },
+    {
+      "at": "2026-03-31T15:29:30.453806+00:00",
+      "task_id": "JORB-INFRA-035",
+      "run_state": "task_selected",
+      "stage_name": null,
+      "detail": null
+    },
+    {
+      "at": "2026-03-31T15:29:30.561843+00:00",
+      "task_id": "JORB-INFRA-035",
+      "run_state": "preflight_passed",
+      "stage_name": null,
+      "detail": null
+    },
+    {
+      "at": "2026-03-31T15:29:30.564292+00:00",
+      "task_id": "JORB-INFRA-035",
+      "run_state": "running",
+      "stage_name": "Task selected",
+      "detail": "Task selected and state loaded."
+    },
+    {
+      "at": "2026-03-31T15:29:30.565881+00:00",
+      "task_id": "JORB-INFRA-035",
+      "run_state": "running",
+      "stage_name": "Codex prompt generated",
+      "detail": "Prompt file ready at /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T152930Z/codex_prompt.md."
+    },
+    {
+      "at": "2026-03-31T15:29:30.676031+00:00",
+      "task_id": "JORB-INFRA-035",
+      "run_state": "failed",
+      "stage_name": "Applying changes",
+      "detail": "Builder repo is dirty before automated execution; refusing to continue."
+    },
+    {
+      "at": "2026-03-31T15:29:30.677257+00:00",
+      "task_id": "JORB-INFRA-035",
+      "run_state": "blocked",
+      "stage_name": "classification",
+      "detail": "Builder repo is dirty before automated execution; refusing to continue."
+    },
+    {
+      "at": "2026-03-31T15:29:30.693803+00:00",
+      "task_id": "JORB-INFRA-035",
+      "run_state": "blocked",
+      "stage_name": null,
+      "detail": "Builder repo is dirty before automated execution; refusing to continue."
     }
   ],
-  "updated_at": "2026-03-31T01:57:27.016061+00:00",
-  "current_task": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
-  "current_title": null,
-  "current_stage": "Git commit and push",
-  "run_state": "running",
-  "current_blocker": null,
+  "updated_at": "2026-03-31T15:29:30.693794+00:00",
+  "current_task": "JORB-INFRA-035",
+  "current_title": "Operator TUI event feed deduplication and readability",
+  "current_stage": null,
+  "run_state": "blocked",
+  "current_blocker": "Builder repo is dirty before automated execution; refusing to continue.",
   "last_successful_checkpoint": null,
   "artifact_completeness": {
     "present": [
@@ -200,13 +200,13 @@
   "eval_result": null,
   "runtime_proof_summary": null,
   "next_recommended_action": null,
-  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T014917Z-DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T152930Z-JORB-INFRA-035",
   "event": {
-    "at": "2026-03-31T01:57:27.016080+00:00",
-    "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
-    "run_state": "running",
-    "stage_name": "Git commit and push",
-    "detail": "Running git add/commit/push."
+    "at": "2026-03-31T15:29:30.693803+00:00",
+    "task_id": "JORB-INFRA-035",
+    "run_state": "blocked",
+    "stage_name": null,
+    "detail": "Builder repo is dirty before automated execution; refusing to continue."
   },
   "eval_blocked_acceptance": false
 }

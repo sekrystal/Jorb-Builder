@@ -16,6 +16,8 @@ PRIVATE_EVAL_SCRIPT = Path("/Users/samuelkrystal/projects/jorb-builder/scripts/p
 MEMORY_CONTROLS_SCRIPT = Path("/Users/samuelkrystal/projects/jorb-builder/scripts/memory_controls.py")
 FEEDBACK_ENGINE_SCRIPT = Path("/Users/samuelkrystal/projects/jorb-builder/scripts/feedback_engine.py")
 BACKLOG_SYNTHESIS_SCRIPT = Path("/Users/samuelkrystal/projects/jorb-builder/scripts/backlog_synthesis.py")
+OPERATOR_STATE_SCRIPT = Path("/Users/samuelkrystal/projects/jorb-builder/scripts/operator_state.py")
+OPERATOR_TUI_SCRIPT = Path("/Users/samuelkrystal/projects/jorb-builder/scripts/operator_tui.py")
 LIVE_BUILDER_ROOT = Path("/Users/samuelkrystal/projects/jorb-builder")
 CANONICAL_FIGMA_SOURCE = "/Users/samuelkrystal/projects/jorb/design/figma"
 
@@ -191,6 +193,60 @@ def _load_backlog_synthesis_module(builder_root: Path | None = None):
         sys.modules.pop("private_eval_suite", None)
         sys.modules.pop("backlog_synthesis_test_module", None)
         spec = importlib.util.spec_from_file_location("backlog_synthesis_test_module", BACKLOG_SYNTHESIS_SCRIPT)
+        assert spec is not None and spec.loader is not None
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+    finally:
+        if inserted and sys.path and sys.path[0] == common_dir:
+            sys.path.pop(0)
+        if builder_root is not None:
+            if previous_root is None:
+                os.environ.pop("JORB_BUILDER_ROOT", None)
+            else:
+                os.environ["JORB_BUILDER_ROOT"] = previous_root
+
+
+def _load_operator_state_module(builder_root: Path | None = None):
+    common_dir = str(SCRIPT.parent)
+    inserted = False
+    previous_root = os.environ.get("JORB_BUILDER_ROOT")
+    if builder_root is not None:
+        os.environ["JORB_BUILDER_ROOT"] = str(builder_root)
+    if common_dir not in sys.path:
+        sys.path.insert(0, common_dir)
+        inserted = True
+    try:
+        for name in ("common", "feedback_engine", "backlog_synthesis", "operator_state_test_module"):
+            sys.modules.pop(name, None)
+        spec = importlib.util.spec_from_file_location("operator_state_test_module", OPERATOR_STATE_SCRIPT)
+        assert spec is not None and spec.loader is not None
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+    finally:
+        if inserted and sys.path and sys.path[0] == common_dir:
+            sys.path.pop(0)
+        if builder_root is not None:
+            if previous_root is None:
+                os.environ.pop("JORB_BUILDER_ROOT", None)
+            else:
+                os.environ["JORB_BUILDER_ROOT"] = previous_root
+
+
+def _load_operator_tui_module(builder_root: Path | None = None):
+    common_dir = str(SCRIPT.parent)
+    inserted = False
+    previous_root = os.environ.get("JORB_BUILDER_ROOT")
+    if builder_root is not None:
+        os.environ["JORB_BUILDER_ROOT"] = str(builder_root)
+    if common_dir not in sys.path:
+        sys.path.insert(0, common_dir)
+        inserted = True
+    try:
+        for name in ("common", "feedback_engine", "backlog_synthesis", "operator_state", "operator_tui_test_module"):
+            sys.modules.pop(name, None)
+        spec = importlib.util.spec_from_file_location("operator_tui_test_module", OPERATOR_TUI_SCRIPT)
         assert spec is not None and spec.loader is not None
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
@@ -6323,6 +6379,254 @@ def test_operator_surface_shows_synthesis_truth(tmp_path: Path) -> None:
     assert "- next_execution_target: DRAFT-JORB-INFRA-ONE" in result.stdout
     assert "- top_synthesized_eval_score: 0.92" in result.stdout
     assert "- top_synthesized_eval_passed: False" in result.stdout
+
+
+def test_operator_snapshot_corrects_stale_status_stats_from_backlog_truth(tmp_path: Path) -> None:
+    builder_root, _, run_dir, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    module = _load_operator_state_module(builder_root)
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "accepted"
+    backlog["tasks"].append(
+        {
+            "id": "JORB-INFRA-031",
+            "title": "JORB-INFRA-031",
+            "type": "infrastructure",
+            "area": "builder",
+            "milestone": "M0",
+            "priority": 1,
+            "status": "accepted",
+            "depends_on": [],
+            "repo_path": "~/projects/jorb-builder",
+            "description": "desc",
+            "acceptance_criteria": ["a"],
+            "verification": [],
+        }
+    )
+    _write_json(builder_root / "backlog.yml", backlog)
+    status = _json(builder_root / "status.yml")
+    status["stats"] = {"completed_tasks": 0, "blocked_tasks": 99, "retry_ready_tasks": 77}
+    status["state"] = "completed"
+    status["last_task_id"] = "JORB-INFRA-030"
+    _write_json(builder_root / "status.yml", status)
+    _write_json(builder_root / "task_history" / "2026-03-31T000000Z-JORB-INFRA-030.yml", {"task_id": "JORB-INFRA-030", "status": "accepted", "completed_at": "2026-03-31T00:00:00+00:00", "run_log_dir": str(run_dir)})
+
+    snapshot = module.build_operator_snapshot(builder_root)
+
+    assert snapshot["stats"]["completed_tasks"] == 2
+    assert snapshot["stats"]["blocked_tasks"] == 0
+    assert snapshot["stats"]["retry_ready_tasks"] == 0
+
+
+def test_operator_snapshot_stage_mapping_and_blocked_truth(tmp_path: Path) -> None:
+    builder_root, _, run_dir, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    module = _load_operator_state_module(builder_root)
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "blocked"
+    backlog["tasks"][0]["required_artifacts"] = ["compiled_feature_spec.md", "proposal.md"]
+    _write_json(builder_root / "backlog.yml", backlog)
+    active = _json(builder_root / "active_task.yml")
+    active["state"] = "blocked"
+    active["failure_summary"] = "Builder repo is dirty before automated execution; refusing to continue."
+    _write_json(builder_root / "active_task.yml", active)
+    status = _json(builder_root / "status.yml")
+    status["state"] = "blocked"
+    status["last_result"] = "blocked"
+    status["last_task_id"] = "JORB-INFRA-030"
+    _write_json(builder_root / "status.yml", status)
+    (run_dir / "compiled_feature_spec.md").write_text("spec\n", encoding="utf-8")
+    (run_dir / "progress.jsonl").write_text(
+        "\n".join(
+            [
+                json.dumps({"timestamp": "2026-03-31T00:00:00+00:00", "task_id": "JORB-INFRA-030", "stage_index": 1, "stage_name": "Task selected", "state": "running", "detail": "selected"}),
+                json.dumps({"timestamp": "2026-03-31T00:00:01+00:00", "task_id": "JORB-INFRA-030", "stage_index": 2, "stage_name": "Codex prompt generated", "state": "running", "detail": "prompt"}),
+                json.dumps({"timestamp": "2026-03-31T00:00:02+00:00", "task_id": "JORB-INFRA-030", "stage_index": 4, "stage_name": "Applying changes", "state": "failed", "detail": "Builder repo is dirty before automated execution; refusing to continue."}),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    _write_json(
+        builder_root / "blockers" / "BLK-JORB-INFRA-030.yml",
+        {
+            "id": "BLK-JORB-INFRA-030",
+            "title": "Task JORB-INFRA-030 blocked during automated execution",
+            "related_tasks": ["JORB-INFRA-030"],
+            "status": "open",
+            "diagnosis": "Builder repo is dirty before automated execution; refusing to continue.",
+            "next_actions": ["git status --short"],
+        },
+    )
+
+    snapshot = module.build_operator_snapshot(builder_root)
+    stages = {item["key"]: item["status"] for item in snapshot["stage_progress"]}
+
+    assert snapshot["latest_blocker"]["id"] == "BLK-JORB-INFRA-030"
+    assert snapshot["next_recommended_action"].startswith("Inspect blocker")
+    assert stages["selected"] == "complete"
+    assert stages["prompt_rendered"] == "complete"
+    assert stages["execution_started"] == "failed"
+    assert stages["terminal"] == "failed"
+
+
+def test_operator_snapshot_event_feed_includes_real_inputs(tmp_path: Path) -> None:
+    builder_root, _, run_dir, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    module = _load_operator_state_module(builder_root)
+    _write_json(
+        builder_root / "run_ledger.json",
+        {
+            "events": [
+                {
+                    "at": "2026-03-31T00:00:05+00:00",
+                    "task_id": "JORB-INFRA-030",
+                    "run_state": "blocked",
+                    "stage_name": "Applying changes",
+                    "detail": "Builder repo is dirty before automated execution; refusing to continue.",
+                }
+            ]
+        },
+    )
+    _write_json(
+        builder_root / "backlog_proposals.json",
+        {
+            "proposals": [
+                {
+                    "proposal_id": "prop-1",
+                    "status": "accepted",
+                    "title": "Approved proposal",
+                    "reviewed_at": "2026-03-31T00:00:06+00:00",
+                    "review_note": "ok",
+                }
+            ]
+        },
+    )
+    _write_json(
+        builder_root / "synthesized_backlog_entries.json",
+        {
+            "entries": [
+                {
+                    "synthesis_id": "syn-1",
+                    "ticket_id_placeholder": "DRAFT-JORB-INFRA-ONE",
+                    "title": "Applied synthesis",
+                    "status": "applied",
+                    "created_at": "2026-03-31T00:00:07+00:00",
+                    "applied_at": "2026-03-31T00:00:08+00:00",
+                    "synthesis_eval_blocked": False,
+                }
+            ]
+        },
+    )
+    (run_dir / "progress.jsonl").write_text(
+        json.dumps({"timestamp": "2026-03-31T00:00:09+00:00", "task_id": "JORB-INFRA-030", "stage_index": 1, "stage_name": "Task selected", "state": "running", "detail": "selected"}) + "\n",
+        encoding="utf-8",
+    )
+
+    snapshot = module.build_operator_snapshot(builder_root)
+    sources = [item["source"] for item in snapshot["event_feed"]]
+
+    assert "progress" in sources
+    assert "proposal" in sources
+    assert "synthesis" in sources
+    assert "run_ledger" in sources
+
+
+def test_show_status_uses_canonical_stats_and_visibility(tmp_path: Path) -> None:
+    builder_root, _, run_dir, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "accepted"
+    backlog["tasks"].append(
+        {
+            "id": "JORB-INFRA-031",
+            "title": "Accepted one",
+            "type": "infrastructure",
+            "area": "builder",
+            "milestone": "M0",
+            "priority": 1,
+            "status": "accepted",
+            "depends_on": [],
+            "repo_path": "~/projects/jorb-builder",
+            "description": "desc",
+            "acceptance_criteria": ["a"],
+            "verification": [],
+        }
+    )
+    backlog["tasks"].append(
+        {
+            "id": "DRAFT-JORB-INFRA-ONE",
+            "title": "Draft one",
+            "type": "infrastructure",
+            "area": "builder",
+            "milestone": "M0",
+            "priority": 1,
+            "status": "ready",
+            "depends_on": [],
+            "repo_path": "~/projects/jorb-builder",
+            "description": "desc",
+            "acceptance_criteria": ["a"],
+            "verification": [],
+        }
+    )
+    _write_json(builder_root / "backlog.yml", backlog)
+    status = _json(builder_root / "status.yml")
+    status["stats"] = {"completed_tasks": 1, "blocked_tasks": 4, "retry_ready_tasks": 8}
+    status["state"] = "completed"
+    status["last_task_id"] = "JORB-INFRA-030"
+    _write_json(builder_root / "status.yml", status)
+    _write_json(builder_root / "task_history" / "2026-03-31T000000Z-JORB-INFRA-030.yml", {"task_id": "JORB-INFRA-030", "status": "accepted", "completed_at": "2026-03-31T00:00:00+00:00", "run_log_dir": str(run_dir)})
+    _write_json(builder_root / "backlog_proposals.json", {"proposals": [{"proposal_id": "prop-1", "status": "accepted", "title": "Approved proposal"}]})
+    _write_json(builder_root / "synthesized_backlog_entries.json", {"entries": [{"synthesis_id": "syn-1", "status": "applied", "ticket_id_placeholder": "DRAFT-JORB-INFRA-ONE", "title": "Applied synthesis", "synthesis_eval_blocked": False}]})
+
+    result = _run([sys.executable, str(SCRIPT.parent / "show_status.py")], builder_root)
+
+    assert result.returncode == 0
+    assert "- completed_tasks: 1" not in result.stdout
+    assert "- completed_tasks: 2" in result.stdout
+    assert "- accepted_proposals: 1" in result.stdout
+    assert "- next_execution_target: DRAFT-JORB-INFRA-ONE" in result.stdout
+
+
+def test_operator_tui_renders_snapshot_when_idle(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "accepted"
+    _write_json(builder_root / "backlog.yml", backlog)
+    status = _json(builder_root / "status.yml")
+    status["state"] = "completed"
+    status["last_task_id"] = "JORB-INFRA-030"
+    _write_json(builder_root / "status.yml", status)
+    active = _json(builder_root / "active_task.yml")
+    active["task_id"] = None
+    active["title"] = None
+    _write_json(builder_root / "active_task.yml", active)
+
+    result = _run([sys.executable, str(OPERATOR_TUI_SCRIPT), "--once"], builder_root)
+
+    assert result.returncode == 0
+    assert "JORB Builder Operator TUI" in result.stdout
+    assert "Stage progress" in result.stdout
+    assert "Event feed" in result.stdout
+
+
+def test_operator_tui_safe_action_wiring_can_approve_proposal(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    tui = _load_operator_tui_module(builder_root)
+    _write_json(
+        builder_root / "backlog_proposals.json",
+        {
+            "proposals": [
+                {
+                    "proposal_id": "prop-1",
+                    "status": "draft",
+                    "title": "Draft proposal",
+                }
+            ]
+        },
+    )
+
+    result = tui.run_operator_action("approve_proposal", root=builder_root, identifier="prop-1", note="operator approved")
+
+    assert result["ok"] is True
+    proposals = _json(builder_root / "backlog_proposals.json")
+    assert proposals["proposals"][0]["status"] == "accepted"
 
 
 def test_synthesis_ready_state_only_enters_execution_queue_after_apply(tmp_path: Path) -> None:
