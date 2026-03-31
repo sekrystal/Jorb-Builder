@@ -25,6 +25,7 @@ SUPPORTED_DIMENSIONS = {
     "runtime_proof_quality",
     "evidence_quality",
     "recovery_quality",
+    "trajectory_quality",
     "operator_handoff_quality",
     "ui_validation_quality",
     "data_contract_compliance",
@@ -241,6 +242,27 @@ def _score_dimension(name: str, subject: dict[str, Any]) -> float:
         if taxonomy.get("failure_class") and taxonomy.get("recovery_action"):
             return 0.7
         return 0.2
+    if name == "trajectory_quality":
+        taxonomy = automation_result.get("failure_taxonomy") or {}
+        retries_used = int(subject["task"].get("retries_used") or 0)
+        steps = [step for step in automation_result.get("steps", []) if isinstance(step, dict)]
+        unstable_outcomes = {
+            str(step.get("name")): str(step.get("outcome") or "").lower()
+            for step in steps
+            if str(step.get("outcome") or "").lower() in {"blocked", "failed", "interrupted", "refined", "paused"}
+        }
+        score = 1.0
+        if retries_used:
+            score -= min(0.4, 0.15 * retries_used)
+        if taxonomy:
+            score -= 0.2
+        if unstable_outcomes:
+            score -= min(0.45, 0.15 * len(unstable_outcomes))
+        if accepted and not steps:
+            score -= 0.1
+        if accepted and not automation_result.get("changed_files") and not unstable_outcomes:
+            score -= 0.1
+        return round(max(0.0, min(1.0, score)), 3)
     if name == "operator_handoff_quality":
         if synthesized:
             score = 0.0

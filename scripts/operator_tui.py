@@ -332,6 +332,7 @@ def render_operator_view(
     lines.append(f"Present : {', '.join(artifact.get('present', [])) or 'none'}")
     lines.append(f"Missing : {', '.join(artifact.get('missing', [])) or 'none'}")
     lines.append(f"Eval    : score={eval_result.get('overall_score', 'n/a')} threshold={eval_result.get('threshold', 'n/a')} passed={eval_result.get('passed', 'n/a')}")
+    lines.append(f"Trajectory: {(eval_result.get('scores') or {}).get('trajectory_quality', 'n/a')}")
     lines.append(f"Judge   : {snapshot.get('judge_result') or 'none'}")
     lines.append("")
     lines.append("Queue and backlog evolution")

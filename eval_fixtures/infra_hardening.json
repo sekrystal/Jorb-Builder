@@ -38,9 +38,15 @@
     },
     {
       "name": "evidence_quality",
-      "weight": 0.2,
+      "weight": 0.16,
       "threshold": 0.8,
       "description": "Judge and evidence artifacts must be complete."
+    },
+    {
+      "name": "trajectory_quality",
+      "weight": 0.14,
+      "threshold": 0.7,
+      "description": "Execution path should avoid excessive retries, unstable recovery, or brittle pathing."
     },
     {
       "name": "operator_handoff_quality",

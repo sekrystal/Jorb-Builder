@@ -545,7 +545,7 @@ def _plain_state(
         }
     if backlog_diag.get("ready_task_ids"):
         return {
-            "label": "Completed",
+            "label": "Ready to run",
             "reason": "The builder is idle right now, but a runnable task is waiting in the queue.",
         }
     if active.get("task_id"):
@@ -775,7 +775,11 @@ def _system_reality(
                 if eval_result.get("fixture_family")
                 else "Local rubric eval framework exists, but the latest run does not show a scored fixture result."
             ),
-            "limit": "No separate trace or trajectory grader exists yet.",
+            "limit": (
+                "Trajectory grading is active for the latest run."
+                if "trajectory_quality" in (eval_result.get("scores") or {})
+                else "Trajectory grading only appears when the selected fixture includes trajectory_quality."
+            ),
         },
         {
             "name": "Memory",

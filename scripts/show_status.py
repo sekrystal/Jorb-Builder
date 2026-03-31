@@ -65,6 +65,7 @@ def main() -> int:
     print(f"- eval_fixture_family: {eval_result.get('fixture_family') or 'none'}")
     print(f"- eval_threshold: {eval_result.get('threshold', 'n/a')}")
     print(f"- eval_passed: {eval_result.get('passed', 'n/a')}")
+    print(f"- eval_trajectory_quality: {(eval_result.get('scores') or {}).get('trajectory_quality', 'n/a')}")
     print(f"- judge_result: {snapshot.get('judge_result') or 'none'}")
     print(f"- runtime_proof_expected: {bool((snapshot.get('task') or {}).get('requires_vm_runtime_proof'))}")
 

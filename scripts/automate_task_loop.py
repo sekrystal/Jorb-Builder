@@ -1418,6 +1418,12 @@ def score_run_eval(
         "test_adequacy": 1.0 if step_lookup.get("local_validation", {}).get("outcome") in {"passed", "accepted"} or "local_validation" not in step_lookup else 0.0,
         "runtime_proof_quality": 1.0 if phase4_runtime_proof_path(run_dir).exists() else 0.0,
         "evidence_quality": 1.0 if (run_dir / "evidence_bundle.json").exists() and (run_dir / "judge_decision.md").exists() else 0.0,
+        "trajectory_quality": max(
+            0.0,
+            1.0
+            - min(0.4, 0.15 * int(task.get("retries_used", 0) or 0))
+            - (0.2 if automation_result.get("failure_taxonomy") else 0.0),
+        ),
         "operator_handoff_quality": 1.0 if (standards.get("agents_exists") and standards.get("skills_exists")) else 0.4,
     }
     overall = round(sum(scores.values()) / len(scores), 3)

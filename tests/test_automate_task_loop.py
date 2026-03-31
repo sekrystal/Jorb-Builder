@@ -5152,6 +5152,71 @@ def test_private_eval_scores_fixture_with_real_rubric_dimensions(tmp_path: Path)
     assert result["overall_score"] >= result["threshold"]
 
 
+def test_private_eval_trajectory_quality_penalizes_brittle_path_even_with_artifacts(tmp_path: Path) -> None:
+    builder_root, _, run_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-010",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    module = _load_private_eval_module(builder_root)
+    fixture = {
+        "fixture_id": "infra_trajectory",
+        "fixture_family": "infra_hardening",
+        "description": "trajectory scoring",
+        "selector": {"task_family": "JORB-INFRA", "area": "builder"},
+        "mandatory_artifacts": ["compiled_feature_spec.md"],
+        "rubric_dimensions": [
+            {"name": "trajectory_quality", "weight": 1.0, "threshold": 0.7, "description": "trajectory"},
+        ],
+        "pass_threshold": 0.7,
+    }
+    standards = {"agents_exists": True, "skills_exists": True}
+    task = {"id": "JORB-INFRA-010", "title": "Feature understanding compiler", "area": "builder", "retries_used": 0}
+    _write_valid_phase4_feature_spec(module, run_dir, task, standards)
+
+    clean_subject = module.build_eval_subject(
+        task,
+        {
+            "classification": "accepted",
+            "summary": "clean path",
+            "steps": [
+                {"name": "executor", "outcome": "passed"},
+                {"name": "local_validation", "outcome": "passed"},
+            ],
+            "changed_files": ["scripts/foo.py"],
+        },
+        run_dir=run_dir,
+        standards=standards,
+    )
+    brittle_subject = module.build_eval_subject(
+        {**task, "retries_used": 2},
+        {
+            "classification": "accepted",
+            "summary": "brittle recovered path",
+            "steps": [
+                {"name": "executor", "outcome": "blocked"},
+                {"name": "local_validation", "outcome": "passed"},
+            ],
+            "changed_files": ["scripts/foo.py"],
+            "failure_taxonomy": {
+                "failure_class": "repo_state_failure",
+                "recovery_action": "repair_state",
+            },
+        },
+        run_dir=run_dir,
+        standards=standards,
+    )
+
+    clean = module.score_fixture_subject(fixture, clean_subject)
+    brittle = module.score_fixture_subject(fixture, brittle_subject)
+
+    assert clean["scores"]["trajectory_quality"] > brittle["scores"]["trajectory_quality"]
+    assert clean["passed"] is True
+    assert brittle["passed"] is False
+    assert brittle["dimension_failures"] == ["trajectory_quality"]
+
+
 def test_private_eval_replay_scores_historical_artifacts_and_aggregates(tmp_path: Path) -> None:
     builder_root, _, run_dir, _ = _setup_builder_fixture(
         tmp_path,
@@ -5391,6 +5456,79 @@ def test_eval_gate_blocks_acceptance_when_fixture_threshold_fails(tmp_path: Path
     assert persisted["classification"] == "blocked"
     assert "Eval threshold not met" in persisted["summary"]
     assert _json(run_dir / "eval_result.json")["blocked_acceptance"] is True
+
+
+def test_eval_gate_blocks_acceptance_when_trajectory_quality_is_poor(tmp_path: Path) -> None:
+    builder_root, _, run_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-010",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    module = _load_script_module(builder_root)
+    _write_eval_fixture(
+        builder_root / "eval_fixtures" / "infra_trajectory.json",
+        {
+            "fixture_id": "infra_hardening_trajectory_v1",
+            "fixture_family": "infra_hardening",
+            "description": "trajectory gate",
+            "selector": {"task_family": "JORB-INFRA", "area": "builder"},
+            "mandatory_artifacts": [
+                "compiled_feature_spec.md",
+                "proposal.md",
+                "tradeoff_matrix.md",
+                "judge_decision.md",
+                "evidence_bundle.json",
+                "runtime_proof.log",
+            ],
+            "rubric_dimensions": [
+                {"name": "planning_quality", "weight": 0.2, "threshold": 0.7, "description": "plan"},
+                {"name": "test_adequacy", "weight": 0.2, "threshold": 0.7, "description": "tests"},
+                {"name": "evidence_quality", "weight": 0.2, "threshold": 0.7, "description": "evidence"},
+                {"name": "operator_handoff_quality", "weight": 0.1, "threshold": 0.7, "description": "handoff"},
+                {"name": "trajectory_quality", "weight": 0.3, "threshold": 0.75, "description": "trajectory"},
+            ],
+            "pass_threshold": 0.8,
+        },
+    )
+    task = _json(builder_root / "backlog.yml")["tasks"][0]
+    task["retries_used"] = 2
+    standards = {"agents_exists": True, "skills_exists": True, "agents_path": "AGENTS.md", "skills_dir": "skills", "skill_files": []}
+    _write_valid_phase4_feature_spec(module, run_dir, task, standards)
+    for name in ("proposal.md", "tradeoff_matrix.md", "research_brief.md"):
+        (run_dir / name).write_text("ok\n", encoding="utf-8")
+    automation_result = {
+        "task_id": "JORB-INFRA-010",
+        "classification": "accepted",
+        "summary": "accepted after a brittle recovery path",
+        "finished_at": "2026-03-30T00:00:00+00:00",
+        "steps": [
+            {"name": "executor", "outcome": "blocked", "detail": "initial repo-state failure"},
+            {"name": "local_validation", "outcome": "passed", "detail": "tests passed"},
+        ],
+        "changed_files": ["scripts/foo.py"],
+        "failure_taxonomy": {
+            "failure_class": "repo_state_failure",
+            "recovery_action": "repair_state",
+        },
+    }
+
+    persisted = module.persist_result_with_phase4_artifacts(
+        run_dir,
+        task,
+        automation_result,
+        standards=standards,
+        require_runtime_proof=False,
+        local_validation_payload=None,
+        vm_validation_payload=None,
+    )
+
+    eval_result = _json(run_dir / "eval_result.json")
+    assert persisted["classification"] == "blocked"
+    assert "Eval threshold not met" in persisted["summary"]
+    assert eval_result["blocked_acceptance"] is True
+    assert "trajectory_quality" in eval_result["dimension_failures"]
+    assert eval_result["scores"]["trajectory_quality"] < 0.75
 
 
 def test_phase4_eval_scores_final_operator_handoff_and_evidence_artifacts(tmp_path: Path) -> None:
@@ -5787,6 +5925,22 @@ def test_private_eval_fixture_schema_accepts_backlog_synthesis_dimension(tmp_pat
             {"name": "backlog_synthesis_quality", "weight": 1.0, "threshold": 0.8, "description": "quality"},
         ],
         "pass_threshold": 0.8,
+    }
+    assert module.validate_fixture_schema(fixture) == []
+
+
+def test_private_eval_fixture_schema_accepts_trajectory_dimension(tmp_path: Path) -> None:
+    module = _load_private_eval_module(tmp_path)
+    fixture = {
+        "fixture_id": "infra_trajectory_v1",
+        "fixture_family": "infra_hardening",
+        "description": "trajectory",
+        "selector": {"task_family": "JORB-INFRA", "area": "builder"},
+        "mandatory_artifacts": [],
+        "rubric_dimensions": [
+            {"name": "trajectory_quality", "weight": 1.0, "threshold": 0.7, "description": "trajectory"},
+        ],
+        "pass_threshold": 0.7,
     }
     assert module.validate_fixture_schema(fixture) == []
 
@@ -6908,6 +7062,7 @@ def test_operator_snapshot_ready_task_does_not_inherit_previous_run_truth(tmp_pa
     snapshot = module.build_operator_snapshot(builder_root)
     stages = {item["key"]: item["status"] for item in snapshot["stage_progress"]}
 
+    assert snapshot["plain_state"]["label"] == "Ready to run"
     assert snapshot["current_task_source"] == "next_ready"
     assert snapshot["task"]["id"] == "JORB-INFRA-041"
     assert snapshot["current_run_dir"] is None

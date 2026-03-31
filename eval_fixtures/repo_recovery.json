@@ -29,9 +29,15 @@
     },
     {
       "name": "operator_handoff_quality",
-      "weight": 0.2,
+      "weight": 0.15,
       "threshold": 0.7,
       "description": "Operators should get clear next actions."
+    },
+    {
+      "name": "trajectory_quality",
+      "weight": 0.2,
+      "threshold": 0.65,
+      "description": "Recovery path should avoid repeated instability, blind retries, or unnecessary divergence."
     },
     {
       "name": "planning_quality",
@@ -41,7 +47,7 @@
     },
     {
       "name": "test_adequacy",
-      "weight": 0.15,
+      "weight": 0.1,
       "threshold": 0.4,
       "description": "Validation evidence should explain what was or was not rerun."
     }
