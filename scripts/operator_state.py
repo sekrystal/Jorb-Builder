@@ -141,6 +141,14 @@ def _latest_run_dir(root: Path, active: dict[str, Any], status: dict[str, Any]) 
     return None
 
 
+def _active_run_dir(active: dict[str, Any]) -> Path | None:
+    value = active.get("run_log_dir")
+    if not value or not active.get("task_id"):
+        return None
+    candidate = Path(str(value)).expanduser().resolve()
+    return candidate if candidate.exists() else None
+
+
 def _latest_open_blocker(root: Path, task_id: str | None) -> dict[str, Any] | None:
     candidates: list[dict[str, Any]] = []
     for path in sorted((root / "blockers").glob("*.yml")):
@@ -179,7 +187,7 @@ def _collect_expected_artifacts(task: dict[str, Any] | None) -> list[str]:
     return []
 
 
-def _artifact_panel(run_dir: Path | None, task: dict[str, Any] | None, ledger_truth: dict[str, Any]) -> dict[str, Any]:
+def _artifact_panel(run_dir: Path | None, task: dict[str, Any] | None, ledger_truth: dict[str, Any], *, allow_ledger_fallback: bool) -> dict[str, Any]:
     expected = _collect_expected_artifacts(task)
     if not expected and task is not None and str(task.get("area")).lower() == "builder":
         expected = list(PHASE4_OPERATOR_ARTIFACTS)
@@ -188,7 +196,7 @@ def _artifact_panel(run_dir: Path | None, task: dict[str, Any] | None, ledger_tr
     if run_dir and run_dir.exists():
         actual_files = sorted(item.name for item in run_dir.iterdir() if item.is_file())
         present = [name for name in expected if (run_dir / name).exists()]
-    elif ledger_truth.get("artifact_completeness"):
+    elif allow_ledger_fallback and ledger_truth.get("artifact_completeness"):
         artifact_state = ledger_truth.get("artifact_completeness") or {}
         present = [str(item) for item in artifact_state.get("present", [])]
     missing = [name for name in expected if name not in set(present)]
@@ -200,12 +208,14 @@ def _artifact_panel(run_dir: Path | None, task: dict[str, Any] | None, ledger_tr
     }
 
 
-def _load_latest_eval(run_dir: Path | None, ledger_truth: dict[str, Any]) -> dict[str, Any]:
+def _load_latest_eval(run_dir: Path | None, ledger_truth: dict[str, Any], *, allow_ledger_fallback: bool) -> dict[str, Any]:
     if run_dir:
         eval_path = run_dir / "eval_result.json"
         if eval_path.exists():
             return _safe_load(eval_path, {})
-    return dict(ledger_truth.get("eval_result") or {})
+    if allow_ledger_fallback:
+        return dict(ledger_truth.get("eval_result") or {})
+    return {}
 
 
 def _latest_judge_result(run_dir: Path | None) -> str | None:
@@ -241,6 +251,7 @@ def _git_status_lines(root: Path) -> list[str]:
 def _stage_progress(
     *,
     task: dict[str, Any] | None,
+    task_source: str,
     active: dict[str, Any],
     status: dict[str, Any],
     run_dir: Path | None,
@@ -253,7 +264,7 @@ def _stage_progress(
     seen_stages.discard(None)
     latest_progress = progress[-1] if progress else None
     latest_mapped = PROGRESS_STAGE_MAP.get(int(latest_progress.get("stage_index", 0))) if latest_progress else None
-    terminal_state = str(status.get("last_result") or automation_result.get("classification") or "").lower()
+    terminal_state = str(automation_result.get("classification") or "").lower() if task_source == "active" else ""
     blocked = terminal_state in {"blocked", "refined", "preflight_failed"}
     completed = terminal_state in {"accepted", "done", "completed"}
     prompt_exists = bool(active.get("prompt_file")) or bool(run_dir and (run_dir / "codex_prompt.md").exists())
@@ -264,8 +275,8 @@ def _stage_progress(
     judge_present = bool(eval_result) or bool(_latest_judge_result(run_dir)) or bool(run_dir and (run_dir / "evidence_bundle.json").exists())
 
     statuses: dict[str, str] = {name: "pending" for name in OPERATOR_STAGE_ORDER}
-    statuses["queued"] = "complete" if task is not None else "current"
-    if "selected" in seen_stages or active.get("task_id") or status.get("last_task_id") == (task or {}).get("id"):
+    statuses["queued"] = "complete" if task_source == "active" else ("current" if task is not None else "current")
+    if task_source == "active" and ("selected" in seen_stages or active.get("task_id")):
         statuses["selected"] = "complete"
     if prompt_exists:
         statuses["prompt_rendered"] = "complete"
@@ -291,7 +302,7 @@ def _stage_progress(
     current_stage = latest_mapped
     if blocked:
         current_stage = latest_mapped or "terminal"
-    elif active.get("task_id"):
+    elif task_source == "active" and active.get("task_id"):
         current_stage = latest_mapped or "selected"
     elif completed:
         current_stage = None
@@ -532,6 +543,11 @@ def _plain_state(
             "label": "Blocked",
             "reason": "A real blocker is stopping the builder and needs intervention before work can continue.",
         }
+    if backlog_diag.get("ready_task_ids"):
+        return {
+            "label": "Completed",
+            "reason": "The builder is idle right now, but a runnable task is waiting in the queue.",
+        }
     if active.get("task_id"):
         current = next((item for item in stage_progress if item.get("status") in {"current", "failed"}), None)
         current_key = str((current or {}).get("key") or "")
@@ -554,11 +570,6 @@ def _plain_state(
             "label": "Waiting on Approval",
             "reason": "There is proposal work waiting for an operator decision or synthesis step before execution can continue.",
         }
-    if backlog_diag.get("ready_task_ids"):
-        return {
-            "label": "Completed",
-            "reason": "The builder is idle right now, but a runnable task is waiting in the queue.",
-        }
     pending_count = len(backlog_diag.get("pending_task_ids", []))
     if pending_count:
         return {
@@ -573,10 +584,12 @@ def _plain_state(
 
 def _compact_progress(
     *,
+    task_source: str,
     active: dict[str, Any],
     latest_run_result: dict[str, Any],
     latest_run_dir: Path | None,
     stage_progress: list[dict[str, Any]],
+    backlog_diag: dict[str, Any],
 ) -> dict[str, Any]:
     progress_rows = _safe_jsonl(latest_run_dir / "progress.jsonl") if latest_run_dir else []
     latest = progress_rows[-1] if progress_rows else {}
@@ -588,6 +601,18 @@ def _compact_progress(
             elapsed_seconds = max(0, int((last_at - first_at).total_seconds()))
             minutes, seconds = divmod(elapsed_seconds, 60)
             elapsed = f"{minutes}m {seconds}s" if minutes else f"{seconds}s"
+    ready_idle = task_source == "next_ready" and not active.get("task_id")
+    if ready_idle:
+        return {
+            "current_phase": "Ready to run",
+            "elapsed": "n/a",
+            "health": "idle",
+            "waiting_for": "operator run trigger",
+            "technical_detail": {
+                "latest_progress": latest,
+                "latest_run_classification": latest_run_result.get("classification"),
+            },
+        }
     health = "blocked" if any(item.get("status") == "failed" for item in stage_progress) else ("active" if active.get("task_id") else "idle")
     current = next((item for item in stage_progress if item.get("status") in {"current", "failed"}), None)
     waiting_for = None
@@ -603,9 +628,9 @@ def _compact_progress(
     elif health == "idle":
         waiting_for = "next runnable task"
     return {
-        "current_phase": (current or {}).get("label") or "none",
+        "current_phase": (current or {}).get("label") or ("Ready to run" if ready_idle else "none"),
         "elapsed": elapsed or "n/a",
-        "health": health,
+        "health": ("idle" if ready_idle else health),
         "waiting_for": waiting_for or "none",
         "technical_detail": {
             "latest_progress": latest,
@@ -631,6 +656,7 @@ def _blocker_guidance(root: Path, latest_blocker: dict[str, Any] | None) -> dict
             "why_it_stops": "The automation loop refuses to continue because running on a dirty worktree could mix unrelated edits into the task.",
             "auto_fix_safe": True,
             "options": [
+                {"key": "u", "label": "Auto-recover common blocker", "action": "recover_common_blocker"},
                 {"key": "g", "label": "Inspect changed files", "action": "inspect_dirty_files"},
                 {"key": "c", "label": "Checkpoint commit current changes", "action": "checkpoint_commit"},
                 {"key": "t", "label": "Repair and reopen blocked task", "action": "retry_blocked_task"},
@@ -697,8 +723,93 @@ def _queue_explanation(backlog_diag: dict[str, Any], proposals: dict[str, Any], 
     }
 
 
-def _recommended_action(*, backlog_diag: dict[str, Any], latest_blocker: dict[str, Any] | None, proposals: dict[str, Any], synthesis: dict[str, Any], active: dict[str, Any], status: dict[str, Any]) -> str:
+def _truth_warnings(
+    *,
+    status: dict[str, Any],
+    active: dict[str, Any],
+    task: dict[str, Any] | None,
+    backlog_diag: dict[str, Any],
+    latest_blocker: dict[str, Any] | None,
+) -> list[str]:
+    warnings: list[str] = []
+    blocked_ids = set(str(item) for item in backlog_diag.get("blocked_task_ids", []))
+    ready_ids = set(str(item) for item in backlog_diag.get("ready_task_ids", []))
+    active_task_id = str(active.get("task_id") or "")
+    task_status = str((task or {}).get("status") or "")
+    status_state = str(status.get("state") or "")
+    if latest_blocker and not blocked_ids:
+        warnings.append("Open blocker evidence exists, but canonical backlog currently reports no blocked task.")
+    if status_state == "blocked" and not latest_blocker and not blocked_ids:
+        warnings.append("Status says blocked, but canonical backlog and blocker files do not currently show an open blocker.")
+    if active_task_id and task is None:
+        warnings.append("Active task state references a task that is not present in canonical backlog.")
+    elif active_task_id and task_status in {"accepted", "done"}:
+        warnings.append("Active task state still points at a task that canonical backlog already marks complete.")
+    elif active_task_id and status_state == "idle":
+        warnings.append("Active task state exists even though top-level status is idle.")
+    if not active_task_id and status_state in {"implementing", "task_selected", "preflight_passed", "preflight_failed"}:
+        warnings.append("Top-level status suggests an active run, but there is no active task bound in canonical state.")
+    if ready_ids and status_state == "completed":
+        warnings.append("Top-level status says completed even though canonical backlog still has ready work.")
+    return warnings
+
+
+def _system_reality(
+    *,
+    root: Path,
+    latest_run_dir: Path | None,
+    memory_store: dict[str, Any],
+    eval_result: dict[str, Any],
+    truth_warnings: list[str],
+) -> list[dict[str, str]]:
+    fixtures_dir = root / "eval_fixtures"
+    fixture_count = len(list(fixtures_dir.glob("*.json"))) if fixtures_dir.exists() else 0
+    has_memory_context = bool(latest_run_dir and ((latest_run_dir / "memory_context.json").exists() or (latest_run_dir / "judge_memory_context.json").exists()))
+    counts = memory_store.get("counts_by_status") or {}
+    return [
+        {
+            "name": "Evals",
+            "status": "proven" if eval_result.get("fixture_family") else ("partially_proven" if fixture_count else "missing"),
+            "detail": (
+                "Explicit scored eval fixtures are active for the latest run."
+                if eval_result.get("fixture_family")
+                else "Local rubric eval framework exists, but the latest run does not show a scored fixture result."
+            ),
+            "limit": "No separate trace or trajectory grader exists yet.",
+        },
+        {
+            "name": "Memory",
+            "status": "partially_proven" if memory_store.get("entries") else "missing",
+            "detail": f"Structured memory store is file-backed with {len(memory_store.get('entries', []))} entries and provenance; active={counts.get('active', 0)}.",
+            "limit": "Retrieval is heuristic local scoring, not vector-search or service-backed retrieval.",
+        },
+        {
+            "name": "Retrieval",
+            "status": "partially_proven" if has_memory_context else "implemented_not_proven",
+            "detail": "Role-specific memory/artifact bundles are emitted for runs that render memory context." if has_memory_context else "Role-specific retrieval code exists, but the latest run does not show emitted memory context artifacts.",
+            "limit": "Analog lookup is file-index and rule driven rather than learned retrieval.",
+        },
+        {
+            "name": "Orchestration",
+            "status": "partially_proven",
+            "detail": "Run continuity exists through active_task.yml, status.yml, run_ledger.json, and progress logs.",
+            "limit": "Streaming remains poll/file based, not webhook or push-event based.",
+        },
+        {
+            "name": "Control plane",
+            "status": "partially_proven" if truth_warnings else "proven",
+            "detail": "Operator surfaces align with current canonical backlog truth." if not truth_warnings else truth_warnings[0],
+            "limit": "Trust drops whenever state repair leaves stale status or blocker evidence behind.",
+        },
+    ]
+
+
+def _recommended_action(*, backlog_diag: dict[str, Any], latest_blocker: dict[str, Any] | None, blocker_guidance: dict[str, Any], proposals: dict[str, Any], synthesis: dict[str, Any], active: dict[str, Any], status: dict[str, Any], truth_warnings: list[str]) -> str:
+    if truth_warnings:
+        return "Press t to reconcile control-plane state drift before taking the next action."
     if latest_blocker:
+        if blocker_guidance.get("auto_fix_safe"):
+            return "Press u to auto-recover the common blocker, or g/c/t to inspect, checkpoint, and repair step by step."
         return f"Inspect blocker {latest_blocker.get('id')} and run python3 scripts/automate_task_loop.py --repair-state if the condition is already resolved."
     next_ready = backlog_diag.get("next_selected_task_id")
     if next_ready:
@@ -736,19 +847,30 @@ def build_operator_snapshot(root: Path | None = None) -> dict[str, Any]:
     synthesis = synthesis_summary_for_operator(repo_root)
     backlog_diag = compute_backlog_diagnostics(backlog)
     latest_run_dir = _latest_run_dir(repo_root, active, status)
-    automation_result = _safe_load(latest_run_dir / "automation_result.json", {}) if latest_run_dir else {}
-    task_id = active.get("task_id") or status.get("last_task_id")
-    task = _task_by_id(backlog, task_id)
+    active_run_dir = _active_run_dir(active)
+    current_task_id = active.get("task_id") or backlog_diag.get("next_selected_task_id") or status.get("last_task_id")
+    if active.get("task_id"):
+        task_source = "active"
+    elif backlog_diag.get("next_selected_task_id"):
+        task_source = "next_ready"
+    elif status.get("last_task_id"):
+        task_source = "last_task"
+    else:
+        task_source = "none"
+    task = _task_by_id(backlog, current_task_id)
+    current_run_dir = active_run_dir if task_source == "active" else None
+    automation_result = _safe_load(current_run_dir / "automation_result.json", {}) if current_run_dir else {}
     latest_blocker = _latest_open_blocker(repo_root, active.get("task_id") or status.get("last_task_id"))
     open_blockers = _open_blockers(repo_root)
-    artifact_panel = _artifact_panel(latest_run_dir, task, ledger)
-    eval_result = _load_latest_eval(latest_run_dir, ledger)
-    judge_result = _latest_judge_result(latest_run_dir)
+    artifact_panel = _artifact_panel(current_run_dir, task, ledger, allow_ledger_fallback=(task_source == "active"))
+    eval_result = _load_latest_eval(current_run_dir, ledger, allow_ledger_fallback=(task_source == "active"))
+    judge_result = _latest_judge_result(current_run_dir)
     stage_progress = _stage_progress(
         task=task,
+        task_source=task_source,
         active=active,
         status=status,
-        run_dir=latest_run_dir,
+        run_dir=current_run_dir,
         automation_result=automation_result,
         artifact_panel=artifact_panel,
         eval_result=eval_result,
@@ -763,20 +885,38 @@ def build_operator_snapshot(root: Path | None = None) -> dict[str, Any]:
         proposals=proposals,
     )
     compact_progress = _compact_progress(
+        task_source=task_source,
         active=active,
         latest_run_result=automation_result,
-        latest_run_dir=latest_run_dir,
+        latest_run_dir=current_run_dir,
         stage_progress=stage_progress,
+        backlog_diag=backlog_diag,
     )
     blocker_guidance = _blocker_guidance(repo_root, latest_blocker)
     queue_explanation = _queue_explanation(backlog_diag, proposals, synthesis)
+    truth_warnings = _truth_warnings(
+        status=status,
+        active=active,
+        task=task,
+        backlog_diag=backlog_diag,
+        latest_blocker=latest_blocker,
+    )
+    system_reality = _system_reality(
+        root=repo_root,
+        latest_run_dir=latest_run_dir,
+        memory_store=memory_store,
+        eval_result=eval_result,
+        truth_warnings=truth_warnings,
+    )
     next_action = _recommended_action(
         backlog_diag=backlog_diag,
         latest_blocker=latest_blocker,
+        blocker_guidance=blocker_guidance,
         proposals=proposals,
         synthesis=synthesis,
         active=active,
         status=status,
+        truth_warnings=truth_warnings,
     )
     selector_items = {
         "proposals": [
@@ -829,6 +969,8 @@ def build_operator_snapshot(root: Path | None = None) -> dict[str, Any]:
         "proposals": proposals,
         "synthesis": synthesis,
         "latest_run_dir": str(latest_run_dir) if latest_run_dir else None,
+        "current_run_dir": str(current_run_dir) if current_run_dir else None,
+        "current_task_source": task_source,
         "latest_run_result": automation_result,
         "latest_blocker": latest_blocker,
         "open_blockers": open_blockers,
@@ -841,6 +983,8 @@ def build_operator_snapshot(root: Path | None = None) -> dict[str, Any]:
         "compact_progress": compact_progress,
         "blocker_guidance": blocker_guidance,
         "queue_explanation": queue_explanation,
+        "truth_warnings": truth_warnings,
+        "system_reality": system_reality,
         "event_feed": event_feed,
         "stats": _actual_stats(backlog_diag),
         "next_recommended_action": next_action,

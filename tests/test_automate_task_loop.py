@@ -6634,6 +6634,7 @@ def test_operator_tui_renders_snapshot_when_idle(tmp_path: Path) -> None:
     status = _json(builder_root / "status.yml")
     status["state"] = "completed"
     status["last_task_id"] = "JORB-INFRA-030"
+    status["last_result"] = "blocked"
     _write_json(builder_root / "status.yml", status)
     active = _json(builder_root / "active_task.yml")
     active["task_id"] = None
@@ -6857,6 +6858,133 @@ def test_operator_snapshot_plain_state_waiting_on_approval(tmp_path: Path) -> No
     assert snapshot["next_recommended_action"] == "Press p to review draft proposals and approve the next builder-safe candidate."
 
 
+def test_operator_snapshot_ready_task_does_not_inherit_previous_run_truth(tmp_path: Path) -> None:
+    builder_root, _, run_dir, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    module = _load_operator_state_module(builder_root)
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "accepted"
+    backlog["tasks"].append(
+        {
+            "id": "JORB-INFRA-041",
+            "title": "Compact progress cleanup",
+            "type": "infrastructure",
+            "area": "builder",
+            "milestone": "M8",
+            "priority": 1,
+            "status": "ready",
+            "depends_on": [],
+            "repo_path": "~/projects/jorb-builder",
+            "description": "desc",
+            "acceptance_criteria": ["a"],
+            "verification": [],
+            "required_artifacts": ["compiled_feature_spec.md", "proposal.md"],
+        }
+    )
+    _write_json(builder_root / "backlog.yml", backlog)
+    status = _json(builder_root / "status.yml")
+    status["state"] = "completed"
+    status["last_task_id"] = "JORB-INFRA-030"
+    _write_json(builder_root / "status.yml", status)
+    active = _json(builder_root / "active_task.yml")
+    active["task_id"] = None
+    active["title"] = None
+    active["state"] = "idle"
+    active["run_log_dir"] = None
+    _write_json(builder_root / "active_task.yml", active)
+    (run_dir / "compiled_feature_spec.md").write_text("old spec\n", encoding="utf-8")
+    (run_dir / "eval_result.json").write_text(json.dumps({"fixture_family": "infra_hardening", "overall_score": 1.0}) + "\n", encoding="utf-8")
+    (run_dir / "progress.jsonl").write_text(
+        "\n".join(
+            [
+                json.dumps({"timestamp": "2026-03-31T00:00:00+00:00", "task_id": "JORB-INFRA-030", "stage_index": 1, "stage_name": "Task selected", "state": "running", "detail": "selected"}),
+                json.dumps({"timestamp": "2026-03-31T00:00:02+00:00", "task_id": "JORB-INFRA-030", "stage_index": 9, "stage_name": "Classification", "state": "completed", "detail": "accepted"}),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    _write_json(builder_root / "task_history" / "2026-03-31T000000Z-JORB-INFRA-030.yml", {"task_id": "JORB-INFRA-030", "status": "accepted", "completed_at": "2026-03-31T00:00:00+00:00", "run_log_dir": str(run_dir)})
+
+    snapshot = module.build_operator_snapshot(builder_root)
+    stages = {item["key"]: item["status"] for item in snapshot["stage_progress"]}
+
+    assert snapshot["current_task_source"] == "next_ready"
+    assert snapshot["task"]["id"] == "JORB-INFRA-041"
+    assert snapshot["current_run_dir"] is None
+    assert snapshot["latest_run_dir"] == str(run_dir)
+    assert snapshot["artifact_panel"]["present"] == []
+    assert snapshot["eval_result"] == {}
+    assert snapshot["compact_progress"]["current_phase"] == "Ready to run"
+    assert snapshot["compact_progress"]["waiting_for"] == "operator run trigger"
+    assert stages["queued"] == "current"
+    assert stages["selected"] == "pending"
+    assert stages["execution_started"] == "pending"
+    assert stages["terminal"] == "pending"
+
+
+def test_show_status_distinguishes_current_target_from_latest_run_context(tmp_path: Path) -> None:
+    builder_root, _, run_dir, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "accepted"
+    backlog["tasks"].append(
+        {
+            "id": "JORB-INFRA-041",
+            "title": "Compact progress cleanup",
+            "type": "infrastructure",
+            "area": "builder",
+            "milestone": "M8",
+            "priority": 1,
+            "status": "ready",
+            "depends_on": [],
+            "repo_path": "~/projects/jorb-builder",
+            "description": "desc",
+            "acceptance_criteria": ["a"],
+            "verification": [],
+            "required_artifacts": ["compiled_feature_spec.md", "proposal.md"],
+        }
+    )
+    _write_json(builder_root / "backlog.yml", backlog)
+    status = _json(builder_root / "status.yml")
+    status["state"] = "completed"
+    status["last_task_id"] = "JORB-INFRA-030"
+    _write_json(builder_root / "status.yml", status)
+    active = _json(builder_root / "active_task.yml")
+    active["task_id"] = None
+    active["title"] = None
+    active["state"] = "idle"
+    active["run_log_dir"] = None
+    _write_json(builder_root / "active_task.yml", active)
+    (run_dir / "compiled_feature_spec.md").write_text("old spec\n", encoding="utf-8")
+    _write_json(builder_root / "task_history" / "2026-03-31T000000Z-JORB-INFRA-030.yml", {"task_id": "JORB-INFRA-030", "status": "accepted", "completed_at": "2026-03-31T00:00:00+00:00", "run_log_dir": str(run_dir)})
+
+    result = _run([sys.executable, str(SCRIPT.parent / "show_status.py")], builder_root)
+
+    assert result.returncode == 0
+    assert "- current_task_source: next_ready" in result.stdout
+    assert "- current_run_dir: none" in result.stdout
+    assert f"- latest_run_dir: {run_dir}" in result.stdout
+    assert "- present_artifacts: none" in result.stdout
+
+
+def test_operator_snapshot_surfaces_system_reality_and_truth_warning(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    module = _load_operator_state_module(builder_root)
+    status = _json(builder_root / "status.yml")
+    status["state"] = "blocked"
+    _write_json(builder_root / "status.yml", status)
+    active = _json(builder_root / "active_task.yml")
+    active["task_id"] = None
+    active["state"] = "idle"
+    _write_json(builder_root / "active_task.yml", active)
+
+    snapshot = module.build_operator_snapshot(builder_root)
+
+    assert any(item["name"] == "Memory" for item in snapshot["system_reality"])
+    assert any(item["name"] == "Evals" for item in snapshot["system_reality"])
+    assert any("Status says blocked" in item for item in snapshot["truth_warnings"])
+    assert snapshot["next_recommended_action"] == "Press t to reconcile control-plane state drift before taking the next action."
+
+
 def test_operator_tui_renders_human_centered_blocker_and_queue_sections(tmp_path: Path) -> None:
     builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
     state = _load_operator_state_module(builder_root)
@@ -6888,6 +7016,7 @@ def test_operator_tui_renders_human_centered_blocker_and_queue_sections(tmp_path
     assert "Recovery opts:" in rendered
     assert "Queue explanation" in rendered
     assert "ACTION STATUS >>> Selected synthesis syn-1. Next: press x." in rendered
+    assert "System reality" in rendered
 
 
 def test_operator_tui_safe_action_can_inspect_dirty_files_and_checkpoint(tmp_path: Path) -> None:
@@ -6901,6 +7030,50 @@ def test_operator_tui_safe_action_can_inspect_dirty_files_and_checkpoint(tmp_pat
     assert inspect["ok"] is True
     assert any("notes.txt" in item for item in inspect["changed_files"])
     assert commit["ok"] is True
+
+
+def test_operator_tui_safe_action_can_recover_common_dirty_repo_blocker(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    tui = _load_operator_tui_module(builder_root)
+    status = _json(builder_root / "status.yml")
+    status["state"] = "blocked"
+    _write_json(builder_root / "status.yml", status)
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "blocked"
+    _write_json(builder_root / "backlog.yml", backlog)
+    _write_json(
+        builder_root / "blockers" / "BLK-JORB-INFRA-030.yml",
+        {
+            "id": "BLK-JORB-INFRA-030",
+            "title": "Dirty repo blocker",
+            "related_tasks": ["JORB-INFRA-030"],
+            "status": "open",
+            "diagnosis": "Builder repo is dirty before automated execution; refusing to continue.",
+            "next_actions": ["repair"],
+        },
+    )
+
+    calls: list[list[str]] = []
+
+    def fake_runner(argv, cwd=None, text=None, capture_output=None, env=None):
+        calls.append(list(argv))
+        if argv[:3] == ["git", "status", "--short"]:
+            return subprocess.CompletedProcess(argv, 0, " M notes.txt\n", "")
+        if argv[:3] == ["git", "add", "-A"]:
+            return subprocess.CompletedProcess(argv, 0, "", "")
+        if argv[:3] == ["git", "commit", "-m"]:
+            return subprocess.CompletedProcess(argv, 0, "[main abc123] checkpoint\n", "")
+        if argv[0] == sys.executable and argv[-1] == "--repair-state":
+            return subprocess.CompletedProcess(argv, 0, "STATE_REPAIRED\n", "")
+        return subprocess.CompletedProcess(argv, 0, "", "")
+
+    result = tui.run_operator_action("recover_common_blocker", root=builder_root, runner=fake_runner)
+
+    assert result["ok"] is True
+    assert "STATE_REPAIRED" in result["message"]
+    assert ["git", "status", "--short"] in calls
+    assert ["git", "add", "-A"] in calls
+    assert [sys.executable, str(SCRIPT), "--repair-state"] in calls
 
 
 def test_operator_tui_safe_action_wiring_can_approve_proposal(tmp_path: Path) -> None:

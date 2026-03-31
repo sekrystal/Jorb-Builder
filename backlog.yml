@@ -4928,6 +4928,108 @@
       "allow_noop_completion": false
     },
     {
+      "id": "JORB-INFRA-044",
+      "title": "Explicit trajectory grading for builder task quality",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M8",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-023"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Add explicit trajectory or trace grading so the builder can score task quality beyond final artifacts and local pass/fail outcomes.",
+      "why_it_matters": "The current eval framework grades artifacts and outcomes, but it does not independently grade the execution trace or reasoning trajectory.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "private eval framework can score at least one machine-readable trajectory or trace dimension",
+        "trajectory grading remains distinct from artifact presence and local test pass/fail",
+        "operator surfaces can state when a run passed tests but still graded weakly on trajectory quality"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Extend the eval framework with explicit trajectory grading instead of relying only on artifact and outcome heuristics.",
+      "allow_noop_completion": false
+    },
+    {
+      "id": "JORB-INFRA-045",
+      "title": "Strengthen retrieval-backed memory beyond local heuristic ranking",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M8",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-024"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Make memory retrieval more robust and auditable than simple local heuristic scoring over files and tags.",
+      "why_it_matters": "The builder has a real structured memory store today, but retrieval is still local heuristic ranking rather than a stronger analog lookup layer.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "retrieval exposes stronger analog-match evidence than raw tag and confidence scoring alone",
+        "operator and artifact outputs can show why a prior run was retrieved",
+        "memory retrieval remains provenance-preserving and role-specific"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Strengthen retrieval-backed memory so it is more than a local file-and-tag ranking heuristic.",
+      "allow_noop_completion": false
+    },
+    {
+      "id": "JORB-INFRA-046",
+      "title": "Streaming-friendly canonical event model for long-running builder supervision",
+      "type": "infrastructure",
+      "area": "builder",
+      "milestone": "M8",
+      "priority": 1,
+      "status": "pending",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-041"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Replace the current mixed polling and file-tail event experience with a cleaner canonical event model that is easier to stream and recover.",
+      "why_it_matters": "Long-running supervision still depends heavily on polling progress files and ledger events, which is operational but noisy and only partially streaming-friendly.",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "acceptance_criteria": [
+        "canonical event payloads can represent state transitions without repeated poll spam",
+        "operator surfaces can consume one normalized event stream for long-running supervision",
+        "until-failure mode stop reasons remain explicit and auditable"
+      ],
+      "repo_path": "~/projects/jorb-builder",
+      "description": "Create a more normalized canonical event model for long-running builder control-plane use.",
+      "allow_noop_completion": false
+    },
+    {
       "id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
       "title": "Harden operator truth for Phase 4 artifact enforcement state",
       "type": "infrastructure",
@@ -5068,7 +5170,7 @@
       "area": "builder",
       "repo_path": "~/projects/jorb-builder",
       "priority": 2,
-      "status": "blocked",
+      "status": "ready",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-010"
@@ -5119,7 +5221,8 @@
       },
       "notes": [
         "Synthesized from proposal prop-31f9d6b6caca",
-        "Builder repo is dirty before automated execution; refusing to continue."
+        "Builder repo is dirty before automated execution; refusing to continue.",
+        "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again."
       ],
       "description": "Consider add missing eval coverage for JORB-INFRA.\n\nPattern observed 1 times in JORB-INFRA.",
       "allow_noop_completion": false

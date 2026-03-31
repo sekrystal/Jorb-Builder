@@ -1,140 +1,211 @@
-# Jorb Builder v1
+# Jorb Builder
 
-This is the external builder control plane for Jorb.
+Jorb Builder is the external control plane for the `jorb` product repo.
 
-It is intentionally separate from the product repo.
+It manages backlog selection, packet rendering, automated execution, validation, eval gating, repair flows, proposal generation, backlog synthesis, and operator supervision. It is intentionally separate from the product repo so builder state and product state do not collapse into each other.
 
-## Workspace assumptions
-- Product repo: `~/projects/jorb`
-- Builder workspace: `~/projects/jorb-builder`
+## What This Repo Is
 
-All builder scripts expand `~` at runtime, so the control files stay portable across your local user environment.
+This repo is for:
+- selecting and executing bounded backlog tasks
+- recording canonical task state and operator truth
+- running local and VM-backed validation
+- generating and reviewing improvement proposals
+- synthesizing approved proposals into audited backlog changes
+- operating the system through terminal-native scripts and the operator TUI
 
-## What this does
-- selects one bounded task from `backlog.yml`
-- writes the active task to `active_task.yml`
-- renders a Codex task packet into `run_logs/<timestamp>/codex_prompt.md`
-- runs deterministic verification commands against the product repo
-- records pass/fail into backlog, history, memory, and blockers
-- resumes cleanly from files after interruption
-- can optionally automate the bounded JORB execution loop when executor/git/vm config is set explicitly
+This repo is not:
+- the product application repo
+- a web dashboard
+- a background daemon or service
+- a database-backed orchestration system
 
-## What this does not do
-- it does not edit the product repo automatically
-- it does not use a database
-- it does not run in the background
-- it does not use OpenAI Agents SDK
-- it does not create a web dashboard
+## Fast Start
 
-## Prerequisites
-Both of these should exist:
-- `~/projects/jorb`
-- `~/projects/jorb-builder`
+Prerequisites:
+- Python 3
+- `git`
+- the product repo at `~/projects/jorb`
+- the builder repo at `~/projects/jorb-builder`
 
-Run this first:
+Sanity check:
 
 ```bash
 cd ~/projects/jorb-builder
 python3 scripts/bootstrap_check.py
 ```
 
-## Operator loop
-1. In the builder window:
+Quick status:
+
 ```bash
-cd ~/projects/jorb-builder
 python3 scripts/show_status.py
-./scripts/run_once.sh
+python3 scripts/automate_task_loop.py --inspect-backlog
 ```
 
-2. If `run_once.sh` prints a packet, open the packet file and give it to Codex in the Jorb window.
+Open the operator TUI:
 
-3. Once you have handed the packet to Codex:
 ```bash
-python3 scripts/mark_in_progress.py
+python3 scripts/operator_tui.py
 ```
 
-4. After Codex applies changes and returns its structured result, save that response into the run log directory as `codex_result.md` if you want it preserved.
+## The Main Ways To Run It
 
-5. Run verification:
-```bash
-python3 scripts/verify_task.py
-```
+### 1. Single-run automation
 
-6. Record the outcome:
-```bash
-python3 scripts/record_result.py --codex-result-file ~/projects/jorb-builder/run_logs/<timestamp>/codex_result.md
-python3 scripts/show_status.py
-```
-
-## Optional Automated Loop
-
-Once you have explicit executor, git, and VM settings in `config.yml`, the builder can run the narrow packet-to-VM loop in one bounded script:
+Runs one canonical automation cycle against the next runnable task.
 
 ```bash
 cd ~/projects/jorb-builder
-python3 scripts/automate_task_loop.py --dry-run
 python3 scripts/automate_task_loop.py
 ```
 
-What it does in v1:
-- loads the current active task and packet
-- invokes the configured executor command directly, or pauses in explicit human-gated handoff mode if you switch back to that mode
-- captures executor output in the active run log
-- detects whether the product repo changed
-- runs the task's local verification commands
-- if local verification passes, commits and pushes the product repo
-- SSHes to the configured VM, pulls latest product code, and runs configured VM validation commands
-- writes `automation_result.json` and `automation_summary.md` into the active run log
-- classifies the outcome as `accepted`, `refined`, or `blocked`
+### 2. Operator TUI
 
-Important constraints:
-- keep the builder external to `~/projects/jorb`
-- keep the product repo worktree clean before automated execution unless you intentionally relax that rule
-- prefer explicit config in `config.yml` over environment-specific magic
-- use `--dry-run` first to confirm the planned executor/git/vm steps
-- the default executor mode is `codex_exec`, which runs `codex exec` non-interactively in the target repo with the packet on stdin and writes the final Codex message into the active run log
-- if you need the older bounded fallback, set `executor.mode` back to `human_gated`, run `python3 scripts/automate_task_loop.py`, complete the packet manually in the JORB Codex workspace, then continue with `python3 scripts/automate_task_loop.py --resume`
+The TUI is the intended control surface for day-to-day operation.
 
-## Non-Interactive Auth Setup
-
-The automated loop is designed to fail fast instead of waiting on password prompts. Set up both the product repo and the VM for SSH key auth before relying on unattended runs.
-
-Required local setup:
-- ensure the product repo origin uses SSH, not HTTPS:
-```bash
-cd ~/projects/jorb
-git remote set-url origin git@github.com:<org>/<repo>.git
-```
-- load your key into the local SSH agent:
-```bash
-ssh-add ~/.ssh/id_ed25519
-```
-
-Required VM setup:
-- make sure `config.yml` points at the correct VM user and host in `vm.ssh_target`
-- install the same GitHub-capable SSH key on the VM user that owns `vm.product_repo`
-- make sure the VM repo origin also uses SSH:
-```bash
-ssh <vm-user>@<vm-host> 'cd ~/projects/jorb && git remote set-url origin git@github.com:<org>/<repo>.git'
-```
-- preload the VM host key locally if needed:
-```bash
-ssh-keyscan -H <vm-host> >> ~/.ssh/known_hosts
-```
-
-Preflight check:
 ```bash
 cd ~/projects/jorb-builder
+python3 scripts/operator_tui.py
+```
+
+Useful keys:
+- `x`: run current loop mode
+- `m`: toggle `single-run` / `until-failure`
+- `p`: approve a draft proposal
+- `s`: synthesize approved proposals
+- `a`: apply synthesized entries
+- `b`: inspect blockers
+- `u`: guided common-blocker recovery
+- `t`: run canonical `--repair-state`
+- `q`: quit
+
+### 3. Until-failure mode
+
+The TUI can keep running the automation loop until a real stop condition occurs.
+
+Stop conditions:
+- a task blocks
+- operator approval is required
+- synthesis eval fails
+- clean-worktree or auth precondition fails
+- no runnable tasks remain
+- operator interrupts
+
+In the TUI:
+- press `m` until mode is `until-failure`
+- press `x`
+
+### 4. Manual packet loop
+
+For older or narrower workflows, the packet-driven shell flow still exists:
+
+```bash
+cd ~/projects/jorb-builder
+./scripts/run_once.sh
+python3 scripts/mark_in_progress.py
+python3 scripts/verify_task.py
+python3 scripts/record_result.py
+```
+
+## Recovery And Repair
+
+Inspect auth preconditions:
+
+```bash
 python3 scripts/automate_task_loop.py --check-auth
 ```
 
-If auth is still wrong, the loop now exits with a failure instead of waiting for interactive Git or SSH input.
+Inspect canonical backlog truth:
 
-## Safe recovery
-If the builder is stuck on a stale task you want to clear safely:
+```bash
+python3 scripts/automate_task_loop.py --inspect-backlog
+```
+
+Repair stale active/blocker state:
+
+```bash
+python3 scripts/automate_task_loop.py --repair-state
+```
+
+Safely abandon a stale task:
 
 ```bash
 python3 scripts/abandon_task.py --reason "why the task is being cleared"
 ```
 
-That clears the active task and returns it to `ready` or `retry_ready` depending on its prior backlog state.
+Important:
+- by default, automation requires a clean worktree before execution
+- the TUI can guide common dirty-repo recovery, but it still uses the same canonical repair logic underneath
+
+## Source Of Truth vs Generated Artifacts
+
+This repo contains both human-maintained source files and machine-generated operational state. They are not the same.
+
+### Human-maintained source files
+
+These are edited intentionally:
+- [backlog.yml](/Users/samuelkrystal/projects/jorb-builder/backlog.yml): canonical backlog definition and task status
+- [roadmap.yml](/Users/samuelkrystal/projects/jorb-builder/roadmap.yml): roadmap and planning structure
+- [config.yml](/Users/samuelkrystal/projects/jorb-builder/config.yml): execution, git, VM, and path configuration
+- [scripts/](/Users/samuelkrystal/projects/jorb-builder/scripts): builder logic
+- [tests/](/Users/samuelkrystal/projects/jorb-builder/tests): regression and behavior tests
+- [prompts/](/Users/samuelkrystal/projects/jorb-builder/prompts): packet/prompt templates
+
+### Canonical state files
+
+These are generated by the system, but they are still canonical runtime truth:
+- [active_task.yml](/Users/samuelkrystal/projects/jorb-builder/active_task.yml): currently active task slot
+- [status.yml](/Users/samuelkrystal/projects/jorb-builder/status.yml): top-level builder run state
+- [run_ledger.json](/Users/samuelkrystal/projects/jorb-builder/run_ledger.json): canonical operator/event truth
+- [backlog_proposals.json](/Users/samuelkrystal/projects/jorb-builder/backlog_proposals.json): proposal review state
+- [synthesized_backlog_entries.json](/Users/samuelkrystal/projects/jorb-builder/synthesized_backlog_entries.json): synthesized backlog drafts/applied entries
+- [backlog_apply_audit.json](/Users/samuelkrystal/projects/jorb-builder/backlog_apply_audit.json): audited backlog mutation log
+- [blockers/](/Users/samuelkrystal/projects/jorb-builder/blockers): canonical blocker records
+
+### Generated run and history artifacts
+
+These are durable evidence and audit output:
+- [run_logs/](/Users/samuelkrystal/projects/jorb-builder/run_logs): per-run artifacts, prompts, progress, eval output, evidence
+- [task_history/](/Users/samuelkrystal/projects/jorb-builder/task_history): finalized task outcomes over time
+- [memory_store.json](/Users/samuelkrystal/projects/jorb-builder/memory_store.json): generated structured memory store
+- [feedback_signals.json](/Users/samuelkrystal/projects/jorb-builder/feedback_signals.json): generated feedback signals
+
+Rule of thumb:
+- source code tells the system how to behave
+- canonical state tells you what the system currently believes
+- run/history artifacts tell you what happened
+
+## Repo Map
+
+Start here for orientation:
+- [docs/repo_map.md](/Users/samuelkrystal/projects/jorb-builder/docs/repo_map.md)
+
+Operational docs:
+- [docs/operator_guide.md](/Users/samuelkrystal/projects/jorb-builder/docs/operator_guide.md)
+- [docs/architecture.md](/Users/samuelkrystal/projects/jorb-builder/docs/architecture.md)
+
+## Notable Directories
+
+- [scripts/](/Users/samuelkrystal/projects/jorb-builder/scripts): CLI entry points and core orchestration logic
+- [tests/](/Users/samuelkrystal/projects/jorb-builder/tests): behavior proofs and regression coverage
+- [eval_fixtures/](/Users/samuelkrystal/projects/jorb-builder/eval_fixtures): task-family eval fixtures
+- [run_logs/](/Users/samuelkrystal/projects/jorb-builder/run_logs): run artifacts
+- [task_history/](/Users/samuelkrystal/projects/jorb-builder/task_history): historical outcomes
+- [blockers/](/Users/samuelkrystal/projects/jorb-builder/blockers): blocker records
+
+## Notes On Configuration
+
+This repo primarily uses [config.yml](/Users/samuelkrystal/projects/jorb-builder/config.yml), not a `.env` file, as the main execution configuration surface.
+
+That means:
+- there is no required `.env.example` in the current design
+- path, git, executor, and VM behavior live in `config.yml`
+- auth and SSH prerequisites should be documented and checked explicitly rather than hidden in environment magic
+
+## Current Limitations
+
+Be honest about the current system:
+- evals are real, but trajectory grading is still missing
+- memory is structured and retrieval-backed, but retrieval is still heuristic
+- long-running events are normalized for operators, but the event model is still file/poll driven
+- the TUI is a real control plane, but it is still evolving toward smoother long-term operation

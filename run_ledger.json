@@ -1,13 +1,6 @@
 {
   "events": [
     {
-      "at": "2026-03-31T01:56:35.520315+00:00",
-      "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
-      "run_state": "running",
-      "stage_name": "Preflight check",
-      "detail": "phase=local_validation | pid=2192 | elapsed=120s | timeout_remaining=Nones | command=pytest tests/test_automate_task_loop.py | poll=running"
-    },
-    {
       "at": "2026-03-31T01:56:50.527425+00:00",
       "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
       "run_state": "running",
@@ -174,20 +167,26 @@
       "run_state": "blocked",
       "stage_name": null,
       "detail": "Builder repo is dirty before automated execution; refusing to continue."
+    },
+    {
+      "at": "2026-03-31T16:42:55.418115+00:00",
+      "task_id": null,
+      "run_state": "idle",
+      "stage_name": null,
+      "detail": null
     }
   ],
-  "updated_at": "2026-03-31T16:30:56.321937+00:00",
-  "current_task": "DRAFT-JORB-INFRA-EVAL_REGRESSION",
-  "current_title": "Add eval coverage for JORB-INFRA eval regression",
+  "updated_at": "2026-03-31T16:42:55.418107+00:00",
+  "current_task": null,
+  "current_title": null,
   "current_stage": null,
-  "run_state": "blocked",
-  "current_blocker": "Builder repo is dirty before automated execution; refusing to continue.",
+  "run_state": "idle",
+  "current_blocker": null,
   "last_successful_checkpoint": null,
   "artifact_completeness": {
-    "present": [
-      "compiled_feature_spec.md"
-    ],
+    "present": [],
     "missing": [
+      "compiled_feature_spec.md",
       "proposal.md",
       "tradeoff_matrix.md",
       "research_brief.md",
@@ -199,14 +198,14 @@
   "failure_taxonomy": null,
   "eval_result": null,
   "runtime_proof_summary": null,
-  "next_recommended_action": null,
-  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T163056Z-DRAFT-JORB-INFRA-EVAL_REGRESSION",
+  "next_recommended_action": "Inspect backlog truth and rerun automation when ready.",
+  "run_log_dir": null,
   "event": {
-    "at": "2026-03-31T16:30:56.321950+00:00",
-    "task_id": "DRAFT-JORB-INFRA-EVAL_REGRESSION",
-    "run_state": "blocked",
+    "at": "2026-03-31T16:42:55.418115+00:00",
+    "task_id": null,
+    "run_state": "idle",
     "stage_name": null,
-    "detail": "Builder repo is dirty before automated execution; refusing to continue."
+    "detail": null
   },
   "eval_blocked_acceptance": false
 }

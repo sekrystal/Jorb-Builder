@@ -45,10 +45,12 @@ def main() -> int:
 
     print("\nCurrent run summary:")
     print(f"- current_task: {ledger.get('current_task') or active.get('task_id') or 'none'}")
+    print(f"- current_task_source: {snapshot.get('current_task_source') or 'none'}")
     print(f"- current_stage: {ledger.get('current_stage') or 'none'}")
     print(f"- run_state: {ledger.get('run_state') or status.get('state') or 'unknown'}")
     print(f"- current_blocker: {ledger.get('current_blocker') or latest_blocker.get('diagnosis') or 'none'}")
     print(f"- last_successful_checkpoint: {ledger.get('last_successful_checkpoint') or 'none'}")
+    print(f"- current_run_dir: {snapshot.get('current_run_dir') or 'none'}")
     print(f"- latest_run_dir: {snapshot.get('latest_run_dir') or 'none'}")
     print(f"- next_recommended_action: {snapshot.get('next_recommended_action') or 'none'}")
 
@@ -88,6 +90,19 @@ def main() -> int:
     print(f"- blocker_id: {latest_blocker.get('id') or 'none'}")
     print(f"- diagnosis: {latest_blocker.get('diagnosis') or 'none'}")
     print(f"- next_actions: {', '.join(latest_blocker.get('next_actions', [])) or 'none'}")
+
+    print("\nSystem reality:")
+    for item in snapshot.get("system_reality", []):
+        print(f"- {item.get('name')}: {item.get('status')} | {item.get('detail')}")
+        print(f"  limit: {item.get('limit')}")
+
+    print("\nTruth warnings:")
+    warnings = snapshot.get("truth_warnings") or []
+    if not warnings:
+        print("- none")
+    else:
+        for item in warnings:
+            print(f"- {item}")
 
     print("\nRecent events:")
     if not snapshot["event_feed"]:

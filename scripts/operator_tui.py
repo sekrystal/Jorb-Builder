@@ -154,6 +154,27 @@ def _checkpoint_commit(repo_root: Path, runner: Callable[..., subprocess.Complet
     }
 
 
+def _checkpoint_if_needed(repo_root: Path, runner: Callable[..., subprocess.CompletedProcess[str]], *, message: str) -> dict[str, Any]:
+    env = os.environ.copy()
+    env["JORB_BUILDER_ROOT"] = str(repo_root)
+    status_result = runner(["git", "status", "--short"], cwd=str(repo_root), text=True, capture_output=True, env=env)
+    if status_result.returncode != 0:
+        return {
+            "ok": False,
+            "message": (status_result.stderr or status_result.stdout or "").strip() or "git status failed",
+            "command": ["git", "status", "--short"],
+            "returncode": status_result.returncode,
+        }
+    if not [line for line in status_result.stdout.splitlines() if line.strip()]:
+        return {"ok": True, "message": "Repo is already clean; no checkpoint commit was needed."}
+    checkpoint = _checkpoint_commit(repo_root, runner, message=message)
+    if checkpoint.get("ok"):
+        return checkpoint
+    if "nothing to commit" in str(checkpoint.get("message") or "").lower():
+        return {"ok": True, "message": "Repo was already effectively clean; no checkpoint commit was needed."}
+    return checkpoint
+
+
 def run_loop_mode(
     mode: str,
     *,
@@ -269,13 +290,21 @@ def render_operator_view(
     lines.append("")
     lines.append("Current task and progress")
     lines.append("-" * min(width, 80))
-    lines.append(f"Current task : {snapshot['active'].get('task_id') or snapshot['status'].get('last_task_id') or 'none'}")
+    current_task = snapshot['active'].get('task_id') or backlog_diag.get('next_selected_task_id') or snapshot['status'].get('last_task_id') or 'none'
+    task_source = str(snapshot.get("current_task_source") or "none").replace("_", " ")
+    lines.append(f"Current task : {current_task}")
+    lines.append(f"Task source  : {task_source}")
     lines.append(f"Current phase: {compact_progress.get('current_phase') or 'none'}")
     lines.append(f"Elapsed      : {compact_progress.get('elapsed') or 'n/a'}")
     lines.append(f"Health       : {compact_progress.get('health') or 'unknown'}")
     lines.append(f"Waiting for  : {compact_progress.get('waiting_for') or 'none'}")
     for item in snapshot["stage_progress"]:
         lines.append(f"{_icon(item['status'])} {item['label']}")
+    truth_warnings = snapshot.get("truth_warnings") or []
+    if truth_warnings:
+        lines.append("Truth warning: " + truth_warnings[0])
+    if snapshot.get("current_run_dir"):
+        lines.append(f"Current run  : {snapshot.get('current_run_dir')}")
     lines.append("")
     lines.append("Blocker diagnosis and recovery")
     lines.append("-" * min(width, 80))
@@ -314,6 +343,12 @@ def render_operator_view(
     lines.append(f"Synthesized      : {synthesis.get('entry_count', 0)} (applied={synthesis.get('applied_count', 0)})")
     lines.append(f"Next execution   : {synthesis.get('next_execution_target') or 'none'}")
     lines.append("")
+    lines.append("System reality")
+    lines.append("-" * min(width, 80))
+    for item in snapshot.get("system_reality", [])[:5]:
+        lines.append(f"{item.get('name')}: {item.get('status')} | {item.get('detail')}")
+        lines.append(f"  Limit: {item.get('limit')}")
+    lines.append("")
     lines.append("Recent meaningful events")
     lines.append("-" * min(width, 80))
     if not snapshot["event_feed"]:
@@ -324,7 +359,7 @@ def render_operator_view(
             detail = f" :: {item['detail']}" if item.get("detail") else ""
             lines.append(f"{item.get('at') or 'unknown'} | {_event_prefix(item)} | {item.get('summary')}{detail}{recommendation}")
     lines.append("")
-    lines.append("Actions: x run | m mode | r refresh | p proposals | s synthesize | a syntheses | b blockers | g changed files | c checkpoint | t repair | d details | o latest run dir | i artifacts | q quit")
+    lines.append("Actions: x run | m mode | r refresh | p proposals | s synthesize | a syntheses | b blockers | u auto-recover | g changed files | c checkpoint | t repair | d details | o latest run dir | i artifacts | q quit")
     return "\n".join(line[: max(20, width - 1)] for line in lines)
 
 
@@ -368,6 +403,14 @@ def run_operator_action(
         }
     if action == "checkpoint_commit":
         return _checkpoint_commit(repo_root, runner, message="Checkpoint operator TUI recovery state")
+    if action == "recover_common_blocker":
+        checkpoint = _checkpoint_if_needed(repo_root, runner, message="Checkpoint operator-guided blocker recovery")
+        if not checkpoint.get("ok"):
+            return checkpoint
+        repair = _run_repo_command([sys.executable, str(AUTOMATE_TASK_LOOP), "--repair-state"], repo_root=repo_root, runner=runner)
+        prefix = checkpoint.get("message") or "Checkpoint step finished."
+        repair["message"] = f"{prefix} {repair.get('message') or ''}".strip()
+        return repair
     if action == "synthesize_approved":
         return _run_repo_command([sys.executable, str(BACKLOG_SYNTHESIS)], repo_root=repo_root, runner=runner)
     if action == "run_single_cycle":
@@ -508,6 +551,12 @@ def _tui(stdscr: Any) -> int:
         elif key == ord("o"):
             result = run_operator_action("latest_run_dir", root=ROOT)
             message = result["message"]
+        elif key == ord("u"):
+            message = "Running guided blocker recovery now..."
+            _paint_screen(stdscr, snapshot, loop_mode=loop_mode, message=message)
+            result = run_operator_action("recover_common_blocker", root=ROOT)
+            snapshot = build_operator_snapshot(ROOT)
+            message = result["message"] or ("Common blocker recovery passed." if result["ok"] else "Common blocker recovery failed.")
         elif key == ord("g"):
             result = run_operator_action("inspect_dirty_files", root=ROOT)
             message = result["message"]
@@ -548,13 +597,13 @@ def _tui(stdscr: Any) -> int:
             else:
                 message = "No synthesized entry selected."
         else:
-            message = "Actions: x run | m mode | r refresh | p proposals | s synthesize | a syntheses | b blockers | g changed files | c checkpoint | t repair | d details | o latest run dir | i artifacts | q quit"
+            message = "Actions: x run | m mode | r refresh | p proposals | s synthesize | a syntheses | b blockers | u auto-recover | g changed files | c checkpoint | t repair | d details | o latest run dir | i artifacts | q quit"
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Terminal operator interface for canonical builder supervision truth.")
     parser.add_argument("--once", action="store_true", help="Render a single snapshot and exit.")
-    parser.add_argument("--action", choices=["refresh", "inspect_blocker", "approve_proposal", "synthesize_approved", "apply_synthesized_entry", "retry_blocked_task", "inspect_dirty_files", "checkpoint_commit", "latest_run_dir", "inspect_artifacts", "run_single_cycle", "run_until_failure"])
+    parser.add_argument("--action", choices=["refresh", "inspect_blocker", "approve_proposal", "synthesize_approved", "apply_synthesized_entry", "retry_blocked_task", "inspect_dirty_files", "checkpoint_commit", "recover_common_blocker", "latest_run_dir", "inspect_artifacts", "run_single_cycle", "run_until_failure"])
     parser.add_argument("--loop-mode", choices=[LOOP_MODE_SINGLE, LOOP_MODE_UNTIL_FAILURE], default=LOOP_MODE_SINGLE)
     parser.add_argument("--id", default=None)
     parser.add_argument("--note", default=None)
