@@ -4003,6 +4003,17 @@ def test_phase4_dry_run_emits_stage_plan_and_repo_local_standards(tmp_path: Path
     ]
     assert machine_payload["repo_local_standards"]["execution_roles"]["Planner"] == "compile the feature/system understanding artifact."
     assert machine_payload["repo_local_standards"]["skill_entries"][0]["name"] == "phase4_enforcement"
+    research_brief = (run_dir / "research_brief.md").read_text(encoding="utf-8")
+    assert "## Grounded Solution Directions" in research_brief
+    assert "### Inline builder hook" in research_brief
+    assert "- Repo-local standards loaded: yes" in research_brief
+    tradeoff_matrix = (run_dir / "tradeoff_matrix.md").read_text(encoding="utf-8")
+    assert "## Inline builder hook" in tradeoff_matrix
+    assert "## Helper-backed artifact planner" in tradeoff_matrix
+    proposal = (run_dir / "proposal.md").read_text(encoding="utf-8")
+    assert "## Recommended Direction" in proposal
+    assert "Inline builder hook" in proposal
+    assert "- Decision checkpoint status: not required" in proposal
 
 
 def test_non_phase4_nontrivial_task_compiles_feature_spec_before_implementation(tmp_path: Path) -> None:
@@ -4068,6 +4079,35 @@ def test_compiled_feature_spec_structured_objective_flags_decision_checkpoint_un
     assert "Multiple implementation options are declared without a selected approach." in machine_payload["structured_objective"]["unknowns"]
     assert "Objective detail is not explicitly stated in backlog metadata." in machine_payload["structured_objective"]["unknowns"]
     assert "Why-it-matters context is not explicitly stated in backlog metadata." in machine_payload["structured_objective"]["unknowns"]
+    tradeoff_matrix = (run_dir / "tradeoff_matrix.md").read_text(encoding="utf-8")
+    assert "## Minimal" in tradeoff_matrix
+    assert "## Framework" in tradeoff_matrix
+    research_brief = (run_dir / "research_brief.md").read_text(encoding="utf-8")
+    assert "Use the declared `minimal` direction" in research_brief
+    assert "Use the declared `framework` direction" in research_brief
+    proposal = (run_dir / "proposal.md").read_text(encoding="utf-8")
+    assert "## Recommended Direction" in proposal
+    assert "- Decision checkpoint status: Decision checkpoint required: multiple implementation options are declared but no selected_approach is recorded." in proposal
+
+
+def test_phase4_proposal_uses_selected_declared_approach_when_present(tmp_path: Path) -> None:
+    module = _load_script_module()
+    task = {
+        "id": "JORB-INFRA-028",
+        "title": "Solution space generator + research briefs",
+        "objective": "Generate grounded solution directions before implementation.",
+        "why_it_matters": "Builder should compare plausible approaches before commitment.",
+        "area": "builder",
+        "implementation_options": ["minimal", "framework"],
+        "selected_approach": "framework",
+    }
+    standards = _repo_local_standards_payload(tmp_path)
+
+    proposal = module.phase4_proposal_text(task, standards)
+
+    assert "## Selected Approach" in proposal
+    assert "Framework" in proposal
+    assert "Decision checkpoint status: not required" in proposal
 
 
 def test_phase4_result_persistence_blocks_accepted_run_when_required_artifacts_are_missing(tmp_path: Path) -> None:

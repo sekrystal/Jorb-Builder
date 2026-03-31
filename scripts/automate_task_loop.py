@@ -91,26 +91,36 @@ PHASE4_FEATURE_SPEC_REQUIRED_KEYS = (
     "repo_bounds",
     "repo_local_standards",
 )
-PHASE4_OPTION_SET = (
+PHASE4_DEFAULT_DIRECTION_SET = (
     {
-        "name": "Minimal coherent change",
-        "summary": "Use the smallest machine-checkable builder change that enforces the task contract without expanding scope.",
+        "name": "Inline builder hook",
+        "summary": "Extend the existing phase-4 preimplementation artifact writers inside the automation loop so solution directions and research briefs are generated where planning already occurs.",
         "complexity": "low",
-        "risks": "May leave extensibility work for later if the contract grows.",
-        "maintainability": "High if the enforcement boundary stays narrow and explicit.",
-        "runtime": "Keeps execution overhead modest and predictable.",
-        "product": "Improves trust without inventing extra process.",
-        "decision": "Prefer when one bounded mechanism can enforce the requirement directly.",
+        "risks": "Artifact-generation logic can stay concentrated in one file if follow-on reuse grows later.",
+        "maintainability": "High for the current builder flow because the enforcement seam stays explicit and narrow.",
+        "runtime": "Keeps runtime deterministic with a small amount of additional string generation.",
+        "product": "Improves builder planning discipline without changing product-repo behavior.",
+        "decision": "Prefer when the task asks for a bounded builder-only capability with minimal surface area.",
     },
     {
-        "name": "Generalized framework extension",
-        "summary": "Introduce a more extensible subsystem that can support similar builder behaviors across future products and tasks.",
+        "name": "Helper-backed artifact planner",
+        "summary": "Extract solution-space generation into a reusable helper that still feeds the same phase-4 artifacts but separates task analysis from orchestration flow.",
         "complexity": "medium",
-        "risks": "Higher chance of overbuilding or introducing regressions in unrelated flows.",
-        "maintainability": "Good if the abstractions remain narrow and well-tested.",
-        "runtime": "May add more orchestration and artifact overhead.",
-        "product": "Creates stronger reuse but costs more now.",
-        "decision": "Prefer when the task explicitly requires reuse beyond one product or stage.",
+        "risks": "Can introduce abstraction before multiple consumers are proven.",
+        "maintainability": "Good if similar artifact-planning logic will be reused across builder workflows soon.",
+        "runtime": "Adds modest orchestration code but should remain deterministic and bounded.",
+        "product": "Creates clearer reuse boundaries for future builder research and proposal steps.",
+        "decision": "Prefer when more than one builder path needs the same grounded option synthesis.",
+    },
+    {
+        "name": "Metadata-driven solution planner",
+        "summary": "Derive solution directions directly from backlog metadata and repo standards so the planner can compare task-declared options against default builder-safe approaches.",
+        "complexity": "medium",
+        "risks": "Output quality depends on backlog metadata quality and may need stronger normalization rules.",
+        "maintainability": "Good if backlog truth is treated as the durable contract for planner input.",
+        "runtime": "String-only analysis keeps runtime bounded, but more parsing logic increases code path size.",
+        "product": "Makes pre-architecture exploration more explicit and replayable from task inputs.",
+        "decision": "Prefer when tasks frequently declare multiple approaches and the builder should ground them automatically before commitment.",
     },
 )
 CANONICAL_RUN_STATES = {
@@ -318,6 +328,111 @@ def task_is_nontrivial(task: dict[str, Any]) -> bool:
         task.get("selected_approach"),
     )
     return any(str(value or "").strip() for value in scalar_signals)
+
+
+def phase4_task_focus(task: dict[str, Any]) -> str:
+    for key in ("objective", "title", "id"):
+        value = str(task.get(key) or "").strip()
+        if value:
+            return value
+    return "builder hardening task"
+
+
+def phase4_solution_direction_key(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "_", value.strip().lower()).strip("_")
+
+
+def phase4_declared_direction(
+    option_text: str,
+    *,
+    focus: str,
+    why: str,
+    standards: dict[str, Any],
+) -> dict[str, str]:
+    option_name = " ".join(segment.capitalize() for segment in re.split(r"[_\-\s]+", option_text.strip()) if segment) or "Declared option"
+    normalized = option_text.lower()
+    complexity = "medium"
+    if any(token in normalized for token in ("minimal", "inline", "small", "bounded")):
+        complexity = "low"
+    elif any(token in normalized for token in ("framework", "platform", "general", "system")):
+        complexity = "high"
+    maintainability = "Balanced if the scope stays aligned with the declared option."
+    runtime = "Should remain bounded if implemented as builder-side artifact generation only."
+    if "framework" in normalized or "general" in normalized:
+        maintainability = "Potentially strong long-term reuse, but only if more consumers actually appear."
+        runtime = "Additional orchestration layers may add overhead and more change surface."
+    elif "metadata" in normalized or "config" in normalized:
+        maintainability = "Strong if backlog truth remains the source of direction synthesis."
+        runtime = "Mostly parsing and text generation, so runtime should stay deterministic."
+    risks = "Declared option may still be underspecified relative to the task objective."
+    if why:
+        risks = f"Must stay anchored to why-it-matters context: {why}"
+    return {
+        "name": option_name,
+        "key": phase4_solution_direction_key(option_text),
+        "summary": f"Use the declared `{option_text}` direction to address {focus} while keeping builder-only scope and machine-checkable artifacts intact.",
+        "complexity": complexity,
+        "risks": risks,
+        "maintainability": maintainability,
+        "runtime": runtime,
+        "product": "Keeps solution exploration grounded in task-declared intent instead of introducing unrelated scope.",
+        "decision": "Prefer only if this declared option is explicitly selected or clearly dominates the alternatives after review.",
+        "grounding": f"Backlog-declared implementation option; repo-local standards loaded={'yes' if not repo_local_standards_issues(standards) else 'no'}.",
+    }
+
+
+def phase4_solution_directions(task: dict[str, Any], standards: dict[str, Any]) -> list[dict[str, str]]:
+    focus = phase4_task_focus(task)
+    why = str(task.get("why_it_matters") or "").strip()
+    declared = [
+        str(item).strip()
+        for item in task.get("implementation_options", [])
+        if str(item).strip()
+    ]
+    if declared:
+        directions = [
+            phase4_declared_direction(option, focus=focus, why=why, standards=standards)
+            for option in declared[:3]
+        ]
+    else:
+        directions = []
+        for option in PHASE4_DEFAULT_DIRECTION_SET:
+            grounded = dict(option)
+            grounded["key"] = phase4_solution_direction_key(option["name"])
+            grounded["summary"] = f"{option['summary']} Task focus: {focus}."
+            grounded["grounding"] = (
+                "Grounded in builder-only scope, repo-local standards, and replayable run-log artifacts."
+            )
+            directions.append(grounded)
+    return directions
+
+
+def phase4_selected_direction(
+    task: dict[str, Any],
+    standards: dict[str, Any],
+) -> tuple[dict[str, str] | None, bool]:
+    directions = phase4_solution_directions(task, standards)
+    selected = str(task.get("selected_approach") or "").strip()
+    if not directions:
+        return None, False
+    if not selected:
+        return directions[0], False
+    selected_key = phase4_solution_direction_key(selected)
+    for direction in directions:
+        if direction.get("key") == selected_key or phase4_solution_direction_key(direction["name"]) == selected_key:
+            return direction, True
+    return {
+        "name": selected,
+        "key": selected_key,
+        "summary": f"Selected approach recorded in task metadata: {selected}.",
+        "complexity": "unknown",
+        "risks": "Selected approach does not map cleanly to generated solution directions yet.",
+        "maintainability": "unknown",
+        "runtime": "unknown",
+        "product": "unknown",
+        "decision": "Review and normalize the selected approach label before architectural commitment.",
+        "grounding": "Selected approach was taken directly from task metadata.",
+    }, True
 
 
 def compile_feature_spec_trigger(task: dict[str, Any]) -> str:
@@ -574,38 +689,65 @@ def phase4_feature_spec_text(task: dict[str, Any], standards: dict[str, Any]) ->
     )
 
 
-def phase4_research_brief_text(task: dict[str, Any]) -> str:
+def phase4_research_brief_text(task: dict[str, Any], standards: dict[str, Any]) -> str:
     title = str(task.get("title") or task.get("id"))
-    return "\n".join(
+    focus = phase4_task_focus(task)
+    why = str(task.get("why_it_matters") or "").strip() or "not explicitly stated in backlog metadata"
+    verification = [str(item).strip() for item in task.get("verification", []) if str(item).strip()]
+    repo_bounds = [str(item).strip() for item in task.get("allowlist", []) if str(item).strip()]
+    directions = phase4_solution_directions(task, standards)
+    lines = [
+        f"# Research Brief: {task['id']}",
+        "",
+        f"Task focus: {title}",
+        "",
+        "## Grounding Inputs",
+        f"- Objective focus: {focus}",
+        f"- Why it matters: {why}",
+        f"- Repo bounds: {', '.join(repo_bounds) or 'not explicitly constrained'}",
+        f"- Verification commands: {', '.join(verification) or 'none declared'}",
+        f"- Repo-local standards loaded: {'yes' if not repo_local_standards_issues(standards) else 'no'}",
+        "",
+        "## Research Questions",
+        "- Which builder-only change keeps solution-space generation deterministic and replayable?",
+        "- Which direction produces grounded architectural options before implementation starts?",
+        "- Which approach best preserves current automation behavior while improving planning evidence?",
+        "",
+        "## Grounded Solution Directions",
+    ]
+    for direction in directions:
+        lines.extend(
+            [
+                f"### {direction['name']}",
+                f"- Summary: {direction['summary']}",
+                f"- Evidence basis: {direction['grounding']}",
+                f"- Key risk: {direction['risks']}",
+                f"- Runtime posture: {direction['runtime']}",
+                "",
+            ]
+        )
+    lines.extend(
         [
-            f"# Research Brief: {task['id']}",
-            "",
-            f"Task focus: {title}",
-            "",
-            "## Relevant Patterns",
-            "- staged delivery pipelines separate planning, implementation, validation, and acceptance",
-            "- CI/CD gate systems require machine-checkable evidence before promotion",
-            "- operator tooling benefits from explicit artifacts and replayable run logs",
-            "",
             "## What Works",
             "- distinct acceptance authority (judge) separate from implementation",
             "- required artifacts that block optimistic success",
-            "- runtime proof that records commands, timestamps, and outputs",
+            "- preimplementation artifacts generated directly from task truth and repo standards",
             "",
             "## What Fails",
+            "- generic architecture proposals that are not grounded in the active task",
             "- checklist-only process with no automatic enforcement",
             "- acceptance based on summary text instead of evidence",
-            "- retry logic that mutates queue truth without preserving context",
             "",
-            "## Why These Patterns Apply Here",
-            "- the builder is an orchestration product and needs the same enforcement discipline it asks of product work",
+            "## Decision Trigger",
+            "- Pause for a decision checkpoint when materially different implementation options exist and no selected approach is recorded.",
         ]
     )
+    return "\n".join(lines)
 
 
-def phase4_tradeoff_matrix_text(task: dict[str, Any]) -> str:
+def phase4_tradeoff_matrix_text(task: dict[str, Any], standards: dict[str, Any]) -> str:
     lines = [f"# Tradeoff Matrix: {task['id']}", ""]
-    for option in PHASE4_OPTION_SET:
+    for option in phase4_solution_directions(task, standards):
         lines.extend(
             [
                 f"## {option['name']}",
@@ -623,12 +765,19 @@ def phase4_tradeoff_matrix_text(task: dict[str, Any]) -> str:
 
 
 def phase4_proposal_text(task: dict[str, Any], standards: dict[str, Any]) -> str:
+    selected_direction, explicitly_selected = phase4_selected_direction(task, standards)
+    decision_checkpoint = phase4_decision_checkpoint_issue(task)
+    recommendation_label = "Selected Approach" if explicitly_selected else "Recommended Direction"
+    recommendation_text = selected_direction["name"] if selected_direction else "No direction available"
+    recommendation_summary = selected_direction["summary"] if selected_direction else "No solution direction was generated."
     return "\n".join(
         [
             f"# Proposal: {task['id']}",
             "",
-            "## Recommended Approach",
-            "Choose the minimal coherent change first, while keeping contracts machine-checkable and reusable.",
+            f"## {recommendation_label}",
+            recommendation_text,
+            "",
+            recommendation_summary,
             "",
             "## Assumptions",
             f"- Task area: {task.get('area')}",
@@ -639,8 +788,9 @@ def phase4_proposal_text(task: dict[str, Any], standards: dict[str, Any]) -> str
             "- Preserve accepted backlog truth and stop on first hard failure.",
             "",
             "## Tradeoff Summary",
+            f"- {recommendation_text}: {selected_direction['decision'] if selected_direction else 'No tradeoff guidance available.'}",
             "- Prefer explicit artifacts and gates over prose-only policy.",
-            "- Escalate to a decision checkpoint only when materially different approaches exist.",
+            f"- Decision checkpoint status: {decision_checkpoint or 'not required'}",
         ]
     )
 
@@ -655,8 +805,8 @@ def write_phase4_preimplementation_artifacts(
     if feature_spec_path:
         created.append(feature_spec_path)
     artifacts = {
-        "research_brief.md": phase4_research_brief_text(task),
-        "tradeoff_matrix.md": phase4_tradeoff_matrix_text(task),
+        "research_brief.md": phase4_research_brief_text(task, standards),
+        "tradeoff_matrix.md": phase4_tradeoff_matrix_text(task, standards),
         "proposal.md": phase4_proposal_text(task, standards),
     }
     for name, content in artifacts.items():

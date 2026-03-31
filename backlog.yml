@@ -4308,7 +4308,7 @@
       "area": "builder",
       "milestone": "M8",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-026"
@@ -4334,7 +4334,9 @@
       "repo_path": "~/projects/jorb-builder",
       "description": "Add the objective compiler as the first SPRE capability so raw user intent becomes structured builder input.",
       "allow_noop_completion": false,
-      "notes": []
+      "notes": [
+        "Automated loop completed with builder-side local validation success."
+      ]
     },
     {
       "id": "JORB-INFRA-028",

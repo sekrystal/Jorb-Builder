@@ -1,0 +1,189 @@
+{
+  "task_id": "JORB-INFRA-027",
+  "title": "Objective compiler (user intent \u2192 structured objective)",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-30T23:59:02.739089+00:00",
+  "completed_at": "2026-03-31T00:07:34.128112+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T235902Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T235902Z-JORB-INFRA-027",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T235902Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T235902Z-JORB-INFRA-027"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T235902Z-JORB-INFRA-027/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T235902Z-JORB-INFRA-027/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T235902Z-JORB-INFRA-027/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T235902Z-JORB-INFRA-027/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T235902Z-JORB-INFRA-027/local_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T235902Z-JORB-INFRA-027/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T235902Z-JORB-INFRA-027/executor.json"
+    },
+    {
+      "label": "eval_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T235902Z-JORB-INFRA-027/eval_result.json"
+    },
+    {
+      "label": "judge_memory_context",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T235902Z-JORB-INFRA-027/judge_memory_context.json"
+    },
+    {
+      "label": "judge_decision",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T235902Z-JORB-INFRA-027/judge_decision.md"
+    },
+    {
+      "label": "evidence_bundle",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T235902Z-JORB-INFRA-027/evidence_bundle.json"
+    }
+  ],
+  "files_changed": [
+    "scripts/automate_task_loop.py",
+    "tests/test_automate_task_loop.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.325.31654-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T235902Z-JORB-INFRA-027/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "passed",
+    "passed",
+    "passed"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with builder-side local validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with builder-side local validation success.",
+    "accepted": true,
+    "acceptance_met": [],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "planner",
+        "outcome": "passed",
+        "detail": "compiled_feature_spec.md written to /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T235902Z-JORB-INFRA-027/compiled_feature_spec.md"
+      },
+      {
+        "name": "architect",
+        "outcome": "passed",
+        "detail": "proposal.md and tradeoff_matrix.md written to /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T235902Z-JORB-INFRA-027"
+      },
+      {
+        "name": "research_grounding",
+        "outcome": "passed",
+        "detail": "research_brief.md written to /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T235902Z-JORB-INFRA-027/research_brief.md"
+      },
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\nAdded structured objective compilation to the existing feature-spec path in [`/Users/samuelkrystal/projects/jorb-builder/scripts/automate_task_loop.py`](/Users/samuelkrystal/projects/jorb-builder/scripts/automate_task_loop.py). `compiled_feature_spec.md` now includes a machine-checkable `structured_objective` with `raw_intent`, `objective_statement`, `success_criteria`, `constraints`, `failure_conditions`, and `unknowns`, and phase-4 validation now requires that field. Updated [`/Users/samuelkrystal/projects/jorb-builder/tests/test_automate_task_loop.py`](/Users/samuelkrystal/projects/jorb-builder/tests/test_automate_task_loop.py) to assert the new payload shape for phase-4 and non-phase-4 dry runs and added coverage for the unresolved decision-checkpoint case.\n\n2. Exact files changed\n\n- [`/Users/samuelkrystal/projects/jorb-builder/scripts/automate_task_loop.py`](/Users/samuelkrystal/projects/jorb-builder/scripts/automate_task_loop.py)\n- [`/Users/samuelkrystal/projects/jorb-builder/tests/test_automate_task_loop.py`](/Users/samuelkrystal/projects/jorb-builder/tests/test_automate_task_loop.py)\n\n3. Exact tests added or updated\n\nAdded:\n- `test_compiled_feature_spec_structured_objective_flags_decision_checkpoint_unknown`\n\nUpdated:\n- `test_phase4_dry_run_emits_stage_plan_and_repo_local_standards`\n- `test_non_phase4_nontrivial_task_compiles_feature_spec_before_implementation`\n\n4. Exact commands run\n\n- `pytest tests/test_automate_task_loop.py -k 'phase4_dry_run_emits_stage_plan_and_repo_local_standards or non_phase4_nontrivial_task_compiles_feature_spec_before_implementation or compiled_feature_spec_structured_objective_flags_decision_checkpoint_unknown'`\n- `python3 -m py_compile scripts/*.py`\n- `pytest tests/test_automate_task_loop.py`\n- `git diff --name-only -- scripts/automate_task_loop.py tests/test_automate_task_loop.py`\n- `git diff -- scripts/automate_task_loop.py tests/test_automate_task_loop.py | sed -n '1,260p'`\n\n5. Exact results\n\n- `pytest tests/test_automate_task_loop.py -k 'phase4_dry_run_emits_stage_plan_and_repo_local_standards or non_phase4_nontrivial_task_compiles_feature_spec_before_implementation or compiled_feature_spec_structured_objective_flags_decision_checkpoint_unknown'`\n  - First run failed with 1 assertion mismatch in `test_non_phase4_nontrivial_task_compiles_feature_spec_before_implementation`\n  - Second run passed: `3 passed, 141 deselected in 2.04s`\n- `python3 -m py_compile scripts/*.py`\n  - Passed\n- `pytest tests/test_automate_task_loop.py`\n  - Passed: `144 passed in 168.74s (0:02:48)`\n- `git diff --name-only -- scripts/automate_task_loop.py tests/test_automate_task_loop.py`\n  - Reported exactly:\n    - `scripts/automate_task_loop.py`\n    - `tests/test_automate_task_loop.py`\n- `git diff -- scripts/automate_task_loop.py tests/test_automate_task_loop.py | sed -n '1,260p'`\n  - Confirmed only the intended structured-objective code and test updates\n\n6. Honest note on what remains unproven\n\nThis is proven only by local compile/test coverage. It is not proven by a live end-to-end automation run that consumes ambiguous operator/user intent from a real session, and it is not proven yet that backlog synthesis directly consumes the new `structured_objective` payload."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "To github.com:sekrystal/Jorb-Builder.git\n   89914d5..af39b38  main -> main\n"
+      }
+    ],
+    "changed_files_count": 2,
+    "changed_files": [
+      "scripts/automate_task_loop.py",
+      "tests/test_automate_task_loop.py"
+    ],
+    "unproven_runtime_gaps": [],
+    "ux_conformance": {
+      "required": false,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": null,
+      "intentional_design_deviations": null,
+      "product_first_checklist": null,
+      "primary_ux_prohibited_surfaces": []
+    }
+  },
+  "unproven_runtime_gaps": [],
+  "failure_taxonomy": null,
+  "eval_result": {
+    "suite_version": 1,
+    "mode": "private_fixture",
+    "fixture_id": "infra_hardening_v1",
+    "fixture_family": "infra_hardening",
+    "task_id": "JORB-INFRA-027",
+    "scores": {
+      "planning_quality": 1.0,
+      "implementation_quality": 1.0,
+      "test_adequacy": 1.0,
+      "evidence_quality": 1.0,
+      "operator_handoff_quality": 1.0,
+      "recovery_quality": 0.8
+    },
+    "overall_score": 0.98,
+    "threshold": 0.78,
+    "passed": true,
+    "mandatory_artifacts": {
+      "present": [
+        "compiled_feature_spec.md",
+        "research_brief.md",
+        "proposal.md",
+        "tradeoff_matrix.md",
+        "judge_decision.md",
+        "evidence_bundle.json",
+        "runtime_proof.log"
+      ],
+      "missing": []
+    },
+    "dimension_failures": [],
+    "fixture_path": "/Users/samuelkrystal/projects/jorb-builder/eval_fixtures/infra_hardening.json",
+    "regression_vs_prior": {
+      "previous_task_id": "JORB-INFRA-026",
+      "current_task_id": "JORB-INFRA-027",
+      "overall_delta": 0.0,
+      "category_deltas": {
+        "evidence_quality": 0.0,
+        "implementation_quality": 0.0,
+        "operator_handoff_quality": 0.0,
+        "planning_quality": 0.0,
+        "recovery_quality": 0.0,
+        "test_adequacy": 0.0
+      },
+      "trend": "unchanged",
+      "baseline_history_path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T234923Z-JORB-INFRA-026.yml"
+    },
+    "blocked_acceptance": false
+  }
+}
