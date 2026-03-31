@@ -1,55 +1,6 @@
 {
   "events": [
     {
-      "at": "2026-03-31T01:54:50.040605+00:00",
-      "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
-      "run_state": "running",
-      "stage_name": "Preflight check",
-      "detail": "phase=local_validation | pid=2192 | elapsed=15s | timeout_remaining=Nones | command=pytest tests/test_automate_task_loop.py | poll=running"
-    },
-    {
-      "at": "2026-03-31T01:55:05.125204+00:00",
-      "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
-      "run_state": "running",
-      "stage_name": "Preflight check",
-      "detail": "phase=local_validation | pid=2192 | elapsed=30s | timeout_remaining=Nones | command=pytest tests/test_automate_task_loop.py | poll=running"
-    },
-    {
-      "at": "2026-03-31T01:55:20.213037+00:00",
-      "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
-      "run_state": "running",
-      "stage_name": "Preflight check",
-      "detail": "phase=local_validation | pid=2192 | elapsed=45s | timeout_remaining=Nones | command=pytest tests/test_automate_task_loop.py | poll=running"
-    },
-    {
-      "at": "2026-03-31T01:55:35.270866+00:00",
-      "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
-      "run_state": "running",
-      "stage_name": "Preflight check",
-      "detail": "phase=local_validation | pid=2192 | elapsed=60s | timeout_remaining=Nones | command=pytest tests/test_automate_task_loop.py | poll=running"
-    },
-    {
-      "at": "2026-03-31T01:55:50.409301+00:00",
-      "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
-      "run_state": "running",
-      "stage_name": "Preflight check",
-      "detail": "phase=local_validation | pid=2192 | elapsed=75s | timeout_remaining=Nones | command=pytest tests/test_automate_task_loop.py | poll=running"
-    },
-    {
-      "at": "2026-03-31T01:56:05.454272+00:00",
-      "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
-      "run_state": "running",
-      "stage_name": "Preflight check",
-      "detail": "phase=local_validation | pid=2192 | elapsed=90s | timeout_remaining=Nones | command=pytest tests/test_automate_task_loop.py | poll=running"
-    },
-    {
-      "at": "2026-03-31T01:56:20.461417+00:00",
-      "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
-      "run_state": "running",
-      "stage_name": "Preflight check",
-      "detail": "phase=local_validation | pid=2192 | elapsed=105s | timeout_remaining=Nones | command=pytest tests/test_automate_task_loop.py | poll=running"
-    },
-    {
       "at": "2026-03-31T01:56:35.520315+00:00",
       "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
       "run_state": "running",
@@ -174,19 +125,69 @@
       "run_state": "idle",
       "stage_name": null,
       "detail": null
+    },
+    {
+      "at": "2026-03-31T16:30:56.081186+00:00",
+      "task_id": "DRAFT-JORB-INFRA-EVAL_REGRESSION",
+      "run_state": "task_selected",
+      "stage_name": null,
+      "detail": null
+    },
+    {
+      "at": "2026-03-31T16:30:56.191312+00:00",
+      "task_id": "DRAFT-JORB-INFRA-EVAL_REGRESSION",
+      "run_state": "preflight_passed",
+      "stage_name": null,
+      "detail": null
+    },
+    {
+      "at": "2026-03-31T16:30:56.193668+00:00",
+      "task_id": "DRAFT-JORB-INFRA-EVAL_REGRESSION",
+      "run_state": "running",
+      "stage_name": "Task selected",
+      "detail": "Task selected and state loaded."
+    },
+    {
+      "at": "2026-03-31T16:30:56.195112+00:00",
+      "task_id": "DRAFT-JORB-INFRA-EVAL_REGRESSION",
+      "run_state": "running",
+      "stage_name": "Codex prompt generated",
+      "detail": "Prompt file ready at /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T163055Z/codex_prompt.md."
+    },
+    {
+      "at": "2026-03-31T16:30:56.306617+00:00",
+      "task_id": "DRAFT-JORB-INFRA-EVAL_REGRESSION",
+      "run_state": "failed",
+      "stage_name": "Applying changes",
+      "detail": "Builder repo is dirty before automated execution; refusing to continue."
+    },
+    {
+      "at": "2026-03-31T16:30:56.307306+00:00",
+      "task_id": "DRAFT-JORB-INFRA-EVAL_REGRESSION",
+      "run_state": "blocked",
+      "stage_name": "classification",
+      "detail": "Builder repo is dirty before automated execution; refusing to continue."
+    },
+    {
+      "at": "2026-03-31T16:30:56.321950+00:00",
+      "task_id": "DRAFT-JORB-INFRA-EVAL_REGRESSION",
+      "run_state": "blocked",
+      "stage_name": null,
+      "detail": "Builder repo is dirty before automated execution; refusing to continue."
     }
   ],
-  "updated_at": "2026-03-31T15:32:55.142344+00:00",
-  "current_task": null,
-  "current_title": null,
+  "updated_at": "2026-03-31T16:30:56.321937+00:00",
+  "current_task": "DRAFT-JORB-INFRA-EVAL_REGRESSION",
+  "current_title": "Add eval coverage for JORB-INFRA eval regression",
   "current_stage": null,
-  "run_state": "idle",
-  "current_blocker": null,
+  "run_state": "blocked",
+  "current_blocker": "Builder repo is dirty before automated execution; refusing to continue.",
   "last_successful_checkpoint": null,
   "artifact_completeness": {
-    "present": [],
+    "present": [
+      "compiled_feature_spec.md"
+    ],
     "missing": [
-      "compiled_feature_spec.md",
       "proposal.md",
       "tradeoff_matrix.md",
       "research_brief.md",
@@ -198,14 +199,14 @@
   "failure_taxonomy": null,
   "eval_result": null,
   "runtime_proof_summary": null,
-  "next_recommended_action": "Inspect backlog truth and rerun automation when ready.",
-  "run_log_dir": null,
+  "next_recommended_action": null,
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T163056Z-DRAFT-JORB-INFRA-EVAL_REGRESSION",
   "event": {
-    "at": "2026-03-31T15:32:55.142350+00:00",
-    "task_id": null,
-    "run_state": "idle",
+    "at": "2026-03-31T16:30:56.321950+00:00",
+    "task_id": "DRAFT-JORB-INFRA-EVAL_REGRESSION",
+    "run_state": "blocked",
     "stage_name": null,
-    "detail": null
+    "detail": "Builder repo is dirty before automated execution; refusing to continue."
   },
   "eval_blocked_acceptance": false
 }

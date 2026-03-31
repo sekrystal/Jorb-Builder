@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-31T15:29:30.690152+00:00",
+  "generated_at": "2026-03-31T16:30:56.318367+00:00",
   "signals": [
     {
       "signal_id": "sig-508834552f75",
@@ -25,11 +25,43 @@
         "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-25T050715Z-JORB-V1-007.yml",
         "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-25T050925Z-JORB-V1-007.yml"
       ],
-      "created_at": "2026-03-31T15:29:30.689631+00:00",
+      "created_at": "2026-03-31T16:30:56.318120+00:00",
       "status": "active",
       "feedback_dimension": "capability_gap",
       "system_gap": "Required automation capability or task contract is missing, so the backlog cannot converge through bounded execution.",
       "corrective_work": "Add or refine a targeted builder task that supplies the missing capability and the proof path for it."
+    },
+    {
+      "signal_id": "sig-39686ff0f8a3",
+      "signal_type": "failure_class",
+      "raw_observation": "Executor changed files outside the task allowlist.; Builder repo is dirty before automated execution; refusing to continue.; Builder repo is dirty before automated execution; refusing to continue.",
+      "interpreted_issue": "repeated_repo_state_failure",
+      "confidence": 0.85,
+      "evidence_links": [
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T204723Z-DRAFT-JORB-INFRA-STATUS-TRUTH.yml",
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T205825Z-DRAFT-JORB-INFRA-STATUS-TRUTH.yml",
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-31T014204Z-DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED.yml",
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-31T163056Z-DRAFT-JORB-INFRA-EVAL_REGRESSION.yml"
+      ],
+      "affected_ticket_family": "DRAFT-JORB",
+      "affected_subsystem": "draft-jorb",
+      "proposed_action_type": "create_follow_up_hardening_ticket",
+      "observation": "Executor changed files outside the task allowlist.; Builder repo is dirty before automated execution; refusing to continue.; Builder repo is dirty before automated execution; refusing to continue.",
+      "inference": "Pattern observed 4 times in DRAFT-JORB.",
+      "recommendation": "Consider create follow up hardening ticket for DRAFT-JORB.",
+      "recurrence_count": 4,
+      "severity": "high",
+      "source_artifacts": [
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T204723Z-DRAFT-JORB-INFRA-STATUS-TRUTH.yml",
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T205825Z-DRAFT-JORB-INFRA-STATUS-TRUTH.yml",
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-31T014204Z-DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED.yml",
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-31T163056Z-DRAFT-JORB-INFRA-EVAL_REGRESSION.yml"
+      ],
+      "created_at": "2026-03-31T16:30:56.318159+00:00",
+      "status": "active",
+      "feedback_dimension": "draft-jorb",
+      "system_gap": "Operator feedback indicates a builder-system gap that is not yet categorized more precisely.",
+      "corrective_work": "Review the evidence and convert the gap into a bounded corrective backlog item."
     },
     {
       "signal_id": "sig-6b2d51e1aaf6",
@@ -53,7 +85,7 @@
         "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-29T190200Z-JORB-V3-001.yml",
         "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-29T222718Z-JORB-V3-002.yml"
       ],
-      "created_at": "2026-03-31T15:29:30.689651+00:00",
+      "created_at": "2026-03-31T16:30:56.318136+00:00",
       "status": "active",
       "feedback_dimension": "capability_gap",
       "system_gap": "Required automation capability or task contract is missing, so the backlog cannot converge through bounded execution.",
@@ -81,7 +113,7 @@
         "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T192337Z-JORB-INFRA-010.yml",
         "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T200609Z-JORB-INFRA-010.yml"
       ],
-      "created_at": "2026-03-31T15:29:30.689668+00:00",
+      "created_at": "2026-03-31T16:30:56.318151+00:00",
       "status": "active",
       "feedback_dimension": "evaluation",
       "system_gap": "Validation coverage is not proving the behavior that regressed.",
@@ -107,7 +139,7 @@
       "source_artifacts": [
         "/Users/samuelkrystal/projects/jorb-builder/run_ledger.json"
       ],
-      "created_at": "2026-03-31T15:29:30.690130+00:00",
+      "created_at": "2026-03-31T16:30:56.318346+00:00",
       "status": "active",
       "feedback_dimension": "artifact_enforcement",
       "system_gap": "Required builder artifacts are incomplete or missing evidence needed for acceptance.",
@@ -133,37 +165,33 @@
       "source_artifacts": [
         "/Users/samuelkrystal/projects/jorb-builder/run_ledger.json"
       ],
-      "created_at": "2026-03-31T15:29:30.690144+00:00",
+      "created_at": "2026-03-31T16:30:56.318354+00:00",
       "status": "active",
       "feedback_dimension": "jorb-infra",
       "system_gap": "Operator feedback indicates a builder-system gap that is not yet categorized more precisely.",
       "corrective_work": "Review the evidence and convert the gap into a bounded corrective backlog item."
     },
     {
-      "signal_id": "sig-39686ff0f8a3",
-      "signal_type": "failure_class",
-      "raw_observation": "Builder repo is dirty before automated execution; refusing to continue.; Executor changed files outside the task allowlist.; Builder repo is dirty before automated execution; refusing to continue.",
-      "interpreted_issue": "repeated_repo_state_failure",
-      "confidence": 0.75,
+      "signal_id": "sig-29f8b4e0be19",
+      "signal_type": "runtime_outcome",
+      "raw_observation": "Builder repo is dirty before automated execution; refusing to continue.",
+      "interpreted_issue": "builder_repo_is_dirty_before_automated_execution_refusing_to_continue",
+      "confidence": 0.8,
       "evidence_links": [
-        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T204723Z-DRAFT-JORB-INFRA-STATUS-TRUTH.yml",
-        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T205825Z-DRAFT-JORB-INFRA-STATUS-TRUTH.yml",
-        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-31T014204Z-DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED.yml"
+        "/Users/samuelkrystal/projects/jorb-builder/run_ledger.json"
       ],
       "affected_ticket_family": "DRAFT-JORB",
       "affected_subsystem": "draft-jorb",
       "proposed_action_type": "create_follow_up_hardening_ticket",
-      "observation": "Builder repo is dirty before automated execution; refusing to continue.; Executor changed files outside the task allowlist.; Builder repo is dirty before automated execution; refusing to continue.",
-      "inference": "Pattern observed 3 times in DRAFT-JORB.",
-      "recommendation": "Consider create follow up hardening ticket for DRAFT-JORB.",
-      "recurrence_count": 3,
+      "observation": "Builder repo is dirty before automated execution; refusing to continue.",
+      "inference": "Canonical run ledger recorded 2 blocked runtime outcome(s) for DRAFT-JORB.",
+      "recommendation": "Refine backlog handling for the observed DRAFT-JORB runtime evidence.",
+      "recurrence_count": 2,
       "severity": "high",
       "source_artifacts": [
-        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T204723Z-DRAFT-JORB-INFRA-STATUS-TRUTH.yml",
-        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T205825Z-DRAFT-JORB-INFRA-STATUS-TRUTH.yml",
-        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-31T014204Z-DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED.yml"
+        "/Users/samuelkrystal/projects/jorb-builder/run_ledger.json"
       ],
-      "created_at": "2026-03-31T15:29:30.689676+00:00",
+      "created_at": "2026-03-31T16:30:56.318361+00:00",
       "status": "active",
       "feedback_dimension": "draft-jorb",
       "system_gap": "Operator feedback indicates a builder-system gap that is not yet categorized more precisely.",
@@ -191,7 +219,7 @@
         "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T192337Z-JORB-INFRA-010.yml",
         "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-31T152930Z-JORB-INFRA-035.yml"
       ],
-      "created_at": "2026-03-31T15:29:30.689660+00:00",
+      "created_at": "2026-03-31T16:30:56.318144+00:00",
       "status": "active",
       "feedback_dimension": "jorb-infra",
       "system_gap": "Operator feedback indicates a builder-system gap that is not yet categorized more precisely.",

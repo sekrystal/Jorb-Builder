@@ -31,6 +31,22 @@
         "reviewed_at": "2026-03-31T01:32:44.185926+00:00",
         "review_note": "bounded live validation"
       }
+    },
+    {
+      "applied_at": "2026-03-31T15:53:51.949648+00:00",
+      "synthesis_id": "syn-a6992f680fd1",
+      "source_proposal_id": "prop-31f9d6b6caca",
+      "synthesized_entry_sha1": "a7cbd7016cecca9b949f68be261eac2205383ec2",
+      "backlog_before_sha1": "b44552e57639572dd61f31604fc15daea2eecac6",
+      "backlog_after_sha1": "db6eb933c818cf2a1dc37c35380fe7ba3abce39f",
+      "ticket_id": "DRAFT-JORB-INFRA-EVAL_REGRESSION",
+      "operator_review": {
+        "required": true,
+        "approved": true,
+        "review_status": "accepted",
+        "reviewed_at": "2026-03-31T15:48:00.836713+00:00",
+        "review_note": "approved from operator_tui"
+      }
     }
   ]
 }

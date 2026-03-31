@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-31T01:42:03.402065+00:00",
+  "generated_at": "2026-03-31T15:53:51.948633+00:00",
   "entries": [
     {
       "synthesis_id": "syn-245e482be1f3",
@@ -196,10 +196,130 @@
       "eval_comparison": null,
       "synthesis_eval_blocked": false,
       "applied_at": "2026-03-31T01:42:03.401799+00:00"
+    },
+    {
+      "synthesis_id": "syn-a6992f680fd1",
+      "ticket_id_placeholder": "DRAFT-JORB-INFRA-EVAL_REGRESSION",
+      "title": "Add eval coverage for JORB-INFRA eval regression",
+      "status_default": "pending",
+      "priority_recommendation": "high",
+      "rationale": "Consider add missing eval coverage for JORB-INFRA.",
+      "evidence_summary": "Pattern observed 1 times in JORB-INFRA.",
+      "evidence_links": [
+        "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T192337Z-JORB-INFRA-010.yml"
+      ],
+      "dependencies": [
+        "JORB-INFRA-010"
+      ],
+      "affected_ticket_family": "JORB-INFRA",
+      "subsystem": "JORB-INFRA",
+      "acceptance_criteria": [
+        "Automated validation proves the recurring issue is handled explicitly: Pattern observed 1 times in JORB-INFRA. Canonical run ledger recorded 1 blocked runtime outcome(s) for JORB-INFRA.",
+        "Operator-visible status or artifacts show the new routing or decision boundary without relying on narrative summary.",
+        "Evidence artifacts include judge_decision.md and evidence_bundle.json with provenance back to the triggering proposal. Provenance points back to prop-31f9d6b6caca via evidence links: /Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T192337Z-JORB-INFRA-010.yml.",
+        "The implementation remains scoped to one builder mechanism and does not silently mutate backlog or roadmap state.",
+        "Replay or comparison output demonstrates the targeted eval gap before and after the change."
+      ],
+      "required_artifacts": [
+        "compiled_feature_spec.md",
+        "proposal.md",
+        "tradeoff_matrix.md",
+        "judge_decision.md",
+        "evidence_bundle.json"
+      ],
+      "validation_expectations": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "requires_vm_runtime_proof": false,
+      "type": "infrastructure",
+      "area": "builder",
+      "repo_path": "~/projects/jorb-builder",
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "provenance": {
+        "source_proposal_id": "prop-31f9d6b6caca",
+        "evidence_links": [
+          "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T192337Z-JORB-INFRA-010.yml"
+        ],
+        "confidence": 0.7,
+        "recurrence_count": 1,
+        "generated_at": "2026-03-31T15:53:41.904554+00:00"
+      },
+      "operator_approval": {
+        "required": true,
+        "approved": true,
+        "review_status": "accepted",
+        "reviewed_at": "2026-03-31T15:48:00.836713+00:00",
+        "review_note": "approved from operator_tui"
+      },
+      "source_signal_id": "sig-9fcb38c88c74",
+      "artifact_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs",
+      "status": "applied",
+      "created_at": "2026-03-31T15:53:41.904834+00:00",
+      "validation": {
+        "issues": [],
+        "invalid_dependencies": [],
+        "duplicate_matches": [],
+        "passed": true
+      },
+      "synthesis_eval": {
+        "suite_version": 1,
+        "mode": "synthesis_fixture",
+        "fixture_id": "proposal_backlog_synthesis_v1",
+        "fixture_family": "proposal_backlog_synthesis",
+        "task_id": "DRAFT-JORB-INFRA-EVAL_REGRESSION",
+        "scores": {
+          "backlog_synthesis_quality": 1.0,
+          "evidence_quality": 1.0,
+          "operator_handoff_quality": 1.0,
+          "planning_quality": 1.0
+        },
+        "overall_score": 1.0,
+        "threshold": 0.8,
+        "passed": true,
+        "mandatory_artifacts": {
+          "present": [],
+          "missing": []
+        },
+        "dimension_failures": [],
+        "fixture_path": "/Users/samuelkrystal/projects/jorb-builder/eval_fixtures/proposal_backlog_synthesis.json"
+      },
+      "eval_comparison": null,
+      "synthesis_eval_blocked": false,
+      "applied_at": "2026-03-31T15:53:51.948295+00:00"
     }
   ],
   "dependency_graph": {
     "nodes": [
+      {
+        "synthesis_id": "syn-a6992f680fd1",
+        "ticket_id": "DRAFT-JORB-INFRA-EVAL_REGRESSION",
+        "title": "Add eval coverage for JORB-INFRA eval regression",
+        "status": "applied",
+        "plan_state": "applied",
+        "priority_recommendation": "high",
+        "dependencies": [
+          "JORB-INFRA-010"
+        ],
+        "internal_dependencies": [],
+        "external_dependencies": [
+          {
+            "ticket_id": "JORB-INFRA-010",
+            "status": "accepted",
+            "satisfied": true
+          }
+        ],
+        "missing_dependencies": [],
+        "validation_passed": true,
+        "synthesis_eval_passed": true,
+        "operator_approved": true,
+        "plan_blockers": []
+      },
       {
         "synthesis_id": "syn-bc95a4232f4c",
         "ticket_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
@@ -253,6 +373,13 @@
       {
         "from_ticket_id": "JORB-INFRA-010",
         "from_synthesis_id": null,
+        "to_ticket_id": "DRAFT-JORB-INFRA-EVAL_REGRESSION",
+        "to_synthesis_id": "syn-a6992f680fd1",
+        "kind": "backlog_dependency"
+      },
+      {
+        "from_ticket_id": "JORB-INFRA-010",
+        "from_synthesis_id": null,
         "to_ticket_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
         "to_synthesis_id": "syn-bc95a4232f4c",
         "kind": "backlog_dependency"
@@ -270,6 +397,15 @@
   "execution_order": [
     {
       "position": 1,
+      "synthesis_id": "syn-a6992f680fd1",
+      "ticket_id": "DRAFT-JORB-INFRA-EVAL_REGRESSION",
+      "title": "Add eval coverage for JORB-INFRA eval regression",
+      "plan_state": "applied",
+      "priority_recommendation": "high",
+      "plan_blockers": []
+    },
+    {
+      "position": 2,
       "synthesis_id": "syn-245e482be1f3",
       "ticket_id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
       "title": "Harden operator truth for Phase 4 artifact enforcement state",
@@ -278,7 +414,7 @@
       "plan_blockers": []
     },
     {
-      "position": 2,
+      "position": 3,
       "synthesis_id": "syn-bc95a4232f4c",
       "ticket_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
       "title": "Strengthen acceptance criteria for JORB-INFRA phase4 artifact enforcement failed",

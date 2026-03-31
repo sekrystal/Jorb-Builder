@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import json
+import subprocess
 from typing import Any
 
 from backlog_synthesis import synthesis_summary_for_operator
@@ -219,6 +220,22 @@ def _latest_judge_result(run_dir: Path | None) -> str | None:
         if line.lower().startswith("decision:"):
             return line.split(":", 1)[1].strip()
     return "present"
+
+
+def _git_status_lines(root: Path) -> list[str]:
+    try:
+        completed = subprocess.run(
+            ["git", "status", "--short"],
+            cwd=str(root),
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+    except Exception:
+        return []
+    if completed.returncode != 0:
+        return []
+    return [line.rstrip() for line in completed.stdout.splitlines() if line.strip()]
 
 
 def _stage_progress(
@@ -501,20 +518,199 @@ def _actual_stats(backlog_diag: dict[str, Any]) -> dict[str, int]:
     }
 
 
+def _plain_state(
+    *,
+    status: dict[str, Any],
+    active: dict[str, Any],
+    latest_blocker: dict[str, Any] | None,
+    stage_progress: list[dict[str, Any]],
+    backlog_diag: dict[str, Any],
+    proposals: dict[str, Any],
+) -> dict[str, str]:
+    if latest_blocker or status.get("state") == "blocked":
+        return {
+            "label": "Blocked",
+            "reason": "A real blocker is stopping the builder and needs intervention before work can continue.",
+        }
+    if active.get("task_id"):
+        current = next((item for item in stage_progress if item.get("status") in {"current", "failed"}), None)
+        current_key = str((current or {}).get("key") or "")
+        if current_key in {"execution_started", "prompt_rendered"}:
+            return {
+                "label": "Waiting on Codex",
+                "reason": "The builder handed work to Codex and is waiting for code or execution output.",
+            }
+        if current_key == "validation":
+            return {
+                "label": "Waiting on Validation",
+                "reason": "The builder is validating changes before it can judge the run result.",
+            }
+        return {
+            "label": "Running",
+            "reason": "The builder is actively processing the current task.",
+        }
+    if proposals.get("draft_count", 0) or proposals.get("accepted_pending_synthesis_count", 0):
+        return {
+            "label": "Waiting on Approval",
+            "reason": "There is proposal work waiting for an operator decision or synthesis step before execution can continue.",
+        }
+    if backlog_diag.get("ready_task_ids"):
+        return {
+            "label": "Completed",
+            "reason": "The builder is idle right now, but a runnable task is waiting in the queue.",
+        }
+    pending_count = len(backlog_diag.get("pending_task_ids", []))
+    if pending_count:
+        return {
+            "label": "Waiting on Dependencies",
+            "reason": "There is queued work, but nothing is runnable yet because dependencies or readiness gates are still unmet.",
+        }
+    return {
+        "label": "Exhausted",
+        "reason": "No runnable, blocked, or pending tasks remain under current backlog truth.",
+    }
+
+
+def _compact_progress(
+    *,
+    active: dict[str, Any],
+    latest_run_result: dict[str, Any],
+    latest_run_dir: Path | None,
+    stage_progress: list[dict[str, Any]],
+) -> dict[str, Any]:
+    progress_rows = _safe_jsonl(latest_run_dir / "progress.jsonl") if latest_run_dir else []
+    latest = progress_rows[-1] if progress_rows else {}
+    elapsed = None
+    if progress_rows:
+        first_at = parse_iso_datetime(progress_rows[0].get("timestamp"))
+        last_at = parse_iso_datetime(latest.get("timestamp"))
+        if first_at and last_at:
+            elapsed_seconds = max(0, int((last_at - first_at).total_seconds()))
+            minutes, seconds = divmod(elapsed_seconds, 60)
+            elapsed = f"{minutes}m {seconds}s" if minutes else f"{seconds}s"
+    health = "blocked" if any(item.get("status") == "failed" for item in stage_progress) else ("active" if active.get("task_id") else "idle")
+    current = next((item for item in stage_progress if item.get("status") in {"current", "failed"}), None)
+    waiting_for = None
+    current_key = str((current or {}).get("key") or "")
+    if current_key in {"execution_started", "prompt_rendered"}:
+        waiting_for = "Codex output"
+    elif current_key == "validation":
+        waiting_for = "validation results"
+    elif current_key == "judge":
+        waiting_for = "judge artifacts"
+    elif health == "blocked":
+        waiting_for = "operator recovery"
+    elif health == "idle":
+        waiting_for = "next runnable task"
+    return {
+        "current_phase": (current or {}).get("label") or "none",
+        "elapsed": elapsed or "n/a",
+        "health": health,
+        "waiting_for": waiting_for or "none",
+        "technical_detail": {
+            "latest_progress": latest,
+            "latest_run_classification": latest_run_result.get("classification"),
+        },
+    }
+
+
+def _blocker_guidance(root: Path, latest_blocker: dict[str, Any] | None) -> dict[str, Any]:
+    if not latest_blocker:
+        return {
+            "plain_reason": "No blocker is currently stopping the builder.",
+            "why_it_stops": "none",
+            "auto_fix_safe": False,
+            "options": [],
+        }
+    diagnosis = str(latest_blocker.get("diagnosis") or "").strip()
+    git_status = _git_status_lines(root)
+    lowered = diagnosis.lower()
+    if "dirty before automated execution" in lowered:
+        return {
+            "plain_reason": "The builder repo has uncommitted changes.",
+            "why_it_stops": "The automation loop refuses to continue because running on a dirty worktree could mix unrelated edits into the task.",
+            "auto_fix_safe": True,
+            "options": [
+                {"key": "g", "label": "Inspect changed files", "action": "inspect_dirty_files"},
+                {"key": "c", "label": "Checkpoint commit current changes", "action": "checkpoint_commit"},
+                {"key": "t", "label": "Repair and reopen blocked task", "action": "retry_blocked_task"},
+            ],
+            "changed_files": git_status,
+        }
+    if "state" in lowered and "repair" in lowered:
+        return {
+            "plain_reason": "The saved builder state does not match current canonical truth.",
+            "why_it_stops": "The automation loop cannot safely continue until it reconciles active-task and backlog state.",
+            "auto_fix_safe": True,
+            "options": [
+                {"key": "t", "label": "Run safe state repair", "action": "retry_blocked_task"},
+            ],
+        }
+    return {
+        "plain_reason": diagnosis or "A blocker is stopping the current task.",
+        "why_it_stops": "The current task reached a terminal blocked state and needs operator intervention.",
+        "auto_fix_safe": False,
+        "options": [
+            {"key": "b", "label": "Inspect blocker details", "action": "inspect_blocker"},
+        ],
+    }
+
+
+def _queue_explanation(backlog_diag: dict[str, Any], proposals: dict[str, Any], synthesis: dict[str, Any]) -> dict[str, Any]:
+    blocked = backlog_diag.get("blocked_task_ids", [])
+    if blocked:
+        return {
+            "summary": "Execution is waiting on blocker recovery.",
+            "why_now": f"{blocked[0]} is blocked and no further progress should happen until it is resolved or repaired.",
+            "waiting_on": "blocker repair",
+        }
+    next_ready = backlog_diag.get("next_selected_task_id")
+    if next_ready:
+        return {
+            "summary": f"{next_ready} is runnable now.",
+            "why_now": "It is already marked ready and no blockers or dependency filters are excluding it.",
+            "waiting_on": "nothing",
+        }
+    if proposals.get("accepted_pending_synthesis_count", 0):
+        return {
+            "summary": "Execution is waiting on synthesis.",
+            "why_now": "At least one approved proposal has not yet been turned into a backlog draft.",
+            "waiting_on": "approval-to-synthesis handoff",
+        }
+    if synthesis.get("draft_count", 0):
+        return {
+            "summary": "Execution is waiting on synthesized draft apply.",
+            "why_now": "There is a draft synthesized entry that has not yet been applied into canonical backlog.",
+            "waiting_on": "synthesized entry apply",
+        }
+    pending = backlog_diag.get("pending_task_ids", [])
+    if pending:
+        return {
+            "summary": "Execution is waiting on dependencies or manual readiness.",
+            "why_now": f"{len(pending)} task(s) are pending, but none are ready yet.",
+            "waiting_on": "dependencies or ready-state transition",
+        }
+    return {
+        "summary": "The queue is exhausted.",
+        "why_now": "There are no ready, blocked, or pending tasks remaining.",
+        "waiting_on": "nothing",
+    }
+
+
 def _recommended_action(*, backlog_diag: dict[str, Any], latest_blocker: dict[str, Any] | None, proposals: dict[str, Any], synthesis: dict[str, Any], active: dict[str, Any], status: dict[str, Any]) -> str:
     if latest_blocker:
         return f"Inspect blocker {latest_blocker.get('id')} and run python3 scripts/automate_task_loop.py --repair-state if the condition is already resolved."
     next_ready = backlog_diag.get("next_selected_task_id")
     if next_ready:
-        return "Run python3 scripts/automate_task_loop.py to execute the next ready task."
+        return "Press x to execute the next ready task."
     if proposals.get("accepted_pending_synthesis_count", 0):
         top = proposals.get("top_accepted_pending_synthesis") or {}
-        return f"Run python3 scripts/backlog_synthesis.py to materialize approved proposal {top.get('proposal_id') or 'accepted proposal'}."
+        return f"Press s to synthesize approved proposal {top.get('proposal_id') or 'accepted proposal'} into a backlog draft."
     if synthesis.get("draft_count", 0):
         top_draft = synthesis.get("top_draft") or {}
-        return f"Apply synthesized entry {top_draft.get('synthesis_id') or top_draft.get('ticket_id_placeholder') or 'draft entry'} if it is still the best next step."
+        return f"Press a to apply synthesized entry {top_draft.get('synthesis_id') or top_draft.get('ticket_id_placeholder') or 'draft entry'}."
     if proposals.get("draft_count", 0):
-        return "Review draft proposals and approve the next builder-safe candidate."
+        return "Press p to review draft proposals and approve the next builder-safe candidate."
     if status.get("state") == "completed":
         return "System is idle and backlog-exhausted; review proposals or add new work."
     if active.get("task_id"):
@@ -558,6 +754,22 @@ def build_operator_snapshot(root: Path | None = None) -> dict[str, Any]:
         eval_result=eval_result,
     )
     event_feed = _build_event_feed(repo_root, run_dir=latest_run_dir, backlog=backlog)
+    plain_state = _plain_state(
+        status=status,
+        active=active,
+        latest_blocker=latest_blocker,
+        stage_progress=stage_progress,
+        backlog_diag=backlog_diag,
+        proposals=proposals,
+    )
+    compact_progress = _compact_progress(
+        active=active,
+        latest_run_result=automation_result,
+        latest_run_dir=latest_run_dir,
+        stage_progress=stage_progress,
+    )
+    blocker_guidance = _blocker_guidance(repo_root, latest_blocker)
+    queue_explanation = _queue_explanation(backlog_diag, proposals, synthesis)
     next_action = _recommended_action(
         backlog_diag=backlog_diag,
         latest_blocker=latest_blocker,
@@ -575,6 +787,16 @@ def build_operator_snapshot(root: Path | None = None) -> dict[str, Any]:
             }
             for item in proposals.get("all", [])
             if item.get("status") == "draft"
+        ],
+        "approved_proposals": [
+            {
+                "id": str(item.get("proposal_id") or ""),
+                "label": str(item.get("title") or item.get("proposal_id") or "approved proposal"),
+                "detail": str(item.get("affected_ticket_family") or "unknown"),
+            }
+            for item in proposals.get("all", [])
+            if item.get("status") == "accepted"
+            and str(item.get("proposal_id") or "") not in synthesized_source_ids
         ],
         "syntheses": [
             {
@@ -615,6 +837,10 @@ def build_operator_snapshot(root: Path | None = None) -> dict[str, Any]:
         "eval_result": eval_result,
         "judge_result": judge_result,
         "stage_progress": stage_progress,
+        "plain_state": plain_state,
+        "compact_progress": compact_progress,
+        "blocker_guidance": blocker_guidance,
+        "queue_explanation": queue_explanation,
         "event_feed": event_feed,
         "stats": _actual_stats(backlog_diag),
         "next_recommended_action": next_action,

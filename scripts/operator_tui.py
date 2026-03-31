@@ -57,10 +57,25 @@ def _event_prefix(item: dict[str, Any]) -> str:
     return "[EVENT]"
 
 
+def _status_badge(label: str) -> str:
+    return {
+        "Running": "[RUNNING]",
+        "Waiting on Codex": "[CODEX]",
+        "Waiting on Validation": "[VALIDATION]",
+        "Blocked": "[BLOCKED]",
+        "Waiting on Approval": "[APPROVAL]",
+        "Waiting on Dependencies": "[DEPENDENCIES]",
+        "Exhausted": "[EXHAUSTED]",
+        "Completed": "[COMPLETED]",
+    }.get(label, "[STATE]")
+
+
 def selector_options(snapshot: dict[str, Any], kind: str) -> tuple[list[dict[str, Any]], str]:
     items = list((snapshot.get("selector_items") or {}).get(kind, []))
     if kind == "proposals":
         empty = "No draft proposals are awaiting approval."
+    elif kind == "approved_proposals":
+        empty = "No approved proposals are awaiting synthesis."
     elif kind == "syntheses":
         empty = "No synthesized draft entries are ready to apply."
     elif kind == "blockers":
@@ -116,6 +131,26 @@ def _run_repo_command(
         "message": (completed.stdout or completed.stderr or "").strip(),
         "command": cmd,
         "returncode": completed.returncode,
+    }
+
+
+def _checkpoint_commit(repo_root: Path, runner: Callable[..., subprocess.CompletedProcess[str]], *, message: str) -> dict[str, Any]:
+    env = os.environ.copy()
+    env["JORB_BUILDER_ROOT"] = str(repo_root)
+    add_result = runner(["git", "add", "-A"], cwd=str(repo_root), text=True, capture_output=True, env=env)
+    if add_result.returncode != 0:
+        return {
+            "ok": False,
+            "message": (add_result.stderr or add_result.stdout or "").strip() or "git add failed",
+            "command": ["git", "add", "-A"],
+            "returncode": add_result.returncode,
+        }
+    commit_result = runner(["git", "commit", "-m", message], cwd=str(repo_root), text=True, capture_output=True, env=env)
+    return {
+        "ok": commit_result.returncode == 0,
+        "message": (commit_result.stdout or commit_result.stderr or "").strip() or "git commit finished",
+        "command": ["git", "commit", "-m", message],
+        "returncode": commit_result.returncode,
     }
 
 
@@ -201,26 +236,66 @@ def run_loop_mode(
             }
 
 
-def render_operator_view(snapshot: dict[str, Any], *, width: int = 120, height: int = 40, loop_mode: str = LOOP_MODE_SINGLE) -> str:
+def render_operator_view(
+    snapshot: dict[str, Any],
+    *,
+    width: int = 120,
+    height: int = 40,
+    loop_mode: str = LOOP_MODE_SINGLE,
+    status_message: str | None = None,
+) -> str:
     backlog_diag = snapshot["backlog_diagnostics"]
     artifact = snapshot["artifact_panel"]
     eval_result = snapshot["eval_result"]
     proposals = snapshot["proposals"]
     synthesis = snapshot["synthesis"]
     latest_blocker = snapshot["latest_blocker"] or {}
+    plain_state = snapshot.get("plain_state") or {}
+    compact_progress = snapshot.get("compact_progress") or {}
+    blocker_guidance = snapshot.get("blocker_guidance") or {}
+    queue_explanation = snapshot.get("queue_explanation") or {}
     lines: list[str] = []
     lines.append("JORB Builder Operator TUI")
     lines.append("=" * min(width, 80))
-    lines.append(f"MODE >>> {LOOP_MODE_LABELS.get(loop_mode, loop_mode)}   STATUS >>> {snapshot['status'].get('state')}   ACTIVE >>> {snapshot['active'].get('task_id') or 'none'}")
+    lines.append(f"STATE >>> {_status_badge(str(plain_state.get('label') or ''))} {plain_state.get('label') or snapshot['status'].get('state')}")
+    lines.append(f"WHY >>> {plain_state.get('reason') or 'No plain-language explanation available.'}")
+    lines.append(f"MODE >>> {LOOP_MODE_LABELS.get(loop_mode, loop_mode)}   ACTIVE >>> {snapshot['active'].get('task_id') or 'none'}")
     lines.append("STOP POLICY >>> " + ", ".join(STOP_CONDITIONS))
     lines.append("NEXT ACTION >>> " + (snapshot.get("next_recommended_action") or "none"))
+    if status_message:
+        lines.append("ACTION STATUS >>> " + status_message)
     lines.append(f"Blocker: {snapshot['ledger'].get('current_blocker') or latest_blocker.get('diagnosis') or 'none'}")
     lines.append(f"Latest run dir: {snapshot.get('latest_run_dir') or 'none'}")
     lines.append("")
-    lines.append("Stage progress")
+    lines.append("Current task and progress")
     lines.append("-" * min(width, 80))
+    lines.append(f"Current task : {snapshot['active'].get('task_id') or snapshot['status'].get('last_task_id') or 'none'}")
+    lines.append(f"Current phase: {compact_progress.get('current_phase') or 'none'}")
+    lines.append(f"Elapsed      : {compact_progress.get('elapsed') or 'n/a'}")
+    lines.append(f"Health       : {compact_progress.get('health') or 'unknown'}")
+    lines.append(f"Waiting for  : {compact_progress.get('waiting_for') or 'none'}")
     for item in snapshot["stage_progress"]:
         lines.append(f"{_icon(item['status'])} {item['label']}")
+    lines.append("")
+    lines.append("Blocker diagnosis and recovery")
+    lines.append("-" * min(width, 80))
+    lines.append(f"Plain reason : {blocker_guidance.get('plain_reason') or 'none'}")
+    lines.append(f"Why it stops : {blocker_guidance.get('why_it_stops') or 'none'}")
+    lines.append(f"Safe auto-fix: {blocker_guidance.get('auto_fix_safe')}")
+    options = blocker_guidance.get("options") or []
+    if options:
+        lines.append("Recovery opts: " + " | ".join(f"{item['key']} {item['label']}" for item in options))
+    else:
+        lines.append("Recovery opts: none")
+    changed_files = blocker_guidance.get("changed_files") or []
+    if changed_files:
+        lines.append("Changed files: " + ", ".join(changed_files[:4]) + (" ..." if len(changed_files) > 4 else ""))
+    lines.append("")
+    lines.append("Queue explanation")
+    lines.append("-" * min(width, 80))
+    lines.append(f"Summary      : {queue_explanation.get('summary') or 'none'}")
+    lines.append(f"Why now      : {queue_explanation.get('why_now') or 'none'}")
+    lines.append(f"Waiting on   : {queue_explanation.get('waiting_on') or 'none'}")
     lines.append("")
     lines.append("Artifacts and eval")
     lines.append("-" * min(width, 80))
@@ -239,7 +314,7 @@ def render_operator_view(snapshot: dict[str, Any], *, width: int = 120, height: 
     lines.append(f"Synthesized      : {synthesis.get('entry_count', 0)} (applied={synthesis.get('applied_count', 0)})")
     lines.append(f"Next execution   : {synthesis.get('next_execution_target') or 'none'}")
     lines.append("")
-    lines.append("Event feed")
+    lines.append("Recent meaningful events")
     lines.append("-" * min(width, 80))
     if not snapshot["event_feed"]:
         lines.append("No canonical events recorded yet.")
@@ -249,7 +324,7 @@ def render_operator_view(snapshot: dict[str, Any], *, width: int = 120, height: 
             detail = f" :: {item['detail']}" if item.get("detail") else ""
             lines.append(f"{item.get('at') or 'unknown'} | {_event_prefix(item)} | {item.get('summary')}{detail}{recommendation}")
     lines.append("")
-    lines.append("Actions: x run | m mode | r refresh | b blockers | p proposals | a syntheses | t retry blocked | o latest run dir | i artifacts | q quit")
+    lines.append("Actions: x run | m mode | r refresh | p proposals | s synthesize | a syntheses | b blockers | g changed files | c checkpoint | t repair | d details | o latest run dir | i artifacts | q quit")
     return "\n".join(line[: max(20, width - 1)] for line in lines)
 
 
@@ -278,6 +353,23 @@ def run_operator_action(
             "artifact_panel": artifact,
             "path": snapshot.get("latest_run_dir"),
         }
+    if action == "inspect_dirty_files":
+        changed_files = []
+        try:
+            completed = runner(["git", "status", "--short"], cwd=str(repo_root), text=True, capture_output=True, env={**os.environ, "JORB_BUILDER_ROOT": str(repo_root)})
+            if completed.returncode == 0:
+                changed_files = [line.rstrip() for line in completed.stdout.splitlines() if line.strip()]
+        except Exception:
+            changed_files = []
+        return {
+            "ok": True,
+            "message": "Changed files: " + (", ".join(changed_files) if changed_files else "none"),
+            "changed_files": changed_files,
+        }
+    if action == "checkpoint_commit":
+        return _checkpoint_commit(repo_root, runner, message="Checkpoint operator TUI recovery state")
+    if action == "synthesize_approved":
+        return _run_repo_command([sys.executable, str(BACKLOG_SYNTHESIS)], repo_root=repo_root, runner=runner)
     if action == "run_single_cycle":
         return run_loop_mode(LOOP_MODE_SINGLE, root=repo_root, runner=runner)
     if action == "run_until_failure":
@@ -298,51 +390,83 @@ def run_operator_action(
 
 def _prompt(stdscr: Any, label: str) -> str:
     height, width = stdscr.getmaxyx()
-    stdscr.addstr(height - 2, 0, " " * max(1, width - 1))
-    stdscr.addstr(height - 2, 0, label[: max(1, width - 1)])
+    prompt_row = max(0, height - 2)
+    input_row = max(0, height - 1)
+    _safe_addstr(stdscr, prompt_row, 0, " " * max(1, width - 1), width=width)
+    _safe_addstr(stdscr, prompt_row, 0, label, width=width)
     stdscr.refresh()
     curses.echo()
     try:
-        value = stdscr.getstr(height - 1, 0).decode("utf-8").strip()
+        value = stdscr.getstr(input_row, 0).decode("utf-8").strip()
     finally:
         curses.noecho()
     return value
+
+
+def _safe_addstr(stdscr: Any, y: int, x: int, text: str, *, width: int | None = None) -> None:
+    try:
+        max_y, max_x = stdscr.getmaxyx()
+    except Exception:
+        return
+    if max_y <= 0 or max_x <= 0:
+        return
+    if y < 0 or y >= max_y or x < 0 or x >= max_x:
+        return
+    usable_width = max_x if width is None else min(max_x, max(1, width))
+    clipped = str(text or "")[: max(0, usable_width - x - 1)]
+    if not clipped:
+        return
+    try:
+        stdscr.addstr(y, x, clipped)
+    except curses.error:
+        return
 
 
 def _choose_selector(stdscr: Any, snapshot: dict[str, Any], kind: str, title: str) -> dict[str, Any] | None:
     options, empty_message = selector_options(snapshot, kind)
     if not options:
         height, width = stdscr.getmaxyx()
-        stdscr.addstr(height - 1, 0, empty_message[: max(1, width - 1)])
+        _safe_addstr(stdscr, max(0, height - 1), 0, empty_message, width=width)
         stdscr.refresh()
         return None
     stdscr.erase()
     height, width = stdscr.getmaxyx()
-    stdscr.addstr(0, 0, title[: max(1, width - 1)])
-    stdscr.addstr(1, 0, "-" * min(width - 1, 80))
+    _safe_addstr(stdscr, 0, 0, title, width=width)
+    _safe_addstr(stdscr, 1, 0, "-" * min(width - 1, 80), width=width)
     for idx, item in enumerate(options, start=1):
         line = f"{idx}. {item.get('label')} [{item.get('id')}]"
         if item.get("detail"):
             line += f" :: {item['detail']}"
-        stdscr.addstr(min(idx + 1, height - 3), 0, line[: max(1, width - 1)])
+        _safe_addstr(stdscr, min(idx + 1, max(0, height - 3)), 0, line, width=width)
     choice = _prompt(stdscr, "Select number (blank to cancel):")
     return resolve_selector_choice(options, choice)
 
 
+def _paint_screen(stdscr: Any, snapshot: dict[str, Any], *, loop_mode: str, message: str) -> None:
+    stdscr.erase()
+    height, width = stdscr.getmaxyx()
+    body = render_operator_view(snapshot, width=width, height=height, loop_mode=loop_mode, status_message=message)
+    for idx, line in enumerate(body.splitlines()[: max(1, height - 2)]):
+        _safe_addstr(stdscr, idx, 0, line, width=width)
+    _safe_addstr(stdscr, max(0, height - 1), 0, message, width=width)
+    stdscr.refresh()
+
+
 def _tui(stdscr: Any) -> int:
-    curses.curs_set(0)
+    try:
+        curses.curs_set(0)
+    except curses.error:
+        pass
     stdscr.nodelay(False)
-    message = "Operator view loaded."
+    message = "Loaded canonical operator view. Common flow: p approve -> s synthesize -> a apply -> x run."
     snapshot = build_operator_snapshot(ROOT)
     loop_mode = LOOP_MODE_SINGLE
+    show_details = False
     while True:
-        stdscr.erase()
-        height, width = stdscr.getmaxyx()
-        body = render_operator_view(snapshot, width=width, height=height, loop_mode=loop_mode)
-        for idx, line in enumerate(body.splitlines()[: max(1, height - 2)]):
-            stdscr.addstr(idx, 0, line)
-        stdscr.addstr(height - 1, 0, message[: max(1, width - 1)])
-        stdscr.refresh()
+        visible_snapshot = dict(snapshot)
+        if not show_details:
+            visible_snapshot["event_feed"] = list(snapshot.get("event_feed", []))[:6]
+        _paint_screen(stdscr, visible_snapshot, loop_mode=loop_mode, message=message)
         key = stdscr.getch()
         if key in {ord("q"), 27}:
             return 0
@@ -353,52 +477,84 @@ def _tui(stdscr: Any) -> int:
         elif key == ord("m"):
             loop_mode = toggle_loop_mode(loop_mode)
             message = f"Loop mode set to {LOOP_MODE_LABELS[loop_mode]}."
+        elif key == ord("d"):
+            show_details = not show_details
+            message = "Technical detail expanded." if show_details else "Technical detail collapsed."
         elif key == ord("x"):
             action = "run_until_failure" if loop_mode == LOOP_MODE_UNTIL_FAILURE else "run_single_cycle"
+            message = f"Running {LOOP_MODE_LABELS[loop_mode]} now. Waiting for canonical automation result..."
+            _paint_screen(stdscr, snapshot, loop_mode=loop_mode, message=message)
             result = run_operator_action(action, root=ROOT)
             snapshot = build_operator_snapshot(ROOT)
-            message = f"{LOOP_MODE_LABELS[loop_mode]}: {result['message']}"
+            message = f"Run mode {LOOP_MODE_LABELS[loop_mode]} completed with {result.get('stop_reason', 'result')}: {result['message']}"
         elif key == ord("b"):
             blocker = _choose_selector(stdscr, snapshot, "blockers", "Open blockers")
             if blocker:
-                message = blocker.get("detail") or blocker.get("label") or blocker.get("id") or "Blocker selected."
+                label = blocker.get("label") or blocker.get("id") or "blocker"
+                detail = blocker.get("detail") or "No diagnosis recorded."
+                message = f"Selected blocker {label}. Detail: {detail}"
             else:
                 message = "No blocker selected."
+        elif key == ord("s"):
+            approved = _choose_selector(stdscr, snapshot, "approved_proposals", "Approved proposals awaiting synthesis")
+            if approved:
+                message = f"Selected approved proposal {approved.get('id')}. Running synthesis now..."
+                _paint_screen(stdscr, snapshot, loop_mode=loop_mode, message=message)
+                result = run_operator_action("synthesize_approved", root=ROOT, identifier=str(approved.get("id")))
+                snapshot = build_operator_snapshot(ROOT)
+                message = f"Selected approved proposal {approved.get('id')}. {result['message'] or 'Synthesis run completed.'} Next: press a to apply a new synthesis draft if one was created."
+            else:
+                message = "No approved proposal selected."
         elif key == ord("o"):
             result = run_operator_action("latest_run_dir", root=ROOT)
+            message = result["message"]
+        elif key == ord("g"):
+            result = run_operator_action("inspect_dirty_files", root=ROOT)
+            message = result["message"]
+        elif key == ord("c"):
+            message = "Checkpointing current repo state now..."
+            _paint_screen(stdscr, snapshot, loop_mode=loop_mode, message=message)
+            result = run_operator_action("checkpoint_commit", root=ROOT)
+            snapshot = build_operator_snapshot(ROOT)
             message = result["message"]
         elif key == ord("i"):
             result = run_operator_action("inspect_artifacts", root=ROOT)
             panel = result.get("artifact_panel") or {}
             message = f"Artifacts present: {', '.join(panel.get('present', [])) or 'none'}"
         elif key == ord("t"):
+            message = "Running blocked-task repair now..."
+            _paint_screen(stdscr, snapshot, loop_mode=loop_mode, message=message)
             result = run_operator_action("retry_blocked_task", root=ROOT)
             snapshot = build_operator_snapshot(ROOT)
             message = result["message"] or ("Retry repair passed." if result["ok"] else "Retry repair failed.")
         elif key == ord("p"):
             proposal = _choose_selector(stdscr, snapshot, "proposals", "Draft proposals awaiting approval")
             if proposal:
+                message = f"Selected proposal {proposal.get('id')}. Approving now..."
+                _paint_screen(stdscr, snapshot, loop_mode=loop_mode, message=message)
                 result = run_operator_action("approve_proposal", root=ROOT, identifier=str(proposal.get("id")))
                 snapshot = build_operator_snapshot(ROOT)
-                message = result["message"]
+                message = f"Selected proposal {proposal.get('id')}. {result['message'] or 'Proposal approved.'} Next: press s to synthesize the approved proposal."
             else:
                 message = "No proposal selected."
         elif key == ord("a"):
             synthesis = _choose_selector(stdscr, snapshot, "syntheses", "Synthesized draft entries")
             if synthesis:
+                message = f"Selected synthesis {synthesis.get('id')}. Applying now..."
+                _paint_screen(stdscr, snapshot, loop_mode=loop_mode, message=message)
                 result = run_operator_action("apply_synthesized_entry", root=ROOT, identifier=str(synthesis.get("id")))
                 snapshot = build_operator_snapshot(ROOT)
-                message = result["message"]
+                message = f"Selected synthesis {synthesis.get('id')}. {result['message'] or 'Synthesis applied.'} Next: press x to run if the task is now ready."
             else:
                 message = "No synthesized entry selected."
         else:
-            message = "Actions: x run | m mode | r refresh | b blockers | p proposals | a syntheses | t retry blocked | o latest run dir | i artifacts | q quit"
+            message = "Actions: x run | m mode | r refresh | p proposals | s synthesize | a syntheses | b blockers | g changed files | c checkpoint | t repair | d details | o latest run dir | i artifacts | q quit"
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Terminal operator interface for canonical builder supervision truth.")
     parser.add_argument("--once", action="store_true", help="Render a single snapshot and exit.")
-    parser.add_argument("--action", choices=["refresh", "inspect_blocker", "approve_proposal", "apply_synthesized_entry", "retry_blocked_task", "latest_run_dir", "inspect_artifacts", "run_single_cycle", "run_until_failure"])
+    parser.add_argument("--action", choices=["refresh", "inspect_blocker", "approve_proposal", "synthesize_approved", "apply_synthesized_entry", "retry_blocked_task", "inspect_dirty_files", "checkpoint_commit", "latest_run_dir", "inspect_artifacts", "run_single_cycle", "run_until_failure"])
     parser.add_argument("--loop-mode", choices=[LOOP_MODE_SINGLE, LOOP_MODE_UNTIL_FAILURE], default=LOOP_MODE_SINGLE)
     parser.add_argument("--id", default=None)
     parser.add_argument("--note", default=None)

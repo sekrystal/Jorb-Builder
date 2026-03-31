@@ -44,6 +44,72 @@
       "source_artifact": "/Users/samuelkrystal/projects/jorb-builder/backlog_proposals.json",
       "confidence": 0.95,
       "content": "Strengthen acceptance criteria for JORB-INFRA phase4 artifact enforcement failed"
+    },
+    {
+      "memory_id": "proposal-prop-42f9a2dbeee1",
+      "memory_type": "operator_feedback",
+      "ticket_family": "JORB-V1",
+      "observation": "Pattern observed 3 times in JORB-V1.",
+      "inference": "Consider refine existing ticket for JORB-V1.",
+      "primary_basis": "inference",
+      "origin": "operator",
+      "role_fit": [
+        "planner",
+        "judge"
+      ],
+      "relevance_tags": [
+        "proposal_review",
+        "accepted"
+      ],
+      "status": "active",
+      "status_reason": "proposal_accepted",
+      "source_artifact": "/Users/samuelkrystal/projects/jorb-builder/backlog_proposals.json",
+      "confidence": 0.9,
+      "content": "Refine preflight handling for JORB-V1"
+    },
+    {
+      "memory_id": "proposal-prop-f6ae0073a270",
+      "memory_type": "operator_feedback",
+      "ticket_family": "JORB-V3",
+      "observation": "Pattern observed 2 times in JORB-V3.",
+      "inference": "Consider refine existing ticket for JORB-V3.",
+      "primary_basis": "inference",
+      "origin": "operator",
+      "role_fit": [
+        "planner",
+        "judge"
+      ],
+      "relevance_tags": [
+        "proposal_review",
+        "accepted"
+      ],
+      "status": "active",
+      "status_reason": "proposal_accepted",
+      "source_artifact": "/Users/samuelkrystal/projects/jorb-builder/backlog_proposals.json",
+      "confidence": 0.8,
+      "content": "Refine preflight handling for JORB-V3"
+    },
+    {
+      "memory_id": "proposal-prop-31f9d6b6caca",
+      "memory_type": "operator_feedback",
+      "ticket_family": "JORB-INFRA",
+      "observation": "Pattern observed 1 times in JORB-INFRA.",
+      "inference": "Consider add missing eval coverage for JORB-INFRA.",
+      "primary_basis": "inference",
+      "origin": "operator",
+      "role_fit": [
+        "planner",
+        "judge"
+      ],
+      "relevance_tags": [
+        "proposal_review",
+        "accepted"
+      ],
+      "status": "active",
+      "status_reason": "proposal_accepted",
+      "source_artifact": "/Users/samuelkrystal/projects/jorb-builder/backlog_proposals.json",
+      "confidence": 0.7,
+      "content": "Add eval coverage for JORB-INFRA eval regression"
     }
   ],
   "pins": []
