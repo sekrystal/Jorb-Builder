@@ -2255,6 +2255,7 @@ def ignored_git_paths_for_target(target_kind: str, git_config: dict[str, Any] | 
             "builder_memory.md",
             "backlog_apply_audit.json",
             "backlog_proposals.json",
+            "feedback_interpretation.md",
             "feedback_signals.json",
             "memory_overrides.json",
             "memory_store.json",

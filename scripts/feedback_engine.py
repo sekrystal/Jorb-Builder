@@ -20,6 +20,7 @@ STATUS = ROOT / "status.yml"
 FEEDBACK_INPUT = ROOT / "operator_feedback.json"
 SIGNALS_FILE = ROOT / "feedback_signals.json"
 PROPOSALS_FILE = ROOT / "backlog_proposals.json"
+INTERPRETATION_FILE = ROOT / "feedback_interpretation.md"
 MEMORY_OVERRIDES = ROOT / "memory_overrides.json"
 
 
@@ -56,6 +57,60 @@ def _confidence_from_recurrence(recurrence: int, *, severe: bool = False) -> flo
     return round(min(base, 0.95), 2)
 
 
+def classify_feedback_interpretation(
+    *,
+    observation: str,
+    interpreted_issue: str,
+    proposed_action: str,
+    signal_type: str,
+    subsystem: str,
+) -> dict[str, str]:
+    lower_observation = observation.lower()
+    normalized_issue = interpreted_issue.strip().lower()
+    normalized_action = proposed_action.strip().lower()
+    normalized_signal_type = signal_type.strip().lower()
+    normalized_subsystem = subsystem.strip().lower() or "builder"
+
+    if "ux" in normalized_issue or "ux" in lower_observation or normalized_subsystem in {"ui", "ux", "figma"}:
+        dimension = "ux"
+        gap = "The produced interface or presentation does not match the operator's intent."
+        corrective_work = "Create or refine a focused UX correction ticket with explicit acceptance evidence."
+    elif "memory" in normalized_issue or "memory" in lower_observation:
+        dimension = "memory"
+        gap = "Retrieved memory context is adding noise instead of helping the active task."
+        corrective_work = "Tighten memory retrieval filters or add overrides that suppress irrelevant memory entries."
+    elif "eval" in normalized_issue or normalized_action == "add_missing_eval_coverage" or normalized_signal_type == "eval_regression":
+        dimension = "evaluation"
+        gap = "Validation coverage is not proving the behavior that regressed."
+        corrective_work = "Add or tighten evaluation coverage before accepting similar work again."
+    elif "artifact" in normalized_issue or normalized_signal_type == "artifact_gap":
+        dimension = "artifact_enforcement"
+        gap = "Required builder artifacts are incomplete or missing evidence needed for acceptance."
+        corrective_work = "Strengthen artifact generation or acceptance gates so the missing evidence becomes mandatory."
+    elif "preflight" in normalized_issue or normalized_signal_type == "preflight_failure":
+        dimension = "preflight"
+        gap = "The task packet or environment setup is missing prerequisites for bounded execution."
+        corrective_work = "Refine task preflight checks or task metadata before retrying execution."
+    elif "retry_loop" in normalized_issue or normalized_signal_type == "retry_loop":
+        dimension = "planning"
+        gap = "The current task shape or plan is causing repeated retries without converging."
+        corrective_work = "Split the work or refine the implementation plan to stop the retry loop."
+    elif "flaky" in normalized_issue or "nondeterministic" in lower_observation:
+        dimension = "determinism"
+        gap = "The workflow is producing unstable or nondeterministic outcomes."
+        corrective_work = "Harden the execution or validation path so repeated runs behave deterministically."
+    else:
+        dimension = normalized_subsystem.replace(" ", "_") or "builder"
+        gap = "Operator feedback indicates a builder-system gap that is not yet categorized more precisely."
+        corrective_work = "Review the evidence and convert the gap into a bounded corrective backlog item."
+
+    return {
+        "feedback_dimension": dimension,
+        "system_gap": gap,
+        "corrective_work": corrective_work,
+    }
+
+
 def load_operator_feedback(root: Path | None = None) -> list[dict[str, Any]]:
     repo_root = Path(root or ROOT)
     payload = _safe_load(repo_root / "operator_feedback.json", {"entries": []})
@@ -80,6 +135,13 @@ def normalize_operator_feedback(entry: dict[str, Any]) -> dict[str, Any]:
     proposed_action = str(entry.get("proposed_action_type") or "request_operator_decision")
     evidence_links = list(entry.get("evidence_links") or [])
     feedback_id = str(entry.get("feedback_id") or _signal_id("operator_feedback", observation + subsystem))
+    interpretation = classify_feedback_interpretation(
+        observation=observation,
+        interpreted_issue=inferred_issue,
+        proposed_action=proposed_action,
+        signal_type="operator_feedback",
+        subsystem=subsystem,
+    )
     return {
         "signal_id": feedback_id,
         "signal_type": "operator_feedback",
@@ -98,6 +160,7 @@ def normalize_operator_feedback(entry: dict[str, Any]) -> dict[str, Any]:
         "source_artifacts": evidence_links,
         "created_at": str(entry.get("created_at") or now_iso()),
         "status": str(entry.get("status") or "active"),
+        **interpretation,
     }
 
 
@@ -155,6 +218,13 @@ def _signal_from_group(kind: str, family: str, label: str, items: list[dict[str,
         "artifact_gap": "add_missing_acceptance_criteria",
         "preflight_failure": "refine_existing_ticket",
     }.get(kind, "request_operator_decision")
+    interpretation = classify_feedback_interpretation(
+        observation=observation or str((latest.get("notes") or [""])[0]),
+        interpreted_issue=interpreted_issue,
+        proposed_action=proposed_action,
+        signal_type=kind,
+        subsystem=family.lower(),
+    )
     return {
         "signal_id": _signal_id(kind, f"{family}:{label}"),
         "signal_type": kind,
@@ -173,7 +243,50 @@ def _signal_from_group(kind: str, family: str, label: str, items: list[dict[str,
         "source_artifacts": evidence_links,
         "created_at": now_iso(),
         "status": "active",
+        **interpretation,
     }
+
+
+def render_feedback_interpretation(signals_payload: dict[str, Any], proposals_payload: dict[str, Any]) -> str:
+    signals = list(signals_payload.get("signals", []))
+    proposals = list(proposals_payload.get("proposals", []))
+    lines = [
+        "# Feedback Interpretation",
+        "",
+        "The feedback interpretation engine converts raw operator feedback and recurring run evidence into structured signals.",
+        "",
+        "## Summary",
+        f"- generated_at: {signals_payload.get('generated_at')}",
+        f"- signal_count: {len(signals)}",
+        f"- proposal_count: {len(proposals)}",
+        "",
+        "## Structured Signals",
+    ]
+    if not signals:
+        lines.extend(["No active feedback signals were generated.", ""])
+        return "\n".join(lines).rstrip() + "\n"
+    for signal in signals:
+        lines.extend(
+            [
+                f"### {signal.get('signal_id')}",
+                f"- signal_type: {signal.get('signal_type')}",
+                f"- feedback_dimension: {signal.get('feedback_dimension')}",
+                f"- interpreted_issue: {signal.get('interpreted_issue')}",
+                f"- system_gap: {signal.get('system_gap')}",
+                f"- corrective_work: {signal.get('corrective_work')}",
+                f"- proposed_action_type: {signal.get('proposed_action_type')}",
+                f"- confidence: {signal.get('confidence')}",
+                f"- recurrence_count: {signal.get('recurrence_count')}",
+                f"- affected_ticket_family: {signal.get('affected_ticket_family')}",
+                f"- affected_subsystem: {signal.get('affected_subsystem')}",
+                f"- raw_observation: {signal.get('raw_observation')}",
+            ]
+        )
+        evidence_links = list(signal.get("evidence_links") or [])
+        if evidence_links:
+            lines.append(f"- evidence_links: {', '.join(str(link) for link in evidence_links)}")
+        lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def build_feedback_signals(root: Path | None = None) -> dict[str, Any]:
@@ -270,9 +383,11 @@ def generate_backlog_proposals(root: Path | None = None, *, dry_run: bool = Fals
         if proposal is not None:
             proposals.append(proposal)
     payload = {"generated_at": now_iso(), "proposals": proposals}
+    interpretation_text = render_feedback_interpretation(signals_payload, payload)
     if not dry_run:
-        _write_json(repo_root / "feedback_signals.json", signals_payload)
-        _write_json(repo_root / "backlog_proposals.json", payload)
+        _write_json(repo_root / SIGNALS_FILE.name, signals_payload)
+        _write_json(repo_root / PROPOSALS_FILE.name, payload)
+        (repo_root / INTERPRETATION_FILE.name).write_text(interpretation_text, encoding="utf-8")
     return {"signals": signals_payload, "proposals": payload}
 
 

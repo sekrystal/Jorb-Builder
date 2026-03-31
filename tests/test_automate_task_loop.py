@@ -5339,6 +5339,9 @@ def test_feedback_normalization_separates_observation_inference_and_recommendati
     assert signal["raw_observation"] == "This UX is wrong and the builder keeps missing the real structure."
     assert signal["observation"] == signal["raw_observation"]
     assert signal["interpreted_issue"] == "ux_mismatch"
+    assert signal["feedback_dimension"] == "ux"
+    assert "does not match the operator's intent" in signal["system_gap"]
+    assert "focused UX correction ticket" in signal["corrective_work"]
     assert "suggests ux mismatch" in signal["inference"]
     assert signal["recommendation"] == "Create a focused refinement ticket."
 
@@ -5566,6 +5569,10 @@ def test_feedback_engine_integration_emits_proposals_without_backlog_mutation(tm
 
     proposals = _json(builder_root / "backlog_proposals.json")["proposals"]
     assert proposals
+    interpretation = (builder_root / "feedback_interpretation.md").read_text(encoding="utf-8")
+    assert "# Feedback Interpretation" in interpretation
+    assert "feedback_dimension: planning" in interpretation
+    assert "corrective_work: Split the work or refine the implementation plan to stop the retry loop." in interpretation
     assert (builder_root / "backlog.yml").read_text(encoding="utf-8") == backlog_before
 
 

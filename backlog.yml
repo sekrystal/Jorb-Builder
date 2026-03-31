@@ -4419,7 +4419,7 @@
       "area": "builder",
       "milestone": "M8",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-029"
@@ -4445,7 +4445,9 @@
       "repo_path": "~/projects/jorb-builder",
       "description": "Add the SPRE backlog synthesis engine so builder can turn chosen approaches into structured executable work.",
       "allow_noop_completion": false,
-      "notes": []
+      "notes": [
+        "Automated loop completed with builder-side local validation success."
+      ]
     },
     {
       "id": "JORB-INFRA-031",
