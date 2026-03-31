@@ -6750,12 +6750,14 @@ def test_operator_snapshot_event_feed_includes_real_inputs(tmp_path: Path) -> No
     )
 
     snapshot = module.build_operator_snapshot(builder_root)
-    sources = [item["source"] for item in snapshot["event_feed"]]
+    canonical_sources = [item["canonical_source"] for item in snapshot["event_feed"]]
 
-    assert "progress" in sources
-    assert "proposal" in sources
-    assert "synthesis" in sources
-    assert "run_ledger" in sources
+    assert snapshot["canonical_event_schema_version"] == 1
+    assert all(item["source"] == "canonical_event" for item in snapshot["event_feed"])
+    assert "progress" in canonical_sources
+    assert "proposal" in canonical_sources
+    assert "synthesis" in canonical_sources
+    assert "run_ledger" in canonical_sources
 
 
 def test_operator_snapshot_deduplicates_progress_and_ledger_overlap(tmp_path: Path) -> None:
@@ -6797,7 +6799,169 @@ def test_operator_snapshot_deduplicates_progress_and_ledger_overlap(tmp_path: Pa
     assert len(matching) == 1
     assert "run_ledger.json" in matching[0]["provenance_sources"][0]
     assert any("progress.jsonl" in source for source in matching[0]["provenance_sources"])
+    assert set(matching[0]["merged_canonical_sources"]) == {"run_ledger", "progress"}
     assert matching[0]["emphasis"] == "critical"
+
+
+def test_canonical_event_schema_validation_and_source_normalization(tmp_path: Path) -> None:
+    builder_root, _, run_dir, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    module = _load_operator_state_module(builder_root)
+    (run_dir / "progress.jsonl").write_text(
+        json.dumps(
+            {
+                "timestamp": "2026-03-31T00:00:05+00:00",
+                "task_id": "JORB-INFRA-030",
+                "stage_index": 5,
+                "stage_name": "Local validation",
+                "state": "running",
+                "detail": "pytest tests/test_automate_task_loop.py",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    events = module.build_canonical_event_stream(builder_root, run_dir=run_dir)
+
+    assert events
+    assert all(module.validate_canonical_event_schema(event) == [] for event in events)
+    progress_event = next(event for event in events if event["canonical_source"] == "progress")
+    assert progress_event["source"] == "canonical_event"
+    assert progress_event["stage_name"] == "Local validation"
+
+
+def test_canonical_event_normalizes_run_ledger_and_progress_rows(tmp_path: Path) -> None:
+    builder_root, _, run_dir, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    module = _load_operator_state_module(builder_root)
+    _write_json(
+        builder_root / "run_ledger.json",
+        {
+            "events": [
+                {
+                    "at": "2026-03-31T00:00:04+00:00",
+                    "task_id": "JORB-INFRA-030",
+                    "run_state": "accepted",
+                    "stage_name": "Classification",
+                    "detail": "accepted cleanly",
+                }
+            ]
+        },
+    )
+    (run_dir / "progress.jsonl").write_text(
+        json.dumps(
+            {
+                "timestamp": "2026-03-31T00:00:03+00:00",
+                "task_id": "JORB-INFRA-030",
+                "stage_index": 6,
+                "stage_name": "Preflight check",
+                "state": "running",
+                "detail": "pytest tests/test_automate_task_loop.py",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    events = module.build_canonical_event_stream(builder_root, run_dir=run_dir)
+
+    accepted = next(event for event in events if event["canonical_source"] == "run_ledger")
+    running = next(event for event in events if event["canonical_source"] == "progress")
+    assert accepted["kind"] == "accepted"
+    assert accepted["emphasis"] == "success"
+    assert running["kind"] == "running"
+    assert running["emphasis"] == "normal"
+
+
+def test_operator_tui_and_show_status_consume_canonical_events_only(tmp_path: Path) -> None:
+    builder_root, _, run_dir, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    state = _load_operator_state_module(builder_root)
+    tui = _load_operator_tui_module(builder_root)
+    _write_json(
+        builder_root / "run_ledger.json",
+        {
+            "events": [
+                {
+                    "at": "2026-03-31T00:00:05+00:00",
+                    "task_id": "JORB-INFRA-030",
+                    "run_state": "blocked",
+                    "stage_name": "Applying changes",
+                    "detail": "Builder repo is dirty before automated execution; refusing to continue.",
+                }
+            ]
+        },
+    )
+    (run_dir / "progress.jsonl").write_text(
+        json.dumps(
+            {
+                "timestamp": "2026-03-31T00:00:05+00:00",
+                "task_id": "JORB-INFRA-030",
+                "stage_index": 4,
+                "stage_name": "Applying changes",
+                "state": "blocked",
+                "detail": "Builder repo is dirty before automated execution; refusing to continue.",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    snapshot = state.build_operator_snapshot(builder_root)
+    rendered = tui.render_operator_view(snapshot)
+
+    assert snapshot["event_feed"]
+    assert all(event["source"] == "canonical_event" for event in snapshot["event_feed"])
+    assert "run_ledger+progress" not in rendered
+    assert "[BLOCKED] | JORB-INFRA-030 blocked at Applying changes" in rendered
+
+
+def test_canonical_event_stream_keeps_terminal_events_dominant_and_ordered(tmp_path: Path) -> None:
+    builder_root, _, run_dir, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    module = _load_operator_state_module(builder_root)
+    _write_json(
+        builder_root / "run_ledger.json",
+        {
+            "events": [
+                {
+                    "at": "2026-03-31T00:00:04+00:00",
+                    "task_id": "JORB-INFRA-030",
+                    "run_state": "running",
+                    "stage_name": "Task selected",
+                    "detail": "selected",
+                },
+                {
+                    "at": "2026-03-31T00:00:05+00:00",
+                    "task_id": "JORB-INFRA-030",
+                    "run_state": "accepted",
+                    "stage_name": "Classification",
+                    "detail": "accepted",
+                },
+                {
+                    "at": "2026-03-31T00:00:06+00:00",
+                    "task_id": "JORB-INFRA-031",
+                    "run_state": "blocked",
+                    "stage_name": "Applying changes",
+                    "detail": "dirty repo",
+                },
+            ]
+        },
+    )
+    (run_dir / "progress.jsonl").write_text(
+        "\n".join(
+            [
+                json.dumps({"timestamp": "2026-03-31T00:00:03+00:00", "task_id": "JORB-INFRA-030", "stage_index": 1, "stage_name": "Task selected", "state": "running", "detail": "selected"}),
+                json.dumps({"timestamp": "2026-03-31T00:00:02+00:00", "task_id": "JORB-INFRA-030", "stage_index": 3, "stage_name": "Codex execution running", "state": "running", "detail": "polling"}),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    events = module.build_canonical_event_stream(builder_root, run_dir=run_dir)
+
+    assert events[0]["emphasis"] in {"critical", "success"}
+    assert events[1]["emphasis"] in {"critical", "success"}
+    assert events[0]["summary"] == "JORB-INFRA-031 blocked at Applying changes"
+    assert events[1]["summary"] == "JORB-INFRA-030 accepted"
 
 
 def test_show_status_uses_canonical_stats_and_visibility(tmp_path: Path) -> None:

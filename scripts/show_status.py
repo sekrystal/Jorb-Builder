@@ -109,7 +109,7 @@ def main() -> int:
     if not snapshot["event_feed"]:
         print("- none")
     for item in snapshot["event_feed"][:5]:
-        print(f"- {item.get('at') or 'unknown'} | {item.get('source')} | {item.get('summary')}")
+        print(f"- {item.get('at') or 'unknown'} | {item.get('canonical_source') or item.get('source')} | {item.get('summary')}")
 
     print("\nStats:")
     for key, value in snapshot["stats"].items():

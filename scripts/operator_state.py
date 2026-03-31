@@ -65,6 +65,18 @@ PROGRESS_STAGE_MAP = {
     9: "terminal",
 }
 
+CANONICAL_EVENT_SCHEMA_VERSION = 1
+CANONICAL_EVENT_KINDS = {
+    "running",
+    "blocked",
+    "failed",
+    "accepted",
+    "completed",
+    "applied",
+    "draft",
+    "attention",
+}
+
 
 def _safe_load(path: Path, default: Any) -> Any:
     try:
@@ -342,14 +354,32 @@ def _load_proposal_truth(root: Path, synthesized_source_ids: set[str] | None = N
     }
 
 
-def _event_payload(at: str | None, source: str, kind: str, summary: str, *, detail: str | None = None, recommendation: str | None = None, provenance: str | None = None) -> dict[str, Any]:
+def _event_payload(
+    at: str | None,
+    source: str,
+    kind: str,
+    summary: str,
+    *,
+    detail: str | None = None,
+    recommendation: str | None = None,
+    provenance: str | None = None,
+    task_id: str | None = None,
+    stage_name: str | None = None,
+    stage_key: str | None = None,
+    canonical_source: str | None = None,
+) -> dict[str, Any]:
     return {
+        "schema_version": CANONICAL_EVENT_SCHEMA_VERSION,
         "at": at,
         "source": source,
+        "canonical_source": canonical_source or source,
         "kind": kind,
         "summary": summary,
         "detail": detail,
         "recommendation": recommendation,
+        "task_id": task_id,
+        "stage_name": stage_name,
+        "stage_key": stage_key,
         "provenance": provenance,
         "provenance_sources": [provenance] if provenance else [],
     }
@@ -395,17 +425,25 @@ def _normalize_run_event(
         recommendation = "Inspect the blocker and repair state before retrying."
     elif lowered_state in {"accepted", "completed", "done"}:
         recommendation = "Inspect the latest run or continue with the next ready task."
+    normalized_stage_key = None
+    lowered_stage = stage_label.lower()
+    for key, label in OPERATOR_STAGE_LABELS.items():
+        if lowered_stage == label.lower() or lowered_stage == key.lower():
+            normalized_stage_key = key
+            break
     payload = _event_payload(
         at,
-        source,
+        "canonical_event",
         lowered_state or "running",
         summary,
         detail=cleaned_detail,
         recommendation=recommendation,
         provenance=provenance,
+        task_id=task_id,
+        stage_name=stage_label,
+        stage_key=normalized_stage_key,
+        canonical_source=source,
     )
-    payload["task_id"] = task_id
-    payload["stage_name"] = stage_label
     payload["emphasis"] = _event_emphasis(lowered_state)
     payload["dedupe_key"] = (
         str(task_id or ""),
@@ -414,6 +452,119 @@ def _normalize_run_event(
         cleaned_detail or "",
     )
     return payload
+
+
+def validate_canonical_event_schema(event: dict[str, Any]) -> list[str]:
+    issues: list[str] = []
+    if event.get("schema_version") != CANONICAL_EVENT_SCHEMA_VERSION:
+        issues.append("schema_version")
+    for field in ("at", "source", "canonical_source", "kind", "summary", "provenance_sources"):
+        if field not in event:
+            issues.append(field)
+    if event.get("source") != "canonical_event":
+        issues.append("source:not_canonical_event")
+    if str(event.get("kind") or "") not in CANONICAL_EVENT_KINDS:
+        issues.append("kind:unsupported")
+    if not isinstance(event.get("provenance_sources"), list):
+        issues.append("provenance_sources:not_list")
+    return issues
+
+
+def _normalize_ledger_events(root: Path, *, limit: int = 20) -> list[dict[str, Any]]:
+    normalized: list[dict[str, Any]] = []
+    ledger = _safe_load(root / "run_ledger.json", {"events": []})
+    for item in ledger.get("events", [])[-limit:]:
+        normalized.append(
+            _normalize_run_event(
+                at=item.get("at"),
+                source="run_ledger",
+                task_id=item.get("task_id"),
+                stage_name=item.get("stage_name"),
+                state=item.get("run_state"),
+                detail=item.get("detail"),
+                provenance=str(root / "run_ledger.json"),
+            )
+        )
+    return normalized
+
+
+def _normalize_progress_events(run_dir: Path | None, *, limit: int = 10) -> list[dict[str, Any]]:
+    if not run_dir or not run_dir.exists():
+        return []
+    normalized: list[dict[str, Any]] = []
+    for item in _safe_jsonl(run_dir / "progress.jsonl")[-limit:]:
+        normalized.append(
+            _normalize_run_event(
+                at=item.get("timestamp"),
+                source="progress",
+                task_id=item.get("task_id"),
+                stage_name=item.get("stage_name"),
+                state=item.get("state"),
+                detail=item.get("detail"),
+                provenance=str(run_dir / "progress.jsonl"),
+            )
+        )
+    return normalized
+
+
+def _normalize_operator_events(root: Path) -> list[dict[str, Any]]:
+    events: list[dict[str, Any]] = []
+    proposals = _safe_load(root / "backlog_proposals.json", {"proposals": []})
+    for item in proposals.get("proposals", []):
+        reviewed_at = item.get("reviewed_at")
+        if reviewed_at:
+            events.append(
+                _event_payload(
+                    reviewed_at,
+                    "canonical_event",
+                    str(item.get("status") or "attention"),
+                    f"Proposal approved: {item.get('title') or item.get('proposal_id') or 'proposal reviewed'}" if item.get("status") == "accepted" else str(item.get("title") or item.get("proposal_id") or "proposal reviewed"),
+                    detail=str(item.get("review_note") or "").strip() or None,
+                    recommendation="Synthesize the approved proposal." if item.get("status") == "accepted" else None,
+                    provenance=str(root / "backlog_proposals.json"),
+                    task_id=None,
+                    stage_name="proposal_review",
+                    stage_key=None,
+                    canonical_source="proposal",
+                )
+            )
+    synthesized = _safe_load(root / "synthesized_backlog_entries.json", {"entries": []})
+    for item in synthesized.get("entries", []):
+        created_at = item.get("created_at")
+        if created_at:
+            events.append(
+                _event_payload(
+                    created_at,
+                    "canonical_event",
+                    str(item.get("status") or "draft"),
+                    f"Synthesis draft: {item.get('title') or item.get('ticket_id_placeholder') or 'synthesized entry'}",
+                    detail=str(item.get("synthesis_id") or ""),
+                    recommendation="Apply the synthesized entry after review." if item.get("status") == "draft" else None,
+                    provenance=str(root / "synthesized_backlog_entries.json"),
+                    task_id=str(item.get("ticket_id_placeholder") or ""),
+                    stage_name="synthesis_draft",
+                    stage_key=None,
+                    canonical_source="synthesis",
+                )
+            )
+        applied_at = item.get("applied_at")
+        if applied_at:
+            events.append(
+                _event_payload(
+                    applied_at,
+                    "canonical_event",
+                    "applied",
+                    f"Synthesis applied: {item.get('ticket_id_placeholder') or item.get('title') or 'synthesized entry applied'}",
+                    detail=str(item.get("synthesis_id") or ""),
+                    recommendation="Run the automation loop for the applied ready task.",
+                    provenance=str(root / "synthesized_backlog_entries.json"),
+                    task_id=str(item.get("ticket_id_placeholder") or ""),
+                    stage_name="synthesis_apply",
+                    stage_key=None,
+                    canonical_source="synthesis",
+                )
+            )
+    return events
 
 
 def _dedupe_events(events: list[dict[str, Any]], *, limit: int) -> list[dict[str, Any]]:
@@ -428,8 +579,11 @@ def _dedupe_events(events: list[dict[str, Any]], *, limit: int) -> list[dict[str
                 if source and source not in merged_sources:
                     merged_sources.append(source)
             existing["provenance_sources"] = merged_sources
-            if existing.get("source") != event.get("source"):
-                existing["source"] = f"{existing.get('source')}+{event.get('source')}"
+            merged_canonical_sources = list(existing.get("merged_canonical_sources", [existing.get("canonical_source")]))
+            for source_name in [event.get("canonical_source")]:
+                if source_name and source_name not in merged_canonical_sources:
+                    merged_canonical_sources.append(source_name)
+            existing["merged_canonical_sources"] = merged_canonical_sources
             if not existing.get("detail") and event.get("detail"):
                 existing["detail"] = event["detail"]
             if not existing.get("recommendation") and event.get("recommendation"):
@@ -442,81 +596,14 @@ def _dedupe_events(events: list[dict[str, Any]], *, limit: int) -> list[dict[str
     terminal = [item for item in deduped if item.get("emphasis") in {"critical", "success"}]
     remainder = [item for item in deduped if item.get("emphasis") not in {"critical", "success"}]
     final_events = terminal[:4] + remainder
-    return final_events[:limit]
+    return [item for item in final_events[:limit] if not validate_canonical_event_schema(item)]
 
 
-def _build_event_feed(root: Path, *, run_dir: Path | None, backlog: dict[str, Any], limit: int = 18) -> list[dict[str, Any]]:
+def build_canonical_event_stream(root: Path, *, run_dir: Path | None, limit: int = 18) -> list[dict[str, Any]]:
     events: list[dict[str, Any]] = []
-    ledger = _safe_load(root / "run_ledger.json", {"events": []})
-    for item in ledger.get("events", [])[-20:]:
-        events.append(
-            _normalize_run_event(
-                at=item.get("at"),
-                source="run_ledger",
-                task_id=item.get("task_id"),
-                stage_name=item.get("stage_name"),
-                state=item.get("run_state"),
-                detail=item.get("detail"),
-                provenance=str(root / "run_ledger.json"),
-            )
-        )
-    proposals = _safe_load(root / "backlog_proposals.json", {"proposals": []})
-    for item in proposals.get("proposals", []):
-        reviewed_at = item.get("reviewed_at")
-        if reviewed_at:
-            events.append(
-                _event_payload(
-                    reviewed_at,
-                    "proposal",
-                    str(item.get("status") or "reviewed"),
-                    f"Proposal approved: {item.get('title') or item.get('proposal_id') or 'proposal reviewed'}" if item.get("status") == "accepted" else str(item.get("title") or item.get("proposal_id") or "proposal reviewed"),
-                    detail=str(item.get("review_note") or "").strip() or None,
-                    recommendation="Synthesize the approved proposal." if item.get("status") == "accepted" else None,
-                    provenance=str(root / "backlog_proposals.json"),
-                )
-            )
-    synthesized = _safe_load(root / "synthesized_backlog_entries.json", {"entries": []})
-    for item in synthesized.get("entries", []):
-        created_at = item.get("created_at")
-        if created_at:
-            events.append(
-                _event_payload(
-                    created_at,
-                    "synthesis",
-                    str(item.get("status") or "draft"),
-                    f"Synthesis draft: {item.get('title') or item.get('ticket_id_placeholder') or 'synthesized entry'}",
-                    detail=str(item.get("synthesis_id") or ""),
-                    recommendation="Apply the synthesized entry after review." if item.get("status") == "draft" else None,
-                    provenance=str(root / "synthesized_backlog_entries.json"),
-                )
-            )
-        applied_at = item.get("applied_at")
-        if applied_at:
-            events.append(
-                _event_payload(
-                    applied_at,
-                    "synthesis",
-                    "applied",
-                    f"Synthesis applied: {item.get('ticket_id_placeholder') or item.get('title') or 'synthesized entry applied'}",
-                    detail=str(item.get("synthesis_id") or ""),
-                    recommendation="Run the automation loop for the applied ready task.",
-                    provenance=str(root / "synthesized_backlog_entries.json"),
-                )
-            )
-    if run_dir and run_dir.exists():
-        progress_events = _safe_jsonl(run_dir / "progress.jsonl")
-        for item in progress_events[-10:]:
-            events.append(
-                _normalize_run_event(
-                    at=item.get("timestamp"),
-                    source="progress",
-                    task_id=item.get("task_id"),
-                    stage_name=item.get("stage_name"),
-                    state=item.get("state"),
-                    detail=item.get("detail"),
-                    provenance=str(run_dir / "progress.jsonl"),
-                )
-            )
+    events.extend(_normalize_ledger_events(root))
+    events.extend(_normalize_operator_events(root))
+    events.extend(_normalize_progress_events(run_dir))
     return _dedupe_events(events, limit=limit)
 
 
@@ -879,7 +966,7 @@ def build_operator_snapshot(root: Path | None = None) -> dict[str, Any]:
         artifact_panel=artifact_panel,
         eval_result=eval_result,
     )
-    event_feed = _build_event_feed(repo_root, run_dir=latest_run_dir, backlog=backlog)
+    event_feed = build_canonical_event_stream(repo_root, run_dir=latest_run_dir)
     plain_state = _plain_state(
         status=status,
         active=active,
@@ -990,6 +1077,7 @@ def build_operator_snapshot(root: Path | None = None) -> dict[str, Any]:
         "truth_warnings": truth_warnings,
         "system_reality": system_reality,
         "event_feed": event_feed,
+        "canonical_event_schema_version": CANONICAL_EVENT_SCHEMA_VERSION,
         "stats": _actual_stats(backlog_diag),
         "next_recommended_action": next_action,
         "selector_items": selector_items,
