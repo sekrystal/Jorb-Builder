@@ -785,13 +785,13 @@ def _system_reality(
             "name": "Memory",
             "status": "partially_proven" if memory_store.get("entries") else "missing",
             "detail": f"Structured memory store is file-backed with {len(memory_store.get('entries', []))} entries and provenance; active={counts.get('active', 0)}.",
-            "limit": "Retrieval is heuristic local scoring, not vector-search or service-backed retrieval.",
+            "limit": "Retrieval is explainable and similarity-aware, but still local/file-backed rather than service-backed retrieval.",
         },
         {
             "name": "Retrieval",
             "status": "partially_proven" if has_memory_context else "implemented_not_proven",
             "detail": "Role-specific memory/artifact bundles are emitted for runs that render memory context." if has_memory_context else "Role-specific retrieval code exists, but the latest run does not show emitted memory context artifacts.",
-            "limit": "Analog lookup is file-index and rule driven rather than learned retrieval.",
+            "limit": "Analog lookup now uses explainable text, tag, artifact, and outcome similarity, but it is not learned or vector-backed retrieval.",
         },
         {
             "name": "Orchestration",

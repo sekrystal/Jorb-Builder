@@ -4560,6 +4560,81 @@ def test_memory_decay_and_operator_invalidation_change_retrieval(tmp_path: Path)
     assert all(entry["memory_id"] != fresh_entry["memory_id"] for entry in selected_after)
 
 
+def test_retrieval_prefers_stronger_analog_over_fresher_generic_memory(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-045",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    common = _load_common_module(builder_root)
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["title"] = "Strengthen retrieval-backed memory"
+    backlog["tasks"][0]["objective"] = "Use prior analogs to improve retrieval selection quality for builder hardening tasks."
+    backlog["tasks"][0]["required_artifacts"] = ["judge_decision.md", "evidence_bundle.json"]
+    _write_json(builder_root / "backlog.yml", backlog)
+
+    strong_run_dir = builder_root / "run_logs" / "2026-03-20T000000Z-JORB-INFRA-021"
+    strong_run_dir.mkdir(parents=True, exist_ok=True)
+    (strong_run_dir / "judge_decision.md").write_text("judge\n", encoding="utf-8")
+    (strong_run_dir / "evidence_bundle.json").write_text("{}\n", encoding="utf-8")
+    _write_json(
+        builder_root / "task_history" / "2026-03-20T000000Z-JORB-INFRA-021.yml",
+        {
+            "task_id": "JORB-INFRA-021",
+            "title": "Strengthen retrieval-backed memory",
+            "status": "accepted",
+            "completed_at": "2026-03-20T00:00:00+00:00",
+            "run_log_dir": str(strong_run_dir),
+            "notes": ["retrieval-backed memory hardening used judge evidence and explicit analog ranking"],
+            "operator_diagnostics": {
+                "accepted": True,
+                "decision_summary": "retrieval-backed memory hardening used judge evidence and explicit analog ranking",
+            },
+        },
+    )
+
+    generic_run_dir = builder_root / "run_logs" / "2026-03-30T000000Z-JORB-INFRA-022"
+    generic_run_dir.mkdir(parents=True, exist_ok=True)
+    (generic_run_dir / "compiled_feature_spec.md").write_text("spec\n", encoding="utf-8")
+    _write_json(
+        builder_root / "task_history" / "2026-03-30T000000Z-JORB-INFRA-022.yml",
+        {
+            "task_id": "JORB-INFRA-022",
+            "title": "General builder cleanup",
+            "status": "accepted",
+            "completed_at": "2026-03-30T00:00:00+00:00",
+            "run_log_dir": str(generic_run_dir),
+            "notes": ["generic cleanup landed cleanly"],
+            "operator_diagnostics": {
+                "accepted": True,
+                "decision_summary": "generic cleanup landed cleanly",
+            },
+        },
+    )
+
+    store = common.build_memory_store(builder_root)
+    bundle = common.retrieve_memory_for_role(
+        {
+            "id": "JORB-INFRA-045",
+            "title": "Strengthen retrieval-backed memory",
+            "objective": "Use prior analogs to improve retrieval selection quality for builder hardening tasks.",
+            "area": "builder",
+            "required_artifacts": ["judge_decision.md", "evidence_bundle.json"],
+        },
+        store,
+        role="planner",
+        limit=3,
+    )
+
+    assert bundle["selected"]
+    assert bundle["selected"][0]["task_id"] == "JORB-INFRA-021"
+    reasons = bundle["selected"][0]["selection_reasons"]
+    assert any(reason.startswith("analog_text_similarity:") for reason in reasons)
+    assert any(reason.startswith("analog_artifact_similarity:") for reason in reasons)
+    assert "ranking_signals" in bundle["profile"]
+
+
 def test_role_specific_retrieval_differs_between_planner_architect_and_judge(tmp_path: Path) -> None:
     builder_root, _, _, _ = _setup_builder_fixture(
         tmp_path,
@@ -7075,6 +7150,18 @@ def test_operator_snapshot_ready_task_does_not_inherit_previous_run_truth(tmp_pa
     assert stages["selected"] == "pending"
     assert stages["execution_started"] == "pending"
     assert stages["terminal"] == "pending"
+
+
+def test_operator_snapshot_system_reality_describes_similarity_aware_retrieval(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-045", area="builder", allowlist=["scripts/**"])
+    module = _load_operator_state_module(builder_root)
+
+    snapshot = module.build_operator_snapshot(builder_root)
+
+    memory_row = next(item for item in snapshot["system_reality"] if item["name"] == "Memory")
+    retrieval_row = next(item for item in snapshot["system_reality"] if item["name"] == "Retrieval")
+    assert "similarity-aware" in memory_row["limit"]
+    assert "text, tag, artifact, and outcome similarity" in retrieval_row["limit"]
 
 
 def test_show_status_distinguishes_current_target_from_latest_run_context(tmp_path: Path) -> None:

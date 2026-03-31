@@ -850,6 +850,92 @@ def _task_relevance_tags(task: dict) -> set[str]:
     return {tag for tag in tags if tag and tag != "unknown"}
 
 
+def _normalized_tokens(*parts: Any) -> set[str]:
+    tokens: set[str] = set()
+    for part in parts:
+        if part is None:
+            continue
+        for token in re.split(r"[^a-zA-Z0-9]+", str(part).lower()):
+            token = token.strip()
+            if len(token) >= 3:
+                tokens.add(token)
+    return tokens
+
+
+def _jaccard_similarity(left: set[str], right: set[str]) -> float:
+    if not left or not right:
+        return 0.0
+    union = left | right
+    if not union:
+        return 0.0
+    return round(len(left & right) / float(len(union)), 3)
+
+
+def _task_similarity_context(task: dict, store: dict) -> dict[str, Any]:
+    task_id = str(task.get("id") or "")
+    family = task_family(task_id)
+    title = str(task.get("title") or "")
+    objective = str(task.get("objective") or task.get("description") or "")
+    acceptance = " ".join(str(item) for item in task.get("acceptance_criteria", []) if str(item).strip())
+    tags = _task_relevance_tags(task)
+    text_tokens = _normalized_tokens(task_id, family, title, objective, acceptance, *sorted(tags))
+    artifact_names: set[str] = set()
+    artifact_labels: set[str] = set()
+    artifact_names.update(str(name).strip().lower() for name in task.get("required_artifacts", []) if str(name).strip())
+    for entry in (store.get("artifact_index") or {}).get("entries", []):
+        if str(entry.get("task_id") or "") != task_id:
+            continue
+        artifact_name = str(entry.get("artifact_name") or "").strip().lower()
+        if artifact_name:
+            artifact_names.add(artifact_name)
+        artifact_labels.update(str(label).strip().lower() for label in entry.get("labels", []) if str(label).strip())
+    return {
+        "task_id": task_id,
+        "family": family,
+        "area": str(task.get("area") or "").lower(),
+        "tags": tags,
+        "text_tokens": text_tokens,
+        "artifact_names": artifact_names,
+        "artifact_labels": artifact_labels,
+        "wants_runtime_proof": bool(task.get("requires_vm_runtime_proof")),
+        "is_ux": is_product_facing_ux_task(task),
+    }
+
+
+def _entry_similarity_context(entry: dict[str, Any], store: dict) -> dict[str, Any]:
+    entry_task_id = str(entry.get("task_id") or "")
+    entry_tags = {str(tag) for tag in entry.get("relevance_tags", []) if str(tag)}
+    text_tokens = _normalized_tokens(
+        entry.get("summary"),
+        entry.get("observation"),
+        entry.get("inference"),
+        entry.get("content"),
+        entry.get("ticket_family"),
+        *sorted(entry_tags),
+    )
+    artifact_names: set[str] = set()
+    artifact_labels: set[str] = set()
+    if entry_task_id:
+        for artifact in (store.get("artifact_index") or {}).get("entries", []):
+            if str(artifact.get("task_id") or "") != entry_task_id:
+                continue
+            artifact_name = str(artifact.get("artifact_name") or "").strip().lower()
+            if artifact_name:
+                artifact_names.add(artifact_name)
+            artifact_labels.update(str(label).strip().lower() for label in artifact.get("labels", []) if str(label).strip())
+    return {
+        "task_id": entry_task_id,
+        "family": str(entry.get("ticket_family") or ""),
+        "area": str(entry.get("area") or "").lower(),
+        "tags": entry_tags,
+        "text_tokens": text_tokens,
+        "artifact_names": artifact_names,
+        "artifact_labels": artifact_labels,
+        "is_success_pattern": str(entry.get("memory_type") or "") in {"successful_fix", "prior_similar_ticket", "playbook"},
+        "is_failure_pattern": str(entry.get("memory_type") or "") in {"failure_mode", "flaky_validation", "environment_assumption"},
+    }
+
+
 def retrieve_memory_for_role(
     task: dict,
     store: dict,
@@ -862,7 +948,8 @@ def retrieve_memory_for_role(
     family = task_family(task_id)
     profile = _role_profile(role)
     budget = int(limit or profile.get("limit") or DEFAULT_MEMORY_PROFILE_BUDGET)
-    task_tags = _task_relevance_tags(task)
+    task_ctx = _task_similarity_context(task, store)
+    task_tags = task_ctx["tags"]
     scored: list[dict[str, Any]] = []
     excluded: list[dict[str, Any]] = []
     for entry in store.get("entries", []):
@@ -872,6 +959,7 @@ def retrieve_memory_for_role(
         if status in {"invalidated", "superseded"}:
             excluded.append({"memory_id": entry.get("memory_id"), "status": status, "excluded_reason": status})
             continue
+        entry_ctx = _entry_similarity_context(entry, store)
         if entry.get("task_id") == task_id:
             score += 5.0
             reasons.append("exact_task_match")
@@ -881,6 +969,28 @@ def retrieve_memory_for_role(
         if area and area in str(entry.get("summary") or entry.get("content") or entry.get("observation") or "").lower():
             score += 1.0
             reasons.append("area_match")
+        title_similarity = _jaccard_similarity(task_ctx["text_tokens"], entry_ctx["text_tokens"])
+        if title_similarity:
+            analog_bonus = round(3.5 * title_similarity, 3)
+            score += analog_bonus
+            reasons.append(f"analog_text_similarity:{title_similarity}")
+        tag_similarity = _jaccard_similarity(task_tags, entry_ctx["tags"])
+        if tag_similarity:
+            score += round(1.8 * tag_similarity, 3)
+            reasons.append(f"analog_tag_similarity:{tag_similarity}")
+        artifact_similarity = _jaccard_similarity(
+            task_ctx["artifact_names"] | task_ctx["artifact_labels"],
+            entry_ctx["artifact_names"] | entry_ctx["artifact_labels"],
+        )
+        if artifact_similarity:
+            score += round(2.2 * artifact_similarity, 3)
+            reasons.append(f"analog_artifact_similarity:{artifact_similarity}")
+        if bool(task_ctx["wants_runtime_proof"]) == ("proof_pattern" in entry_ctx["tags"]):
+            score += 0.8
+            reasons.append("runtime_pattern_fit")
+        if bool(task_ctx["is_ux"]) == ("ux" in entry_ctx["tags"]):
+            score += 0.7
+            reasons.append("ux_pattern_fit")
         if str(entry.get("memory_type")) in set(profile.get("preferred_types", set())):
             score += 1.25
             reasons.append("role_type_fit")
@@ -896,6 +1006,17 @@ def retrieve_memory_for_role(
             if tag in set(entry.get("relevance_tags") or []):
                 score += float(bonus)
                 reasons.append(f"role_tag_bias:{tag}")
+        if role in {"planner", "architect"} and entry_ctx["is_success_pattern"]:
+            score += 0.9
+            reasons.append("success_pattern_fit")
+        if role == "judge" and entry_ctx["is_failure_pattern"]:
+            score += 1.1
+            reasons.append("failure_pattern_fit")
+        support_count = int(entry.get("support_count") or 1)
+        if support_count > 1:
+            support_bonus = min(0.8, 0.2 * (support_count - 1))
+            score += support_bonus
+            reasons.append(f"support_count:{support_count}")
         decay = float((entry.get("freshness") or {}).get("decay_factor") or 0.6)
         score += decay
         reasons.append(f"decay:{decay}")
@@ -937,6 +1058,20 @@ def retrieve_memory_for_role(
             "preferred_types": sorted(profile.get("preferred_types", set())),
             "preferred_origins": sorted(profile.get("preferred_origins", set())),
             "tag_biases": profile.get("tag_biases", {}),
+            "ranking_signals": [
+                "exact_task_match",
+                "same_ticket_family",
+                "analog_text_similarity",
+                "analog_tag_similarity",
+                "analog_artifact_similarity",
+                "runtime_pattern_fit",
+                "ux_pattern_fit",
+                "role_type_fit",
+                "role_origin_fit",
+                "support_count",
+                "decay",
+                "confidence",
+            ],
         },
         "selected": [
             {
