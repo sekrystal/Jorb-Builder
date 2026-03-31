@@ -4493,7 +4493,7 @@
       "area": "builder",
       "milestone": "M8",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-031"
@@ -4519,7 +4519,9 @@
       "repo_path": "~/projects/jorb-builder",
       "description": "Add self-improving backlog behavior so builder can evolve future work from evidence and feedback.",
       "allow_noop_completion": false,
-      "notes": []
+      "notes": [
+        "Automated loop completed with builder-side local validation success."
+      ]
     },
     {
       "id": "JORB-INFRA-033",

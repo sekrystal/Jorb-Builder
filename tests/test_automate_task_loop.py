@@ -4110,6 +4110,37 @@ def test_phase4_proposal_uses_selected_declared_approach_when_present(tmp_path: 
     assert "Decision checkpoint status: not required" in proposal
 
 
+def test_phase4_performance_task_emits_profile_artifact_and_optimization_plan(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-033",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["title"] = "Builder performance profiling + optimization plan"
+    backlog["tasks"][0]["objective"] = "Profile builder performance and produce a plan to improve latency, determinism, and scalability without weakening gates."
+    backlog["tasks"][0]["why_it_matters"] = "A company-grade builder must remain usable and scalable as planning and judging become more sophisticated."
+    backlog["tasks"][0]["verification"] = ["python3 -m py_compile scripts/*.py", "pytest tests/test_automate_task_loop.py"]
+    _write_json(builder_root / "backlog.yml", backlog)
+    _git(["add", "backlog.yml"], builder_root)
+    _git(["commit", "-m", "seed performance profiling fixture"], builder_root)
+
+    dry_run = _run([sys.executable, str(SCRIPT), "--dry-run"], builder_root)
+
+    assert dry_run.returncode == 0, dry_run.stdout + dry_run.stderr
+    run_dir = max((builder_root / "run_logs").glob("*"), key=lambda path: path.stat().st_mtime)
+    payload = _json(run_dir / "automation_result.json")
+    assert any(path.endswith("performance_profile.md") for path in payload["planned_artifacts"])
+    performance_profile = (run_dir / "performance_profile.md").read_text(encoding="utf-8")
+    assert "## Profiling Baseline" in performance_profile
+    assert "## Optimization Plan" in performance_profile
+    assert "latency, determinism, scalability" in performance_profile
+    proposal = (run_dir / "proposal.md").read_text(encoding="utf-8")
+    assert "## Performance Profiling Plan" in proposal
+    assert "## Optimization Plan" in proposal
+
+
 def test_phase4_material_decision_checkpoint_blocks_before_executor_handoff(tmp_path: Path) -> None:
     builder_root, _, _, _ = _setup_builder_fixture(
         tmp_path,

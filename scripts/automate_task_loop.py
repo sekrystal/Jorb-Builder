@@ -62,6 +62,7 @@ RESULT_FILE = "automation_result.json"
 SUMMARY_FILE = "automation_summary.md"
 PROGRESS_FILE = "progress.jsonl"
 DECISION_CHECKPOINT_FILE = "decision_checkpoint.json"
+PERFORMANCE_PROFILE_FILE = "performance_profile.md"
 FEATURE_SPEC_ALLOW_EMPTY_KEYS = {"verification_commands"}
 PHASE4_REQUIRED_ARTIFACTS = (
     "compiled_feature_spec.md",
@@ -339,6 +340,99 @@ def phase4_task_focus(task: dict[str, Any]) -> str:
         if value:
             return value
     return "builder hardening task"
+
+
+def phase4_task_text(task: dict[str, Any]) -> str:
+    text_parts: list[str] = []
+    for key in ("title", "objective", "why_it_matters", "description"):
+        value = str(task.get(key) or "").strip()
+        if value:
+            text_parts.append(value)
+    for key in ("acceptance", "acceptance_criteria", "verification", "notes"):
+        values = task.get(key) or []
+        if isinstance(values, list):
+            text_parts.extend(str(item).strip() for item in values if str(item).strip())
+    return " ".join(text_parts).lower()
+
+
+def phase4_needs_performance_profile(task: dict[str, Any]) -> bool:
+    text = phase4_task_text(task)
+    return any(
+        token in text
+        for token in (
+            "performance",
+            "profil",
+            "latency",
+            "determin",
+            "scalab",
+            "throughput",
+            "runtime",
+        )
+    )
+
+
+def phase4_performance_dimensions(task: dict[str, Any]) -> list[str]:
+    text = phase4_task_text(task)
+    dimensions: list[str] = []
+    for name, tokens in (
+        ("latency", ("latency", "throughput", "performance", "runtime")),
+        ("determinism", ("determin", "replay", "bounded")),
+        ("scalability", ("scalab", "scale", "history", "artifact", "memory")),
+    ):
+        if any(token in text for token in tokens):
+            dimensions.append(name)
+    if not dimensions:
+        return ["latency", "determinism", "scalability"]
+    ordered: list[str] = []
+    for name in ("latency", "determinism", "scalability"):
+        if name in dimensions:
+            ordered.append(name)
+    return ordered
+
+
+def phase4_performance_profile_text(task: dict[str, Any], standards: dict[str, Any]) -> str:
+    dimensions = phase4_performance_dimensions(task)
+    verification = [str(item).strip() for item in task.get("verification", []) if str(item).strip()]
+    return "\n".join(
+        [
+            f"# Performance Profile: {task['id']}",
+            "",
+            "## Scope",
+            f"- Task focus: {phase4_task_focus(task)}",
+            f"- Quality attributes: {', '.join(dimensions)}",
+            f"- Repo-local standards loaded: {'yes' if not repo_local_standards_issues(standards) else 'no'}",
+            f"- Verification commands: {', '.join(verification) or 'none declared'}",
+            "",
+            "## Profiling Baseline",
+            "- Capture per-phase wall-clock timing for planner, architect, implementer, validator, and judge.",
+            "- Capture helper timing for repo-local standards loading, memory-store construction, role-specific artifact retrieval, and evidence persistence.",
+            "- Record workload size alongside timings: task-history files scanned, artifact candidates considered, validation commands executed, and artifacts written.",
+            "",
+            "## Suspected Hotspots",
+            "### Planning Artifact Generation",
+            "- Evidence: phase-4 planning writes compiled feature understanding, research, tradeoff, and proposal artifacts before implementation.",
+            "- Optimization direction: normalize task truth once per run and reuse the derived performance dimensions and task focus across artifact writers.",
+            "",
+            "### Memory And Artifact Retrieval",
+            "- Evidence: judge persistence constructs a memory store and retrieves role-scoped memory and artifact bundles from task history and run logs.",
+            "- Optimization direction: cache the per-run memory/artifact index and bound scans to the active ticket family and recent accepted histories.",
+            "",
+            "### Validation And Acceptance Persistence",
+            "- Evidence: local validation, runtime proof generation, judge decision writing, evidence bundle writing, and eval scoring all execute near acceptance.",
+            "- Optimization direction: emit timing around subprocess-heavy validation and avoid rewriting unchanged acceptance artifacts when content is identical.",
+            "",
+            "## Optimization Plan",
+            "1. Establish a baseline timing ledger before changing control flow so latency regressions are evidence-backed.",
+            "2. Remove repeated loads and derived-string work within a single run while preserving deterministic outputs.",
+            "3. Bound history and artifact scans with explicit filters rather than broad repository walks.",
+            "4. Keep judge, runtime-proof, and verification gates intact; optimize orchestration overhead, not acceptance rigor.",
+            "",
+            "## Guardrails",
+            "- Do not weaken required artifacts, local validation, or judge evidence rules.",
+            "- Do not replace replayable evidence with summary-only reporting.",
+            "- Do not broaden edits beyond the builder repo while profiling builder performance.",
+        ]
+    )
 
 
 def phase4_solution_direction_key(value: str) -> str:
@@ -801,29 +895,43 @@ def phase4_proposal_text(task: dict[str, Any], standards: dict[str, Any]) -> str
     recommendation_label = "Selected Approach" if explicitly_selected else "Recommended Direction"
     recommendation_text = selected_direction["name"] if selected_direction else "No direction available"
     recommendation_summary = selected_direction["summary"] if selected_direction else "No solution direction was generated."
-    return "\n".join(
-        [
-            f"# Proposal: {task['id']}",
-            "",
-            f"## {recommendation_label}",
-            recommendation_text,
-            "",
-            recommendation_summary,
-            "",
-            "## Assumptions",
-            f"- Task area: {task.get('area')}",
-            f"- Repo-local standards are available: {'yes' if not repo_local_standards_issues(standards) else 'no'}",
-            "",
-            "## Constraints",
-            "- Do not modify JORB product code during builder-only hardening work.",
-            "- Preserve accepted backlog truth and stop on first hard failure.",
-            "",
-            "## Tradeoff Summary",
-            f"- {recommendation_text}: {selected_direction['decision'] if selected_direction else 'No tradeoff guidance available.'}",
-            "- Prefer explicit artifacts and gates over prose-only policy.",
-            f"- Decision checkpoint status: {decision_checkpoint or 'not required'}",
-        ]
-    )
+    lines = [
+        f"# Proposal: {task['id']}",
+        "",
+        f"## {recommendation_label}",
+        recommendation_text,
+        "",
+        recommendation_summary,
+        "",
+        "## Assumptions",
+        f"- Task area: {task.get('area')}",
+        f"- Repo-local standards are available: {'yes' if not repo_local_standards_issues(standards) else 'no'}",
+        "",
+        "## Constraints",
+        "- Do not modify JORB product code during builder-only hardening work.",
+        "- Preserve accepted backlog truth and stop on first hard failure.",
+        "",
+        "## Tradeoff Summary",
+        f"- {recommendation_text}: {selected_direction['decision'] if selected_direction else 'No tradeoff guidance available.'}",
+        "- Prefer explicit artifacts and gates over prose-only policy.",
+        f"- Decision checkpoint status: {decision_checkpoint or 'not required'}",
+    ]
+    if phase4_needs_performance_profile(task):
+        lines.extend(
+            [
+                "",
+                "## Performance Profiling Plan",
+                "- Baseline planner, architect, validator, and judge wall time before changing orchestration flow.",
+                "- Measure memory/artifact retrieval cost separately from validation subprocess cost.",
+                "- Record workload-size counters next to timings so scalability regressions are explainable.",
+                "",
+                "## Optimization Plan",
+                "- Reuse per-run derived task truth and performance dimensions instead of recalculating them across artifact writers.",
+                "- Bound history and artifact retrieval to deterministic filters before introducing heavier optimization work.",
+                "- Preserve the current acceptance gates and collect before/after timing evidence for any hot-path change.",
+            ]
+        )
+    return "\n".join(lines)
 
 
 def write_phase4_preimplementation_artifacts(
@@ -844,6 +952,10 @@ def write_phase4_preimplementation_artifacts(
         path = run_dir / name
         path.write_text(content if content.endswith("\n") else content + "\n", encoding="utf-8")
         created.append(str(path))
+    if phase4_needs_performance_profile(task):
+        performance_profile_path = run_dir / PERFORMANCE_PROFILE_FILE
+        performance_profile_path.write_text(phase4_performance_profile_text(task, standards) + "\n", encoding="utf-8")
+        created.append(str(performance_profile_path))
     created.append(str(write_phase4_decision_checkpoint(run_dir, task, standards)))
     return created
 
@@ -939,6 +1051,7 @@ def write_phase4_evidence_bundle(
             "research_brief": str(phase4_research_brief_path(run_dir)),
             "proposal": str(run_dir / "proposal.md"),
             "tradeoff_matrix": str(run_dir / "tradeoff_matrix.md"),
+            "performance_profile": str(run_dir / PERFORMANCE_PROFILE_FILE) if (run_dir / PERFORMANCE_PROFILE_FILE).exists() else None,
             "decision_checkpoint": str(run_dir / DECISION_CHECKPOINT_FILE) if (run_dir / DECISION_CHECKPOINT_FILE).exists() else None,
             "runtime_proof": str(phase4_runtime_proof_path(run_dir)),
             "eval_result": str(run_dir / "eval_result.json"),
@@ -1444,6 +1557,7 @@ def history_evidence_artifacts(run_dir: Path | None, prompt_file: Path | None) -
                 ("judge_memory_context", run_dir / "judge_memory_context.json"),
                 ("judge_decision", run_dir / "judge_decision.md"),
                 ("evidence_bundle", run_dir / "evidence_bundle.json"),
+                ("performance_profile", run_dir / PERFORMANCE_PROFILE_FILE),
             ]
         )
     artifacts: list[dict[str, str]] = []

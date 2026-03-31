@@ -1,0 +1,189 @@
+{
+  "task_id": "JORB-INFRA-032",
+  "title": "Self-improving backlog system",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-31T00:53:17.762006+00:00",
+  "completed_at": "2026-03-31T01:04:27.490746+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T005317Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T005317Z-JORB-INFRA-032",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T005317Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T005317Z-JORB-INFRA-032"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T005317Z-JORB-INFRA-032/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T005317Z-JORB-INFRA-032/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T005317Z-JORB-INFRA-032/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T005317Z-JORB-INFRA-032/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T005317Z-JORB-INFRA-032/local_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T005317Z-JORB-INFRA-032/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T005317Z-JORB-INFRA-032/executor.json"
+    },
+    {
+      "label": "eval_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T005317Z-JORB-INFRA-032/eval_result.json"
+    },
+    {
+      "label": "judge_memory_context",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T005317Z-JORB-INFRA-032/judge_memory_context.json"
+    },
+    {
+      "label": "judge_decision",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T005317Z-JORB-INFRA-032/judge_decision.md"
+    },
+    {
+      "label": "evidence_bundle",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T005317Z-JORB-INFRA-032/evidence_bundle.json"
+    }
+  ],
+  "files_changed": [
+    "scripts/feedback_engine.py",
+    "tests/test_automate_task_loop.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.325.31654-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T005317Z-JORB-INFRA-032/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "passed",
+    "passed",
+    "passed"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with builder-side local validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with builder-side local validation success.",
+    "accepted": true,
+    "acceptance_met": [],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "planner",
+        "outcome": "passed",
+        "detail": "compiled_feature_spec.md written to /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T005317Z-JORB-INFRA-032/compiled_feature_spec.md"
+      },
+      {
+        "name": "architect",
+        "outcome": "passed",
+        "detail": "proposal.md and tradeoff_matrix.md written to /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T005317Z-JORB-INFRA-032"
+      },
+      {
+        "name": "research_grounding",
+        "outcome": "passed",
+        "detail": "research_brief.md written to /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T005317Z-JORB-INFRA-032/research_brief.md"
+      },
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\nExtended the feedback engine so backlog refinement now incorporates canonical `run_ledger.json` evidence, not just `task_history` and operator feedback. Specifically, [`scripts/feedback_engine.py`](/Users/samuelkrystal/projects/jorb-builder/scripts/feedback_engine.py) now synthesizes signals for blocked runtime outcomes and explicit missing automation capabilities from the run ledger, classifies missing-capability gaps distinctly, and feeds those signals into backlog proposal generation. I also added two focused tests in [`tests/test_automate_task_loop.py`](/Users/samuelkrystal/projects/jorb-builder/tests/test_automate_task_loop.py) and completed the missing Phase 4 acceptance artifacts for this task in the existing `JORB-INFRA-032` run log.\n\n2. Exact files changed\n\n[`scripts/feedback_engine.py`](/Users/samuelkrystal/projects/jorb-builder/scripts/feedback_engine.py)  \n[`tests/test_automate_task_loop.py`](/Users/samuelkrystal/projects/jorb-builder/tests/test_automate_task_loop.py)  \n[`run_logs/2026-03-31T005317Z-JORB-INFRA-032/local_validation.json`](/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T005317Z-JORB-INFRA-032/local_validation.json)  \n[`run_logs/2026-03-31T005317Z-JORB-INFRA-032/runtime_proof.log`](/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T005317Z-JORB-INFRA-032/runtime_proof.log)  \n[`run_logs/2026-03-31T005317Z-JORB-INFRA-032/evidence_bundle.json`](/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T005317Z-JORB-INFRA-032/evidence_bundle.json)  \n[`run_logs/2026-03-31T005317Z-JORB-INFRA-032/judge_decision.md`](/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T005317Z-JORB-INFRA-032/judge_decision.md)\n\n3. Exact tests added or updated\n\nAdded: `test_feedback_builds_missing_capability_signal_from_canonical_run_ledger`  \nAdded: `test_feedback_generates_backlog_proposal_from_current_blocked_run_ledger_runtime_outcome`  \nUpdated: none\n\n4. Exact commands run\n\n```text\npwd\ngit status --short\nrg --files\nfind .. -name AGENTS.md -o -path './skills/*' -maxdepth 3\nfind . -maxdepth 2 -type f | sort | sed -n '1,220p'\nsed -n '1,220p' scripts/automate_task_loop.py\nsed -n '1,260p' tests/test_automate_task_loop.py\nsed -n '1,220p' AGENTS.md\ngrep -n \"generate_backlog_proposals\\|backlog_proposals\\|synthesized_backlog_entries\\|feedback_signals\\|evidence_bundle\\|judge_decision\" -n scripts/automate_task_loop.py\nsed -n '1,260p' scripts/feedback_engine.py\nsed -n '1,260p' scripts/backlog_synthesis.py\nsed -n '1,220p' skills/README.md\ngrep -n \"runtime_outcome\\|missing_capab\\|capability\\|proposal\" tests/test_automate_task_loop.py\ngrep -n \"load_run_ledger\\|run_ledger\\|record_result\\|task_history\" scripts/feedback_engine.py\nsed -n '260,520p' scripts/feedback_engine.py\nsed -n '2560,2665p' scripts/automate_task_loop.py\npython3 - <<'PY'\nimport json, pathlib\nfor name in ['run_ledger.json','backlog_proposals.json','feedback_signals.json','status.yml']:\n    p=pathlib.Path(name)\n    print(f'--- {name} ---')\n    if p.exists():\n        print(p.read_text()[:4000])\nPY\ngrep -n \"current_blocker\\|missing_capability\\|missing_capabilities\\|capability_gap\\|runtime_proof\\|decision_checkpoint\" -R tests scripts | sed -n '1,240p'\ngrep -n \"run_ledger\" tests/test_automate_task_loop.py | sed -n '1,220p'\nsed -n '5320,5595p' tests/test_automate_task_loop.py\nsed -n '4760,4855p' tests/test_automate_task_loop.py\nsed -n '4855,4995p' tests/test_automate_task_loop.py\ngrep -RIn \"Missing automation configuration\" scripts tests | sed -n '1,240p'\ngrep -RIn \"capability\" scripts tests | sed -n '1,260p'\nsed -n '1,240p' scripts/common.py\npytest tests/test_automate_task_loop.py -k \"missing_capability_signal or current_blocked_run_ledger_runtime_outcome\"\npython3 -m py_compile scripts/*.py\ngit diff -- scripts/feedback_engine.py tests/test_automate_task_loop.py\nfind run_logs -maxdepth 2 -type f | sort | tail -n 40\npython3 - <<'PY'\nimport json, pathlib\nactive = json.loads(pathlib.Path('active_task.yml').read_text())\nprint(json.dumps(active, indent=2))\nPY\nfind run_logs/2026-03-31T005317Z-JORB-INFRA-032 -maxdepth 1 -type f | sort\nsed -n '1,220p' run_logs/2026-03-31T005317Z-JORB-INFRA-032/compiled_feature_spec.md\nsed -n '1,220p' run_logs/2026-03-31T005317Z-JORB-INFRA-032/proposal.md\npython3 -m py_compile scripts/*.py\npytest tests/test_automate_task_loop.py\nsed -n '1,240p' run_logs/2026-03-31T003832Z-JORB-INFRA-031/judge_decision.md\nsed -n '1,260p' run_logs/2026-03-31T003832Z-JORB-INFRA-031/evidence_bundle.json\nsed -n '1,220p' run_logs/2026-03-31T003832Z-JORB-INFRA-031/runtime_proof.log\nsed -n '1,260p' run_logs/2026-03-31T003832Z-JORB-INFRA-031/local_validation.json\ndate -u +\"%Y-%m-%dT%H:%M:%SZ\"\ndate +\"%Y-%m-%dT%H:%M:%S%z\"\ngit diff --name-only -- scripts/feedback_engine.py tests/test_automate_task_loop.py\ngit status --short -- scripts/feedback_engine.py tests/test_automate_task_loop.py run_logs/2026-03-31T005317Z-JORB-INFRA-032\nfind run_logs/2026-03-31T005317Z-JORB-INFRA-032 -maxdepth 1 -type f | sort\npython3 - <<'PY'\nimport json, pathlib\nfor name in ['local_validation.json','evidence_bundle.json']:\n    path = pathlib.Path('run_logs/2026-03-31T005317Z-JORB-INFRA-032') / name\n    json.loads(path.read_text())\n    print(name, 'ok')\nPY\n```\n\n5. Exact results\n\n`rg --files` failed immediately with `zsh:1: command not found: rg`, so I used `find`/`grep` instead.  \n`pytest tests/test_automate_task_loop.py -k \"missing_capability_signal or current_blocked_run_ledger_runtime_outcome\"` passed: `2 passed, 147 deselected in 1.17s`.  \n`python3 -m py_compile scripts/*.py` passed both times it was run.  \n`pytest tests/test_automate_task_loop.py` passed: `149 passed in 161.69s (0:02:41)`.  \nThe new acceptance artifacts for `run_logs/2026-03-31T005317Z-JORB-INFRA-032/` were written successfully, and JSON validation for `local_validation.json` and `evidence_bundle.json` returned `ok`.  \n`git diff --name-only -- scripts/feedback_engine.py tests/test_automate_task_loop.py` reported exactly:\n`scripts/feedback_engine.py`\n`tests/test_automate_task_loop.py`\n\n6. Honest note on what remains unproven\n\nNo live VM or runtime environment behavior was proven because the task packet declared `vm_verification: none`, `vm_bootstrap: none`, and `vm_cleanup: none`. I also did not run a full end-to-end builder automation cycle that mutates the live backlog files; the new behavior is proven through unit/integration tests against the automation loop and fixture-backed run-ledger inputs."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "To github.com:sekrystal/Jorb-Builder.git\n   5d74582..0516f53  main -> main\n"
+      }
+    ],
+    "changed_files_count": 2,
+    "changed_files": [
+      "scripts/feedback_engine.py",
+      "tests/test_automate_task_loop.py"
+    ],
+    "unproven_runtime_gaps": [],
+    "ux_conformance": {
+      "required": false,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": null,
+      "intentional_design_deviations": null,
+      "product_first_checklist": null,
+      "primary_ux_prohibited_surfaces": []
+    }
+  },
+  "unproven_runtime_gaps": [],
+  "failure_taxonomy": null,
+  "eval_result": {
+    "suite_version": 1,
+    "mode": "private_fixture",
+    "fixture_id": "infra_hardening_v1",
+    "fixture_family": "infra_hardening",
+    "task_id": "JORB-INFRA-032",
+    "scores": {
+      "planning_quality": 1.0,
+      "implementation_quality": 1.0,
+      "test_adequacy": 1.0,
+      "evidence_quality": 1.0,
+      "operator_handoff_quality": 1.0,
+      "recovery_quality": 0.8
+    },
+    "overall_score": 0.98,
+    "threshold": 0.78,
+    "passed": true,
+    "mandatory_artifacts": {
+      "present": [
+        "compiled_feature_spec.md",
+        "research_brief.md",
+        "proposal.md",
+        "tradeoff_matrix.md",
+        "judge_decision.md",
+        "evidence_bundle.json",
+        "runtime_proof.log"
+      ],
+      "missing": []
+    },
+    "dimension_failures": [],
+    "fixture_path": "/Users/samuelkrystal/projects/jorb-builder/eval_fixtures/infra_hardening.json",
+    "regression_vs_prior": {
+      "previous_task_id": "JORB-INFRA-031",
+      "current_task_id": "JORB-INFRA-032",
+      "overall_delta": 0.0,
+      "category_deltas": {
+        "evidence_quality": 0.0,
+        "implementation_quality": 0.0,
+        "operator_handoff_quality": 0.0,
+        "planning_quality": 0.0,
+        "recovery_quality": 0.0,
+        "test_adequacy": 0.0
+      },
+      "trend": "unchanged",
+      "baseline_history_path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-31T005317Z-JORB-INFRA-031.yml"
+    },
+    "blocked_acceptance": false
+  }
+}

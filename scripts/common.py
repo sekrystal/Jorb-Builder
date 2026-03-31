@@ -89,11 +89,13 @@ MEMORY_ARTIFACT_ROLE_PROFILES = {
         "preferred_names": {
             "compiled_feature_spec.md",
             "research_brief.md",
+            "performance_profile.md",
             "automation_summary.md",
         },
         "preferred_labels": {
             "phase4:compiled_feature_spec.md",
             "phase4:research_brief.md",
+            "performance_profile",
             "automation_summary",
         },
     },
@@ -104,12 +106,14 @@ MEMORY_ARTIFACT_ROLE_PROFILES = {
             "tradeoff_matrix.md",
             "research_brief.md",
             "compiled_feature_spec.md",
+            "performance_profile.md",
         },
         "preferred_labels": {
             "phase4:proposal.md",
             "phase4:tradeoff_matrix.md",
             "phase4:research_brief.md",
             "phase4:compiled_feature_spec.md",
+            "performance_profile",
         },
     },
     "judge": {
@@ -123,6 +127,7 @@ MEMORY_ARTIFACT_ROLE_PROFILES = {
             "proposal.md",
             "tradeoff_matrix.md",
             "research_brief.md",
+            "performance_profile.md",
         },
         "preferred_labels": {
             "judge_decision",
@@ -134,6 +139,7 @@ MEMORY_ARTIFACT_ROLE_PROFILES = {
             "phase4:proposal.md",
             "phase4:tradeoff_matrix.md",
             "phase4:research_brief.md",
+            "performance_profile",
         },
     },
 }

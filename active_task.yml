@@ -1,12 +1,12 @@
 {
-  "task_id": "JORB-INFRA-032",
-  "title": "Self-improving backlog system",
+  "task_id": "JORB-INFRA-033",
+  "title": "Builder performance profiling + optimization plan",
   "state": "verifying",
   "attempt": 1,
-  "started_at": "2026-03-31T00:53:17.762006+00:00",
+  "started_at": "2026-03-31T01:12:39.721725+00:00",
   "handed_to_codex_at": null,
-  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T005317Z/codex_prompt.md",
-  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T005317Z-JORB-INFRA-032",
+  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T011239Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T011239Z-JORB-INFRA-033",
   "verification_commands": [
     "python3 -m py_compile scripts/*.py",
     "pytest tests/test_automate_task_loop.py"
@@ -20,9 +20,9 @@
   "failure_summary": null,
   "notes": [],
   "prior_run_log_dirs": [
-    "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T005317Z"
+    "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T011239Z"
   ],
-  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T005317Z",
+  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T011239Z",
   "target_repo": "/Users/samuelkrystal/projects/jorb-builder",
   "target_kind": "builder"
 }
