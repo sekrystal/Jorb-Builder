@@ -1,12 +1,12 @@
 {
-  "task_id": "JORB-INFRA-028",
-  "title": "Solution space generator + research briefs",
+  "task_id": "JORB-INFRA-029",
+  "title": "Decision proposal + human checkpoint engine",
   "state": "verifying",
   "attempt": 1,
-  "started_at": "2026-03-31T00:07:34.960864+00:00",
+  "started_at": "2026-03-31T00:17:05.598280+00:00",
   "handed_to_codex_at": null,
-  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T000734Z/codex_prompt.md",
-  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T000734Z-JORB-INFRA-028",
+  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T001705Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T001705Z-JORB-INFRA-029",
   "verification_commands": [
     "python3 -m py_compile scripts/*.py",
     "pytest tests/test_automate_task_loop.py"
@@ -20,9 +20,9 @@
   "failure_summary": null,
   "notes": [],
   "prior_run_log_dirs": [
-    "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T000734Z"
+    "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T001705Z"
   ],
-  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T000734Z",
+  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T001705Z",
   "target_repo": "/Users/samuelkrystal/projects/jorb-builder",
   "target_kind": "builder"
 }

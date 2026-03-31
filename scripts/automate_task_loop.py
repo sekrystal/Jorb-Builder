@@ -61,6 +61,7 @@ RENDER_PACKET = SCRIPTS_DIR / "render_packet.py"
 RESULT_FILE = "automation_result.json"
 SUMMARY_FILE = "automation_summary.md"
 PROGRESS_FILE = "progress.jsonl"
+DECISION_CHECKPOINT_FILE = "decision_checkpoint.json"
 FEATURE_SPEC_ALLOW_EMPTY_KEYS = {"verification_commands"}
 PHASE4_REQUIRED_ARTIFACTS = (
     "compiled_feature_spec.md",
@@ -272,6 +273,8 @@ def phase4_stage_order(task: dict[str, Any], *, use_vm_flow: bool) -> list[str]:
 
 def phase4_failure_category(summary: str) -> str:
     normalized = summary.lower()
+    if "decision checkpoint" in normalized or "human approval" in normalized:
+        return "spec_ambiguity_failure"
     if "missing automation configuration" in normalized:
         return "configuration_defect"
     if "dirty before automated execution" in normalized:
@@ -433,6 +436,34 @@ def phase4_selected_direction(
         "decision": "Review and normalize the selected approach label before architectural commitment.",
         "grounding": "Selected approach was taken directly from task metadata.",
     }, True
+
+
+def phase4_decision_checkpoint_payload(task: dict[str, Any], standards: dict[str, Any]) -> dict[str, Any]:
+    issue = phase4_decision_checkpoint_issue(task)
+    selected_direction, explicitly_selected = phase4_selected_direction(task, standards)
+    options = [direction["name"] for direction in phase4_solution_directions(task, standards)]
+    selected_approach = str(task.get("selected_approach") or "").strip() or None
+    return {
+        "task_id": task["id"],
+        "task_title": task.get("title"),
+        "requires_human_approval": bool(issue),
+        "status": "awaiting_human_approval" if issue else "ready_to_proceed",
+        "issue": issue,
+        "implementation_options": options,
+        "selected_approach": selected_approach,
+        "recommended_direction": selected_direction["name"] if selected_direction else None,
+        "recommendation_basis": selected_direction["summary"] if selected_direction else None,
+        "explicitly_selected": explicitly_selected,
+    }
+
+
+def write_phase4_decision_checkpoint(run_dir: Path, task: dict[str, Any], standards: dict[str, Any]) -> Path:
+    path = run_dir / DECISION_CHECKPOINT_FILE
+    path.write_text(
+        json.dumps(phase4_decision_checkpoint_payload(task, standards), indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return path
 
 
 def compile_feature_spec_trigger(task: dict[str, Any]) -> str:
@@ -813,6 +844,7 @@ def write_phase4_preimplementation_artifacts(
         path = run_dir / name
         path.write_text(content if content.endswith("\n") else content + "\n", encoding="utf-8")
         created.append(str(path))
+    created.append(str(write_phase4_decision_checkpoint(run_dir, task, standards)))
     return created
 
 
@@ -907,6 +939,7 @@ def write_phase4_evidence_bundle(
             "research_brief": str(phase4_research_brief_path(run_dir)),
             "proposal": str(run_dir / "proposal.md"),
             "tradeoff_matrix": str(run_dir / "tradeoff_matrix.md"),
+            "decision_checkpoint": str(run_dir / DECISION_CHECKPOINT_FILE) if (run_dir / DECISION_CHECKPOINT_FILE).exists() else None,
             "runtime_proof": str(phase4_runtime_proof_path(run_dir)),
             "eval_result": str(run_dir / "eval_result.json"),
             "judge_memory_context": str(judge_memory_path),
@@ -1226,6 +1259,8 @@ def detect_failure_taxonomy(summary: str, automation_result: dict[str, Any]) -> 
         failure_class = "runtime_vm_failure"
     elif "artifact" in normalized or "ux conformance evidence is incomplete" in normalized:
         failure_class = "artifact_completeness_failure"
+    elif "decision checkpoint" in normalized or "human approval" in normalized:
+        failure_class = "spec_ambiguity_failure"
     elif "missing automation configuration" in normalized:
         failure_class = "configuration_defect"
     elif "ambiguity" in normalized or "source of truth" in normalized:
@@ -3684,6 +3719,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
             "skill_files": standards.get("skill_files", []),
             "skill_entries": standards.get("skill_entries", []),
         }
+        plan["decision_checkpoint"] = phase4_decision_checkpoint_payload(task, standards)
     executor_result: dict[str, Any] = {}
     local_validation_payload: dict[str, Any] | None = None
     vm_validation_payload: dict[str, Any] | None = None
@@ -3696,8 +3732,6 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
     if phase4_enforcement:
         plan["missing_configuration"].extend(repo_local_standards_issues(standards))
         checkpoint_issue = phase4_decision_checkpoint_issue(task)
-        if checkpoint_issue:
-            plan["missing_configuration"].append(checkpoint_issue)
     plan["preflight_contract_issues"] = preflight_contract_issues(
         task=task,
         target_kind=target_kind,
@@ -3742,7 +3776,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
                     {"name": "planner", "outcome": "planned", "detail": f"compiled_feature_spec.md -> {run_dir / 'compiled_feature_spec.md'}"},
                     {"name": "architect", "outcome": "planned", "detail": f"tradeoff_matrix.md + proposal.md -> {run_dir}"},
                     {"name": "research_grounding", "outcome": "planned", "detail": f"research_brief.md -> {run_dir / 'research_brief.md'}"},
-                    {"name": "decision_checkpoint", "outcome": "planned", "detail": "Decision checkpoint would block if selected_approach were missing while multiple options were declared."},
+                    {"name": "decision_checkpoint", "outcome": "planned", "detail": checkpoint_issue or "No human approval checkpoint is currently required."},
                     {"name": "implementer", "outcome": "planned", "detail": "Executor would run only after planning artifacts exist."},
                     {"name": "validator", "outcome": "planned", "detail": "Local validation, git, and runtime proof would run according to the task target."},
                     {"name": "judge", "outcome": "planned", "detail": "Acceptance would require judge_decision.md and evidence_bundle.json."},
@@ -3887,6 +3921,61 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
                 {"name": "research_grounding", "outcome": "passed", "detail": f"research_brief.md written to {run_dir / 'research_brief.md'}"},
             ]
         )
+        if checkpoint_issue:
+            summary = f"Decision checkpoint required before implementation: {checkpoint_issue}"
+            checkpoint_path = run_dir / DECISION_CHECKPOINT_FILE
+            emit_progress(
+                run_dir,
+                task_id=task["id"],
+                stage_index=3,
+                backlog=backlog,
+                task_started_at=progress_started_at,
+                state="failed",
+                detail=summary,
+            )
+            automation_result = {
+                "task_id": task["id"],
+                "classification": "blocked",
+                "finished_at": now_iso(),
+                "summary": summary,
+                "steps": steps + [
+                    {
+                        "name": "decision_checkpoint",
+                        "outcome": "blocked",
+                        "detail": f"{checkpoint_issue} Approval artifact: {checkpoint_path}",
+                    }
+                ],
+                "changed_files": [],
+                "blocker_evidence": [checkpoint_issue, str(checkpoint_path)],
+                "unproven_runtime_gaps": [summary],
+            }
+            automation_result = persist_result_with_phase4_artifacts(
+                run_dir,
+                task,
+                automation_result,
+                standards=standards,
+                require_runtime_proof=phase4_enforcement,
+                local_validation_payload=local_validation_payload,
+                vm_validation_payload=vm_validation_payload,
+            )
+            classify_and_update_state(
+                "blocked",
+                summary,
+                task,
+                backlog,
+                active,
+                status,
+                automation_result,
+                terminal_state="preflight_failed",
+            )
+            write_data(BACKLOG, backlog)
+            write_data(STATUS, status)
+            print_result(
+                "BLOCKED",
+                summary,
+                f"Review {run_dir / 'proposal.md'}, {run_dir / 'tradeoff_matrix.md'}, and {checkpoint_path}; record selected_approach in backlog.yml, then rerun python3 scripts/automate_task_loop.py.",
+            )
+            return 2
 
     if plan["missing_configuration"]:
         summary = "Missing automation configuration: " + ", ".join(plan["missing_configuration"])

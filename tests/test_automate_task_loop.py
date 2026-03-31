@@ -4110,6 +4110,45 @@ def test_phase4_proposal_uses_selected_declared_approach_when_present(tmp_path: 
     assert "Decision checkpoint status: not required" in proposal
 
 
+def test_phase4_material_decision_checkpoint_blocks_before_executor_handoff(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-029",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["title"] = "Decision proposal + human checkpoint engine"
+    backlog["tasks"][0]["objective"] = "Pause for human approval when architecture tradeoffs are material."
+    backlog["tasks"][0]["why_it_matters"] = "SPRE must not silently choose materially different directions."
+    backlog["tasks"][0]["implementation_options"] = ["minimal", "framework"]
+    backlog["tasks"][0]["selected_approach"] = ""
+    backlog["tasks"][0]["verification"] = ["python3 -m py_compile scripts/*.py"]
+    _write_json(builder_root / "backlog.yml", backlog)
+    _git(["add", "backlog.yml"], builder_root)
+    _git(["commit", "-m", "seed decision checkpoint fixture"], builder_root)
+
+    result = _run([sys.executable, str(SCRIPT)], builder_root)
+
+    assert result.returncode == 2
+    assert "BLOCKED Decision checkpoint required before implementation:" in result.stdout
+    run_dir = _active_run_dir(builder_root)
+    payload = _json(run_dir / "automation_result.json")
+    assert payload["classification"] == "blocked"
+    assert any(
+        step["name"] == "decision_checkpoint" and step["outcome"] == "blocked"
+        for step in payload["steps"]
+    )
+    assert not any(step["name"] == "executor_handoff" for step in payload["steps"])
+    checkpoint = _json(run_dir / "decision_checkpoint.json")
+    assert checkpoint["requires_human_approval"] is True
+    assert checkpoint["status"] == "awaiting_human_approval"
+    assert checkpoint["selected_approach"] is None
+    assert checkpoint["recommended_direction"] == "Minimal"
+    evidence_bundle = _json(run_dir / "evidence_bundle.json")
+    assert evidence_bundle["artifacts"]["decision_checkpoint"].endswith("decision_checkpoint.json")
+
+
 def test_phase4_result_persistence_blocks_accepted_run_when_required_artifacts_are_missing(tmp_path: Path) -> None:
     module = _load_script_module()
     run_dir = tmp_path / "run"
