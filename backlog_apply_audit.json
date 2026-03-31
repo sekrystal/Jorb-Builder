@@ -15,6 +15,22 @@
         "reviewed_at": "2026-03-30T19:15:51.748069+00:00",
         "review_note": "approved for narrow JORB-INFRA synthesis lifecycle"
       }
+    },
+    {
+      "applied_at": "2026-03-31T01:42:03.403367+00:00",
+      "synthesis_id": "syn-bc95a4232f4c",
+      "source_proposal_id": "prop-2d91a8da268e",
+      "synthesized_entry_sha1": "64c564f7b748172c46ca4fba9b4c7888adc248c7",
+      "backlog_before_sha1": "fbf5748a54dcf359cec66ffced37173217a19705",
+      "backlog_after_sha1": "9789060a5bf025a1a4385e4e2e4fe3e591b0e9b3",
+      "ticket_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
+      "operator_review": {
+        "required": true,
+        "approved": true,
+        "review_status": "accepted",
+        "reviewed_at": "2026-03-31T01:32:44.185926+00:00",
+        "review_note": "bounded live validation"
+      }
     }
   ]
 }

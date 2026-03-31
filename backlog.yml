@@ -4628,6 +4628,69 @@
       ],
       "description": "The builder should not show a clean dry-run surface when repeated Phase 4 judge failures for missing artifacts are the strongest recent truth. Tighten operator status truth so artifact-enforcement failures, current blocker, and artifact completeness stay coherent across blocked and dry-run transitions.\n\nrun_ledger.json records repeated blocked judge events for JORB-INFRA-010 citing missing compiled_feature_spec.md, proposal.md, tradeoff_matrix.md, and research_brief.md, while show_status.py currently reports run_state dry_run, current_blocker none, and artifact_missing only judge_decision.md and evidence_bundle.json.",
       "allow_noop_completion": false
+    },
+    {
+      "id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
+      "title": "Strengthen acceptance criteria for JORB-INFRA phase4 artifact enforcement failed",
+      "type": "infrastructure",
+      "area": "builder",
+      "repo_path": "~/projects/jorb-builder",
+      "priority": 2,
+      "status": "blocked",
+      "retries_used": 0,
+      "depends_on": [
+        "JORB-INFRA-010"
+      ],
+      "prompt": "implement_feature",
+      "objective": "Refine backlog handling for the observed JORB-INFRA runtime evidence.",
+      "why_it_matters": "Canonical run ledger recorded 4 blocked runtime outcome(s) for JORB-INFRA.",
+      "acceptance_criteria": [
+        "Automated validation proves the recurring issue is handled explicitly: Canonical run ledger recorded 4 blocked runtime outcome(s) for JORB-INFRA.",
+        "Operator-visible status or artifacts show the new routing or decision boundary without relying on narrative summary.",
+        "Evidence artifacts include judge_decision.md and evidence_bundle.json with provenance back to the triggering proposal.",
+        "The implementation remains scoped to one builder mechanism and does not silently mutate backlog or roadmap state.",
+        "The change preserves provenance back to the source proposal and evidence links."
+      ],
+      "verification": [
+        "python3 -m py_compile scripts/*.py",
+        "pytest tests/test_automate_task_loop.py"
+      ],
+      "allowlist": [
+        "../jorb-builder/**"
+      ],
+      "forbid": [
+        "../jorb/**"
+      ],
+      "required_artifacts": [
+        "compiled_feature_spec.md",
+        "proposal.md",
+        "tradeoff_matrix.md",
+        "judge_decision.md",
+        "evidence_bundle.json"
+      ],
+      "requires_vm_runtime_proof": false,
+      "provenance": {
+        "source_proposal_id": "prop-2d91a8da268e",
+        "evidence_links": [
+          "/Users/samuelkrystal/projects/jorb-builder/run_ledger.json"
+        ],
+        "confidence": 0.95,
+        "recurrence_count": 4,
+        "generated_at": "2026-03-31T01:32:50.636183+00:00"
+      },
+      "operator_approval": {
+        "required": true,
+        "approved": true,
+        "review_status": "accepted",
+        "reviewed_at": "2026-03-31T01:32:44.185926+00:00",
+        "review_note": "bounded live validation"
+      },
+      "notes": [
+        "Synthesized from proposal prop-2d91a8da268e",
+        "Builder repo is dirty before automated execution; refusing to continue."
+      ],
+      "description": "Refine backlog handling for the observed JORB-INFRA runtime evidence.\n\nCanonical run ledger recorded 4 blocked runtime outcome(s) for JORB-INFRA.",
+      "allow_noop_completion": false
     }
   ],
   "errors": [],

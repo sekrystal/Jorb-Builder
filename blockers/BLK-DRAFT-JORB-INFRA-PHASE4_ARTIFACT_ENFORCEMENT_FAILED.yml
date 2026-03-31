@@ -1,0 +1,22 @@
+{
+  "id": "BLK-DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
+  "title": "Task DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED blocked during automated execution",
+  "severity": "high",
+  "opened_at": "2026-03-31T01:42:04.469493+00:00",
+  "related_tasks": [
+    "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED"
+  ],
+  "status": "open",
+  "symptoms": [
+    "Builder repo is dirty before automated execution; refusing to continue."
+  ],
+  "diagnosis": "Builder repo is dirty before automated execution; refusing to continue.",
+  "evidence": [
+    "scripts/backlog_synthesis.py",
+    "tests/test_automate_task_loop.py"
+  ],
+  "next_actions": [
+    "Inspect automation_result.json and narrow the next bounded refinement."
+  ],
+  "human_needed": true
+}

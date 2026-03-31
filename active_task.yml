@@ -1,12 +1,12 @@
 {
-  "task_id": null,
-  "title": null,
-  "state": "completed",
+  "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
+  "title": "Strengthen acceptance criteria for JORB-INFRA phase4 artifact enforcement failed",
+  "state": "blocked",
   "attempt": 1,
-  "started_at": "2026-03-31T01:12:39.721725+00:00",
+  "started_at": "2026-03-31T01:42:04.323837+00:00",
   "handed_to_codex_at": null,
-  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T011239Z/codex_prompt.md",
-  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T011239Z-JORB-INFRA-033",
+  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T014203Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T014204Z-DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
   "verification_commands": [
     "python3 -m py_compile scripts/*.py",
     "pytest tests/test_automate_task_loop.py"
@@ -17,12 +17,12 @@
   "allowlist": [
     "../jorb-builder/**"
   ],
-  "failure_summary": null,
+  "failure_summary": "Builder repo is dirty before automated execution; refusing to continue.",
   "notes": [],
   "prior_run_log_dirs": [
-    "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T011239Z"
+    "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T014203Z"
   ],
-  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T011239Z",
+  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T014203Z",
   "target_repo": "/Users/samuelkrystal/projects/jorb-builder",
   "target_kind": "builder"
 }

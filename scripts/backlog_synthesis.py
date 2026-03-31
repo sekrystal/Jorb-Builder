@@ -490,7 +490,18 @@ def generate_synthesized_entries(root: Path | None = None, *, dry_run: bool = Fa
     return payload
 
 
-def _backlog_task_from_entry(entry: dict[str, Any]) -> dict[str, Any]:
+def _canonical_status_for_entry(entry: dict[str, Any], *, backlog: dict[str, Any], payload: dict[str, Any]) -> str:
+    synthesis_plan = build_synthesis_plan(payload.get("entries", []), backlog=backlog)
+    node = next(
+        (item for item in synthesis_plan.get("nodes", []) if item.get("synthesis_id") == entry.get("synthesis_id")),
+        None,
+    )
+    if node and node.get("plan_state") == "ready":
+        return "ready"
+    return str(entry.get("status_default", "pending"))
+
+
+def _backlog_task_from_entry(entry: dict[str, Any], *, canonical_status: str | None = None) -> dict[str, Any]:
     return {
         "id": entry["ticket_id_placeholder"],
         "title": entry["title"],
@@ -498,7 +509,7 @@ def _backlog_task_from_entry(entry: dict[str, Any]) -> dict[str, Any]:
         "area": entry.get("area", "builder"),
         "repo_path": entry.get("repo_path", "~/projects/jorb-builder"),
         "priority": 2 if entry.get("priority_recommendation") == "high" else 3,
-        "status": entry.get("status_default", "pending"),
+        "status": canonical_status or entry.get("status_default", "pending"),
         "retries_used": 0,
         "depends_on": entry.get("dependencies", []),
         "prompt": "implement_feature",
@@ -533,7 +544,8 @@ def apply_synthesized_entry(synthesis_id: str, *, root: Path | None = None) -> d
     if entry.get("synthesis_eval_blocked"):
         raise ValueError("synthesis eval threshold not met")
 
-    backlog.setdefault("tasks", []).append(_backlog_task_from_entry(entry))
+    canonical_status = _canonical_status_for_entry(entry, backlog=backlog, payload=payload)
+    backlog.setdefault("tasks", []).append(_backlog_task_from_entry(entry, canonical_status=canonical_status))
     write_data(backlog_path, backlog)
     backlog_after_text = backlog_path.read_text(encoding="utf-8")
 
@@ -576,7 +588,19 @@ def synthesis_summary_for_operator(root: Path | None = None) -> dict[str, Any]:
     applied = [entry for entry in entries if entry.get("status") == "applied"]
     blocked = [entry for entry in entries if entry.get("synthesis_eval_blocked")]
     top_draft = draft[0] if draft else None
-    next_ready = next((item for item in synthesis_plan["execution_order"] if item.get("plan_state") == "ready"), None)
+    applied_ticket_ids = {str(entry.get("ticket_id_placeholder")) for entry in applied}
+    backlog_ready = {
+        str(task.get("id")): task
+        for task in backlog.get("tasks", [])
+        if str(task.get("status")) in {"ready", "retry_ready"}
+    }
+    next_ready = next(
+        (
+            item for item in synthesis_plan["execution_order"]
+            if item.get("ticket_id") in applied_ticket_ids and item.get("ticket_id") in backlog_ready
+        ),
+        None,
+    )
     return {
         "entry_count": len(entries),
         "draft_count": len(draft),

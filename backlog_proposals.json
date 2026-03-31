@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-31T01:23:16.797668+00:00",
+  "generated_at": "2026-03-31T01:42:04.468019+00:00",
   "proposals": [
     {
       "proposal_id": "prop-c967a7d8242d",
@@ -172,7 +172,7 @@
     {
       "proposal_id": "prop-2d91a8da268e",
       "dedupe_key": "phase4_artifact_enforcement_failed::JORB-INFRA::add_missing_acceptance_criteria",
-      "status": "draft",
+      "status": "accepted",
       "source_signal_id": "sig-baaab0a47ec1",
       "title": "Strengthen acceptance criteria for JORB-INFRA phase4 artifact enforcement failed",
       "rationale": "Refine backlog handling for the observed JORB-INFRA runtime evidence.",
@@ -199,7 +199,39 @@
           "/Users/samuelkrystal/projects/jorb-builder/run_ledger.json"
         ]
       },
-      "created_at": "2026-03-31T01:23:16.797662+00:00"
+      "created_at": "2026-03-31T01:23:16.797662+00:00",
+      "reviewed_at": "2026-03-31T01:32:44.185926+00:00",
+      "review_note": "bounded live validation"
+    },
+    {
+      "proposal_id": "prop-9fde5f3af2e6",
+      "dedupe_key": "builder_repo_is_dirty_before_automated_execution_refusing_to_continue::DRAFT-JORB::create_follow_up_hardening_ticket",
+      "status": "draft",
+      "source_signal_id": "sig-29f8b4e0be19",
+      "title": "Harden DRAFT-JORB against builder repo is dirty before automated execution refusing to continue",
+      "rationale": "Refine backlog handling for the observed DRAFT-JORB runtime evidence.",
+      "evidence_summary": "Canonical run ledger recorded 2 blocked runtime outcome(s) for DRAFT-JORB.",
+      "evidence_links": [
+        "/Users/samuelkrystal/projects/jorb-builder/run_ledger.json"
+      ],
+      "affected_ticket_family": "DRAFT-JORB",
+      "priority_recommendation": "high",
+      "confidence": 0.8,
+      "recurrence_count": 2,
+      "proposed_action_type": "create_follow_up_hardening_ticket",
+      "dependencies": [],
+      "operator_approval_required": true,
+      "draft_ticket": {
+        "id_placeholder": "DRAFT-DRAFT-JORB-BUILDER_REPO_IS_DIRTY_BEFORE_AUTOMATED_EXECUTION_REFUSING_TO_CONTINUE",
+        "title": "Harden DRAFT-JORB against builder repo is dirty before automated execution refusing to continue",
+        "type": "hardening",
+        "area": "product",
+        "objective": "Refine backlog handling for the observed DRAFT-JORB runtime evidence.",
+        "evidence_basis": [
+          "/Users/samuelkrystal/projects/jorb-builder/run_ledger.json"
+        ]
+      },
+      "created_at": "2026-03-31T01:42:04.468006+00:00"
     }
   ]
 }

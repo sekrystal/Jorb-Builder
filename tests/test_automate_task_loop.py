@@ -5978,6 +5978,9 @@ def test_apply_synthesized_entry_requires_explicit_approval_and_audit(tmp_path: 
     module = _load_backlog_synthesis_module(builder_root)
     status_before = _json(builder_root / "status.yml")
     active_before = _json(builder_root / "active_task.yml")
+    backlog_seed = _json(builder_root / "backlog.yml")
+    backlog_seed["tasks"][0]["status"] = "accepted"
+    _write_json(builder_root / "backlog.yml", backlog_seed)
     _write_json(
         builder_root / "backlog_proposals.json",
         {
@@ -6009,6 +6012,7 @@ def test_apply_synthesized_entry_requires_explicit_approval_and_audit(tmp_path: 
 
     backlog = _json(builder_root / "backlog.yml")
     applied_task = next(task for task in backlog["tasks"] if task["id"] == applied["ticket_id_placeholder"])
+    assert applied_task["status"] == "ready"
     assert applied_task["repo_path"] == "~/projects/jorb-builder"
     assert applied_task["allowlist"] == ["../jorb-builder/**"]
     assert applied_task["forbid"] == ["../jorb/**"]
@@ -6151,7 +6155,7 @@ def test_operator_surface_shows_synthesis_truth(tmp_path: Path) -> None:
                 {
                     "synthesis_id": "syn-1",
                     "ticket_id_placeholder": "DRAFT-JORB-INFRA-ONE",
-                    "status": "draft",
+                    "status": "applied",
                     "title": "Draft follow-up",
                     "priority_recommendation": "high",
                     "dependencies": [],
@@ -6160,23 +6164,101 @@ def test_operator_surface_shows_synthesis_truth(tmp_path: Path) -> None:
                     "synthesis_eval_blocked": False,
                     "synthesis_eval": {"overall_score": 0.92},
                 },
-                {"synthesis_id": "syn-2", "status": "applied", "title": "Applied follow-up", "synthesis_eval_blocked": False},
-                {"synthesis_id": "syn-3", "status": "draft", "title": "Blocked follow-up", "synthesis_eval_blocked": True},
-            ],
-        },
+                    {"synthesis_id": "syn-2", "status": "applied", "ticket_id_placeholder": "DRAFT-JORB-INFRA-TWO", "title": "Applied follow-up", "synthesis_eval_blocked": False},
+                    {
+                        "synthesis_id": "syn-3",
+                        "status": "draft",
+                        "title": "Blocked follow-up",
+                        "synthesis_eval_blocked": True,
+                        "synthesis_eval": {"overall_score": 0.92},
+                    },
+                ],
+            },
     )
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"].append(
+        {
+            "id": "DRAFT-JORB-INFRA-ONE",
+            "title": "Draft follow-up",
+            "type": "infrastructure",
+            "area": "builder",
+            "priority": 2,
+            "status": "ready",
+            "depends_on": [],
+        }
+    )
+    backlog["tasks"].append(
+        {
+            "id": "DRAFT-JORB-INFRA-TWO",
+            "title": "Applied follow-up",
+            "type": "infrastructure",
+            "area": "builder",
+            "priority": 2,
+            "status": "pending",
+            "depends_on": [],
+        }
+    )
+    _write_json(builder_root / "backlog.yml", backlog)
     result = _run([sys.executable, str(SCRIPT.parent / "show_status.py")], builder_root)
     assert result.returncode == 0
     assert "Backlog synthesis:" in result.stdout
     assert "- synthesized_entries: 3" in result.stdout
-    assert "- draft_entries: 2" in result.stdout
-    assert "- applied_entries: 1" in result.stdout
+    assert "- draft_entries: 1" in result.stdout
+    assert "- applied_entries: 2" in result.stdout
     assert "- eval_blocked_entries: 1" in result.stdout
     assert "- dependency_edges: 0" in result.stdout
     assert "- dependency_cycles: 0" in result.stdout
     assert "- next_execution_target: DRAFT-JORB-INFRA-ONE" in result.stdout
     assert "- top_synthesized_eval_score: 0.92" in result.stdout
-    assert "- top_synthesized_eval_passed: True" in result.stdout
+    assert "- top_synthesized_eval_passed: False" in result.stdout
+
+
+def test_synthesis_ready_state_only_enters_execution_queue_after_apply(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    module = _load_backlog_synthesis_module(builder_root)
+    backlog_seed = _json(builder_root / "backlog.yml")
+    backlog_seed["tasks"][0]["status"] = "accepted"
+    _write_json(builder_root / "backlog.yml", backlog_seed)
+    _write_json(
+        builder_root / "backlog_proposals.json",
+        {
+            "generated_at": "2026-03-30T00:00:00+00:00",
+            "proposals": [
+                {
+                    "proposal_id": "prop-1",
+                    "status": "accepted",
+                    "title": "Harden builder retries",
+                    "rationale": "Add a follow-up hardening task.",
+                    "evidence_summary": "Repeated retry loop observed 3 times.",
+                    "evidence_links": ["task_history/one.yml", "task_history/two.yml"],
+                    "affected_ticket_family": "JORB-INFRA",
+                    "priority_recommendation": "high",
+                    "confidence": 0.9,
+                    "recurrence_count": 3,
+                    "proposed_action_type": "create_follow_up_hardening_ticket",
+                    "dependencies": ["JORB-INFRA-030"],
+                    "reviewed_at": "2026-03-30T01:00:00+00:00",
+                    "review_note": "approved",
+                }
+            ],
+        },
+    )
+
+    payload = module.generate_synthesized_entries(builder_root, dry_run=False)
+    entry = payload["entries"][0]
+    summary_before = module.synthesis_summary_for_operator(builder_root)
+    inspect_before = _run([sys.executable, str(SCRIPT), "--inspect-backlog"], builder_root)
+
+    assert any(item["plan_state"] == "ready" for item in payload["execution_order"])
+    assert summary_before["next_execution_target"] is None
+    assert 'ready_queue: []' in inspect_before.stdout
+
+    module.apply_synthesized_entry(entry["synthesis_id"], root=builder_root)
+    summary_after = module.synthesis_summary_for_operator(builder_root)
+    inspect_after = _run([sys.executable, str(SCRIPT), "--inspect-backlog"], builder_root)
+
+    assert summary_after["next_execution_target"] == "DRAFT-JORB-INFRA-FOLLOWUP"
+    assert 'ready_queue: ["DRAFT-JORB-INFRA-FOLLOWUP"]' in inspect_after.stdout
 
 
 def test_replay_can_compare_synthesis_quality_between_attempts(tmp_path: Path) -> None:
