@@ -4271,7 +4271,7 @@
       "area": "builder",
       "milestone": "M8",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-025"
@@ -4297,7 +4297,9 @@
       "repo_path": "~/projects/jorb-builder",
       "description": "Add repo-local standards consumption so builder planning and execution honor AGENTS.md and available skills explicitly.",
       "allow_noop_completion": false,
-      "notes": []
+      "notes": [
+        "Automated loop completed with builder-side local validation success."
+      ]
     },
     {
       "id": "JORB-INFRA-027",

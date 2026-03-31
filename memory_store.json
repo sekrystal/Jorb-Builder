@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-30T23:38:31.759289+00:00",
+  "generated_at": "2026-03-30T23:59:02.388548+00:00",
   "entries": [
     {
       "memory_id": "mem-479fde0e0817",
@@ -758,10 +758,10 @@
       "area": "builder",
       "summary": "Harden operator truth for Phase 4 artifact enforcement state",
       "source_artifact": "/Users/samuelkrystal/projects/jorb-builder/backlog_proposals.json",
-      "timestamp": "2026-03-30T23:38:31.759159+00:00",
+      "timestamp": "2026-03-30T23:59:02.388385+00:00",
       "confidence": 0.88,
       "freshness": {
-        "observed_at": "2026-03-30T23:38:31.759159+00:00",
+        "observed_at": "2026-03-30T23:59:02.388385+00:00",
         "age_days": 0,
         "decay_factor": 1.0,
         "stale_after_days": 45,
@@ -793,6 +793,54 @@
         "judge"
       ],
       "content": "Harden operator truth for Phase 4 artifact enforcement state"
+    },
+    {
+      "memory_id": "mem-471149e11995",
+      "memory_type": "successful_fix",
+      "ticket_family": "JORB-INFRA",
+      "task_id": "JORB-INFRA-026",
+      "area": "builder",
+      "summary": "Automated loop completed with builder-side local validation success.",
+      "source_artifact": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T234923Z-JORB-INFRA-026.yml",
+      "timestamp": "2026-03-30T23:49:23.498935+00:00",
+      "confidence": 0.88,
+      "freshness": {
+        "observed_at": "2026-03-30T23:49:23.498935+00:00",
+        "age_days": 0,
+        "decay_factor": 1.0,
+        "stale_after_days": 21,
+        "freshness_state": "fresh"
+      },
+      "observation": "Automated loop completed with builder-side local validation success.",
+      "inference": "Past successful execution pattern",
+      "primary_basis": "observation",
+      "relevance_tags": [
+        "JORB-INFRA",
+        "accepted_pattern",
+        "implementation_pattern",
+        "proof_pattern",
+        "repo-local_standards_(agents.md_+_skills_consumption)"
+      ],
+      "origin": "judge",
+      "status": "active",
+      "status_reason": "derived_from_history",
+      "provenance": [
+        {
+          "path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T234923Z-JORB-INFRA-026.yml",
+          "kind": "task_history"
+        }
+      ],
+      "signature": "d7d5afce6915775a14a474cd3182b0fa62022bd9",
+      "support_count": 1,
+      "superseded_by": null,
+      "supersedes": [],
+      "manual": false,
+      "role_fit": [
+        "planner",
+        "architect",
+        "judge"
+      ],
+      "content": "Automated loop completed with builder-side local validation success."
     },
     {
       "memory_id": "mem-01d3be0a4545",
@@ -1930,8 +1978,8 @@
       "confidence": 0.72,
       "freshness": {
         "observed_at": "2026-03-29T23:46:56.593170+00:00",
-        "age_days": 0,
-        "decay_factor": 1.0,
+        "age_days": 1,
+        "decay_factor": 0.984,
         "stale_after_days": 21,
         "freshness_state": "fresh"
       },
@@ -6453,8 +6501,539 @@
     }
   ],
   "artifact_index": {
-    "generated_at": "2026-03-30T23:38:31.861163+00:00",
+    "generated_at": "2026-03-30T23:59:02.490047+00:00",
     "entries": [
+      {
+        "artifact_id": "mem-9e0d5b324179",
+        "task_id": "JORB-INFRA-026",
+        "ticket_family": "JORB-INFRA",
+        "history_path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T234923Z-JORB-INFRA-026.yml",
+        "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026",
+        "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z/codex_prompt.md",
+        "relative_path": "run_logs/2026-03-30T233831Z/codex_prompt.md",
+        "artifact_name": "codex_prompt.md",
+        "artifact_stem": "codex_prompt",
+        "extension": ".md",
+        "kind": "file",
+        "size_bytes": 6083,
+        "timestamp": "2026-03-30T23:49:23.498935+00:00",
+        "history_status": "accepted",
+        "labels": [
+          "prompt"
+        ],
+        "phase4_artifact": false,
+        "search_tokens": [
+          ".md",
+          "2026-03-30t234923z-jorb-infra-026.yml",
+          "accepted",
+          "codex_prompt",
+          "codex_prompt.md",
+          "jorb-infra",
+          "jorb-infra-026",
+          "prompt"
+        ]
+      },
+      {
+        "artifact_id": "mem-5967a21114a5",
+        "task_id": "JORB-INFRA-026",
+        "ticket_family": "JORB-INFRA",
+        "history_path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T234923Z-JORB-INFRA-026.yml",
+        "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026",
+        "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026/tradeoff_matrix.md",
+        "relative_path": "run_logs/2026-03-30T233831Z-JORB-INFRA-026/tradeoff_matrix.md",
+        "artifact_name": "tradeoff_matrix.md",
+        "artifact_stem": "tradeoff_matrix",
+        "extension": ".md",
+        "kind": "file",
+        "size_bytes": 1162,
+        "timestamp": "2026-03-30T23:49:23.498935+00:00",
+        "history_status": "accepted",
+        "labels": [
+          "phase4:tradeoff_matrix.md"
+        ],
+        "phase4_artifact": true,
+        "search_tokens": [
+          ".md",
+          "2026-03-30t234923z-jorb-infra-026.yml",
+          "accepted",
+          "jorb-infra",
+          "jorb-infra-026",
+          "phase4",
+          "tradeoff_matrix",
+          "tradeoff_matrix.md"
+        ]
+      },
+      {
+        "artifact_id": "mem-ccd8dc5d78d8",
+        "task_id": "JORB-INFRA-026",
+        "ticket_family": "JORB-INFRA",
+        "history_path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T234923Z-JORB-INFRA-026.yml",
+        "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026",
+        "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026/runtime_proof.log",
+        "relative_path": "run_logs/2026-03-30T233831Z-JORB-INFRA-026/runtime_proof.log",
+        "artifact_name": "runtime_proof.log",
+        "artifact_stem": "runtime_proof",
+        "extension": ".log",
+        "kind": "file",
+        "size_bytes": 243,
+        "timestamp": "2026-03-30T23:49:23.498935+00:00",
+        "history_status": "accepted",
+        "labels": [
+          "phase4:runtime_proof.log"
+        ],
+        "phase4_artifact": true,
+        "search_tokens": [
+          ".log",
+          "2026-03-30t234923z-jorb-infra-026.yml",
+          "accepted",
+          "jorb-infra",
+          "jorb-infra-026",
+          "phase4",
+          "runtime_proof",
+          "runtime_proof.log"
+        ]
+      },
+      {
+        "artifact_id": "mem-a48f05f88210",
+        "task_id": "JORB-INFRA-026",
+        "ticket_family": "JORB-INFRA",
+        "history_path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T234923Z-JORB-INFRA-026.yml",
+        "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026",
+        "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026/research_brief.md",
+        "relative_path": "run_logs/2026-03-30T233831Z-JORB-INFRA-026/research_brief.md",
+        "artifact_name": "research_brief.md",
+        "artifact_stem": "research_brief",
+        "extension": ".md",
+        "kind": "file",
+        "size_bytes": 892,
+        "timestamp": "2026-03-30T23:49:23.498935+00:00",
+        "history_status": "accepted",
+        "labels": [
+          "phase4:research_brief.md"
+        ],
+        "phase4_artifact": true,
+        "search_tokens": [
+          ".md",
+          "2026-03-30t234923z-jorb-infra-026.yml",
+          "accepted",
+          "jorb-infra",
+          "jorb-infra-026",
+          "phase4",
+          "research_brief",
+          "research_brief.md"
+        ]
+      },
+      {
+        "artifact_id": "mem-84309eb6c0b6",
+        "task_id": "JORB-INFRA-026",
+        "ticket_family": "JORB-INFRA",
+        "history_path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T234923Z-JORB-INFRA-026.yml",
+        "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026",
+        "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026/proposal.md",
+        "relative_path": "run_logs/2026-03-30T233831Z-JORB-INFRA-026/proposal.md",
+        "artifact_name": "proposal.md",
+        "artifact_stem": "proposal",
+        "extension": ".md",
+        "kind": "file",
+        "size_bytes": 549,
+        "timestamp": "2026-03-30T23:49:23.498935+00:00",
+        "history_status": "accepted",
+        "labels": [
+          "phase4:proposal.md"
+        ],
+        "phase4_artifact": true,
+        "search_tokens": [
+          ".md",
+          "2026-03-30t234923z-jorb-infra-026.yml",
+          "accepted",
+          "jorb-infra",
+          "jorb-infra-026",
+          "phase4",
+          "proposal",
+          "proposal.md"
+        ]
+      },
+      {
+        "artifact_id": "mem-597d6d0fa485",
+        "task_id": "JORB-INFRA-026",
+        "ticket_family": "JORB-INFRA",
+        "history_path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T234923Z-JORB-INFRA-026.yml",
+        "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026",
+        "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026/progress.jsonl",
+        "relative_path": "run_logs/2026-03-30T233831Z-JORB-INFRA-026/progress.jsonl",
+        "artifact_name": "progress.jsonl",
+        "artifact_stem": "progress",
+        "extension": ".jsonl",
+        "kind": "file",
+        "size_bytes": 53451,
+        "timestamp": "2026-03-30T23:49:23.498935+00:00",
+        "history_status": "accepted",
+        "labels": [
+          "progress_log"
+        ],
+        "phase4_artifact": false,
+        "search_tokens": [
+          ".jsonl",
+          "2026-03-30t234923z-jorb-infra-026.yml",
+          "accepted",
+          "jorb-infra",
+          "jorb-infra-026",
+          "progress",
+          "progress.jsonl",
+          "progress_log"
+        ]
+      },
+      {
+        "artifact_id": "mem-1364b4a772f2",
+        "task_id": "JORB-INFRA-026",
+        "ticket_family": "JORB-INFRA",
+        "history_path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T234923Z-JORB-INFRA-026.yml",
+        "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026",
+        "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026/local_validation.json",
+        "relative_path": "run_logs/2026-03-30T233831Z-JORB-INFRA-026/local_validation.json",
+        "artifact_name": "local_validation.json",
+        "artifact_stem": "local_validation",
+        "extension": ".json",
+        "kind": "file",
+        "size_bytes": 1285,
+        "timestamp": "2026-03-30T23:49:23.498935+00:00",
+        "history_status": "accepted",
+        "labels": [
+          "local_validation"
+        ],
+        "phase4_artifact": false,
+        "search_tokens": [
+          ".json",
+          "2026-03-30t234923z-jorb-infra-026.yml",
+          "accepted",
+          "jorb-infra",
+          "jorb-infra-026",
+          "local_validation",
+          "local_validation.json"
+        ]
+      },
+      {
+        "artifact_id": "mem-5eb560f776d5",
+        "task_id": "JORB-INFRA-026",
+        "ticket_family": "JORB-INFRA",
+        "history_path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T234923Z-JORB-INFRA-026.yml",
+        "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026",
+        "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026/judge_memory_context.json",
+        "relative_path": "run_logs/2026-03-30T233831Z-JORB-INFRA-026/judge_memory_context.json",
+        "artifact_name": "judge_memory_context.json",
+        "artifact_stem": "judge_memory_context",
+        "extension": ".json",
+        "kind": "file",
+        "size_bytes": 14341,
+        "timestamp": "2026-03-30T23:49:23.498935+00:00",
+        "history_status": "accepted",
+        "labels": [
+          "judge_memory_context"
+        ],
+        "phase4_artifact": false,
+        "search_tokens": [
+          ".json",
+          "2026-03-30t234923z-jorb-infra-026.yml",
+          "accepted",
+          "jorb-infra",
+          "jorb-infra-026",
+          "judge_memory_context",
+          "judge_memory_context.json"
+        ]
+      },
+      {
+        "artifact_id": "mem-378a965f423e",
+        "task_id": "JORB-INFRA-026",
+        "ticket_family": "JORB-INFRA",
+        "history_path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T234923Z-JORB-INFRA-026.yml",
+        "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026",
+        "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026/judge_decision.md",
+        "relative_path": "run_logs/2026-03-30T233831Z-JORB-INFRA-026/judge_decision.md",
+        "artifact_name": "judge_decision.md",
+        "artifact_stem": "judge_decision",
+        "extension": ".md",
+        "kind": "file",
+        "size_bytes": 1689,
+        "timestamp": "2026-03-30T23:49:23.498935+00:00",
+        "history_status": "accepted",
+        "labels": [
+          "judge_decision",
+          "phase4:judge_decision.md"
+        ],
+        "phase4_artifact": true,
+        "search_tokens": [
+          ".md",
+          "2026-03-30t234923z-jorb-infra-026.yml",
+          "accepted",
+          "jorb-infra",
+          "jorb-infra-026",
+          "judge_decision",
+          "judge_decision.md"
+        ]
+      },
+      {
+        "artifact_id": "mem-469354007adc",
+        "task_id": "JORB-INFRA-026",
+        "ticket_family": "JORB-INFRA",
+        "history_path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T234923Z-JORB-INFRA-026.yml",
+        "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026",
+        "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026/git.json",
+        "relative_path": "run_logs/2026-03-30T233831Z-JORB-INFRA-026/git.json",
+        "artifact_name": "git.json",
+        "artifact_stem": "git",
+        "extension": ".json",
+        "kind": "file",
+        "size_bytes": 1245,
+        "timestamp": "2026-03-30T23:49:23.498935+00:00",
+        "history_status": "accepted",
+        "labels": [
+          "git"
+        ],
+        "phase4_artifact": false,
+        "search_tokens": [
+          ".json",
+          "2026-03-30t234923z-jorb-infra-026.yml",
+          "accepted",
+          "git",
+          "git.json",
+          "jorb-infra",
+          "jorb-infra-026"
+        ]
+      },
+      {
+        "artifact_id": "mem-0b92de855ff8",
+        "task_id": "JORB-INFRA-026",
+        "ticket_family": "JORB-INFRA",
+        "history_path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T234923Z-JORB-INFRA-026.yml",
+        "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026",
+        "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026/executor.json",
+        "relative_path": "run_logs/2026-03-30T233831Z-JORB-INFRA-026/executor.json",
+        "artifact_name": "executor.json",
+        "artifact_stem": "executor",
+        "extension": ".json",
+        "kind": "file",
+        "size_bytes": 1967348,
+        "timestamp": "2026-03-30T23:49:23.498935+00:00",
+        "history_status": "accepted",
+        "labels": [
+          "executor"
+        ],
+        "phase4_artifact": false,
+        "search_tokens": [
+          ".json",
+          "2026-03-30t234923z-jorb-infra-026.yml",
+          "accepted",
+          "executor",
+          "executor.json",
+          "jorb-infra",
+          "jorb-infra-026"
+        ]
+      },
+      {
+        "artifact_id": "mem-a12d34228697",
+        "task_id": "JORB-INFRA-026",
+        "ticket_family": "JORB-INFRA",
+        "history_path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T234923Z-JORB-INFRA-026.yml",
+        "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026",
+        "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026/evidence_bundle.json",
+        "relative_path": "run_logs/2026-03-30T233831Z-JORB-INFRA-026/evidence_bundle.json",
+        "artifact_name": "evidence_bundle.json",
+        "artifact_stem": "evidence_bundle",
+        "extension": ".json",
+        "kind": "file",
+        "size_bytes": 6729,
+        "timestamp": "2026-03-30T23:49:23.498935+00:00",
+        "history_status": "accepted",
+        "labels": [
+          "evidence_bundle",
+          "phase4:evidence_bundle.json"
+        ],
+        "phase4_artifact": true,
+        "search_tokens": [
+          ".json",
+          "2026-03-30t234923z-jorb-infra-026.yml",
+          "accepted",
+          "evidence_bundle",
+          "evidence_bundle.json",
+          "jorb-infra",
+          "jorb-infra-026"
+        ]
+      },
+      {
+        "artifact_id": "mem-8b82a440896a",
+        "task_id": "JORB-INFRA-026",
+        "ticket_family": "JORB-INFRA",
+        "history_path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T234923Z-JORB-INFRA-026.yml",
+        "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026",
+        "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026/eval_result.json",
+        "relative_path": "run_logs/2026-03-30T233831Z-JORB-INFRA-026/eval_result.json",
+        "artifact_name": "eval_result.json",
+        "artifact_stem": "eval_result",
+        "extension": ".json",
+        "kind": "file",
+        "size_bytes": 1374,
+        "timestamp": "2026-03-30T23:49:23.498935+00:00",
+        "history_status": "accepted",
+        "labels": [
+          "eval_result"
+        ],
+        "phase4_artifact": false,
+        "search_tokens": [
+          ".json",
+          "2026-03-30t234923z-jorb-infra-026.yml",
+          "accepted",
+          "eval_result",
+          "eval_result.json",
+          "jorb-infra",
+          "jorb-infra-026"
+        ]
+      },
+      {
+        "artifact_id": "mem-bfd9399b1f4e",
+        "task_id": "JORB-INFRA-026",
+        "ticket_family": "JORB-INFRA",
+        "history_path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T234923Z-JORB-INFRA-026.yml",
+        "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026",
+        "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026/compiled_feature_spec.md",
+        "relative_path": "run_logs/2026-03-30T233831Z-JORB-INFRA-026/compiled_feature_spec.md",
+        "artifact_name": "compiled_feature_spec.md",
+        "artifact_stem": "compiled_feature_spec",
+        "extension": ".md",
+        "kind": "file",
+        "size_bytes": 5796,
+        "timestamp": "2026-03-30T23:49:23.498935+00:00",
+        "history_status": "accepted",
+        "labels": [
+          "phase4:compiled_feature_spec.md"
+        ],
+        "phase4_artifact": true,
+        "search_tokens": [
+          ".md",
+          "2026-03-30t234923z-jorb-infra-026.yml",
+          "accepted",
+          "compiled_feature_spec",
+          "compiled_feature_spec.md",
+          "jorb-infra",
+          "jorb-infra-026",
+          "phase4"
+        ]
+      },
+      {
+        "artifact_id": "mem-5a15fd8fb779",
+        "task_id": "JORB-INFRA-026",
+        "ticket_family": "JORB-INFRA",
+        "history_path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T234923Z-JORB-INFRA-026.yml",
+        "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026",
+        "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026/codex_last_message.md",
+        "relative_path": "run_logs/2026-03-30T233831Z-JORB-INFRA-026/codex_last_message.md",
+        "artifact_name": "codex_last_message.md",
+        "artifact_stem": "codex_last_message",
+        "extension": ".md",
+        "kind": "file",
+        "size_bytes": 1774,
+        "timestamp": "2026-03-30T23:49:23.498935+00:00",
+        "history_status": "accepted",
+        "labels": [
+          "executor_output"
+        ],
+        "phase4_artifact": false,
+        "search_tokens": [
+          ".md",
+          "2026-03-30t234923z-jorb-infra-026.yml",
+          "accepted",
+          "codex_last_message",
+          "codex_last_message.md",
+          "executor_output",
+          "jorb-infra",
+          "jorb-infra-026"
+        ]
+      },
+      {
+        "artifact_id": "mem-e383800c19f9",
+        "task_id": "JORB-INFRA-026",
+        "ticket_family": "JORB-INFRA",
+        "history_path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T234923Z-JORB-INFRA-026.yml",
+        "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026",
+        "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026/automation_summary.md",
+        "relative_path": "run_logs/2026-03-30T233831Z-JORB-INFRA-026/automation_summary.md",
+        "artifact_name": "automation_summary.md",
+        "artifact_stem": "automation_summary",
+        "extension": ".md",
+        "kind": "file",
+        "size_bytes": 2851,
+        "timestamp": "2026-03-30T23:49:23.498935+00:00",
+        "history_status": "accepted",
+        "labels": [
+          "automation_summary"
+        ],
+        "phase4_artifact": false,
+        "search_tokens": [
+          ".md",
+          "2026-03-30t234923z-jorb-infra-026.yml",
+          "accepted",
+          "automation_summary",
+          "automation_summary.md",
+          "jorb-infra",
+          "jorb-infra-026"
+        ]
+      },
+      {
+        "artifact_id": "mem-1edeaa72052e",
+        "task_id": "JORB-INFRA-026",
+        "ticket_family": "JORB-INFRA",
+        "history_path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T234923Z-JORB-INFRA-026.yml",
+        "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026",
+        "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026/automation_result.json",
+        "relative_path": "run_logs/2026-03-30T233831Z-JORB-INFRA-026/automation_result.json",
+        "artifact_name": "automation_result.json",
+        "artifact_stem": "automation_result",
+        "extension": ".json",
+        "kind": "file",
+        "size_bytes": 5060,
+        "timestamp": "2026-03-30T23:49:23.498935+00:00",
+        "history_status": "accepted",
+        "labels": [
+          "automation_result"
+        ],
+        "phase4_artifact": false,
+        "search_tokens": [
+          ".json",
+          "2026-03-30t234923z-jorb-infra-026.yml",
+          "accepted",
+          "automation_result",
+          "automation_result.json",
+          "jorb-infra",
+          "jorb-infra-026"
+        ]
+      },
+      {
+        "artifact_id": "mem-ff786228161c",
+        "task_id": "JORB-INFRA-026",
+        "ticket_family": "JORB-INFRA",
+        "history_path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T234923Z-JORB-INFRA-026.yml",
+        "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026",
+        "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-30T233831Z-JORB-INFRA-026",
+        "relative_path": "run_logs/2026-03-30T233831Z-JORB-INFRA-026",
+        "artifact_name": "2026-03-30T233831Z-JORB-INFRA-026",
+        "artifact_stem": "2026-03-30T233831Z-JORB-INFRA-026",
+        "extension": "",
+        "kind": "directory",
+        "size_bytes": null,
+        "timestamp": "2026-03-30T23:49:23.498935+00:00",
+        "history_status": "accepted",
+        "labels": [
+          "run_log_dir"
+        ],
+        "phase4_artifact": false,
+        "search_tokens": [
+          "2026-03-30t233831z-jorb-infra-026",
+          "2026-03-30t234923z-jorb-infra-026.yml",
+          "accepted",
+          "jorb-infra",
+          "jorb-infra-026",
+          "run_log_dir"
+        ]
+      },
       {
         "artifact_id": "mem-c8629dec9749",
         "task_id": "JORB-INFRA-025",
@@ -31149,33 +31728,53 @@
       }
     ],
     "counts_by_label": {
-      "prompt": 103,
-      "phase4:tradeoff_matrix.md": 7,
-      "phase4:runtime_proof.log": 7,
-      "phase4:research_brief.md": 7,
-      "phase4:proposal.md": 7,
-      "progress_log": 94,
-      "local_validation": 64,
-      "judge_memory_context": 6,
-      "judge_decision": 7,
-      "phase4:judge_decision.md": 7,
-      "git": 57,
-      "executor": 66,
-      "evidence_bundle": 7,
-      "phase4:evidence_bundle.json": 7,
-      "eval_result": 7,
-      "phase4:compiled_feature_spec.md": 10,
-      "executor_output": 61,
-      "automation_summary": 94,
-      "automation_result": 94,
-      "run_log_dir": 94,
+      "prompt": 104,
+      "phase4:tradeoff_matrix.md": 8,
+      "phase4:runtime_proof.log": 8,
+      "phase4:research_brief.md": 8,
+      "phase4:proposal.md": 8,
+      "progress_log": 95,
+      "local_validation": 65,
+      "judge_memory_context": 7,
+      "judge_decision": 8,
+      "phase4:judge_decision.md": 8,
+      "git": 58,
+      "executor": 67,
+      "evidence_bundle": 8,
+      "phase4:evidence_bundle.json": 8,
+      "eval_result": 8,
+      "phase4:compiled_feature_spec.md": 11,
+      "executor_output": 62,
+      "automation_summary": 95,
+      "automation_result": 95,
+      "run_log_dir": 95,
       "vm_validation": 52
     },
     "counts_by_kind": {
-      "file": 750,
-      "directory": 94
+      "file": 767,
+      "directory": 95
     },
     "by_task_id": {
+      "JORB-INFRA-026": [
+        "mem-9e0d5b324179",
+        "mem-5967a21114a5",
+        "mem-ccd8dc5d78d8",
+        "mem-a48f05f88210",
+        "mem-84309eb6c0b6",
+        "mem-597d6d0fa485",
+        "mem-1364b4a772f2",
+        "mem-5eb560f776d5",
+        "mem-378a965f423e",
+        "mem-469354007adc",
+        "mem-0b92de855ff8",
+        "mem-a12d34228697",
+        "mem-8b82a440896a",
+        "mem-bfd9399b1f4e",
+        "mem-5a15fd8fb779",
+        "mem-e383800c19f9",
+        "mem-1edeaa72052e",
+        "mem-ff786228161c"
+      ],
       "JORB-INFRA-025": [
         "mem-c8629dec9749",
         "mem-483435975f45",
@@ -32161,6 +32760,7 @@
     },
     "by_label": {
       "prompt": [
+        "mem-9e0d5b324179",
         "mem-c8629dec9749",
         "mem-97f438f187e9",
         "mem-5c89619aa98a",
@@ -32266,6 +32866,7 @@
         "mem-9ec7f563db23"
       ],
       "phase4:tradeoff_matrix.md": [
+        "mem-5967a21114a5",
         "mem-483435975f45",
         "mem-418dcb5071ef",
         "mem-21851fa4646e",
@@ -32275,6 +32876,7 @@
         "mem-310d18bdeb56"
       ],
       "phase4:runtime_proof.log": [
+        "mem-ccd8dc5d78d8",
         "mem-f2b2525a8f2b",
         "mem-24d38ba000ff",
         "mem-5de3c6c2ed27",
@@ -32284,6 +32886,7 @@
         "mem-c04f29c9bfbd"
       ],
       "phase4:research_brief.md": [
+        "mem-a48f05f88210",
         "mem-5933720a935d",
         "mem-bc8e7ad77bcd",
         "mem-748f11fd36d8",
@@ -32293,6 +32896,7 @@
         "mem-b17302d38a8c"
       ],
       "phase4:proposal.md": [
+        "mem-84309eb6c0b6",
         "mem-ddb01e1d536a",
         "mem-0a9cbc30ea98",
         "mem-0967faba446b",
@@ -32302,6 +32906,7 @@
         "mem-2249df4b0791"
       ],
       "progress_log": [
+        "mem-597d6d0fa485",
         "mem-2ceb9014fb66",
         "mem-c5720b837bd6",
         "mem-71999a7aab04",
@@ -32398,6 +33003,7 @@
         "mem-97feec39541a"
       ],
       "local_validation": [
+        "mem-1364b4a772f2",
         "mem-2c813f550e0f",
         "mem-921cb6e419d0",
         "mem-ff43b35bcb83",
@@ -32464,6 +33070,7 @@
         "mem-929be963a974"
       ],
       "judge_memory_context": [
+        "mem-5eb560f776d5",
         "mem-b88ac7a81f26",
         "mem-0c0ab63d12bf",
         "mem-3fb5d21785c1",
@@ -32472,6 +33079,7 @@
         "mem-562a887bd963"
       ],
       "judge_decision": [
+        "mem-378a965f423e",
         "mem-48a9e1784043",
         "mem-908d0cc8e343",
         "mem-46e3d62f5211",
@@ -32481,6 +33089,7 @@
         "mem-d65ee57b3542"
       ],
       "phase4:judge_decision.md": [
+        "mem-378a965f423e",
         "mem-48a9e1784043",
         "mem-908d0cc8e343",
         "mem-46e3d62f5211",
@@ -32490,6 +33099,7 @@
         "mem-d65ee57b3542"
       ],
       "git": [
+        "mem-469354007adc",
         "mem-b3d6f94823a7",
         "mem-14a1d47cee67",
         "mem-9736629639a6",
@@ -32549,6 +33159,7 @@
         "mem-f28a0533f0b6"
       ],
       "executor": [
+        "mem-0b92de855ff8",
         "mem-7d156e1cca4d",
         "mem-e1ab03d152a4",
         "mem-730c185697dd",
@@ -32617,6 +33228,7 @@
         "mem-abb9c612e7c8"
       ],
       "evidence_bundle": [
+        "mem-a12d34228697",
         "mem-867439e6b2e0",
         "mem-867d4371f36a",
         "mem-23a9f66dec15",
@@ -32626,6 +33238,7 @@
         "mem-3e2294344bf5"
       ],
       "phase4:evidence_bundle.json": [
+        "mem-a12d34228697",
         "mem-867439e6b2e0",
         "mem-867d4371f36a",
         "mem-23a9f66dec15",
@@ -32635,6 +33248,7 @@
         "mem-3e2294344bf5"
       ],
       "eval_result": [
+        "mem-8b82a440896a",
         "mem-35d9b725a29c",
         "mem-2069ba0ea19c",
         "mem-a81eba942e75",
@@ -32644,6 +33258,7 @@
         "mem-1004a665a95b"
       ],
       "phase4:compiled_feature_spec.md": [
+        "mem-bfd9399b1f4e",
         "mem-ba75230dc0e7",
         "mem-044b02ea19e2",
         "mem-43effd62a0c1",
@@ -32656,6 +33271,7 @@
         "mem-213f0550bc26"
       ],
       "executor_output": [
+        "mem-5a15fd8fb779",
         "mem-04ca3b2ab70f",
         "mem-c01a2303dfd1",
         "mem-e4aafbf9f873",
@@ -32719,6 +33335,7 @@
         "mem-cf2459235e2a"
       ],
       "automation_summary": [
+        "mem-e383800c19f9",
         "mem-32a3f3f0e833",
         "mem-60bfdd0d7bbf",
         "mem-3cd28192df96",
@@ -32815,6 +33432,7 @@
         "mem-f9a943c37156"
       ],
       "automation_result": [
+        "mem-1edeaa72052e",
         "mem-45d33112d80a",
         "mem-873d7d91e0b6",
         "mem-c7d5c965dc73",
@@ -32911,6 +33529,7 @@
         "mem-f7abd6faa972"
       ],
       "run_log_dir": [
+        "mem-ff786228161c",
         "mem-223b593e4622",
         "mem-35044aa5e669",
         "mem-14de50761dfa",
@@ -33063,6 +33682,7 @@
     },
     "by_name": {
       "codex_prompt.md": [
+        "mem-9e0d5b324179",
         "mem-c8629dec9749",
         "mem-97f438f187e9",
         "mem-5c89619aa98a",
@@ -33168,6 +33788,7 @@
         "mem-9ec7f563db23"
       ],
       "tradeoff_matrix.md": [
+        "mem-5967a21114a5",
         "mem-483435975f45",
         "mem-418dcb5071ef",
         "mem-21851fa4646e",
@@ -33177,6 +33798,7 @@
         "mem-310d18bdeb56"
       ],
       "runtime_proof.log": [
+        "mem-ccd8dc5d78d8",
         "mem-f2b2525a8f2b",
         "mem-24d38ba000ff",
         "mem-5de3c6c2ed27",
@@ -33186,6 +33808,7 @@
         "mem-c04f29c9bfbd"
       ],
       "research_brief.md": [
+        "mem-a48f05f88210",
         "mem-5933720a935d",
         "mem-bc8e7ad77bcd",
         "mem-748f11fd36d8",
@@ -33195,6 +33818,7 @@
         "mem-b17302d38a8c"
       ],
       "proposal.md": [
+        "mem-84309eb6c0b6",
         "mem-ddb01e1d536a",
         "mem-0a9cbc30ea98",
         "mem-0967faba446b",
@@ -33204,6 +33828,7 @@
         "mem-2249df4b0791"
       ],
       "progress.jsonl": [
+        "mem-597d6d0fa485",
         "mem-2ceb9014fb66",
         "mem-c5720b837bd6",
         "mem-71999a7aab04",
@@ -33300,6 +33925,7 @@
         "mem-97feec39541a"
       ],
       "local_validation.json": [
+        "mem-1364b4a772f2",
         "mem-2c813f550e0f",
         "mem-921cb6e419d0",
         "mem-ff43b35bcb83",
@@ -33366,6 +33992,7 @@
         "mem-929be963a974"
       ],
       "judge_memory_context.json": [
+        "mem-5eb560f776d5",
         "mem-b88ac7a81f26",
         "mem-0c0ab63d12bf",
         "mem-3fb5d21785c1",
@@ -33374,6 +34001,7 @@
         "mem-562a887bd963"
       ],
       "judge_decision.md": [
+        "mem-378a965f423e",
         "mem-48a9e1784043",
         "mem-908d0cc8e343",
         "mem-46e3d62f5211",
@@ -33383,6 +34011,7 @@
         "mem-d65ee57b3542"
       ],
       "git.json": [
+        "mem-469354007adc",
         "mem-b3d6f94823a7",
         "mem-14a1d47cee67",
         "mem-9736629639a6",
@@ -33442,6 +34071,7 @@
         "mem-f28a0533f0b6"
       ],
       "executor.json": [
+        "mem-0b92de855ff8",
         "mem-7d156e1cca4d",
         "mem-e1ab03d152a4",
         "mem-730c185697dd",
@@ -33510,6 +34140,7 @@
         "mem-abb9c612e7c8"
       ],
       "evidence_bundle.json": [
+        "mem-a12d34228697",
         "mem-867439e6b2e0",
         "mem-867d4371f36a",
         "mem-23a9f66dec15",
@@ -33519,6 +34150,7 @@
         "mem-3e2294344bf5"
       ],
       "eval_result.json": [
+        "mem-8b82a440896a",
         "mem-35d9b725a29c",
         "mem-2069ba0ea19c",
         "mem-a81eba942e75",
@@ -33528,6 +34160,7 @@
         "mem-1004a665a95b"
       ],
       "compiled_feature_spec.md": [
+        "mem-bfd9399b1f4e",
         "mem-ba75230dc0e7",
         "mem-044b02ea19e2",
         "mem-43effd62a0c1",
@@ -33540,6 +34173,7 @@
         "mem-213f0550bc26"
       ],
       "codex_last_message.md": [
+        "mem-5a15fd8fb779",
         "mem-04ca3b2ab70f",
         "mem-c01a2303dfd1",
         "mem-e4aafbf9f873",
@@ -33603,6 +34237,7 @@
         "mem-cf2459235e2a"
       ],
       "automation_summary.md": [
+        "mem-e383800c19f9",
         "mem-32a3f3f0e833",
         "mem-60bfdd0d7bbf",
         "mem-3cd28192df96",
@@ -33699,6 +34334,7 @@
         "mem-f9a943c37156"
       ],
       "automation_result.json": [
+        "mem-1edeaa72052e",
         "mem-45d33112d80a",
         "mem-873d7d91e0b6",
         "mem-c7d5c965dc73",
@@ -33793,6 +34429,9 @@
         "mem-46f98b6ca963",
         "mem-49954ba56f72",
         "mem-f7abd6faa972"
+      ],
+      "2026-03-30T233831Z-JORB-INFRA-026": [
+        "mem-ff786228161c"
       ],
       "2026-03-30T232644Z-JORB-INFRA-025": [
         "mem-223b593e4622"
@@ -34197,10 +34836,10 @@
   },
   "counts_by_status": {
     "superseded": 16,
-    "active": 117
+    "active": 118
   },
   "source_counts": {
-    "task_history": 116,
+    "task_history": 117,
     "blockers": 16,
     "manual": 1
   }

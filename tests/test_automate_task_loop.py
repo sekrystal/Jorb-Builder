@@ -3977,6 +3977,23 @@ def test_phase4_dry_run_emits_stage_plan_and_repo_local_standards(tmp_path: Path
     assert machine_payload["objective"] == "obj"
     assert machine_payload["why_it_matters"] == "why"
     assert machine_payload["user_story"] == "obj"
+    assert machine_payload["structured_objective"]["objective_statement"] == "obj"
+    assert machine_payload["structured_objective"]["raw_intent"] == {
+        "title": "JORB-INFRA-010",
+        "objective": "obj",
+        "why_it_matters": "why",
+    }
+    assert machine_payload["structured_objective"]["success_criteria"][0] == "a"
+    assert any(
+        "Phase-4 acceptance artifacts exist and judge/evidence enforcement passes before the run can be accepted."
+        == item
+        for item in machine_payload["structured_objective"]["success_criteria"]
+    )
+    assert any(
+        item.startswith("Builder-only scope: do not modify the JORB product repo")
+        for item in machine_payload["structured_objective"]["constraints"]
+    )
+    assert machine_payload["structured_objective"]["unknowns"] == ["Deterministic verification commands are not explicitly declared."]
     assert machine_payload["state_transitions"]
     assert machine_payload["observability_requirements"]
     assert machine_payload["repo_bounds"]["allowlist"] == ["../jorb-builder/**"]
@@ -4015,7 +4032,42 @@ def test_non_phase4_nontrivial_task_compiles_feature_spec_before_implementation(
     machine_payload = json.loads(match.group(1))
     assert machine_payload["task_id"] == "TASK-BUILDER"
     assert machine_payload["task_nontrivial"] is True
+    assert machine_payload["structured_objective"]["objective_statement"] == "obj"
+    assert machine_payload["structured_objective"]["success_criteria"][0] == "a"
+    assert "Deterministic local verification passes: python3 -m py_compile scripts/*.py" in machine_payload["structured_objective"]["success_criteria"]
+    assert machine_payload["structured_objective"]["unknowns"] == []
     assert machine_payload["verification_commands"] == ["python3 -m py_compile scripts/*.py"]
+
+
+def test_compiled_feature_spec_structured_objective_flags_decision_checkpoint_unknown(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-INFRA-027",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["title"] = "Objective compiler"
+    backlog["tasks"][0]["objective"] = ""
+    backlog["tasks"][0]["why_it_matters"] = ""
+    backlog["tasks"][0]["implementation_options"] = ["minimal", "framework"]
+    backlog["tasks"][0]["selected_approach"] = ""
+    _write_json(builder_root / "backlog.yml", backlog)
+    _git(["add", "backlog.yml"], builder_root)
+    _git(["commit", "-m", "seed structured objective decision checkpoint fixture"], builder_root)
+
+    dry_run = _run([sys.executable, str(SCRIPT), "--dry-run"], builder_root)
+
+    assert dry_run.returncode == 0, dry_run.stdout + dry_run.stderr
+    run_dir = max((builder_root / "run_logs").glob("*"), key=lambda path: path.stat().st_mtime)
+    feature_spec = (run_dir / "compiled_feature_spec.md").read_text(encoding="utf-8")
+    match = re.search(r"## Machine-Checkable Payload\n```json\n(.*?)\n```", feature_spec, re.DOTALL)
+    assert match is not None
+    machine_payload = json.loads(match.group(1))
+    assert machine_payload["structured_objective"]["objective_statement"] == "Objective compiler"
+    assert "Multiple implementation options are declared without a selected approach." in machine_payload["structured_objective"]["unknowns"]
+    assert "Objective detail is not explicitly stated in backlog metadata." in machine_payload["structured_objective"]["unknowns"]
+    assert "Why-it-matters context is not explicitly stated in backlog metadata." in machine_payload["structured_objective"]["unknowns"]
 
 
 def test_phase4_result_persistence_blocks_accepted_run_when_required_artifacts_are_missing(tmp_path: Path) -> None:

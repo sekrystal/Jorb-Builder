@@ -78,6 +78,7 @@ PHASE4_FEATURE_SPEC_REQUIRED_KEYS = (
     "task_type",
     "task_nontrivial",
     "objective",
+    "structured_objective",
     "why_it_matters",
     "user_story",
     "initiating_trigger",
@@ -354,6 +355,75 @@ def compile_feature_spec_inputs(task: dict[str, Any]) -> list[str]:
     return inputs
 
 
+def compile_feature_spec_success_criteria(task: dict[str, Any]) -> list[str]:
+    criteria = [
+        str(item).strip()
+        for item in (task.get("acceptance") or task.get("acceptance_criteria") or [])
+        if str(item).strip()
+    ]
+    verification = [str(item).strip() for item in task.get("verification", []) if str(item).strip()]
+    if verification:
+        criteria.append("Deterministic local verification passes: " + ", ".join(verification))
+    if phase4_requires_artifact_enforcement(task):
+        criteria.append(
+            "Phase-4 acceptance artifacts exist and judge/evidence enforcement passes before the run can be accepted."
+        )
+    if not criteria:
+        criteria.append("No explicit acceptance criteria were declared; use the task packet and verification plan as the success boundary.")
+    return criteria
+
+
+def compile_feature_spec_constraints(task: dict[str, Any]) -> list[str]:
+    constraints: list[str] = []
+    allowlist = [str(item).strip() for item in task.get("allowlist", []) if str(item).strip()]
+    denylist = [str(item).strip() for item in (task.get("denylist", []) or task.get("forbid", [])) if str(item).strip()]
+    if str(task.get("area") or "").strip().lower() == "builder":
+        constraints.append("Builder-only scope: do not modify the JORB product repo unless runtime proof explicitly requires it.")
+    if allowlist:
+        constraints.append("Allowed edit scope: " + ", ".join(allowlist))
+    if denylist:
+        constraints.append("Forbidden edit scope: " + ", ".join(denylist))
+    verification = [str(item).strip() for item in task.get("verification", []) if str(item).strip()]
+    if verification:
+        constraints.append("Required verification commands: " + ", ".join(verification))
+    selected_approach = str(task.get("selected_approach") or "").strip()
+    if selected_approach:
+        constraints.append(f"Selected implementation approach: {selected_approach}")
+    return constraints
+
+
+def compile_feature_spec_unknowns(task: dict[str, Any]) -> list[str]:
+    unknowns: list[str] = []
+    if not str(task.get("objective") or "").strip():
+        unknowns.append("Objective detail is not explicitly stated in backlog metadata.")
+    if not str(task.get("why_it_matters") or "").strip():
+        unknowns.append("Why-it-matters context is not explicitly stated in backlog metadata.")
+    if not any(str(item).strip() for item in (task.get("acceptance") or task.get("acceptance_criteria") or [])):
+        unknowns.append("Acceptance criteria are not explicitly enumerated in the task packet.")
+    if not any(str(item).strip() for item in task.get("verification", [])):
+        unknowns.append("Deterministic verification commands are not explicitly declared.")
+    options = [str(item).strip() for item in task.get("implementation_options", []) if str(item).strip()]
+    if len(options) > 1 and not str(task.get("selected_approach") or "").strip():
+        unknowns.append("Multiple implementation options are declared without a selected approach.")
+    return unknowns
+
+
+def compile_structured_objective(task: dict[str, Any]) -> dict[str, Any]:
+    raw_intent = {
+        "title": str(task.get("title") or "").strip(),
+        "objective": str(task.get("objective") or "").strip(),
+        "why_it_matters": str(task.get("why_it_matters") or "").strip(),
+    }
+    return {
+        "raw_intent": raw_intent,
+        "objective_statement": raw_intent["objective"] or raw_intent["title"],
+        "success_criteria": compile_feature_spec_success_criteria(task),
+        "constraints": compile_feature_spec_constraints(task),
+        "failure_conditions": compile_feature_spec_failure_modes(task),
+        "unknowns": compile_feature_spec_unknowns(task),
+    }
+
+
 def compile_feature_spec_state_transitions(task: dict[str, Any]) -> list[str]:
     transitions = [
         "selected -> packet_rendered -> implementing -> verifying -> completed/blocked/refined/interrupted",
@@ -407,6 +477,7 @@ def phase4_feature_spec_payload(task: dict[str, Any], standards: dict[str, Any])
         "denylist": [str(item).strip() for item in (task.get("denylist", []) or task.get("forbid", [])) if str(item).strip()],
         "target_repo_scope": "builder-only" if str(task.get("area") or "").strip().lower() == "builder" else "task-defined",
     }
+    structured_objective = compile_structured_objective(task)
     return {
         "task_id": task["id"],
         "task_title": task["title"],
@@ -414,8 +485,9 @@ def phase4_feature_spec_payload(task: dict[str, Any], standards: dict[str, Any])
         "task_type": task.get("type"),
         "task_nontrivial": task_is_nontrivial(task),
         "objective": str(task.get("objective") or "").strip(),
+        "structured_objective": structured_objective,
         "why_it_matters": str(task.get("why_it_matters") or "").strip(),
-        "user_story": str(task.get("objective") or "").strip() or f"Complete {task['title']} within the stated repo bounds and verification plan.",
+        "user_story": structured_objective["objective_statement"] or f"Complete {task['title']} within the stated repo bounds and verification plan.",
         "initiating_trigger": compile_feature_spec_trigger(task),
         "data_inputs": compile_feature_spec_inputs(task),
         "state_transitions": compile_feature_spec_state_transitions(task),
@@ -447,6 +519,16 @@ def phase4_feature_spec_text(task: dict[str, Any], standards: dict[str, Any]) ->
             "",
             "## User Story",
             payload["user_story"],
+            "",
+            "## Structured Objective",
+            f"- Objective statement: {payload['structured_objective']['objective_statement']}",
+            *[f"- Success criterion: {item}" for item in payload["structured_objective"]["success_criteria"]],
+            *[f"- Constraint: {item}" for item in payload["structured_objective"]["constraints"]],
+            *[f"- Failure condition: {item}" for item in payload["structured_objective"]["failure_conditions"]],
+            *[
+                f"- Unknown: {item}"
+                for item in (payload["structured_objective"]["unknowns"] or ["none"])
+            ],
             "",
             "## Initiating Trigger",
             payload["initiating_trigger"],
