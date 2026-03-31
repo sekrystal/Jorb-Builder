@@ -1,0 +1,189 @@
+{
+  "task_id": "JORB-INFRA-029",
+  "title": "Decision proposal + human checkpoint engine",
+  "status": "accepted",
+  "attempt": 1,
+  "started_at": "2026-03-31T00:17:05.598280+00:00",
+  "completed_at": "2026-03-31T00:26:15.775380+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T001705Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T001705Z-JORB-INFRA-029",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T001705Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T001705Z-JORB-INFRA-029"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T001705Z-JORB-INFRA-029/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T001705Z-JORB-INFRA-029/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T001705Z-JORB-INFRA-029/progress.jsonl"
+    },
+    {
+      "label": "executor_output",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T001705Z-JORB-INFRA-029/codex_last_message.md"
+    },
+    {
+      "label": "local_validation",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T001705Z-JORB-INFRA-029/local_validation.json"
+    },
+    {
+      "label": "git",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T001705Z-JORB-INFRA-029/git.json"
+    },
+    {
+      "label": "executor",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T001705Z-JORB-INFRA-029/executor.json"
+    },
+    {
+      "label": "eval_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T001705Z-JORB-INFRA-029/eval_result.json"
+    },
+    {
+      "label": "judge_memory_context",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T001705Z-JORB-INFRA-029/judge_memory_context.json"
+    },
+    {
+      "label": "judge_decision",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T001705Z-JORB-INFRA-029/judge_decision.md"
+    },
+    {
+      "label": "evidence_bundle",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T001705Z-JORB-INFRA-029/evidence_bundle.json"
+    }
+  ],
+  "files_changed": [
+    "scripts/automate_task_loop.py",
+    "tests/test_automate_task_loop.py"
+  ],
+  "commands_run": [
+    "/Users/samuelkrystal/.vscode/extensions/openai.chatgpt-26.325.31654-darwin-arm64/bin/macos-aarch64/codex exec --sandbox workspace-write --full-auto -o /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T001705Z-JORB-INFRA-029/codex_last_message.md -"
+  ],
+  "results": [
+    "passed",
+    "passed",
+    "passed",
+    "passed",
+    "passed",
+    "passed"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Automated loop completed with builder-side local validation success."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Automated loop completed with builder-side local validation success.",
+    "accepted": true,
+    "acceptance_met": [],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "planner",
+        "outcome": "passed",
+        "detail": "compiled_feature_spec.md written to /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T001705Z-JORB-INFRA-029/compiled_feature_spec.md"
+      },
+      {
+        "name": "architect",
+        "outcome": "passed",
+        "detail": "proposal.md and tradeoff_matrix.md written to /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T001705Z-JORB-INFRA-029"
+      },
+      {
+        "name": "research_grounding",
+        "outcome": "passed",
+        "detail": "research_brief.md written to /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T001705Z-JORB-INFRA-029/research_brief.md"
+      },
+      {
+        "name": "executor",
+        "outcome": "passed",
+        "detail": "1. Concise summary of exactly what changed\n\n`scripts/automate_task_loop.py` now writes a machine-readable `decision_checkpoint.json` for phase-4 tasks, includes that artifact in the evidence bundle, and blocks before any executor handoff when multiple implementation options exist without `selected_approach`. That pause is now surfaced as a dedicated decision-checkpoint block instead of being folded into generic missing-configuration handling, and it is classified as a spec-ambiguity/operator-decision failure. `tests/test_automate_task_loop.py` gained an end-to-end test that proves the loop stops before manual executor handoff and emits the checkpoint artifact.\n\n2. Exact files changed\n\n- `scripts/automate_task_loop.py`\n- `tests/test_automate_task_loop.py`\n\n3. Exact tests added or updated\n\n- Added `test_phase4_material_decision_checkpoint_blocks_before_executor_handoff`\n- Existing phase-4 proposal/checkpoint tests were exercised unchanged:\n  - `test_compiled_feature_spec_structured_objective_flags_decision_checkpoint_unknown`\n  - `test_phase4_proposal_uses_selected_declared_approach_when_present`\n\n4. Exact commands run\n\n- `pwd`\n- `git status --short`\n- `find . -maxdepth 3 -type f | sort`\n- `grep -RIn \"automate_task_loop\\|proposal\\|tradeoff\\|checkpoint\\|approval\\|compiled_feature_spec\\|judge_decision\\|evidence_bundle\" .`\n- `sed -n '1,260p' tests/test_automate_task_loop.py`\n- `find scripts -maxdepth 2 -type f | sort | xargs -I{} sh -c 'printf \"FILE %s\\n\" \"$1\"; sed -n \"1,260p\" \"$1\"' sh {}`\n- `python3 - <<'PY' ...` inspections against `scripts/automate_task_loop.py`, `tests/test_automate_task_loop.py`, and `skills/README.md`\n- `sed -n '260,860p' scripts/automate_task_loop.py`\n- `sed -n '3600,3775p' scripts/automate_task_loop.py`\n- `sed -n '4030,4125p' tests/test_automate_task_loop.py`\n- `sed -n '860,1225p' scripts/automate_task_loop.py`\n- `sed -n '1520,1665p' scripts/automate_task_loop.py`\n- `sed -n '2480,2665p' scripts/automate_task_loop.py`\n- `sed -n '3810,3925p' scripts/automate_task_loop.py`\n- `sed -n '1,180p' scripts/automate_task_loop.py`\n- `sed -n '180,240p' scripts/automate_task_loop.py`\n- `sed -n '1225,1315p' scripts/automate_task_loop.py`\n- `sed -n '3958,4015p' scripts/automate_task_loop.py`\n- `python3 -m py_compile scripts/*.py`\n- `pytest tests/test_automate_task_loop.py -k \"decision_checkpoint or selected_declared_approach\"`\n- `pytest tests/test_automate_task_loop.py`\n- `git status --short scripts/automate_task_loop.py tests/test_automate_task_loop.py`\n- `git diff -- scripts/automate_task_loop.py tests/test_automate_task_loop.py`\n\n5. Exact results\n\n- `python3 -m py_compile scripts/*.py`: passed\n- `pytest tests/test_automate_task_loop.py -k \"decision_checkpoint or selected_declared_approach\"`: passed, `3 passed, 143 deselected`\n- `pytest tests/test_automate_task_loop.py`: passed, `146 passed in 158.97s (0:02:38)`\n- Final modified files in this task: `scripts/automate_task_loop.py`, `tests/test_automate_task_loop.py`\n\n6. Honest note on what remains unproven\n\nA live human approval cycle was not exercised end-to-end beyond the new local test fixture, and no VM/runtime validation path was involved for this builder-only change. The repo also had unrelated pre-existing dirty builder state files outside these edits, which I left untouched."
+      },
+      {
+        "name": "local_validation",
+        "outcome": "passed",
+        "detail": "All local verification commands passed."
+      },
+      {
+        "name": "git",
+        "outcome": "passed",
+        "detail": "To github.com:sekrystal/Jorb-Builder.git\n   02da0f0..7354afb  main -> main\n"
+      }
+    ],
+    "changed_files_count": 2,
+    "changed_files": [
+      "scripts/automate_task_loop.py",
+      "tests/test_automate_task_loop.py"
+    ],
+    "unproven_runtime_gaps": [],
+    "ux_conformance": {
+      "required": false,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": null,
+      "intentional_design_deviations": null,
+      "product_first_checklist": null,
+      "primary_ux_prohibited_surfaces": []
+    }
+  },
+  "unproven_runtime_gaps": [],
+  "failure_taxonomy": null,
+  "eval_result": {
+    "suite_version": 1,
+    "mode": "private_fixture",
+    "fixture_id": "infra_hardening_v1",
+    "fixture_family": "infra_hardening",
+    "task_id": "JORB-INFRA-029",
+    "scores": {
+      "planning_quality": 1.0,
+      "implementation_quality": 1.0,
+      "test_adequacy": 1.0,
+      "evidence_quality": 1.0,
+      "operator_handoff_quality": 1.0,
+      "recovery_quality": 0.8
+    },
+    "overall_score": 0.98,
+    "threshold": 0.78,
+    "passed": true,
+    "mandatory_artifacts": {
+      "present": [
+        "compiled_feature_spec.md",
+        "research_brief.md",
+        "proposal.md",
+        "tradeoff_matrix.md",
+        "judge_decision.md",
+        "evidence_bundle.json",
+        "runtime_proof.log"
+      ],
+      "missing": []
+    },
+    "dimension_failures": [],
+    "fixture_path": "/Users/samuelkrystal/projects/jorb-builder/eval_fixtures/infra_hardening.json",
+    "regression_vs_prior": {
+      "previous_task_id": "JORB-INFRA-028",
+      "current_task_id": "JORB-INFRA-029",
+      "overall_delta": 0.0,
+      "category_deltas": {
+        "evidence_quality": 0.0,
+        "implementation_quality": 0.0,
+        "operator_handoff_quality": 0.0,
+        "planning_quality": 0.0,
+        "recovery_quality": 0.0,
+        "test_adequacy": 0.0
+      },
+      "trend": "unchanged",
+      "baseline_history_path": "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-31T001641Z-JORB-INFRA-028.yml"
+    },
+    "blocked_acceptance": false
+  }
+}

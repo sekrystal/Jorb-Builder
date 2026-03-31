@@ -21,6 +21,13 @@ Synthesized backlog entries include:
 - `validation`
 - `synthesis_eval`
 
+Synthesized backlog payload also includes:
+
+- `dependency_graph.nodes`
+- `dependency_graph.edges`
+- `dependency_graph.cycles`
+- `execution_order`
+
 Validation rejects:
 - missing required fields
 - missing evidence links

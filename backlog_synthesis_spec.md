@@ -11,6 +11,8 @@ Inputs:
 
 Outputs:
 - `synthesized_backlog_entries.json`
+- `synthesized_backlog_entries.json.dependency_graph`
+- `synthesized_backlog_entries.json.execution_order`
 - optional canonical mutation through `--apply`
 - `backlog_apply_audit.json`
 
@@ -20,3 +22,4 @@ Rules:
 - no canonical mutation without explicit `--apply`
 - synthesized entries must pass validation and synthesis eval before apply
 - provenance back to the source proposal is mandatory
+- dependency edges and execution order must be deterministic from backlog truth plus accepted proposals

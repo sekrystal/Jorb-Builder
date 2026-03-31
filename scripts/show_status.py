@@ -83,6 +83,9 @@ def main() -> int:
     print(f"- draft_entries: {synthesis.get('draft_count', 0)}")
     print(f"- applied_entries: {synthesis.get('applied_count', 0)}")
     print(f"- eval_blocked_entries: {synthesis.get('blocked_count', 0)}")
+    print(f"- dependency_edges: {synthesis.get('dependency_edge_count', 0)}")
+    print(f"- dependency_cycles: {synthesis.get('dependency_cycle_count', 0)}")
+    print(f"- next_execution_target: {synthesis.get('next_execution_target') or 'none'}")
     top_synth = synthesis.get("top_draft") or {}
     print(f"- top_synthesized_title: {top_synth.get('title') or 'none'}")
     print(f"- top_synthesized_eval_score: {synthesis.get('top_draft_eval_score', 'n/a')}")

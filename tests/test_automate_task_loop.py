@@ -5623,6 +5623,10 @@ def test_approved_proposal_becomes_structured_synthesized_entry(tmp_path: Path) 
     assert entry["repo_path"] == "~/projects/jorb-builder"
     assert entry["allowlist"] == ["../jorb-builder/**"]
     assert entry["forbid"] == ["../jorb/**"]
+    assert payload["dependency_graph"]["nodes"][0]["ticket_id"] == entry["ticket_id_placeholder"]
+    assert payload["dependency_graph"]["edges"][0]["from_ticket_id"] == "JORB-INFRA-030"
+    assert payload["execution_order"][0]["ticket_id"] == entry["ticket_id_placeholder"]
+    assert payload["execution_order"][0]["plan_state"] == "blocked"
 
 
 def test_unapproved_proposal_does_not_synthesize_entry(tmp_path: Path) -> None:
@@ -5747,6 +5751,88 @@ def test_synthesis_dry_run_does_not_mutate_canonical_files(tmp_path: Path) -> No
     assert payload["entries"]
     assert not (builder_root / "synthesized_backlog_entries.json").exists()
     assert (builder_root / "backlog.yml").read_text(encoding="utf-8") == backlog_before
+
+
+def test_synthesis_outputs_dependency_graph_and_execution_order_for_selected_approaches(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    module = _load_backlog_synthesis_module(builder_root)
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "accepted"
+    _write_json(builder_root / "backlog.yml", backlog)
+    _write_json(
+        builder_root / "backlog_proposals.json",
+        {
+            "generated_at": "2026-03-30T00:00:00+00:00",
+            "proposals": [
+                {
+                    "proposal_id": "prop-graph-1",
+                    "status": "accepted",
+                    "title": "Normalize proposal selection",
+                    "rationale": "Create a first synthesized step.",
+                    "evidence_summary": "Planner needs a normalized selected-approach contract.",
+                    "evidence_links": ["task_history/one.yml"],
+                    "affected_ticket_family": "JORB-INFRA",
+                    "priority_recommendation": "high",
+                    "confidence": 0.9,
+                    "recurrence_count": 2,
+                    "proposed_action_type": "create_follow_up_hardening_ticket",
+                    "dependencies": ["JORB-INFRA-030"],
+                    "draft_ticket": {"id_placeholder": "DRAFT-JORB-INFRA-SELECT-APPROACH"},
+                    "reviewed_at": "2026-03-30T01:00:00+00:00",
+                    "review_note": "approved",
+                },
+                {
+                    "proposal_id": "prop-graph-2",
+                    "status": "accepted",
+                    "title": "Emit synthesis execution plan",
+                    "rationale": "Create a dependent synthesized step.",
+                    "evidence_summary": "Operators need explicit execution order after selected approaches are accepted.",
+                    "evidence_links": ["task_history/two.yml"],
+                    "affected_ticket_family": "JORB-INFRA",
+                    "priority_recommendation": "medium",
+                    "confidence": 0.9,
+                    "recurrence_count": 2,
+                    "proposed_action_type": "create_follow_up_hardening_ticket",
+                    "dependencies": ["DRAFT-JORB-INFRA-SELECT-APPROACH"],
+                    "draft_ticket": {"id_placeholder": "DRAFT-JORB-INFRA-EXECUTION-PLAN"},
+                    "reviewed_at": "2026-03-30T01:05:00+00:00",
+                    "review_note": "approved",
+                },
+            ],
+        },
+    )
+
+    payload = module.generate_synthesized_entries(builder_root, dry_run=False)
+    entry_by_ticket = {entry["ticket_id_placeholder"]: entry for entry in payload["entries"]}
+    select_entry = entry_by_ticket["DRAFT-JORB-INFRA-SELECT-APPROACH"]
+    plan_entry = entry_by_ticket["DRAFT-JORB-INFRA-EXECUTION-PLAN"]
+
+    assert [item["ticket_id"] for item in payload["execution_order"]] == [
+        "DRAFT-JORB-INFRA-SELECT-APPROACH",
+        "DRAFT-JORB-INFRA-EXECUTION-PLAN",
+    ]
+    assert payload["execution_order"][0]["plan_state"] == "ready"
+    assert payload["execution_order"][1]["plan_state"] == "ready"
+    assert payload["dependency_graph"]["cycles"] == []
+    node_by_ticket = {node["ticket_id"]: node for node in payload["dependency_graph"]["nodes"]}
+    assert node_by_ticket["DRAFT-JORB-INFRA-EXECUTION-PLAN"]["internal_dependencies"] == [select_entry["synthesis_id"]]
+    assert node_by_ticket["DRAFT-JORB-INFRA-SELECT-APPROACH"]["external_dependencies"][0]["ticket_id"] == "JORB-INFRA-030"
+    assert payload["dependency_graph"]["edges"] == [
+        {
+            "from_ticket_id": "DRAFT-JORB-INFRA-SELECT-APPROACH",
+            "from_synthesis_id": select_entry["synthesis_id"],
+            "to_ticket_id": "DRAFT-JORB-INFRA-EXECUTION-PLAN",
+            "to_synthesis_id": plan_entry["synthesis_id"],
+            "kind": "synthesized_dependency",
+        },
+        {
+            "from_ticket_id": "JORB-INFRA-030",
+            "from_synthesis_id": None,
+            "to_ticket_id": "DRAFT-JORB-INFRA-SELECT-APPROACH",
+            "to_synthesis_id": select_entry["synthesis_id"],
+            "kind": "backlog_dependency",
+        },
+    ]
 
 
 def test_accepted_task_auto_promotes_dependency_satisfied_synthesized_followup(tmp_path: Path) -> None:
@@ -5953,9 +6039,20 @@ def test_operator_surface_shows_synthesis_truth(tmp_path: Path) -> None:
     _write_json(
         builder_root / "synthesized_backlog_entries.json",
         {
-            "generated_at": "2026-03-30T00:00:00+00:00",
-            "entries": [
-                {"synthesis_id": "syn-1", "status": "draft", "title": "Draft follow-up", "synthesis_eval_blocked": False, "synthesis_eval": {"overall_score": 0.92}},
+                "generated_at": "2026-03-30T00:00:00+00:00",
+                "entries": [
+                {
+                    "synthesis_id": "syn-1",
+                    "ticket_id_placeholder": "DRAFT-JORB-INFRA-ONE",
+                    "status": "draft",
+                    "title": "Draft follow-up",
+                    "priority_recommendation": "high",
+                    "dependencies": [],
+                    "operator_approval": {"approved": True},
+                    "validation": {"passed": True, "issues": [], "duplicate_matches": []},
+                    "synthesis_eval_blocked": False,
+                    "synthesis_eval": {"overall_score": 0.92},
+                },
                 {"synthesis_id": "syn-2", "status": "applied", "title": "Applied follow-up", "synthesis_eval_blocked": False},
                 {"synthesis_id": "syn-3", "status": "draft", "title": "Blocked follow-up", "synthesis_eval_blocked": True},
             ],
@@ -5968,6 +6065,9 @@ def test_operator_surface_shows_synthesis_truth(tmp_path: Path) -> None:
     assert "- draft_entries: 2" in result.stdout
     assert "- applied_entries: 1" in result.stdout
     assert "- eval_blocked_entries: 1" in result.stdout
+    assert "- dependency_edges: 0" in result.stdout
+    assert "- dependency_cycles: 0" in result.stdout
+    assert "- next_execution_target: DRAFT-JORB-INFRA-ONE" in result.stdout
     assert "- top_synthesized_eval_score: 0.92" in result.stdout
     assert "- top_synthesized_eval_passed: True" in result.stdout
 

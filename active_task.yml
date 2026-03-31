@@ -1,12 +1,12 @@
 {
-  "task_id": "JORB-INFRA-029",
-  "title": "Decision proposal + human checkpoint engine",
+  "task_id": "JORB-INFRA-030",
+  "title": "Backlog synthesis engine",
   "state": "verifying",
   "attempt": 1,
-  "started_at": "2026-03-31T00:17:05.598280+00:00",
+  "started_at": "2026-03-31T00:26:16.548022+00:00",
   "handed_to_codex_at": null,
-  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T001705Z/codex_prompt.md",
-  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T001705Z-JORB-INFRA-029",
+  "prompt_file": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T002616Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T002616Z-JORB-INFRA-030",
   "verification_commands": [
     "python3 -m py_compile scripts/*.py",
     "pytest tests/test_automate_task_loop.py"
@@ -20,9 +20,9 @@
   "failure_summary": null,
   "notes": [],
   "prior_run_log_dirs": [
-    "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T001705Z"
+    "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T002616Z"
   ],
-  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T001705Z",
+  "previous_run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T002616Z",
   "target_repo": "/Users/samuelkrystal/projects/jorb-builder",
   "target_kind": "builder"
 }
