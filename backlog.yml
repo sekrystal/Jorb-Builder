@@ -4607,7 +4607,7 @@
       "area": "builder",
       "milestone": "M8",
       "priority": 1,
-      "status": "blocked",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-034"
@@ -4635,7 +4635,9 @@
       "description": "Improve event feed readability and noise control for live operator use without introducing a second state system.",
       "allow_noop_completion": false,
       "notes": [
-        "Builder repo is dirty before automated execution; refusing to continue."
+        "Builder repo is dirty before automated execution; refusing to continue.",
+        "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again.",
+        "Implemented via canonical event normalization and ledger/progress deduplication in operator_state.py."
       ]
     },
     {
@@ -4645,7 +4647,7 @@
       "area": "builder",
       "milestone": "M8",
       "priority": 1,
-      "status": "pending",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-035"
@@ -4670,7 +4672,10 @@
       ],
       "repo_path": "~/projects/jorb-builder",
       "description": "Add keyboard-driven selectors for the most important safe operator actions in the terminal UI.",
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "notes": [
+        "Implemented via numbered selector flows in operator_tui.py for proposals, syntheses, and blockers."
+      ]
     },
     {
       "id": "JORB-INFRA-037",
@@ -4739,7 +4744,10 @@
       ],
       "repo_path": "~/projects/jorb-builder",
       "description": "Polish keyboard flow and usability after the core operator TUI improvements land.",
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "notes": [
+        "First slice landed early: loop mode visibility and run trigger are now exposed in the TUI, but the ticket remains open for broader keyboard-flow polish."
+      ]
     },
     {
       "id": "DRAFT-JORB-INFRA-STATUS-TRUTH",

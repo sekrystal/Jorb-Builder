@@ -6529,6 +6529,48 @@ def test_operator_snapshot_event_feed_includes_real_inputs(tmp_path: Path) -> No
     assert "run_ledger" in sources
 
 
+def test_operator_snapshot_deduplicates_progress_and_ledger_overlap(tmp_path: Path) -> None:
+    builder_root, _, run_dir, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    module = _load_operator_state_module(builder_root)
+    detail = "Builder repo is dirty before automated execution; refusing to continue."
+    _write_json(
+        builder_root / "run_ledger.json",
+        {
+            "events": [
+                {
+                    "at": "2026-03-31T00:00:05+00:00",
+                    "task_id": "JORB-INFRA-030",
+                    "run_state": "blocked",
+                    "stage_name": "Applying changes",
+                    "detail": detail,
+                }
+            ]
+        },
+    )
+    (run_dir / "progress.jsonl").write_text(
+        json.dumps(
+            {
+                "timestamp": "2026-03-31T00:00:05+00:00",
+                "task_id": "JORB-INFRA-030",
+                "stage_index": 4,
+                "stage_name": "Applying changes",
+                "state": "blocked",
+                "detail": detail,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    snapshot = module.build_operator_snapshot(builder_root)
+    matching = [item for item in snapshot["event_feed"] if item["summary"] == "JORB-INFRA-030 blocked at Applying changes"]
+
+    assert len(matching) == 1
+    assert "run_ledger.json" in matching[0]["provenance_sources"][0]
+    assert any("progress.jsonl" in source for source in matching[0]["provenance_sources"])
+    assert matching[0]["emphasis"] == "critical"
+
+
 def test_show_status_uses_canonical_stats_and_visibility(tmp_path: Path) -> None:
     builder_root, _, run_dir, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
     backlog = _json(builder_root / "backlog.yml")
@@ -6604,6 +6646,90 @@ def test_operator_tui_renders_snapshot_when_idle(tmp_path: Path) -> None:
     assert "JORB Builder Operator TUI" in result.stdout
     assert "Stage progress" in result.stdout
     assert "Event feed" in result.stdout
+    assert "MODE >>> single-run" in result.stdout
+    assert "NEXT ACTION >>>" in result.stdout
+
+
+def test_operator_tui_selector_options_and_empty_states(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    state = _load_operator_state_module(builder_root)
+    tui = _load_operator_tui_module(builder_root)
+    _write_json(
+        builder_root / "backlog_proposals.json",
+        {
+            "proposals": [
+                {"proposal_id": "prop-1", "status": "draft", "title": "Draft proposal", "affected_ticket_family": "JORB-INFRA"},
+            ]
+        },
+    )
+    _write_json(
+        builder_root / "synthesized_backlog_entries.json",
+        {
+            "entries": [
+                {"synthesis_id": "syn-1", "status": "draft", "title": "Draft synthesis", "ticket_id_placeholder": "DRAFT-JORB-INFRA-ONE", "synthesis_eval_blocked": False},
+            ]
+        },
+    )
+    _write_json(
+        builder_root / "blockers" / "BLK-JORB-INFRA-030.yml",
+        {
+            "id": "BLK-JORB-INFRA-030",
+            "title": "Open blocker",
+            "related_tasks": ["JORB-INFRA-030"],
+            "status": "open",
+            "diagnosis": "Blocked for operator review.",
+            "next_actions": ["repair"],
+        },
+    )
+
+    snapshot = state.build_operator_snapshot(builder_root)
+    proposal_options, proposal_empty = tui.selector_options(snapshot, "proposals")
+    synthesis_options, synthesis_empty = tui.selector_options(snapshot, "syntheses")
+    blocker_options, blocker_empty = tui.selector_options(snapshot, "blockers")
+
+    assert proposal_empty == "No draft proposals are awaiting approval."
+    assert proposal_options[0]["id"] == "prop-1"
+    assert synthesis_empty == "No synthesized draft entries are ready to apply."
+    assert synthesis_options[0]["id"] == "syn-1"
+    assert blocker_empty == "No open blockers are available to inspect."
+    assert blocker_options[0]["id"] == "BLK-JORB-INFRA-030"
+    assert tui.resolve_selector_choice(proposal_options, "1")["id"] == "prop-1"
+    assert tui.resolve_selector_choice(synthesis_options, "syn-1")["id"] == "syn-1"
+
+
+def test_operator_snapshot_next_action_varies_by_state(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    module = _load_operator_state_module(builder_root)
+    status = _json(builder_root / "status.yml")
+    status["state"] = "completed"
+    _write_json(builder_root / "status.yml", status)
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "accepted"
+    _write_json(builder_root / "backlog.yml", backlog)
+    _write_json(builder_root / "backlog_proposals.json", {"proposals": [{"proposal_id": "prop-1", "status": "draft", "title": "Draft proposal"}]})
+
+    snapshot = module.build_operator_snapshot(builder_root)
+    assert snapshot["next_recommended_action"] == "Review draft proposals and approve the next builder-safe candidate."
+
+    _write_json(builder_root / "backlog_proposals.json", {"proposals": []})
+    _write_json(
+        builder_root / "synthesized_backlog_entries.json",
+        {"entries": [{"synthesis_id": "syn-1", "status": "draft", "title": "Draft synthesis", "ticket_id_placeholder": "DRAFT-JORB-INFRA-ONE", "synthesis_eval_blocked": False}]},
+    )
+    snapshot = module.build_operator_snapshot(builder_root)
+    assert snapshot["next_recommended_action"].startswith("Apply synthesized entry syn-1")
+
+    blockers = {
+        "id": "BLK-JORB-INFRA-030",
+        "title": "Open blocker",
+        "related_tasks": ["JORB-INFRA-030"],
+        "status": "open",
+        "diagnosis": "Blocked for operator review.",
+        "next_actions": ["repair"],
+    }
+    _write_json(builder_root / "blockers" / "BLK-JORB-INFRA-030.yml", blockers)
+    snapshot = module.build_operator_snapshot(builder_root)
+    assert snapshot["next_recommended_action"].startswith("Inspect blocker BLK-JORB-INFRA-030")
 
 
 def test_operator_tui_safe_action_wiring_can_approve_proposal(tmp_path: Path) -> None:
@@ -6627,6 +6753,106 @@ def test_operator_tui_safe_action_wiring_can_approve_proposal(tmp_path: Path) ->
     assert result["ok"] is True
     proposals = _json(builder_root / "backlog_proposals.json")
     assert proposals["proposals"][0]["status"] == "accepted"
+
+
+def test_operator_tui_safe_action_wiring_can_apply_synthesis(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    tui = _load_operator_tui_module(builder_root)
+    synthesis = _load_backlog_synthesis_module(builder_root)
+    backlog_seed = _json(builder_root / "backlog.yml")
+    backlog_seed["tasks"][0]["status"] = "accepted"
+    _write_json(builder_root / "backlog.yml", backlog_seed)
+    _write_json(
+        builder_root / "backlog_proposals.json",
+        {
+            "generated_at": "2026-03-30T00:00:00+00:00",
+            "proposals": [
+                {
+                    "proposal_id": "prop-1",
+                    "status": "accepted",
+                    "title": "Harden builder retries",
+                    "rationale": "Add a follow-up hardening task.",
+                    "evidence_summary": "Pattern observed 3 blocked runtime outcome(s) in JORB-INFRA.",
+                    "evidence_links": ["task_history/one.yml", "task_history/two.yml"],
+                    "affected_ticket_family": "JORB-INFRA",
+                    "priority_recommendation": "high",
+                    "confidence": 0.9,
+                    "recurrence_count": 3,
+                    "proposed_action_type": "create_follow_up_hardening_ticket",
+                    "dependencies": ["JORB-INFRA-030"],
+                    "reviewed_at": "2026-03-30T01:00:00+00:00",
+                    "review_note": "approved",
+                }
+            ],
+        },
+    )
+    payload = synthesis.generate_synthesized_entries(builder_root, dry_run=False)
+    entry = payload["entries"][0]
+
+    result = tui.run_operator_action("apply_synthesized_entry", root=builder_root, identifier=entry["synthesis_id"])
+
+    assert result["ok"] is True
+    entries = _json(builder_root / "synthesized_backlog_entries.json")["entries"]
+    assert entries[0]["status"] == "applied"
+
+
+def test_operator_tui_loop_mode_toggle_and_render(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    state = _load_operator_state_module(builder_root)
+    tui = _load_operator_tui_module(builder_root)
+
+    snapshot = state.build_operator_snapshot(builder_root)
+    rendered = tui.render_operator_view(snapshot, loop_mode=tui.LOOP_MODE_UNTIL_FAILURE)
+
+    assert tui.toggle_loop_mode(tui.LOOP_MODE_SINGLE) == tui.LOOP_MODE_UNTIL_FAILURE
+    assert "MODE >>> until-failure" in rendered
+    assert "STOP POLICY >>>" in rendered
+
+
+def test_operator_tui_run_until_failure_stops_when_no_runnable_tasks_remain(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    tui = _load_operator_tui_module(builder_root)
+
+    def fake_snapshot_builder(_: Path | None) -> dict[str, Any]:
+        return {
+            "backlog_diagnostics": {"next_selected_task_id": None},
+            "proposals": {"draft_count": 0},
+            "synthesis": {"eval_blocked_entries": 0},
+            "latest_blocker": None,
+        }
+
+    result = tui.run_loop_mode(
+        tui.LOOP_MODE_UNTIL_FAILURE,
+        root=builder_root,
+        snapshot_builder=fake_snapshot_builder,
+        runner=lambda *args, **kwargs: None,
+    )
+
+    assert result["ok"] is True
+    assert result["stop_reason"] == "no_runnable_tasks_remain"
+
+
+def test_operator_tui_run_until_failure_stops_for_operator_approval(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    tui = _load_operator_tui_module(builder_root)
+
+    def fake_snapshot_builder(_: Path | None) -> dict[str, Any]:
+        return {
+            "backlog_diagnostics": {"next_selected_task_id": None},
+            "proposals": {"draft_count": 2},
+            "synthesis": {"eval_blocked_entries": 0},
+            "latest_blocker": None,
+        }
+
+    result = tui.run_loop_mode(
+        tui.LOOP_MODE_UNTIL_FAILURE,
+        root=builder_root,
+        snapshot_builder=fake_snapshot_builder,
+        runner=lambda *args, **kwargs: None,
+    )
+
+    assert result["ok"] is True
+    assert result["stop_reason"] == "operator_approval_required"
 
 
 def test_synthesis_ready_state_only_enters_execution_queue_after_apply(tmp_path: Path) -> None:

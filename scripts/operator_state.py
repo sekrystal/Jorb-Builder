@@ -157,6 +157,18 @@ def _latest_open_blocker(root: Path, task_id: str | None) -> dict[str, Any] | No
     return candidates[0]
 
 
+def _open_blockers(root: Path) -> list[dict[str, Any]]:
+    blockers: list[dict[str, Any]] = []
+    for path in sorted((root / "blockers").glob("*.yml")):
+        payload = _safe_load(path, {})
+        if payload.get("status") != "open":
+            continue
+        payload["_path"] = str(path)
+        blockers.append(payload)
+    blockers.sort(key=lambda item: _sort_key(item.get("opened_at")), reverse=True)
+    return blockers
+
+
 def _collect_expected_artifacts(task: dict[str, Any] | None) -> list[str]:
     if task is None:
         return []
@@ -311,28 +323,112 @@ def _event_payload(at: str | None, source: str, kind: str, summary: str, *, deta
         "detail": detail,
         "recommendation": recommendation,
         "provenance": provenance,
+        "provenance_sources": [provenance] if provenance else [],
     }
+
+
+def _event_emphasis(kind: str) -> str:
+    lowered = str(kind or "").lower()
+    if lowered in {"blocked", "failed"}:
+        return "critical"
+    if lowered in {"accepted", "applied", "completed"}:
+        return "success"
+    if lowered in {"waiting", "operator_approval_required", "no_runnable_tasks_remain"}:
+        return "attention"
+    return "normal"
+
+
+def _normalize_run_event(
+    *,
+    at: str | None,
+    source: str,
+    task_id: str | None,
+    stage_name: str | None,
+    state: str | None,
+    detail: str | None,
+    provenance: str,
+) -> dict[str, Any]:
+    lowered_state = str(state or "").strip().lower()
+    task_label = str(task_id or "system")
+    stage_label = str(stage_name or "state").strip() or "state"
+    cleaned_detail = str(detail or "").strip() or None
+    if lowered_state in {"blocked", "failed", "preflight_failed"}:
+        summary = f"{task_label} blocked at {stage_label}"
+    elif lowered_state in {"accepted", "completed", "done"}:
+        summary = f"{task_label} accepted"
+    elif lowered_state in {"running", ""}:
+        summary = f"{task_label} {stage_label}"
+    else:
+        summary = f"{task_label} {lowered_state.replace('_', ' ')} at {stage_label}"
+    recommendation = None
+    if cleaned_detail and "dirty before automated execution" in cleaned_detail.lower():
+        recommendation = "Commit or stash changes, then rerun automation."
+    elif lowered_state in {"blocked", "failed", "preflight_failed"}:
+        recommendation = "Inspect the blocker and repair state before retrying."
+    elif lowered_state in {"accepted", "completed", "done"}:
+        recommendation = "Inspect the latest run or continue with the next ready task."
+    payload = _event_payload(
+        at,
+        source,
+        lowered_state or "running",
+        summary,
+        detail=cleaned_detail,
+        recommendation=recommendation,
+        provenance=provenance,
+    )
+    payload["task_id"] = task_id
+    payload["stage_name"] = stage_label
+    payload["emphasis"] = _event_emphasis(lowered_state)
+    payload["dedupe_key"] = (
+        str(task_id or ""),
+        stage_label.lower(),
+        lowered_state or "running",
+        cleaned_detail or "",
+    )
+    return payload
+
+
+def _dedupe_events(events: list[dict[str, Any]], *, limit: int) -> list[dict[str, Any]]:
+    deduped: list[dict[str, Any]] = []
+    by_key: dict[tuple[str, str, str, str], dict[str, Any]] = {}
+    for event in sorted(events, key=lambda item: _sort_key(item.get("at")), reverse=True):
+        key = tuple(event.get("dedupe_key") or ())
+        if key and key in by_key:
+            existing = by_key[key]
+            merged_sources = list(existing.get("provenance_sources", []))
+            for source in event.get("provenance_sources", []):
+                if source and source not in merged_sources:
+                    merged_sources.append(source)
+            existing["provenance_sources"] = merged_sources
+            if existing.get("source") != event.get("source"):
+                existing["source"] = f"{existing.get('source')}+{event.get('source')}"
+            if not existing.get("detail") and event.get("detail"):
+                existing["detail"] = event["detail"]
+            if not existing.get("recommendation") and event.get("recommendation"):
+                existing["recommendation"] = event["recommendation"]
+            continue
+        if key:
+            by_key[key] = event
+        deduped.append(event)
+    deduped.sort(key=lambda item: _sort_key(item.get("at")), reverse=True)
+    terminal = [item for item in deduped if item.get("emphasis") in {"critical", "success"}]
+    remainder = [item for item in deduped if item.get("emphasis") not in {"critical", "success"}]
+    final_events = terminal[:4] + remainder
+    return final_events[:limit]
 
 
 def _build_event_feed(root: Path, *, run_dir: Path | None, backlog: dict[str, Any], limit: int = 18) -> list[dict[str, Any]]:
     events: list[dict[str, Any]] = []
     ledger = _safe_load(root / "run_ledger.json", {"events": []})
     for item in ledger.get("events", [])[-20:]:
-        detail = str(item.get("detail") or "").strip() or None
-        run_state = str(item.get("run_state") or "").strip()
-        recommendation = None
-        if detail and "dirty before automated execution" in detail.lower():
-            recommendation = "Commit or stash changes, then rerun automation."
-        elif run_state == "accepted":
-            recommendation = "Inspect the latest run artifacts or promote the next approved proposal."
         events.append(
-            _event_payload(
-                item.get("at"),
-                "run_ledger",
-                run_state or "event",
-                f"{item.get('task_id') or 'system'} :: {item.get('stage_name') or 'state'}",
-                detail=detail,
-                recommendation=recommendation,
+            _normalize_run_event(
+                at=item.get("at"),
+                source="run_ledger",
+                task_id=item.get("task_id"),
+                stage_name=item.get("stage_name"),
+                state=item.get("run_state"),
+                detail=item.get("detail"),
                 provenance=str(root / "run_ledger.json"),
             )
         )
@@ -345,7 +441,7 @@ def _build_event_feed(root: Path, *, run_dir: Path | None, backlog: dict[str, An
                     reviewed_at,
                     "proposal",
                     str(item.get("status") or "reviewed"),
-                    str(item.get("title") or item.get("proposal_id") or "proposal reviewed"),
+                    f"Proposal approved: {item.get('title') or item.get('proposal_id') or 'proposal reviewed'}" if item.get("status") == "accepted" else str(item.get("title") or item.get("proposal_id") or "proposal reviewed"),
                     detail=str(item.get("review_note") or "").strip() or None,
                     recommendation="Synthesize the approved proposal." if item.get("status") == "accepted" else None,
                     provenance=str(root / "backlog_proposals.json"),
@@ -360,7 +456,7 @@ def _build_event_feed(root: Path, *, run_dir: Path | None, backlog: dict[str, An
                     created_at,
                     "synthesis",
                     str(item.get("status") or "draft"),
-                    str(item.get("title") or item.get("ticket_id_placeholder") or "synthesized entry"),
+                    f"Synthesis draft: {item.get('title') or item.get('ticket_id_placeholder') or 'synthesized entry'}",
                     detail=str(item.get("synthesis_id") or ""),
                     recommendation="Apply the synthesized entry after review." if item.get("status") == "draft" else None,
                     provenance=str(root / "synthesized_backlog_entries.json"),
@@ -373,7 +469,7 @@ def _build_event_feed(root: Path, *, run_dir: Path | None, backlog: dict[str, An
                     applied_at,
                     "synthesis",
                     "applied",
-                    str(item.get("ticket_id_placeholder") or item.get("title") or "synthesized entry applied"),
+                    f"Synthesis applied: {item.get('ticket_id_placeholder') or item.get('title') or 'synthesized entry applied'}",
                     detail=str(item.get("synthesis_id") or ""),
                     recommendation="Run the automation loop for the applied ready task.",
                     provenance=str(root / "synthesized_backlog_entries.json"),
@@ -383,17 +479,17 @@ def _build_event_feed(root: Path, *, run_dir: Path | None, backlog: dict[str, An
         progress_events = _safe_jsonl(run_dir / "progress.jsonl")
         for item in progress_events[-10:]:
             events.append(
-                _event_payload(
-                    item.get("timestamp"),
-                    "progress",
-                    str(item.get("state") or "running"),
-                    f"{item.get('task_id')} :: {item.get('stage_name')}",
-                    detail=str(item.get("detail") or "").strip() or None,
+                _normalize_run_event(
+                    at=item.get("timestamp"),
+                    source="progress",
+                    task_id=item.get("task_id"),
+                    stage_name=item.get("stage_name"),
+                    state=item.get("state"),
+                    detail=item.get("detail"),
                     provenance=str(run_dir / "progress.jsonl"),
                 )
             )
-    events.sort(key=lambda item: _sort_key(item.get("at")), reverse=True)
-    return events[:limit]
+    return _dedupe_events(events, limit=limit)
 
 
 def _actual_stats(backlog_diag: dict[str, Any]) -> dict[str, int]:
@@ -411,11 +507,12 @@ def _recommended_action(*, backlog_diag: dict[str, Any], latest_blocker: dict[st
     next_ready = backlog_diag.get("next_selected_task_id")
     if next_ready:
         return "Run python3 scripts/automate_task_loop.py to execute the next ready task."
-    if synthesis.get("next_execution_target"):
-        return f"Apply or inspect synthesized entry for {synthesis['next_execution_target']}."
     if proposals.get("accepted_pending_synthesis_count", 0):
         top = proposals.get("top_accepted_pending_synthesis") or {}
         return f"Run python3 scripts/backlog_synthesis.py to materialize approved proposal {top.get('proposal_id') or 'accepted proposal'}."
+    if synthesis.get("draft_count", 0):
+        top_draft = synthesis.get("top_draft") or {}
+        return f"Apply synthesized entry {top_draft.get('synthesis_id') or top_draft.get('ticket_id_placeholder') or 'draft entry'} if it is still the best next step."
     if proposals.get("draft_count", 0):
         return "Review draft proposals and approve the next builder-safe candidate."
     if status.get("state") == "completed":
@@ -447,6 +544,7 @@ def build_operator_snapshot(root: Path | None = None) -> dict[str, Any]:
     task_id = active.get("task_id") or status.get("last_task_id")
     task = _task_by_id(backlog, task_id)
     latest_blocker = _latest_open_blocker(repo_root, active.get("task_id") or status.get("last_task_id"))
+    open_blockers = _open_blockers(repo_root)
     artifact_panel = _artifact_panel(latest_run_dir, task, ledger)
     eval_result = _load_latest_eval(latest_run_dir, ledger)
     judge_result = _latest_judge_result(latest_run_dir)
@@ -468,6 +566,34 @@ def build_operator_snapshot(root: Path | None = None) -> dict[str, Any]:
         active=active,
         status=status,
     )
+    selector_items = {
+        "proposals": [
+            {
+                "id": str(item.get("proposal_id") or ""),
+                "label": str(item.get("title") or item.get("proposal_id") or "draft proposal"),
+                "detail": str(item.get("affected_ticket_family") or "unknown"),
+            }
+            for item in proposals.get("all", [])
+            if item.get("status") == "draft"
+        ],
+        "syntheses": [
+            {
+                "id": str(item.get("synthesis_id") or ""),
+                "label": str(item.get("title") or item.get("ticket_id_placeholder") or "draft synthesis"),
+                "detail": str(item.get("ticket_id_placeholder") or ""),
+            }
+            for item in synthesized_payload.get("entries", [])
+            if item.get("status") == "draft" and not item.get("synthesis_eval_blocked")
+        ],
+        "blockers": [
+            {
+                "id": str(item.get("id") or ""),
+                "label": str(item.get("title") or item.get("id") or "open blocker"),
+                "detail": str(item.get("diagnosis") or "").strip(),
+            }
+            for item in open_blockers
+        ],
+    }
     return {
         "generated_at": now_iso(),
         "root": str(repo_root),
@@ -483,6 +609,7 @@ def build_operator_snapshot(root: Path | None = None) -> dict[str, Any]:
         "latest_run_dir": str(latest_run_dir) if latest_run_dir else None,
         "latest_run_result": automation_result,
         "latest_blocker": latest_blocker,
+        "open_blockers": open_blockers,
         "task": task,
         "artifact_panel": artifact_panel,
         "eval_result": eval_result,
@@ -491,4 +618,5 @@ def build_operator_snapshot(root: Path | None = None) -> dict[str, Any]:
         "event_feed": event_feed,
         "stats": _actual_stats(backlog_diag),
         "next_recommended_action": next_action,
+        "selector_items": selector_items,
     }

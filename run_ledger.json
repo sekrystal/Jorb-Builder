@@ -1,13 +1,6 @@
 {
   "events": [
     {
-      "at": "2026-03-31T01:54:34.941782+00:00",
-      "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
-      "run_state": "running",
-      "stage_name": "Preflight check",
-      "detail": "pytest tests/test_automate_task_loop.py"
-    },
-    {
       "at": "2026-03-31T01:54:50.040605+00:00",
       "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
       "run_state": "running",
@@ -174,20 +167,26 @@
       "run_state": "blocked",
       "stage_name": null,
       "detail": "Builder repo is dirty before automated execution; refusing to continue."
+    },
+    {
+      "at": "2026-03-31T15:32:55.142350+00:00",
+      "task_id": null,
+      "run_state": "idle",
+      "stage_name": null,
+      "detail": null
     }
   ],
-  "updated_at": "2026-03-31T15:29:30.693794+00:00",
-  "current_task": "JORB-INFRA-035",
-  "current_title": "Operator TUI event feed deduplication and readability",
+  "updated_at": "2026-03-31T15:32:55.142344+00:00",
+  "current_task": null,
+  "current_title": null,
   "current_stage": null,
-  "run_state": "blocked",
-  "current_blocker": "Builder repo is dirty before automated execution; refusing to continue.",
+  "run_state": "idle",
+  "current_blocker": null,
   "last_successful_checkpoint": null,
   "artifact_completeness": {
-    "present": [
-      "compiled_feature_spec.md"
-    ],
+    "present": [],
     "missing": [
+      "compiled_feature_spec.md",
       "proposal.md",
       "tradeoff_matrix.md",
       "research_brief.md",
@@ -199,14 +198,14 @@
   "failure_taxonomy": null,
   "eval_result": null,
   "runtime_proof_summary": null,
-  "next_recommended_action": null,
-  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T152930Z-JORB-INFRA-035",
+  "next_recommended_action": "Inspect backlog truth and rerun automation when ready.",
+  "run_log_dir": null,
   "event": {
-    "at": "2026-03-31T15:29:30.693803+00:00",
-    "task_id": "JORB-INFRA-035",
-    "run_state": "blocked",
+    "at": "2026-03-31T15:32:55.142350+00:00",
+    "task_id": null,
+    "run_state": "idle",
     "stage_name": null,
-    "detail": "Builder repo is dirty before automated execution; refusing to continue."
+    "detail": null
   },
   "eval_blocked_acceptance": false
 }
