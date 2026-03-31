@@ -1,27 +1,6 @@
 {
   "events": [
     {
-      "at": "2026-03-31T01:19:12.708241+00:00",
-      "task_id": "JORB-INFRA-033",
-      "run_state": "running",
-      "stage_name": "Codex execution running",
-      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=45235 | elapsed=392s | timeout_remaining=1407s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T011239Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T011239Z-JORB-INFRA-033/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=4s | stdout_seen=false | stderr_seen=true | poll=running"
-    },
-    {
-      "at": "2026-03-31T01:19:27.821976+00:00",
-      "task_id": "JORB-INFRA-033",
-      "run_state": "running",
-      "stage_name": "Codex execution running",
-      "detail": "status=healthy | waiting_on=codex_last_message.md | pid=45235 | elapsed=407s | timeout_remaining=1392s | prompt=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T011239Z/codex_prompt.md | output=/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T011239Z-JORB-INFRA-033/codex_last_message.md | output_exists=false | output_size=0B | output_mtime=none | artifact_age=none | stream_age=7s | stdout_seen=false | stderr_seen=true | poll=running"
-    },
-    {
-      "at": "2026-03-31T01:19:32.304069+00:00",
-      "task_id": "JORB-INFRA-010",
-      "run_state": "blocked",
-      "stage_name": "judge",
-      "detail": "Phase 4 artifact enforcement failed: compiled_feature_spec.md, proposal.md, tradeoff_matrix.md, research_brief.md, research_brief.md"
-    },
-    {
       "at": "2026-03-31T01:19:32.444761+00:00",
       "task_id": "JORB-INFRA-010",
       "run_state": "blocked",
@@ -174,13 +153,34 @@
       "run_state": "running",
       "stage_name": "Git commit and push",
       "detail": "Running git add/commit/push."
+    },
+    {
+      "at": "2026-03-31T01:23:16.565466+00:00",
+      "task_id": "JORB-INFRA-033",
+      "run_state": "completed",
+      "stage_name": "Classification",
+      "detail": "Automated loop completed with builder-side local validation success."
+    },
+    {
+      "at": "2026-03-31T01:23:16.787538+00:00",
+      "task_id": "JORB-INFRA-033",
+      "run_state": "accepted",
+      "stage_name": "judge",
+      "detail": "Automated loop completed with builder-side local validation success."
+    },
+    {
+      "at": "2026-03-31T01:23:16.800320+00:00",
+      "task_id": null,
+      "run_state": "completed",
+      "stage_name": null,
+      "detail": null
     }
   ],
-  "updated_at": "2026-03-31T01:23:14.457217+00:00",
-  "current_task": "JORB-INFRA-033",
+  "updated_at": "2026-03-31T01:23:16.800256+00:00",
+  "current_task": null,
   "current_title": null,
-  "current_stage": "Git commit and push",
-  "run_state": "running",
+  "current_stage": null,
+  "run_state": "completed",
   "current_blocker": null,
   "last_successful_checkpoint": null,
   "artifact_completeness": {
@@ -188,25 +188,24 @@
       "compiled_feature_spec.md",
       "proposal.md",
       "tradeoff_matrix.md",
-      "research_brief.md"
-    ],
-    "missing": [
+      "research_brief.md",
       "judge_decision.md",
       "evidence_bundle.json",
       "runtime_proof.log"
-    ]
+    ],
+    "missing": []
   },
   "failure_taxonomy": null,
   "eval_result": null,
-  "runtime_proof_summary": null,
+  "runtime_proof_summary": "# Runtime Proof\n\nsummary: Automated loop completed with builder-side local validation success.\n\n## Local Validation\n- command: python3 -m py_compile scripts/*.py\n  passed: True\n- command: pytest tests/test_automate_task_loop.py\n  passed: True\n",
   "next_recommended_action": null,
   "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T011239Z-JORB-INFRA-033",
   "event": {
-    "at": "2026-03-31T01:23:14.457226+00:00",
-    "task_id": "JORB-INFRA-033",
-    "run_state": "running",
-    "stage_name": "Git commit and push",
-    "detail": "Running git add/commit/push."
+    "at": "2026-03-31T01:23:16.800320+00:00",
+    "task_id": null,
+    "run_state": "completed",
+    "stage_name": null,
+    "detail": null
   },
   "eval_blocked_acceptance": false
 }

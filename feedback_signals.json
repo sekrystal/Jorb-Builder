@@ -1,6 +1,32 @@
 {
-  "generated_at": "2026-03-31T01:04:27.688493+00:00",
+  "generated_at": "2026-03-31T01:23:16.797054+00:00",
   "signals": [
+    {
+      "signal_id": "sig-baaab0a47ec1",
+      "signal_type": "runtime_outcome",
+      "raw_observation": "Phase 4 artifact enforcement failed: compiled_feature_spec.md:missing_machine_payload; Phase 4 artifact enforcement failed: compiled_feature_spec.md, proposal.md, tradeoff_matrix.md, research_brief.md, research_brief.md",
+      "interpreted_issue": "phase4_artifact_enforcement_failed",
+      "confidence": 0.95,
+      "evidence_links": [
+        "/Users/samuelkrystal/projects/jorb-builder/run_ledger.json"
+      ],
+      "affected_ticket_family": "JORB-INFRA",
+      "affected_subsystem": "jorb-infra",
+      "proposed_action_type": "add_missing_acceptance_criteria",
+      "observation": "Phase 4 artifact enforcement failed: compiled_feature_spec.md:missing_machine_payload; Phase 4 artifact enforcement failed: compiled_feature_spec.md, proposal.md, tradeoff_matrix.md, research_brief.md, research_brief.md",
+      "inference": "Canonical run ledger recorded 4 blocked runtime outcome(s) for JORB-INFRA.",
+      "recommendation": "Refine backlog handling for the observed JORB-INFRA runtime evidence.",
+      "recurrence_count": 4,
+      "severity": "high",
+      "source_artifacts": [
+        "/Users/samuelkrystal/projects/jorb-builder/run_ledger.json"
+      ],
+      "created_at": "2026-03-31T01:23:16.797048+00:00",
+      "status": "active",
+      "feedback_dimension": "artifact_enforcement",
+      "system_gap": "Required builder artifacts are incomplete or missing evidence needed for acceptance.",
+      "corrective_work": "Strengthen artifact generation or acceptance gates so the missing evidence becomes mandatory."
+    },
     {
       "signal_id": "sig-508834552f75",
       "signal_type": "preflight_failure",
@@ -25,8 +51,11 @@
         "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-25T050715Z-JORB-V1-007.yml",
         "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-25T050925Z-JORB-V1-007.yml"
       ],
-      "created_at": "2026-03-31T01:04:27.688452+00:00",
-      "status": "active"
+      "created_at": "2026-03-31T01:23:16.796838+00:00",
+      "status": "active",
+      "feedback_dimension": "capability_gap",
+      "system_gap": "Required automation capability or task contract is missing, so the backlog cannot converge through bounded execution.",
+      "corrective_work": "Add or refine a targeted builder task that supplies the missing capability and the proof path for it."
     },
     {
       "signal_id": "sig-6b2d51e1aaf6",
@@ -50,8 +79,11 @@
         "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-29T190200Z-JORB-V3-001.yml",
         "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-29T222718Z-JORB-V3-002.yml"
       ],
-      "created_at": "2026-03-31T01:04:27.688462+00:00",
-      "status": "active"
+      "created_at": "2026-03-31T01:23:16.796855+00:00",
+      "status": "active",
+      "feedback_dimension": "capability_gap",
+      "system_gap": "Required automation capability or task contract is missing, so the backlog cannot converge through bounded execution.",
+      "corrective_work": "Add or refine a targeted builder task that supplies the missing capability and the proof path for it."
     },
     {
       "signal_id": "sig-9fcb38c88c74",
@@ -75,8 +107,11 @@
         "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T192337Z-JORB-INFRA-010.yml",
         "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T200609Z-JORB-INFRA-010.yml"
       ],
-      "created_at": "2026-03-31T01:04:27.688469+00:00",
-      "status": "active"
+      "created_at": "2026-03-31T01:23:16.796863+00:00",
+      "status": "active",
+      "feedback_dimension": "evaluation",
+      "system_gap": "Validation coverage is not proving the behavior that regressed.",
+      "corrective_work": "Add or tighten evaluation coverage before accepting similar work again."
     },
     {
       "signal_id": "sig-39686ff0f8a3",
@@ -100,8 +135,11 @@
         "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T204723Z-DRAFT-JORB-INFRA-STATUS-TRUTH.yml",
         "/Users/samuelkrystal/projects/jorb-builder/task_history/2026-03-30T205825Z-DRAFT-JORB-INFRA-STATUS-TRUTH.yml"
       ],
-      "created_at": "2026-03-31T01:04:27.688475+00:00",
-      "status": "active"
+      "created_at": "2026-03-31T01:23:16.796872+00:00",
+      "status": "active",
+      "feedback_dimension": "draft-jorb",
+      "system_gap": "Operator feedback indicates a builder-system gap that is not yet categorized more precisely.",
+      "corrective_work": "Review the evidence and convert the gap into a bounded corrective backlog item."
     }
   ]
 }

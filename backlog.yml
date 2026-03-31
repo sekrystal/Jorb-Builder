@@ -4530,7 +4530,7 @@
       "area": "builder",
       "milestone": "M8",
       "priority": 1,
-      "status": "ready",
+      "status": "accepted",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-032"
@@ -4556,7 +4556,9 @@
       "repo_path": "~/projects/jorb-builder",
       "description": "Add builder performance profiling and optimization planning as the final Phase 4B intelligence task.",
       "allow_noop_completion": false,
-      "notes": []
+      "notes": [
+        "Automated loop completed with builder-side local validation success."
+      ]
     },
     {
       "id": "DRAFT-JORB-INFRA-STATUS-TRUTH",
