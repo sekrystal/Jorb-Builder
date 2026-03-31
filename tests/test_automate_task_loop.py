@@ -3353,6 +3353,49 @@ def test_repair_state_reopens_stale_dirty_repo_blocker_when_repo_is_clean(tmp_pa
     assert '"next_selected_task: "TASK-PRODUCT""' in inspect.stdout.lower() or 'next_selected_task: "TASK-PRODUCT"' in inspect.stdout
 
 
+def test_run_loop_auto_repairs_stale_dirty_repo_blocker_when_repo_is_clean(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-BUILDER",
+        area="builder",
+        allowlist=["../jorb-builder/**"],
+    )
+    backlog = _json(builder_root / "backlog.yml")
+    backlog["tasks"][0]["status"] = "blocked"
+    _write_json(builder_root / "backlog.yml", backlog)
+    active = _json(builder_root / "active_task.yml")
+    active["state"] = "blocked"
+    active["target_repo"] = str(builder_root)
+    active["target_kind"] = "builder"
+    active["failure_summary"] = "Builder repo is dirty before automated execution; refusing to continue."
+    _write_json(builder_root / "active_task.yml", active)
+    status = _json(builder_root / "status.yml")
+    status["state"] = "blocked"
+    status["last_result"] = "blocked"
+    _write_json(builder_root / "status.yml", status)
+    _write_json(
+        builder_root / "blockers" / "BLK-TASK-BUILDER.yml",
+        {
+            "id": "BLK-TASK-BUILDER",
+            "title": "Task TASK-BUILDER blocked during automated execution",
+            "related_tasks": ["TASK-BUILDER"],
+            "status": "open",
+            "diagnosis": "Builder repo is dirty before automated execution; refusing to continue.",
+        },
+    )
+
+    run = _run([sys.executable, str(SCRIPT), "--dry-run"], builder_root)
+
+    assert run.returncode == 0
+    assert "DRY_RUN" in run.stdout
+    backlog_after = _json(builder_root / "backlog.yml")
+    assert backlog_after["tasks"][0]["status"] == "ready"
+    blocker_after = _json(builder_root / "blockers" / "BLK-TASK-BUILDER.yml")
+    assert blocker_after["status"] == "resolved"
+    active_after = _json(builder_root / "active_task.yml")
+    assert active_after["task_id"] is None
+
+
 def test_repair_state_keeps_current_dirty_repo_blocker_blocked(tmp_path: Path) -> None:
     builder_root, product_repo, _, _ = _setup_builder_fixture(
         tmp_path,

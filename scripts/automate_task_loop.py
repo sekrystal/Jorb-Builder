@@ -3028,6 +3028,64 @@ def blocked_dirty_repo_truth(task: dict[str, Any], active: dict[str, Any]) -> tu
     return target_kind, target_repo, files
 
 
+def active_block_summary(active: dict[str, Any], task_id: str | None) -> str:
+    summary = str(active.get("failure_summary") or "")
+    if summary.strip():
+        return summary
+    if task_id:
+        blocker_path = BLOCKERS / f"BLK-{task_id}.yml"
+        if blocker_path.exists():
+            blocker = load_data(blocker_path)
+            return str(blocker.get("diagnosis") or blocker.get("symptoms", [""])[0] or "")
+    return ""
+
+
+def auto_repair_stale_dirty_repo_block() -> bool:
+    active = load_data(ACTIVE)
+    status = load_data(STATUS)
+    backlog = load_data(BACKLOG)
+    task_id = active.get("task_id")
+    if not task_id:
+        return False
+    if active.get("state") != "blocked" and status.get("state") != "blocked":
+        return False
+    task = None
+    for item in backlog.get("tasks", []):
+        if item.get("id") == task_id:
+            task = item
+            break
+    if task is None or task.get("status") != "blocked":
+        return False
+    if "dirty before automated execution" not in active_block_summary(active, str(task_id)).lower():
+        return False
+    _, _, dirty_files = blocked_dirty_repo_truth(task, active)
+    if dirty_files:
+        return False
+
+    task["status"] = "ready"
+    task.setdefault("notes", []).append(
+        "Auto-repaired from stale dirty-repo blocker after the worktree became clean again."
+    )
+    write_data(BACKLOG, backlog)
+
+    repaired_active = reset_active()
+    repaired_active["previous_run_log_dir"] = active.get("run_log_dir")
+    write_data(ACTIVE, repaired_active)
+
+    status["state"] = "idle"
+    status["active_task_id"] = None
+    status["last_task_id"] = task_id
+    status["last_result"] = "blocked"
+    status["last_run_at"] = now_iso()
+    write_data(STATUS, status)
+    clear_run_ledger_after_repair()
+    resolve_blocker_for_task(
+        str(task_id),
+        resolution="Resolved automatically: prior dirty-repo blocker is no longer current and the task is runnable again.",
+    )
+    return True
+
+
 def stale_allowlist_block_repaired(task: dict[str, Any], active: dict[str, Any]) -> bool:
     summary = str(active.get("failure_summary") or "").lower()
     if "allowlist" not in summary:
@@ -3678,6 +3736,9 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
     standalone_result = dispatch_standalone_mode(args, config)
     if standalone_result is not None:
         return standalone_result
+
+    if not args.resume:
+        auto_repair_stale_dirty_repo_block()
 
     backlog, active, status, auto_bootstrapped = try_bootstrap_active_task()
     prior_active_state = active.get("state")
