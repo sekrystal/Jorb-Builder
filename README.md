@@ -1,5 +1,7 @@
 # Jorb Builder
 
+*Apologies for the AI slop content below, I'll make a human pass once I think this is ready for humans to use. *
+
 Jorb Builder is the external control plane for the `jorb` product repo.
 
 It manages backlog selection, packet rendering, automated execution, validation, eval gating, repair flows, proposal generation, backlog synthesis, and operator supervision. It is intentionally separate from the product repo so builder state and product state do not collapse into each other.
