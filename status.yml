@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "state": "blocked",
+  "state": "verifying",
   "state_legend": {
     "idle": "No active task is currently in flight.",
     "task_selected": "A task has been selected and the current run has been initialized.",
@@ -14,7 +14,7 @@
   "active_task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
   "last_task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
   "last_result": "blocked",
-  "last_run_at": "2026-03-31T01:42:04.470173+00:00",
+  "last_run_at": "2026-03-31T01:54:34.716960+00:00",
   "roadmap_focus": {
     "milestone": "M2",
     "theme": "discovery"

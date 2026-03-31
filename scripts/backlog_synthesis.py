@@ -101,13 +101,35 @@ def _family_defaults(family: str, proposal: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _acceptance_text(criteria: list[Any]) -> str:
+    return " ".join(str(item).strip().lower() for item in criteria if str(item).strip())
+
+
 def _acceptance_criteria_for_proposal(proposal: dict[str, Any]) -> list[str]:
     action = str(proposal.get("proposed_action_type") or "")
     issue = str(proposal.get("evidence_summary") or proposal.get("title") or "the observed issue").strip().rstrip(".")
+    family = str(proposal.get("affected_ticket_family") or "JORB-INFRA").strip() or "JORB-INFRA"
+    recurrence = proposal.get("recurrence_count")
+    proposal_id = str(proposal.get("proposal_id") or "").strip() or "unknown_proposal"
+    evidence_links = [str(item).strip() for item in proposal.get("evidence_links", []) if str(item).strip()]
+    recurrence_clause = (
+        f"Canonical run ledger recorded {recurrence} blocked runtime outcome(s) for {family}."
+        if recurrence not in (None, "")
+        else f"Canonical evidence remains recorded for {family}."
+    )
+    evidence_clause = (
+        "Provenance points back to "
+        + proposal_id
+        + " via evidence links: "
+        + ", ".join(evidence_links)
+        + "."
+        if evidence_links
+        else f"Provenance points back to {proposal_id}."
+    )
     base = [
-        f"Automated validation proves the recurring issue is handled explicitly: {issue}.",
+        f"Automated validation proves the recurring issue is handled explicitly: {issue}. {recurrence_clause}",
         "Operator-visible status or artifacts show the new routing or decision boundary without relying on narrative summary.",
-        "Evidence artifacts include judge_decision.md and evidence_bundle.json with provenance back to the triggering proposal.",
+        f"Evidence artifacts include judge_decision.md and evidence_bundle.json with provenance back to the triggering proposal. {evidence_clause}",
         "The implementation remains scoped to one builder mechanism and does not silently mutate backlog or roadmap state.",
     ]
     if action == "add_missing_eval_coverage":
@@ -180,6 +202,22 @@ def validate_synthesized_entry(
         ]
         if generic:
             issues.append("acceptance_criteria:generic")
+        acceptance_text = _acceptance_text(entry["acceptance_criteria"])
+        if "operator-visible status or artifacts show the new routing or decision boundary" not in acceptance_text:
+            issues.append("acceptance_criteria:missing_operator_truth_gate")
+        if "judge_decision.md" not in acceptance_text or "evidence_bundle.json" not in acceptance_text:
+            issues.append("acceptance_criteria:missing_evidence_artifact_gate")
+        if "provenance" not in acceptance_text or "triggering proposal" not in acceptance_text:
+            issues.append("acceptance_criteria:missing_provenance_gate")
+        provenance = entry.get("provenance") or {}
+        recurrence = provenance.get("recurrence_count")
+        family = str(entry.get("affected_ticket_family") or "").strip()
+        if recurrence not in (None, ""):
+            recurrence_phrase = f"{recurrence} blocked runtime outcome(s)"
+            if recurrence_phrase not in acceptance_text:
+                issues.append("acceptance_criteria:missing_recurrence_count")
+        if family and family.lower() not in acceptance_text:
+            issues.append("acceptance_criteria:missing_ticket_family")
     if not entry.get("evidence_links"):
         issues.append("evidence_links:missing")
     if not entry.get("operator_approval", {}).get("approved"):

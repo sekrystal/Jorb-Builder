@@ -5779,6 +5779,38 @@ def test_approved_proposal_becomes_structured_synthesized_entry(tmp_path: Path) 
     assert payload["execution_order"][0]["plan_state"] == "blocked"
 
 
+def test_synthesized_entry_acceptance_tracks_runtime_recurrence_and_provenance(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    module = _load_backlog_synthesis_module(builder_root)
+
+    entry = module.synthesize_entry_from_proposal(
+        {
+            "proposal_id": "prop-runtime-1",
+            "status": "accepted",
+            "title": "Strengthen acceptance routing",
+            "rationale": "Refine backlog handling for runtime evidence.",
+            "evidence_summary": "Canonical run ledger recorded blocked runtime outcomes.",
+            "evidence_links": ["/tmp/run_ledger.json"],
+            "affected_ticket_family": "JORB-INFRA",
+            "priority_recommendation": "high",
+            "confidence": 0.9,
+            "recurrence_count": 4,
+            "proposed_action_type": "refine_existing_ticket",
+            "dependencies": ["JORB-INFRA-030"],
+            "reviewed_at": "2026-03-30T01:00:00+00:00",
+            "review_note": "approved",
+        },
+        root=builder_root,
+    )
+
+    acceptance = " ".join(entry["acceptance_criteria"])
+    assert "Canonical run ledger recorded 4 blocked runtime outcome(s) for JORB-INFRA." in acceptance
+    assert "judge_decision.md" in acceptance
+    assert "evidence_bundle.json" in acceptance
+    assert "prop-runtime-1" in acceptance
+    assert "/tmp/run_ledger.json" in acceptance
+
+
 def test_unapproved_proposal_does_not_synthesize_entry(tmp_path: Path) -> None:
     builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
     module = _load_backlog_synthesis_module(builder_root)
@@ -5866,6 +5898,43 @@ def test_synthesized_entry_duplicate_and_dependency_validation(tmp_path: Path) -
     assert "acceptance_criteria:generic" in validation["issues"]
     assert "invalid_dependency:MISSING-ID" in validation["issues"]
     assert validation["duplicate_matches"]
+
+
+def test_synthesized_entry_validation_requires_recurrence_and_provenance_acceptance_gates(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    module = _load_backlog_synthesis_module(builder_root)
+    backlog = _json(builder_root / "backlog.yml")
+    entry = {
+        "synthesis_id": "syn-runtime-1",
+        "ticket_id_placeholder": "DRAFT-JORB-INFRA-RUNTIME",
+        "title": "Strengthen runtime evidence acceptance",
+        "status_default": "pending",
+        "priority_recommendation": "high",
+        "rationale": "reason",
+        "evidence_summary": "evidence",
+        "evidence_links": ["run_ledger.json"],
+        "dependencies": ["JORB-INFRA-030"],
+        "affected_ticket_family": "JORB-INFRA",
+        "acceptance_criteria": [
+            "Operator-visible status or artifacts show the new routing or decision boundary without relying on narrative summary.",
+            "Evidence artifacts include judge_decision.md and evidence_bundle.json.",
+            "The implementation remains scoped to one builder mechanism.",
+        ],
+        "required_artifacts": ["judge_decision.md"],
+        "validation_expectations": ["pytest tests/test_automate_task_loop.py"],
+        "requires_vm_runtime_proof": False,
+        "provenance": {
+            "source_proposal_id": "prop-runtime-1",
+            "evidence_links": ["run_ledger.json"],
+            "recurrence_count": 4,
+        },
+        "operator_approval": {"approved": True},
+    }
+
+    validation = module.validate_synthesized_entry(entry, backlog=backlog, synthesized_payload={"entries": []})
+
+    assert "acceptance_criteria:missing_provenance_gate" in validation["issues"]
+    assert "acceptance_criteria:missing_recurrence_count" in validation["issues"]
 
 
 def test_synthesis_dry_run_does_not_mutate_canonical_files(tmp_path: Path) -> None:

@@ -4636,7 +4636,7 @@
       "area": "builder",
       "repo_path": "~/projects/jorb-builder",
       "priority": 2,
-      "status": "blocked",
+      "status": "ready",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-010"
@@ -4687,7 +4687,8 @@
       },
       "notes": [
         "Synthesized from proposal prop-2d91a8da268e",
-        "Builder repo is dirty before automated execution; refusing to continue."
+        "Builder repo is dirty before automated execution; refusing to continue.",
+        "Repaired from stale dirty-repo blocker; repo is now clean and the task is runnable again."
       ],
       "description": "Refine backlog handling for the observed JORB-INFRA runtime evidence.\n\nCanonical run ledger recorded 4 blocked runtime outcome(s) for JORB-INFRA.",
       "allow_noop_completion": false
