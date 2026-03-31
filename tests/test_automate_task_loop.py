@@ -5440,6 +5440,75 @@ def test_feedback_generates_evidence_backed_backlog_proposal_from_repeated_patte
     assert proposal["draft_ticket"]["id_placeholder"].startswith("DRAFT-JORB-INFRA")
 
 
+def test_feedback_builds_missing_capability_signal_from_canonical_run_ledger(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-032", area="builder", allowlist=["scripts/**"])
+    module = _load_feedback_module(builder_root)
+    _write_json(
+        builder_root / "run_ledger.json",
+        {
+            "current_task": "JORB-INFRA-032",
+            "current_stage": "preflight",
+            "run_state": "preflight_failed",
+            "current_blocker": "Missing automation configuration: executor.codex_cli, vm.runtime_validation_commands or task.vm_verification",
+            "events": [
+                {
+                    "at": "2026-03-30T00:00:00+00:00",
+                    "task_id": "JORB-INFRA-032",
+                    "run_state": "preflight_failed",
+                    "stage_name": "preflight",
+                    "detail": "Missing automation configuration: executor.codex_cli, vm.runtime_validation_commands or task.vm_verification",
+                }
+            ],
+        },
+    )
+
+    payload = module.build_feedback_signals(builder_root)
+    missing_capability_signals = [signal for signal in payload["signals"] if signal["signal_type"] == "missing_capability"]
+
+    assert len(missing_capability_signals) == 2
+    assert {signal["missing_capability"] for signal in missing_capability_signals} == {
+        "executor.codex_cli",
+        "vm.runtime_validation_commands or task.vm_verification",
+    }
+    assert all(signal["feedback_dimension"] == "capability_gap" for signal in missing_capability_signals)
+    assert all(signal["affected_ticket_family"] == "JORB-INFRA" for signal in missing_capability_signals)
+    assert all(signal["evidence_links"] == [str(builder_root / "run_ledger.json")] for signal in missing_capability_signals)
+
+
+def test_feedback_generates_backlog_proposal_from_current_blocked_run_ledger_runtime_outcome(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-032", area="builder", allowlist=["scripts/**"])
+    module = _load_feedback_module(builder_root)
+    _write_json(
+        builder_root / "run_ledger.json",
+        {
+            "current_task": "JORB-INFRA-032",
+            "current_stage": "judge",
+            "run_state": "blocked",
+            "current_blocker": "Phase 4 artifact enforcement failed: compiled_feature_spec.md, proposal.md",
+            "events": [
+                {
+                    "at": "2026-03-30T00:00:00+00:00",
+                    "task_id": "JORB-INFRA-032",
+                    "run_state": "blocked",
+                    "stage_name": "judge",
+                    "detail": "Phase 4 artifact enforcement failed: compiled_feature_spec.md, proposal.md",
+                }
+            ],
+        },
+    )
+
+    payload = module.generate_backlog_proposals(builder_root, dry_run=False)
+    runtime_proposals = [
+        proposal for proposal in payload["proposals"]["proposals"] if proposal["source_signal_id"].startswith("sig-")
+    ]
+
+    assert runtime_proposals
+    proposal = runtime_proposals[0]
+    assert proposal["affected_ticket_family"] == "JORB-INFRA"
+    assert proposal["proposed_action_type"] == "add_missing_acceptance_criteria"
+    assert proposal["priority_recommendation"] == "high"
+    assert proposal["evidence_links"] == [str(builder_root / "run_ledger.json")]
+
 def test_feedback_operator_review_status_transitions_persist_to_memory(tmp_path: Path) -> None:
     builder_root, _, _, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-031", area="builder", allowlist=["scripts/**"])
     module = _load_feedback_module(builder_root)

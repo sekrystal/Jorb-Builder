@@ -83,6 +83,10 @@ def classify_feedback_interpretation(
         dimension = "evaluation"
         gap = "Validation coverage is not proving the behavior that regressed."
         corrective_work = "Add or tighten evaluation coverage before accepting similar work again."
+    elif normalized_signal_type == "missing_capability" or normalized_issue.startswith("missing_capability") or lower_observation.startswith("missing automation configuration:"):
+        dimension = "capability_gap"
+        gap = "Required automation capability or task contract is missing, so the backlog cannot converge through bounded execution."
+        corrective_work = "Add or refine a targeted builder task that supplies the missing capability and the proof path for it."
     elif "artifact" in normalized_issue or normalized_signal_type == "artifact_gap":
         dimension = "artifact_enforcement"
         gap = "Required builder artifacts are incomplete or missing evidence needed for acceptance."
@@ -196,6 +200,82 @@ def _history_signal_groups(root: Path | None = None) -> dict[tuple[str, str, str
     return grouped
 
 
+def _run_ledger_payload(root: Path | None = None) -> dict[str, Any]:
+    repo_root = Path(root or ROOT)
+    return _safe_load(repo_root / "run_ledger.json", {})
+
+
+def _normalize_issue_token(value: str) -> str:
+    normalized = "".join(char if char.isalnum() else "_" for char in value.lower())
+    normalized = normalized.strip("_")
+    while "__" in normalized:
+        normalized = normalized.replace("__", "_")
+    return normalized or "unknown"
+
+
+def _parse_missing_configuration_items(detail: str) -> list[str]:
+    prefix = "Missing automation configuration:"
+    if not detail.startswith(prefix):
+        return []
+    missing = detail[len(prefix) :].strip()
+    if not missing:
+        return []
+    return [item.strip() for item in missing.split(",") if item.strip()]
+
+
+def _run_ledger_signal_groups(root: Path | None = None) -> dict[tuple[str, str, str], list[dict[str, Any]]]:
+    repo_root = Path(root or ROOT)
+    payload = _run_ledger_payload(repo_root)
+    grouped: dict[tuple[str, str, str], list[dict[str, Any]]] = defaultdict(list)
+    ledger_path = str(repo_root / "run_ledger.json")
+    entries = list(payload.get("events") or [])
+    if payload.get("current_task") and payload.get("run_state") in {"blocked", "preflight_failed"}:
+        entries.append(
+            {
+                "at": payload.get("updated_at") or payload.get("generated_at") or now_iso(),
+                "task_id": payload.get("current_task"),
+                "run_state": payload.get("run_state"),
+                "stage_name": payload.get("current_stage") or "unknown",
+                "detail": payload.get("current_blocker") or payload.get("next_recommended_action") or "",
+                "_current": True,
+            }
+        )
+    for entry in entries:
+        task_id = str(entry.get("task_id") or payload.get("current_task") or "").strip()
+        if not task_id:
+            continue
+        family = task_family(task_id)
+        detail = str(entry.get("detail") or "").strip()
+        if not detail:
+            continue
+        run_state = str(entry.get("run_state") or "").strip().lower()
+        current = bool(entry.get("_current"))
+        evidence_entry = {
+            "task_id": task_id,
+            "run_state": run_state,
+            "stage_name": str(entry.get("stage_name") or "").strip(),
+            "detail": detail,
+            "evidence_link": ledger_path,
+            "current": current,
+        }
+        missing_items = _parse_missing_configuration_items(detail)
+        if missing_items:
+            for item in missing_items:
+                grouped[("missing_capability", family, _normalize_issue_token(item))].append(
+                    {
+                        **evidence_entry,
+                        "missing_item": item,
+                    }
+                )
+            continue
+        if detail.startswith("Phase 4 artifact enforcement failed:"):
+            grouped[("runtime_outcome", family, "phase4_artifact_enforcement_failed")].append(evidence_entry)
+            continue
+        if run_state in {"blocked", "preflight_failed"}:
+            grouped[("runtime_outcome", family, _normalize_issue_token(detail)[:80])].append(evidence_entry)
+    return grouped
+
+
 def _signal_from_group(kind: str, family: str, label: str, items: list[dict[str, Any]]) -> dict[str, Any] | None:
     recurrence = len(items)
     severe = kind in {"preflight_failure", "eval_regression"} and recurrence >= 1
@@ -247,6 +327,65 @@ def _signal_from_group(kind: str, family: str, label: str, items: list[dict[str,
     }
 
 
+def _signal_from_run_ledger_group(kind: str, family: str, label: str, items: list[dict[str, Any]]) -> dict[str, Any] | None:
+    recurrence = len(items)
+    latest = items[-1]
+    severe = any(item.get("current") for item in items) or latest.get("run_state") in {"blocked", "preflight_failed"}
+    if recurrence < 2 and not severe:
+        return None
+    evidence_links: list[str] = []
+    for item in items:
+        link = str(item.get("evidence_link") or "")
+        if link and link not in evidence_links:
+            evidence_links.append(link)
+    observations: list[str] = []
+    for item in items[-3:]:
+        detail = str(item.get("detail") or "").strip()
+        if detail and detail not in observations:
+            observations.append(detail)
+    observation = "; ".join(observations)
+
+    if kind == "missing_capability":
+        missing_item = str(latest.get("missing_item") or label).strip()
+        interpreted_issue = f"missing_capability_{label}"
+        proposed_action = "refine_existing_ticket"
+    else:
+        interpreted_issue = label
+        proposed_action = "add_missing_acceptance_criteria" if label == "phase4_artifact_enforcement_failed" else "create_follow_up_hardening_ticket"
+
+    interpretation = classify_feedback_interpretation(
+        observation=observation or str(latest.get("detail") or ""),
+        interpreted_issue=interpreted_issue,
+        proposed_action=proposed_action,
+        signal_type=kind,
+        subsystem=family.lower(),
+    )
+    signal = {
+        "signal_id": _signal_id(kind, f"{family}:{label}"),
+        "signal_type": kind,
+        "raw_observation": observation or str(latest.get("detail") or ""),
+        "interpreted_issue": interpreted_issue,
+        "confidence": _confidence_from_recurrence(recurrence, severe=severe),
+        "evidence_links": evidence_links,
+        "affected_ticket_family": family,
+        "affected_subsystem": family.lower(),
+        "proposed_action_type": proposed_action,
+        "observation": observation or str(latest.get("detail") or ""),
+        "inference": f"Canonical run ledger recorded {recurrence} blocked runtime outcome(s) for {family}.",
+        "recommendation": f"Refine backlog handling for the observed {family} runtime evidence.",
+        "recurrence_count": recurrence,
+        "severity": "high" if severe else "medium",
+        "source_artifacts": evidence_links,
+        "created_at": now_iso(),
+        "status": "active",
+        **interpretation,
+    }
+    if kind == "missing_capability":
+        signal["missing_capability"] = missing_item
+        signal["recommendation"] = f"Add or refine backlog work for the missing automation capability: {missing_item}."
+    return signal
+
+
 def render_feedback_interpretation(signals_payload: dict[str, Any], proposals_payload: dict[str, Any]) -> str:
     signals = list(signals_payload.get("signals", []))
     proposals = list(proposals_payload.get("proposals", []))
@@ -296,6 +435,10 @@ def build_feedback_signals(root: Path | None = None) -> dict[str, Any]:
         signals.append(normalize_operator_feedback(entry))
     for (kind, family, label), items in _history_signal_groups(repo_root).items():
         signal = _signal_from_group(kind, family, label, items)
+        if signal is not None:
+            signals.append(signal)
+    for (kind, family, label), items in _run_ledger_signal_groups(repo_root).items():
+        signal = _signal_from_run_ledger_group(kind, family, label, items)
         if signal is not None:
             signals.append(signal)
     signals.sort(key=lambda item: (float(item.get("confidence") or 0.0), int(item.get("recurrence_count") or 0)), reverse=True)
