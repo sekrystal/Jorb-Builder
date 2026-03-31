@@ -512,6 +512,27 @@ def _apply_product_facing_ux_fields(task: dict, *, mapping: list[str] | None = N
     ]
 
 
+def _apply_product_contract_fields(
+    task: dict,
+    *,
+    contract: str | None = None,
+    layers: list[str] | None = None,
+    misleading: list[str] | None = None,
+    not_done_until: list[str] | None = None,
+) -> None:
+    task["product_contract"] = contract or "Search must behave correctly end to end for the user, not just in the visible list shell."
+    task["systemic_layers"] = layers or ["ui", "backend", "persistence", "empty_state"]
+    task["misleading_partial_implementations"] = misleading or [
+        "declaring success after only the client-side visible search was patched",
+        "keeping UI controls that imply backend semantics that are still missing",
+    ]
+    task["not_done_until"] = not_done_until or [
+        "backend and UI semantics match",
+        "persistence survives refresh when the flow implies durability",
+        "empty and zero-result states are explicit and validated",
+    ]
+
+
 def _progress_events(run_dir: Path) -> list[dict]:
     return [json.loads(line) for line in (run_dir / "progress.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
 
@@ -771,6 +792,9 @@ def _setup_builder_fixture(tmp_path: Path, *, task_id: str, area: str, allowlist
                 "",
                 "UX conformance requirements:",
                 "{ux_conformance_requirements}",
+                "",
+                "Product contract completeness requirements:",
+                "{product_contract_requirements}",
                 "",
                 "Failure summary:",
                 "{failure_summary}",
@@ -4794,6 +4818,228 @@ def test_render_packet_emits_role_specific_memory_bundles_and_bounded_prompt_con
     assert "repo skill: phase4_enforcement => require planner/architect/judge artifacts and evidence before acceptance." in prompt_text
 
 
+def test_render_packet_emits_product_contract_requirements_for_product_tasks(tmp_path: Path) -> None:
+    builder_root, _, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="JORB-V2-999",
+        area="backend",
+        allowlist=["api/**", "services/**"],
+    )
+
+    result = _run([sys.executable, str(SCRIPT.parent / "render_packet.py")], builder_root)
+
+    assert result.returncode == 0
+    active = _json(builder_root / "active_task.yml")
+    prompt_text = Path(active["prompt_file"]).read_text(encoding="utf-8")
+    assert "Product contract completeness requirements:" in prompt_text
+    assert "Product contract: obj" in prompt_text
+    assert "Systemic layers that must be audited before calling the task done:" in prompt_text
+    assert "For product tasks, section 1 of the final response must include labeled lines for:" in prompt_text
+    assert "  - Product Contract:" in prompt_text
+    assert "  - Layers Audited:" in prompt_text
+    assert "  - Misleading Partials Avoided:" in prompt_text
+    assert "  - Not Done Until:" in prompt_text
+    assert "  - Remaining Gaps:" in prompt_text
+
+
+def test_product_task_contract_conformance_detects_missing_labels_and_layers(tmp_path: Path) -> None:
+    builder_root, product_repo, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="backend",
+        allowlist=["api/**", "services/**"],
+    )
+    module = _load_script_module(builder_root)
+    task = {
+        "id": "TASK-PRODUCT",
+        "title": "TASK-PRODUCT",
+        "area": "backend",
+        "repo_path": str(product_repo),
+        "systemic_layers": ["ui", "backend", "persistence"],
+    }
+
+    conformance = module.product_contract_conformance_result(task, "1. Concise summary of exactly what changed\n")
+
+    assert conformance["passed"] is False
+    assert "response.product_contract" in conformance["missing_response_fields"]
+    assert "ui" in conformance["missing_layers"]
+
+
+def test_product_task_contract_conformance_accepts_with_expected_layers(tmp_path: Path) -> None:
+    builder_root, product_repo, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="backend",
+        allowlist=["api/**", "services/**"],
+    )
+    module = _load_script_module(builder_root)
+    task = {
+        "id": "TASK-PRODUCT",
+        "title": "TASK-PRODUCT",
+        "area": "backend",
+        "repo_path": str(product_repo),
+        "systemic_layers": ["ui", "backend", "persistence", "empty_state"],
+    }
+
+    conformance = module.product_contract_conformance_result(
+        task,
+        (
+            "1. Concise summary of exactly what changed\n"
+            "Product Contract: Search behaves correctly end to end across UI, backend, persistence, and empty-state handling.\n"
+            "Layers Audited: ui, backend, persistence, empty_state\n"
+            "Misleading Partials Avoided: did not stop at a UI-only patch or leave persistence semantics mismatched\n"
+            "Not Done Until: backend and UI semantics match; persistence survives refresh; empty states are explicit\n"
+            "Remaining Gaps: none beyond unproven live traffic behavior\n"
+        ),
+    )
+
+    assert conformance["passed"] is True
+    assert conformance["missing_layers"] == []
+    assert conformance["product_contract"] == "Search behaves correctly end to end across UI, backend, persistence, and empty-state handling."
+
+
+def test_code_review_result_detects_missing_review_labels(tmp_path: Path) -> None:
+    builder_root, product_repo, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="backend",
+        allowlist=["api/**", "services/**"],
+    )
+    module = _load_script_module(builder_root)
+    task = {
+        "id": "TASK-PRODUCT",
+        "title": "TASK-PRODUCT",
+        "area": "backend",
+        "repo_path": str(product_repo),
+    }
+
+    review = module.parse_code_review_result(task, "Review Verdict: accept\n")
+
+    assert review["passed"] is False
+    assert "response.review_summary" in review["missing_response_fields"]
+    assert "backend/UI semantic mismatch" in review["required_focus"]
+
+
+def test_code_review_gate_refines_accepted_run_when_review_fails(tmp_path: Path) -> None:
+    builder_root, product_repo, _, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="backend",
+        allowlist=["api/**", "services/**"],
+    )
+    module = _load_script_module(builder_root)
+    task = {
+        "id": "TASK-PRODUCT",
+        "title": "TASK-PRODUCT",
+        "area": "backend",
+        "repo_path": str(product_repo),
+    }
+    review = module.parse_code_review_result(
+        task,
+        (
+            "Review Verdict: refine\n"
+            "Review Summary: Backend and UI search semantics still diverge.\n"
+            "Review Findings: UI query flow still bypasses backend contract on one path\n"
+            "Review Recommendation: Unify the remaining query path before accepting.\n"
+            "Review Focus: backend/UI semantic mismatch; empty/loading/error-state incompleteness\n"
+        ),
+    )
+    steps: list[dict[str, object]] = []
+
+    classification, summary = module.apply_code_review_gate(
+        classification="accepted",
+        summary="accepted before review",
+        review_result=review,
+        steps=steps,
+    )
+
+    assert classification == "refined"
+    assert summary == "Backend and UI search semantics still diverge."
+    assert any(step["name"] == "code_review" and step["outcome"] == "refined" for step in steps)
+
+
+def test_private_eval_product_contract_completeness_blocks_narrow_partial(tmp_path: Path) -> None:
+    builder_root, _, run_dir, _ = _setup_builder_fixture(
+        tmp_path,
+        task_id="TASK-PRODUCT",
+        area="backend",
+        allowlist=["api/**", "services/**"],
+    )
+    module = _load_private_eval_module(builder_root)
+    fixture = {
+        "fixture_id": "product_contract_v1",
+        "fixture_family": "product_contract",
+        "description": "product completeness",
+        "selector": {"area": "backend"},
+        "mandatory_artifacts": [],
+        "rubric_dimensions": [
+            {"name": "product_contract_completeness", "weight": 1.0, "threshold": 0.8, "description": "contract"},
+        ],
+        "pass_threshold": 0.8,
+    }
+    task = {
+        "id": "TASK-PRODUCT",
+        "title": "Search contract",
+        "area": "backend",
+        "repo_path": str(builder_root.parent / "jorb"),
+        "systemic_layers": ["ui", "backend", "persistence"],
+    }
+    standards = {"agents_exists": True, "skills_exists": True}
+    clean_subject = module.build_eval_subject(
+        task,
+        {
+            "classification": "accepted",
+            "summary": "complete",
+            "steps": [],
+            "changed_files": ["api/routes/search.py"],
+            "product_contract_conformance": {
+                "required": True,
+                "passed": True,
+                "product_contract": "Search is correct end to end.",
+                "layers_audited": "ui, backend, persistence",
+                "misleading_partials_avoided": "avoided UI-only patch",
+                "not_done_until": "backend and persistence match",
+                "remaining_gaps": "none",
+                "missing_response_fields": [],
+                "missing_layers": [],
+            },
+        },
+        run_dir=run_dir,
+        standards=standards,
+    )
+    narrow_subject = module.build_eval_subject(
+        task,
+        {
+            "classification": "accepted",
+            "summary": "narrow",
+            "steps": [],
+            "changed_files": ["ui/screens/jobs.py"],
+            "product_contract_conformance": {
+                "required": True,
+                "passed": False,
+                "product_contract": "Search is correct end to end.",
+                "layers_audited": "ui",
+                "misleading_partials_avoided": "none",
+                "not_done_until": "none",
+                "remaining_gaps": "backend semantics still unproven",
+                "missing_response_fields": [],
+                "missing_layers": ["backend", "persistence"],
+            },
+        },
+        run_dir=run_dir,
+        standards=standards,
+    )
+
+    clean = module.score_fixture_subject(fixture, clean_subject)
+    narrow = module.score_fixture_subject(fixture, narrow_subject)
+
+    assert clean["scores"]["product_contract_completeness"] == 1.0
+    assert narrow["scores"]["product_contract_completeness"] < clean["scores"]["product_contract_completeness"]
+    assert clean["passed"] is True
+    assert narrow["passed"] is False
+    assert narrow["dimension_failures"] == ["product_contract_completeness"]
+
+
 def test_memory_controls_can_supersede_and_pin_entries(tmp_path: Path) -> None:
     builder_root, _, _, _ = _setup_builder_fixture(
         tmp_path,
@@ -7290,7 +7536,7 @@ def test_operator_snapshot_ready_task_does_not_inherit_previous_run_truth(tmp_pa
         "\n".join(
             [
                 json.dumps({"timestamp": "2026-03-31T00:00:00+00:00", "task_id": "JORB-INFRA-030", "stage_index": 1, "stage_name": "Task selected", "state": "running", "detail": "selected"}),
-                json.dumps({"timestamp": "2026-03-31T00:00:02+00:00", "task_id": "JORB-INFRA-030", "stage_index": 9, "stage_name": "Classification", "state": "completed", "detail": "accepted"}),
+                json.dumps({"timestamp": "2026-03-31T00:00:02+00:00", "task_id": "JORB-INFRA-030", "stage_index": 10, "stage_name": "Classification", "state": "completed", "detail": "accepted"}),
             ]
         )
         + "\n",
@@ -7314,6 +7560,75 @@ def test_operator_snapshot_ready_task_does_not_inherit_previous_run_truth(tmp_pa
     assert stages["selected"] == "pending"
     assert stages["execution_started"] == "pending"
     assert stages["terminal"] == "pending"
+
+
+def test_operator_snapshot_surfaces_review_result_and_review_stage(tmp_path: Path) -> None:
+    builder_root, _, run_dir, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    module = _load_operator_state_module(builder_root)
+    _write_json(
+        run_dir / "automation_result.json",
+        {
+            "task_id": "JORB-INFRA-030",
+            "classification": "accepted",
+            "summary": "accepted",
+            "review_result": {
+                "required": True,
+                "passed": True,
+                "verdict": "accepted",
+                "summary": "Codex review found no blocking regressions.",
+            },
+            "steps": [],
+        },
+    )
+    (run_dir / "progress.jsonl").write_text(
+        json.dumps(
+            {
+                "timestamp": "2026-03-31T00:00:02+00:00",
+                "task_id": "JORB-INFRA-030",
+                "stage_index": 10,
+                "stage_name": "Classification",
+                "state": "completed",
+                "detail": "accepted",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    snapshot = module.build_operator_snapshot(builder_root)
+
+    assert snapshot["review_result"]["verdict"] == "accepted"
+    review_stage = next(item for item in snapshot["stage_progress"] if item["key"] == "review")
+    assert review_stage["status"] == "complete"
+
+
+def test_show_status_and_tui_surface_review_outcome(tmp_path: Path) -> None:
+    builder_root, _, run_dir, _ = _setup_builder_fixture(tmp_path, task_id="JORB-INFRA-030", area="builder", allowlist=["scripts/**"])
+    tui = _load_operator_tui_module(builder_root)
+    state = _load_operator_state_module(builder_root)
+    _write_json(
+        run_dir / "automation_result.json",
+        {
+            "task_id": "JORB-INFRA-030",
+            "classification": "accepted",
+            "summary": "accepted",
+            "review_result": {
+                "required": True,
+                "passed": True,
+                "verdict": "accepted",
+                "summary": "Codex review found no blocking regressions.",
+            },
+            "steps": [],
+        },
+    )
+
+    snapshot = state.build_operator_snapshot(builder_root)
+    rendered = tui.render_operator_view(snapshot)
+    status_result = _run([sys.executable, str(SCRIPT.parent / "show_status.py")], builder_root)
+
+    assert "Review  : verdict=accepted passed=True" in rendered
+    assert "- review_verdict: accepted" in status_result.stdout
+    assert "- review_passed: True" in status_result.stdout
 
 
 def test_operator_snapshot_system_reality_describes_similarity_aware_retrieval(tmp_path: Path) -> None:

@@ -1,62 +1,6 @@
 {
   "events": [
     {
-      "at": "2026-03-31T01:56:50.527425+00:00",
-      "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
-      "run_state": "running",
-      "stage_name": "Preflight check",
-      "detail": "phase=local_validation | pid=2192 | elapsed=135s | timeout_remaining=Nones | command=pytest tests/test_automate_task_loop.py | poll=running"
-    },
-    {
-      "at": "2026-03-31T01:57:04.408559+00:00",
-      "task_id": "JORB-INFRA-010",
-      "run_state": "blocked",
-      "stage_name": "judge",
-      "detail": "Phase 4 artifact enforcement failed: compiled_feature_spec.md, proposal.md, tradeoff_matrix.md, research_brief.md, research_brief.md"
-    },
-    {
-      "at": "2026-03-31T01:57:04.567497+00:00",
-      "task_id": "JORB-INFRA-010",
-      "run_state": "blocked",
-      "stage_name": "judge",
-      "detail": "Phase 4 artifact enforcement failed: compiled_feature_spec.md:missing_machine_payload"
-    },
-    {
-      "at": "2026-03-31T01:57:05.625375+00:00",
-      "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
-      "run_state": "running",
-      "stage_name": "Preflight check",
-      "detail": "phase=local_validation | pid=2192 | elapsed=150s | timeout_remaining=Nones | command=pytest tests/test_automate_task_loop.py | poll=running"
-    },
-    {
-      "at": "2026-03-31T01:57:20.713336+00:00",
-      "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
-      "run_state": "running",
-      "stage_name": "Preflight check",
-      "detail": "phase=local_validation | pid=2192 | elapsed=165s | timeout_remaining=Nones | command=pytest tests/test_automate_task_loop.py | poll=running"
-    },
-    {
-      "at": "2026-03-31T01:57:27.016080+00:00",
-      "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
-      "run_state": "running",
-      "stage_name": "Git commit and push",
-      "detail": "Running git add/commit/push."
-    },
-    {
-      "at": "2026-03-31T01:57:29.323049+00:00",
-      "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
-      "run_state": "completed",
-      "stage_name": "Classification",
-      "detail": "Automated loop completed with builder-side local validation success."
-    },
-    {
-      "at": "2026-03-31T01:57:29.325610+00:00",
-      "task_id": "DRAFT-JORB-INFRA-PHASE4_ARTIFACT_ENFORCEMENT_FAILED",
-      "run_state": "accepted",
-      "stage_name": "classification",
-      "detail": "Automated loop completed with builder-side local validation success."
-    },
-    {
       "at": "2026-03-31T01:57:29.372841+00:00",
       "task_id": null,
       "run_state": "completed",
@@ -174,19 +118,76 @@
       "run_state": "idle",
       "stage_name": null,
       "detail": null
+    },
+    {
+      "at": "2026-03-31T20:50:07.311853+00:00",
+      "task_id": null,
+      "run_state": "idle",
+      "stage_name": null,
+      "detail": null
+    },
+    {
+      "at": "2026-03-31T20:50:18.863560+00:00",
+      "task_id": "JORB-INFRA-041",
+      "run_state": "task_selected",
+      "stage_name": null,
+      "detail": null
+    },
+    {
+      "at": "2026-03-31T20:50:19.018975+00:00",
+      "task_id": "JORB-INFRA-041",
+      "run_state": "preflight_passed",
+      "stage_name": null,
+      "detail": null
+    },
+    {
+      "at": "2026-03-31T20:50:19.069005+00:00",
+      "task_id": "JORB-INFRA-041",
+      "run_state": "running",
+      "stage_name": "Task selected",
+      "detail": "Task selected and state loaded."
+    },
+    {
+      "at": "2026-03-31T20:50:19.079543+00:00",
+      "task_id": "JORB-INFRA-041",
+      "run_state": "running",
+      "stage_name": "Codex prompt generated",
+      "detail": "Prompt file ready at /Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T205018Z/codex_prompt.md."
+    },
+    {
+      "at": "2026-03-31T20:50:19.193036+00:00",
+      "task_id": "JORB-INFRA-041",
+      "run_state": "failed",
+      "stage_name": "Applying changes",
+      "detail": "Builder repo is dirty before automated execution; refusing to continue."
+    },
+    {
+      "at": "2026-03-31T20:50:19.193755+00:00",
+      "task_id": "JORB-INFRA-041",
+      "run_state": "blocked",
+      "stage_name": "classification",
+      "detail": "Builder repo is dirty before automated execution; refusing to continue."
+    },
+    {
+      "at": "2026-03-31T20:50:19.219972+00:00",
+      "task_id": "JORB-INFRA-041",
+      "run_state": "blocked",
+      "stage_name": null,
+      "detail": "Builder repo is dirty before automated execution; refusing to continue."
     }
   ],
-  "updated_at": "2026-03-31T16:42:55.418107+00:00",
-  "current_task": null,
-  "current_title": null,
+  "updated_at": "2026-03-31T20:50:19.219963+00:00",
+  "current_task": "JORB-INFRA-041",
+  "current_title": "Operator TUI compact progress and technical detail toggle",
   "current_stage": null,
-  "run_state": "idle",
-  "current_blocker": null,
+  "run_state": "blocked",
+  "current_blocker": "Builder repo is dirty before automated execution; refusing to continue.",
   "last_successful_checkpoint": null,
   "artifact_completeness": {
-    "present": [],
+    "present": [
+      "compiled_feature_spec.md"
+    ],
     "missing": [
-      "compiled_feature_spec.md",
       "proposal.md",
       "tradeoff_matrix.md",
       "research_brief.md",
@@ -198,14 +199,14 @@
   "failure_taxonomy": null,
   "eval_result": null,
   "runtime_proof_summary": null,
-  "next_recommended_action": "Inspect backlog truth and rerun automation when ready.",
-  "run_log_dir": null,
+  "next_recommended_action": null,
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T205018Z-JORB-INFRA-041",
   "event": {
-    "at": "2026-03-31T16:42:55.418115+00:00",
-    "task_id": null,
-    "run_state": "idle",
+    "at": "2026-03-31T20:50:19.219972+00:00",
+    "task_id": "JORB-INFRA-041",
+    "run_state": "blocked",
     "stage_name": null,
-    "detail": null
+    "detail": "Builder repo is dirty before automated execution; refusing to continue."
   },
   "eval_blocked_acceptance": false
 }

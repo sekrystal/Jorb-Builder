@@ -19,7 +19,8 @@ Implementation constraints:
 - Make the smallest robust change set that satisfies the task.
 - Preserve existing working behavior unless this task explicitly changes it.
 - Keep hot paths deterministic and bounded.
-- Do not broaden scope.
+- Do not broaden beyond the explicit product or builder contract.
+- Do not narrow to the easiest visible layer if the task contract spans UI, backend, persistence, loading, empty-state, restore, or other cross-layer behavior.
 - Do not edit anything outside the target repo.
 {builder_edit_constraint}
 - If a test fails, fix it and rerun until green.
@@ -27,6 +28,9 @@ Implementation constraints:
 
 UX conformance requirements:
 {ux_conformance_requirements}
+
+Product contract completeness requirements:
+{product_contract_requirements}
 
 Deterministic acceptance criteria:
 {acceptance}

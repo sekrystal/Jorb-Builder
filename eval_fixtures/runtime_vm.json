@@ -34,9 +34,15 @@
     },
     {
       "name": "data_contract_compliance",
-      "weight": 0.16,
+      "weight": 0.12,
       "threshold": 0.7,
       "description": "Accepted runtime work should preserve contract checks."
+    },
+    {
+      "name": "product_contract_completeness",
+      "weight": 0.12,
+      "threshold": 0.75,
+      "description": "The final report must prove the full product contract rather than only the easiest visible layer."
     },
     {
       "name": "evidence_quality",

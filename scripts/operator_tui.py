@@ -268,6 +268,7 @@ def render_operator_view(
     backlog_diag = snapshot["backlog_diagnostics"]
     artifact = snapshot["artifact_panel"]
     eval_result = snapshot["eval_result"]
+    review_result = snapshot.get("review_result") or {}
     proposals = snapshot["proposals"]
     synthesis = snapshot["synthesis"]
     latest_blocker = snapshot["latest_blocker"] or {}
@@ -334,6 +335,9 @@ def render_operator_view(
     lines.append(f"Eval    : score={eval_result.get('overall_score', 'n/a')} threshold={eval_result.get('threshold', 'n/a')} passed={eval_result.get('passed', 'n/a')}")
     lines.append(f"Trajectory: {(eval_result.get('scores') or {}).get('trajectory_quality', 'n/a')}")
     lines.append(f"Judge   : {snapshot.get('judge_result') or 'none'}")
+    lines.append(f"Review  : verdict={review_result.get('verdict', 'n/a')} passed={review_result.get('passed', 'n/a')}")
+    if review_result.get("summary"):
+        lines.append(f"Review note: {review_result.get('summary')}")
     lines.append("")
     lines.append("Queue and backlog evolution")
     lines.append("-" * min(width, 80))

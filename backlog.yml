@@ -150,7 +150,21 @@
         "targeted tests cover the new truth behavior",
         "preflight passes"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Ensure discovery status is a truthful source of latest completed-cycle state, even for zero-yield runs. The product is not complete unless these user-visible semantics hold: latest completed discovery cycle metrics are visible even when discovery yields zero; latest planner/openai/discovery truth is sourced from persisted latest relevant rows rather than a shallow recent window alone; targeted tests cover the new truth behavior; preflight passes.",
+      "systemic_layers": [
+        "backend",
+        "persistence"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability"
+      ]
     },
     {
       "id": "JORB-V1-002",
@@ -217,7 +231,27 @@
         "UI can render query-family diagnostics without touching /leads",
         "targeted tests and preflight pass"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Attribute discovery outcomes by query family from planner query through accepted result, candidate conversion, and expansion selection. The product is not complete unless these user-visible semantics hold: cycle_metrics contains query_family_metrics persisted from the latest cycle; discovery status exposes query family truth; UI can render query-family diagnostics without touching /leads; targeted tests and preflight pass.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-V1-003",
@@ -264,7 +298,23 @@
         "accepted ATS roots and careers pages remain supported",
         "targeted tests and preflight pass"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Make search provider failure modes explicit and add a bounded fallback path when primary provider output is only provider self-links. The product is not complete unless these user-visible semantics hold: provider_self_link-only output is treated as first-class provider failure; bounded failover or deterministic rewrite path is attempted and logged; accepted ATS roots and careers pages remain supported; targeted tests and preflight pass.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability"
+      ]
     },
     {
       "id": "JORB-V1-004",
@@ -311,7 +361,21 @@
         "expansion diagnostics make invalid or empty discovered surfaces obvious",
         "targeted tests and preflight pass"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Persist and expose clear stage boundaries for accepted results, candidate conversions, selected expansions, empty expansions, and yielded listings. The product is not complete unless these user-visible semantics hold: cycle metrics distinguish accepted results, candidates, selected expansions, empty expansions, and listings yielded; expansion diagnostics make invalid or empty discovered surfaces obvious; targeted tests and preflight pass.",
+      "systemic_layers": [
+        "backend",
+        "persistence"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability"
+      ]
     },
     {
       "id": "JORB-V1-005",
@@ -361,7 +425,27 @@
         "/leads hot path remains untouched",
         "targeted tests and preflight pass"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Expose runtime phase, operator hints, and latest success/failure summaries more clearly in API and UI. The product is not complete unless these user-visible semantics hold: runtime phase and operator hints are visible in API and UI; docs match the runtime model; /leads hot path remains untouched; targeted tests and preflight pass.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-V1-006",
@@ -409,7 +493,27 @@
         "profile data can be used by downstream search and scoring logic",
         "tests cover schema creation and update behavior"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Create the core structured user profile schema that will drive targeting, ranking, and recommendation logic without drifting into generic coaching behavior. The product is not complete unless these user-visible semantics hold: a durable user profile schema exists in the product repo; profile fields are explicit, editable, and versionable; profile data can be used by downstream search and scoring logic; tests cover schema creation and update behavior.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-V1-007",
@@ -471,7 +575,27 @@
         "parsing failures degrade gracefully and do not break onboarding",
         "tests cover successful and partial extraction behavior"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Add a working resume and PDF upload flow that parses documents into structured profile fields instead of storing opaque text blobs. The product is not complete unless these user-visible semantics hold: user can upload a resume or PDF through the interface; extraction populates structured profile fields; extraction output is reviewable and editable; parsing failures degrade gracefully and do not break onboarding; tests cover successful and partial extraction behavior.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-V1-008",
@@ -522,7 +646,27 @@
         "interface remains simple and comprehensible",
         "tests cover persistence and downstream usage"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Add onboarding fields for confirmed skills, competencies, and explicit preferences that write into the structured profile layer. The product is not complete unless these user-visible semantics hold: onboarding includes editable skill and competency inputs; preference fields persist correctly; profile updates affect downstream targeting inputs; interface remains simple and comprehensible; tests cover persistence and downstream usage.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-V1-009",
@@ -570,7 +714,27 @@
         "output of onboarding becomes structured search and scoring input",
         "tests cover onboarding state progression"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Build a minimal onboarding flow from resume upload through profile review into target role selection and discovery entry. The product is not complete unless these user-visible semantics hold: onboarding is linear, simple, and understandable; user can complete onboarding without dead ends; output of onboarding becomes structured search and scoring input; tests cover onboarding state progression.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-V1-010",
@@ -619,7 +783,27 @@
         "final score and explanation can be surfaced in UI and API",
         "tests cover score assembly and explanation structure"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Define a transparent recommendation score schema with explicit component metrics and traceable inputs. The product is not complete unless these user-visible semantics hold: a structured recommendation score schema exists; each component has clear semantics and traceable inputs; final score and explanation can be surfaced in UI and API; tests cover score assembly and explanation structure.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-V1-011",
@@ -668,7 +852,21 @@
         "recommendation explanations can cite freshness logic",
         "tests cover fresh, stale, and evergreen edge cases"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Add explicit freshness, staleness, and evergreen metrics to opportunity intelligence with inspectable logic. The product is not complete unless these user-visible semantics hold: listings are classified with freshness related metrics; evergreen likelihood is represented explicitly; recommendation explanations can cite freshness logic; tests cover fresh, stale, and evergreen edge cases.",
+      "systemic_layers": [
+        "backend",
+        "persistence"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability"
+      ]
     },
     {
       "id": "JORB-V1-012",
@@ -716,7 +914,27 @@
         "provenance shows user submitted versus system discovered",
         "tests cover ingestion and evaluation behavior"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Let users submit job links and run them through the same normalization and evaluation pipeline as discovered listings. The product is not complete unless these user-visible semantics hold: user can submit a job link manually; the job is normalized and scored through the same pipeline; provenance shows user submitted versus system discovered; tests cover ingestion and evaluation behavior.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-V1-013",
@@ -767,7 +985,21 @@
         "diagnostics can show dead weight versus productive families",
         "tests cover lineage persistence and retrieval"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Persist end-to-end discovery lineage from planner query family through expansion outcome and surfaced yield. The product is not complete unless these user-visible semantics hold: lineage from query family to expansion outcome is persisted; zero yield outcomes remain visible; diagnostics can show dead weight versus productive families; tests cover lineage persistence and retrieval.",
+      "systemic_layers": [
+        "backend",
+        "persistence"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability"
+      ]
     },
     {
       "id": "JORB-V1-014",
@@ -817,7 +1049,27 @@
         "UI renders action guidance clearly",
         "tests cover label selection and explanation output"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Add explicit action labels and compact explanations so surfaced roles come with decision-oriented guidance. The product is not complete unless these user-visible semantics hold: surfaced opportunities include action label and explanation; explanations use explicit score and signal components; UI renders action guidance clearly; tests cover label selection and explanation output.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-V1-015",
@@ -862,7 +1114,21 @@
         "outcomes and reasons persist cleanly",
         "tests cover lifecycle transitions and stored reason codes"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Expand the application tracker into a durable outcome dataset with lifecycle states, reasons, and notes. The product is not complete unless these user-visible semantics hold: tracker supports richer lifecycle states; outcomes and reasons persist cleanly; tests cover lifecycle transitions and stored reason codes.",
+      "systemic_layers": [
+        "backend",
+        "persistence"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability"
+      ]
     },
     {
       "id": "JORB-V1-016",
@@ -910,7 +1176,27 @@
         "system can generate targeted improvement recommendations",
         "tests cover parsing and recommendation mapping"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Add a feedback pipeline that maps structured rejection reasons into targeted, non-generic improvement recommendations. The product is not complete unless these user-visible semantics hold: user can record rejection feedback; feedback can be categorized into structured reason buckets; system can generate targeted improvement recommendations; tests cover parsing and recommendation mapping.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-V1-017",
@@ -959,7 +1245,27 @@
         "no outreach content or automation is produced",
         "tests cover import and matching logic"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Add local network-data import so JORB can suggest referral paths and contact adjacency without automating outreach. The product is not complete unless these user-visible semantics hold: user can import network data locally; system can connect companies to possible referral paths; no outreach content or automation is produced; tests cover import and matching logic.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-V1-018",
@@ -1005,7 +1311,27 @@
         "system distinguishes local versus cloud assisted paths",
         "tests cover inventory generation and basic export behavior"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Add a local data inventory surface so users can inspect stored data categories, provenance, and usage. The product is not complete unless these user-visible semantics hold: user can inspect local stored data categories and provenance; system distinguishes local versus cloud assisted paths; tests cover inventory generation and basic export behavior.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-INFRA-003",
@@ -1187,7 +1513,27 @@
         "generate_follow_up_tasks and other application-querying runtime flows behave safely on both old and current schemas",
         "targeted tests and preflight pass"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Make the live product work against existing SQLite databases even when applications table columns such as status_reason_code, outcome_code, and outcome_reason_code are missing. The product is not complete unless these user-visible semantics hold: existing SQLite databases without applications.status_reason_code, applications.outcome_code, or applications.outcome_reason_code no longer crash worker or UI runtime paths; there is a compatibility or migration path that safely upgrades or tolerates older databases; generate_follow_up_tasks and other application-querying runtime flows behave safely on both old and current schemas; targeted tests and preflight pass.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-V2-002",
@@ -1263,7 +1609,27 @@
         "the main screen is understandable without needing to understand builder, autonomy, or discovery internals",
         "targeted tests and preflight pass"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Reshape the primary UI so users see ranked opportunities and clear reasons first instead of internal control surfaces. The product is not complete unless these user-visible semantics hold: the default UI path shows jobs or opportunities first rather than internal diagnostic tabs; ranking signals and concise explanation are visible in the primary opportunity flow; the main screen is understandable without needing to understand builder, autonomy, or discovery internals; targeted tests and preflight pass.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-V2-003",
@@ -1341,7 +1707,27 @@
         "optional onboarding still writes into the structured profile layer cleanly when used",
         "targeted tests and preflight pass"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Keep the temporary Streamlit validation harness skippable enough for runtime proof without treating it as the long-term product onboarding architecture. The product is not complete unless these user-visible semantics hold: the temporary Streamlit validation harness does not force resume upload or LinkedIn import before users can reach the real-job validation path; streamlit-side onboarding remains clearly secondary to the underlying search-truth and real-job vertical slice work; optional onboarding still writes into the structured profile layer cleanly when used; targeted tests and preflight pass.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-V2-004",
@@ -1419,7 +1805,27 @@
         "the task does not broaden into treating Streamlit as the final production IA",
         "targeted tests and preflight pass"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Reduce internal or operator-facing clutter in the temporary Streamlit harness without treating Streamlit as the final product IA. The product is not complete unless these user-visible semantics hold: the temporary Streamlit harness keeps operator or diagnostic surfaces secondary to the real-job validation path; internal labels and navigation that are only meaningful to operators are demoted, collapsed, or clearly separated from user-facing validation flows; the task does not broaden into treating Streamlit as the final production IA; targeted tests and preflight pass.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-V2-005",
@@ -1475,7 +1881,27 @@
         "the product can distinguish between no-jobs-found reality and upstream provider failure clearly",
         "targeted tests and preflight pass"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Make discovery degrade gracefully when ATS queries or search discovery produce nothing, with a clear fallback order and scrape or parse fallback where appropriate. The product is not complete unless these user-visible semantics hold: search timeout and zero-yield conditions are classified clearly and surfaced in operator-visible diagnostics; discovery follows an explicit retry or fallback order rather than silently ending in zero results; scrape or parse fallback is attempted where appropriate when ATS or search discovery produces no usable jobs; the product can distinguish between no-jobs-found reality and upstream provider failure clearly; targeted tests and preflight pass.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-V2-006",
@@ -1554,6 +1980,20 @@
         "runtime validation distinguishes local test success from actual live product proof",
         "docs and smoke tooling reflect the minimum evidence required before future product acceptance",
         "targeted tests, preflight, and smoke checks pass"
+      ],
+      "product_contract": "Strengthen acceptance for product work so critical tickets require live runtime smoke proof, not only isolated local tests. The product is not complete unless these user-visible semantics hold: acceptance-critical product tasks define explicit live smoke checks covering API, worker, and primary UI path where relevant; runtime validation distinguishes local test success from actual live product proof; docs and smoke tooling reflect the minimum evidence required before future product acceptance; targeted tests, preflight, and smoke checks pass.",
+      "systemic_layers": [
+        "backend",
+        "persistence"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability"
       ]
     },
     {
@@ -1603,7 +2043,27 @@
         "warning cleanup does not regress runtime behavior or broaden into unrelated refactors",
         "targeted tests and preflight pass"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Clean up repeated datetime.utcnow deprecation warnings in active UI and runtime paths without broadening scope beyond targeted Phase 2 polish. The product is not complete unless these user-visible semantics hold: datetime.utcnow deprecation warnings are removed from the targeted active UI and runtime paths touched by Phase 2 work; warning cleanup does not regress runtime behavior or broaden into unrelated refactors; targeted tests and preflight pass.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-V2-008",
@@ -1658,7 +2118,27 @@
         "runtime behavior makes it clear which profile constraints were applied versus defaulted",
         "targeted tests and preflight pass"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Add backend profile support for preferred geographies, remote or hybrid or onsite preference, and target roles so search and ranking can be materially constrained even when the UI is still evolving. The product is not complete unless these user-visible semantics hold: backend profile state explicitly supports preferred geographies or locations, remote or hybrid or onsite preference, and target roles; search and ranking materially use those constraints when present, with graceful defaults when profile data is missing; changing profile preferences changes the returned or ranked jobs in a provable runtime path; runtime behavior makes it clear which profile constraints were applied versus defaulted; targeted tests and preflight pass.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-V2-009",
@@ -1715,7 +2195,27 @@
         "unsupported or disabled sources are explicit rather than hidden behind generic zero-yield behavior",
         "targeted tests and preflight pass"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Make it explicit in code and runtime behavior which discovery sources are truly live and trustworthy today, including Greenhouse, Ashby, search-driven scraping, X search, user-supplied links, and existing source toggles. The product is not complete unless these user-visible semantics hold: the product exposes a truthful source matrix covering greenhouse, ashby, search_web or scraping fallback, X search, user-supplied links, and relevant source toggles; each source in that matrix is explicitly classified as working, partially working, or not working; runtime behavior matches the declared source truth instead of silently implying unsupported coverage; unsupported or disabled sources are explicit rather than hidden behind generic zero-yield behavior; targeted tests and preflight pass.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-V2-010",
@@ -1770,7 +2270,27 @@
         "runtime discovery can surface useful jobs from the new slice without regressing existing ATS paths",
         "targeted tests and preflight pass"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Add a realistic first implementation slice of broader discovery sources beyond the current ATS assumptions, such as YC Jobs, 80,000 Hours, or general posting-page discovery where feasible. The product is not complete unless these user-visible semantics hold: at least one broader non-ATS source such as YC Jobs or 80,000 Hours is supported end to end in a bounded, testable way; the product clearly stages or rejects additional sources it does not yet support instead of implying universal coverage; runtime discovery can surface useful jobs from the new slice without regressing existing ATS paths; targeted tests and preflight pass.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-V2-011",
@@ -1826,7 +2346,27 @@
         "zero-yield outcomes stay visible instead of disappearing into aggregate counts alone",
         "targeted tests and preflight pass"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Expose which sources ran, failed, returned zero results, and produced surfaced jobs so both runtime debugging and later UX work can rely on truthful source-yield visibility. The product is not complete unless these user-visible semantics hold: runtime and product surfaces can show which sources ran, failed, returned zero results, or produced surfaced jobs; source-health visibility is usable both for debugging and for the eventual user-facing jobs experience; zero-yield outcomes stay visible instead of disappearing into aggregate counts alone; targeted tests and preflight pass.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-V2-012",
@@ -1885,7 +2425,27 @@
         "running without crashing is not sufficient for acceptance",
         "the product must surface real jobs in the UI as the basis for acceptance"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Force product reality by proving that at least one truly working discovery source can surface real jobs in the VM UI with score, explanation, and source provenance. The product is not complete unless these user-visible semantics hold: at least one truly working source produces real, non-mocked jobs that appear in the product UI in the VM runtime environment; each visible job in the validated slice includes title, company, match score, explanation, and source or source provenance where feasible; passing tests alone is not sufficient for acceptance; running without crashing is not sufficient for acceptance; the product must surface real jobs in the UI as the basis for acceptance.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-V2-013",
@@ -1964,7 +2524,27 @@
         "the relationship between the JS front end and the existing Streamlit harness is explicit",
         "targeted tests and preflight pass"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Introduce the production JS front end shell, routing, API integration pattern, and local development flow grounded in the current repo and backend. The product is not complete unless these user-visible semantics hold: a production JS front end shell exists with a realistic framework choice, routing or page structure, and backend API integration approach; local development setup is documented and wired to the existing backend; the relationship between the JS front end and the existing Streamlit harness is explicit; targeted tests and preflight pass.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-V2-014",
@@ -2048,7 +2628,27 @@
         "job cards and detail state preserve title, company, score, explanation, and source provenance where available",
         "targeted tests and preflight pass"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Implement the real Jobs screen in the JS front end using the Figma design as source of truth and wiring it to real backend data. The product is not complete unless these user-visible semantics hold: the JS front end implements the Figma jobs screen including sidebar, jobs top bar, job list, job cards, detail panel or drawer, and loading and empty states; the jobs screen is wired to real backend data rather than mocked cards; job cards and detail state preserve title, company, score, explanation, and source provenance where available; targeted tests and preflight pass.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-V2-015",
@@ -2127,7 +2727,27 @@
         "users can reach the jobs flow quickly without being forced through heavyweight setup",
         "targeted tests and preflight pass"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Implement lightweight profile and skippable onboarding in the JS front end so profile preferences materially help search without blocking first value. The product is not complete unless these user-visible semantics hold: the JS front end supports lightweight, skippable onboarding and profile editing; profile preferences for geography, work mode, and target roles are clearly useful to search and ranking; users can reach the jobs flow quickly without being forced through heavyweight setup; targeted tests and preflight pass.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-V2-016",
@@ -2206,7 +2826,27 @@
         "the tracker surfaces integrate coherently with the real jobs flow",
         "targeted tests and preflight pass"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Make Saved and Applied flows first-class surfaces in the JS front end instead of leaving tracker behavior stranded in backend or temporary harness views. The product is not complete unless these user-visible semantics hold: the JS front end exposes Saved and Applied surfaces as first-class product flows; tracker state changes are wired to real backend data rather than static UI placeholders; the tracker surfaces integrate coherently with the real jobs flow; targeted tests and preflight pass.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-V2-017",
@@ -2285,7 +2925,23 @@
         "docs and runtime guidance make the transition explicit",
         "targeted tests and preflight pass"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Make the JS front end the primary product path and demote Streamlit to internal validation, debugging, or operator use only. The product is not complete unless these user-visible semantics hold: the JS front end is the explicit primary product path; Streamlit is demoted to internal validation, debugging, or operator use rather than the default product shell; docs and runtime guidance make the transition explicit; targeted tests and preflight pass.",
+      "systemic_layers": [
+        "ui",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-INFRA-006",
@@ -2421,7 +3077,27 @@
         "Saved, Applied, and Profile remain understandable in the temporary harness",
         "acceptance requires live runtime review of the jobs-first shell and not tests alone"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Make the temporary Streamlit harness minimally suitable for product validation by keeping jobs clearly primary and moving internal or diagnostic surfaces out of the main user-facing shell. The product is not complete unless these user-visible semantics hold: the temporary Streamlit harness keeps the jobs list clearly primary on the main screen; Add job link is removed from the dominant top-of-screen position or otherwise demoted so it does not overshadow jobs; operator or debug surfaces such as discovery source matrix, discovery internals, learning, autonomy ops, agent activity, investigations, diagnostics, and admin controls are absent from the primary user-facing shell; lightweight user-facing status remains available without turning the main shell into an operator console; Saved, Applied, and Profile remain understandable in the temporary harness; acceptance requires live runtime review of the jobs-first shell and not tests alone.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-V2-019",
@@ -2471,7 +3147,23 @@
         "Discovery logic consumes SearchIntent",
         "Changing profile inputs changes discovery queries or filtering behavior"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Create a canonical SearchIntent derived from user profile inputs and pass it into all discovery planning and ranking stages. The product is not complete unless these user-visible semantics hold: SearchIntent structure exists and is persisted or constructed consistently; Discovery logic consumes SearchIntent; Changing profile inputs changes discovery queries or filtering behavior.",
+      "systemic_layers": [
+        "backend",
+        "persistence",
+        "data_contract"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "API and stored data semantics match the intended product behavior"
+      ]
     },
     {
       "id": "JORB-V2-020",
@@ -2521,7 +3213,23 @@
         "No direct job extraction in planner layer",
         "Plans include role + location combinations"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Implement planners that generate structured discovery plans instead of directly fetching jobs. The product is not complete unless these user-visible semantics hold: Planners output structured query plans; No direct job extraction in planner layer; Plans include role + location combinations.",
+      "systemic_layers": [
+        "backend",
+        "persistence",
+        "data_contract"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "API and stored data semantics match the intended product behavior"
+      ]
     },
     {
       "id": "JORB-V2-021",
@@ -2571,7 +3279,23 @@
         "Search produces candidate URLs",
         "Parser extracts job links from at least one page type"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Implement workers that execute discovery plans across ATS resolution, search-based URL discovery, and page parsing. The product is not complete unless these user-visible semantics hold: At least one ATS source returns real job listings; Search produces candidate URLs; Parser extracts job links from at least one page type.",
+      "systemic_layers": [
+        "backend",
+        "persistence",
+        "data_contract"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "API and stored data semantics match the intended product behavior"
+      ]
     },
     {
       "id": "JORB-V2-022",
@@ -2618,7 +3342,23 @@
         "All sources map to canonical schema",
         "Required fields present: URL, company, title, location"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Normalize all raw job candidates into a single canonical schema. The product is not complete unless these user-visible semantics hold: All sources map to canonical schema; Required fields present: URL, company, title, location.",
+      "systemic_layers": [
+        "backend",
+        "persistence",
+        "data_contract"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "API and stored data semantics match the intended product behavior"
+      ]
     },
     {
       "id": "JORB-V2-023",
@@ -2667,7 +3407,23 @@
         "Invalid or dead links filtered",
         "Stale jobs flagged or excluded"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Add verification steps including liveness, freshness, canonical URL resolution, and duplicate detection. The product is not complete unless these user-visible semantics hold: Duplicate jobs removed; Invalid or dead links filtered; Stale jobs flagged or excluded.",
+      "systemic_layers": [
+        "backend",
+        "persistence",
+        "data_contract"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "API and stored data semantics match the intended product behavior"
+      ]
     },
     {
       "id": "JORB-V2-024",
@@ -2716,7 +3472,23 @@
         "Explanations include at least role match and location fit",
         "Ranking changes when profile changes"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Score jobs based on profile fit and generate explanation fragments. The product is not complete unless these user-visible semantics hold: Jobs receive numeric score; Explanations include at least role match and location fit; Ranking changes when profile changes.",
+      "systemic_layers": [
+        "backend",
+        "persistence",
+        "data_contract"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "API and stored data semantics match the intended product behavior"
+      ]
     },
     {
       "id": "JORB-V2-025",
@@ -2767,7 +3539,23 @@
         "Zero-yield scenarios explicitly logged",
         "Source health status visible in logs or endpoint"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Track source usage, yield, failures, and fallback behavior. The product is not complete unless these user-visible semantics hold: Logs show sources attempted and results; Zero-yield scenarios explicitly logged; Source health status visible in logs or endpoint.",
+      "systemic_layers": [
+        "backend",
+        "persistence",
+        "data_contract"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "API and stored data semantics match the intended product behavior"
+      ]
     },
     {
       "id": "JORB-V2-026",
@@ -2834,7 +3622,27 @@
         "Jobs are ranked and include explanations",
         "Zero-yield case handled explicitly if it occurs"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "Deliver a full pipeline from profile to discovery to verification to ranking to UI with real jobs. The product is not complete unless these user-visible semantics hold: At least one real job appears in UI; Jobs are verified (no dead links); Jobs are ranked and include explanations; Zero-yield case handled explicitly if it occurs.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
+      ]
     },
     {
       "id": "JORB-V2-027",
@@ -2885,7 +3693,23 @@
         "Fallback produces additional candidates",
         "Integrated into normalization and verification pipeline"
       ],
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "product_contract": "When structured discovery yields no jobs, trigger fallback scraping and search-based extraction. The product is not complete unless these user-visible semantics hold: Fallback triggers when no jobs found; Fallback produces additional candidates; Integrated into normalization and verification pipeline.",
+      "systemic_layers": [
+        "backend",
+        "persistence",
+        "data_contract"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "API and stored data semantics match the intended product behavior"
+      ]
     },
     {
       "id": "JORB-V3-001",
@@ -2935,6 +3759,22 @@
         "Repaired from transient executor transport failure; task restored to ready for a fresh rerun.",
         "executor_transport_failure",
         "Automated loop completed with VM validation success."
+      ],
+      "product_contract": "Add a persisted SearchRun model that records every search attempt as an observable runtime object.",
+      "systemic_layers": [
+        "backend",
+        "persistence",
+        "data_contract"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "API and stored data semantics match the intended product behavior"
       ]
     },
     {
@@ -2988,6 +3828,22 @@
         "VM smoke validation failed after local validation and git push succeeded.",
         "VM bootstrap now aligns the UI port with runtime_self_check.sh so the next rerun should use a consistent smoke contract.",
         "Automated loop completed with VM validation success."
+      ],
+      "product_contract": "Expose the latest SearchRun over an API surface that the UI and runtime checks can consume.",
+      "systemic_layers": [
+        "backend",
+        "persistence",
+        "data_contract"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "API and stored data semantics match the intended product behavior"
       ]
     },
     {
@@ -3057,6 +3913,26 @@
         "Repaired from stale retry-without-changes state; no in-flight repo edits remain, so the task should rerun fresh from ready.",
         "executor_transport_failure",
         "Automated loop completed with VM validation success."
+      ],
+      "product_contract": "Render the latest SearchRun state in the primary jobs experience.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
       ]
     },
     {
@@ -3119,6 +3995,26 @@
       "product_facing_ux": true,
       "notes": [
         "Automated loop completed with VM validation success."
+      ],
+      "product_contract": "Replace any fake or premature empty state with SearchRun-driven truth.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
       ]
     },
     {
@@ -3167,6 +4063,26 @@
       "allow_noop_completion": false,
       "notes": [
         "Automated loop completed with VM validation success."
+      ],
+      "product_contract": "Add an explicit manual search trigger so the system can be validated end to end without hidden automation assumptions.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
       ]
     },
     {
@@ -3227,6 +4143,26 @@
       "notes": [
         "VM bootstrap failed after local validation and git push succeeded.",
         "Automated loop completed with VM validation success."
+      ],
+      "product_contract": "Prove SearchIntent to fetch to parse to normalize to store to display with real jobs in the VM.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
       ]
     },
     {
@@ -3291,6 +4227,26 @@
       "product_facing_ux": true,
       "notes": [
         "Automated loop completed with VM validation success."
+      ],
+      "product_contract": "Rewrite the primary jobs experience to match the Figma jobs-first hierarchy exactly.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
       ]
     },
     {
@@ -3354,6 +4310,26 @@
       "product_facing_ux": true,
       "notes": [
         "Automated loop completed with VM validation success."
+      ],
+      "product_contract": "Implement the exact job card content and hierarchy from Figma.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
       ]
     },
     {
@@ -3418,6 +4394,26 @@
       "product_facing_ux": true,
       "notes": [
         "Automated loop completed with VM validation success."
+      ],
+      "product_contract": "Implement the user-facing filters panel aligned with the Figma jobs flow.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
       ]
     },
     {
@@ -3483,6 +4479,26 @@
       "product_facing_ux": true,
       "notes": [
         "Automated loop completed with VM validation success."
+      ],
+      "product_contract": "Purge internal system language and diagnostics from the primary user-facing UX.",
+      "systemic_layers": [
+        "ui",
+        "backend",
+        "persistence",
+        "loading_state",
+        "empty_state"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty, zero-result, and unavailable states are validated and non-misleading"
       ]
     },
     {
@@ -3532,6 +4548,22 @@
       "allow_noop_completion": false,
       "notes": [
         "Automated loop completed with VM validation success."
+      ],
+      "product_contract": "Make discovery truly multi-source so real job yield does not hinge on one brittle path.",
+      "systemic_layers": [
+        "backend",
+        "persistence",
+        "data_contract"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "API and stored data semantics match the intended product behavior"
       ]
     },
     {
@@ -3581,6 +4613,22 @@
       "allow_noop_completion": false,
       "notes": [
         "Automated loop completed with VM validation success."
+      ],
+      "product_contract": "Fall back to scraping when primary acquisition paths return zero useful jobs.",
+      "systemic_layers": [
+        "backend",
+        "persistence",
+        "data_contract"
+      ],
+      "misleading_partial_implementations": [
+        "declaring success after only the easiest visible layer was fixed",
+        "treating a UI-only patch as done when backend or persistence semantics still disagree",
+        "keeping a visible control that is still unwired, misleading, or not durable across refresh"
+      ],
+      "not_done_until": [
+        "backend semantics match the user-visible behavior instead of only patching presentation",
+        "state survives refresh or reload when the product implies durability",
+        "API and stored data semantics match the intended product behavior"
       ]
     },
     {
@@ -4830,7 +5878,7 @@
       "area": "builder",
       "milestone": "M8",
       "priority": 1,
-      "status": "ready",
+      "status": "blocked",
       "retries_used": 0,
       "depends_on": [
         "JORB-INFRA-039"
@@ -4855,7 +5903,10 @@
       ],
       "repo_path": "~/projects/jorb-builder",
       "description": "Make progress concise by default while preserving access to canonical technical detail.",
-      "allow_noop_completion": false
+      "allow_noop_completion": false,
+      "notes": [
+        "Builder repo is dirty before automated execution; refusing to continue."
+      ]
     },
     {
       "id": "JORB-INFRA-042",

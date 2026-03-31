@@ -23,7 +23,8 @@
     "step_outcomes": [],
     "changed_files_count": 0,
     "changed_files": [],
-    "unproven_runtime_gaps": []
+    "unproven_runtime_gaps": [],
+    "product_contract_conformance": {}
   },
   "unproven_runtime_gaps": []
 }

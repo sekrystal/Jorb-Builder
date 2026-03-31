@@ -29,6 +29,7 @@ SUPPORTED_DIMENSIONS = {
     "operator_handoff_quality",
     "ui_validation_quality",
     "data_contract_compliance",
+    "product_contract_completeness",
     "backlog_synthesis_quality",
 }
 RUN_DIR_TASK_ID_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{6}Z-(.+)$")
@@ -291,6 +292,18 @@ def _score_dimension(name: str, subject: dict[str, Any]) -> float:
         if accepted and local_step.get("outcome") in {"passed", "accepted"}:
             return 1.0 if vm_step.get("outcome") in {"accepted", "passed"} or not vm_step else 0.8
         return 0.3
+    if name == "product_contract_completeness":
+        conformance = subject.get("product_contract_conformance") or {}
+        if not conformance.get("required"):
+            return 0.5
+        missing_fields = list(conformance.get("missing_response_fields") or [])
+        missing_layers = list(conformance.get("missing_layers") or [])
+        if conformance.get("passed") and not missing_fields and not missing_layers:
+            return 1.0
+        if conformance.get("product_contract") and conformance.get("layers_audited"):
+            penalty = min(0.6, 0.15 * len(missing_fields) + 0.1 * len(missing_layers))
+            return round(max(0.2, 0.8 - penalty), 3)
+        return 0.0
     if name == "backlog_synthesis_quality":
         synthesis = subject.get("synthesized_entry") or {}
         validation = synthesis.get("validation") or {}
@@ -356,6 +369,7 @@ def build_eval_subject(
         "run_dir": run_dir,
         "standards": standards,
         "step_lookup": _step_lookup(automation_result),
+        "product_contract_conformance": automation_result.get("product_contract_conformance") or {},
     }
 
 
@@ -464,6 +478,7 @@ def replay_history_eval(history_path: Path, *, root: Path | None = None) -> dict
             "changed_files": history.get("files_changed", []),
             "failure_taxonomy": history.get("failure_taxonomy"),
             "ux_conformance": (history.get("operator_diagnostics") or {}).get("ux_conformance", {}),
+            "product_contract_conformance": (history.get("operator_diagnostics") or {}).get("product_contract_conformance", {}),
         }
     standards = load_repo_local_standards(repo_root)
     result = score_private_eval(task, automation_result, run_dir=run_dir, standards=standards, root=repo_root)

@@ -9,9 +9,11 @@ Supported rubric dimensions include:
 - runtime_proof_quality
 - evidence_quality
 - recovery_quality
+- trajectory_quality
 - operator_handoff_quality
 - ui_validation_quality
 - data_contract_compliance
+- product_contract_completeness
 - backlog_synthesis_quality
 Each fixture file lives under `eval_fixtures/*.json`.
 
@@ -46,9 +48,11 @@ Supported rubric dimensions in this slice:
 - `runtime_proof_quality`
 - `evidence_quality`
 - `recovery_quality`
+- `trajectory_quality`
 - `operator_handoff_quality`
 - `ui_validation_quality`
 - `data_contract_compliance`
+- `product_contract_completeness`
 
 Each rubric dimension entry must include:
 

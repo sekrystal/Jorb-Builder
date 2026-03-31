@@ -1,0 +1,127 @@
+{
+  "task_id": "JORB-INFRA-041",
+  "title": "Operator TUI compact progress and technical detail toggle",
+  "status": "blocked",
+  "attempt": 1,
+  "started_at": "2026-03-31T20:50:19.002247+00:00",
+  "completed_at": "2026-03-31T20:50:19.193385+00:00",
+  "prompt": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T205018Z/codex_prompt.md",
+  "run_log_dir": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T205018Z-JORB-INFRA-041",
+  "evidence_artifacts": [
+    {
+      "label": "prompt",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T205018Z/codex_prompt.md"
+    },
+    {
+      "label": "run_log_dir",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T205018Z-JORB-INFRA-041"
+    },
+    {
+      "label": "automation_result",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T205018Z-JORB-INFRA-041/automation_result.json"
+    },
+    {
+      "label": "automation_summary",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T205018Z-JORB-INFRA-041/automation_summary.md"
+    },
+    {
+      "label": "progress_log",
+      "path": "/Users/samuelkrystal/projects/jorb-builder/run_logs/2026-03-31T205018Z-JORB-INFRA-041/progress.jsonl"
+    }
+  ],
+  "files_changed": [
+    "backlog_entry_schema.md",
+    "eval_fixture_schema.md",
+    "eval_fixtures/product_ux.json",
+    "eval_fixtures/runtime_vm.json",
+    "prompts/debug_failure.md",
+    "prompts/implement_feature.md",
+    "proposal_guardrails.md",
+    "scripts/automate_task_loop.py",
+    "scripts/common.py",
+    "scripts/operator_state.py",
+    "scripts/operator_tui.py",
+    "scripts/private_eval_suite.py",
+    "scripts/render_packet.py",
+    "scripts/show_status.py",
+    "templates/task_history.yml",
+    "tests/test_automate_task_loop.py"
+  ],
+  "commands_run": [],
+  "results": [
+    "blocked"
+  ],
+  "acceptance_met": [],
+  "acceptance_unmet": [],
+  "blocker_opened": null,
+  "notes": [
+    "Builder repo is dirty before automated execution; refusing to continue."
+  ],
+  "operator_diagnostics": {
+    "decision_summary": "Builder repo is dirty before automated execution; refusing to continue.",
+    "accepted": false,
+    "acceptance_met": [],
+    "acceptance_unmet": [],
+    "step_outcomes": [
+      {
+        "name": "git_status_before",
+        "outcome": "blocked",
+        "detail": "backlog_entry_schema.md\neval_fixture_schema.md\neval_fixtures/product_ux.json\neval_fixtures/runtime_vm.json\nprompts/debug_failure.md\nprompts/implement_feature.md\nproposal_guardrails.md\nscripts/automate_task_loop.py\nscripts/common.py\nscripts/operator_state.py\nscripts/operator_tui.py\nscripts/private_eval_suite.py\nscripts/render_packet.py\nscripts/show_status.py\ntemplates/task_history.yml\ntests/test_automate_task_loop.py"
+      }
+    ],
+    "changed_files_count": 16,
+    "changed_files": [
+      "backlog_entry_schema.md",
+      "eval_fixture_schema.md",
+      "eval_fixtures/product_ux.json",
+      "eval_fixtures/runtime_vm.json",
+      "prompts/debug_failure.md",
+      "prompts/implement_feature.md",
+      "proposal_guardrails.md",
+      "scripts/automate_task_loop.py",
+      "scripts/common.py",
+      "scripts/operator_state.py",
+      "scripts/operator_tui.py",
+      "scripts/private_eval_suite.py",
+      "scripts/render_packet.py",
+      "scripts/show_status.py",
+      "templates/task_history.yml",
+      "tests/test_automate_task_loop.py"
+    ],
+    "unproven_runtime_gaps": [
+      "Builder repo is dirty before automated execution; refusing to continue."
+    ],
+    "ux_conformance": {
+      "required": false,
+      "passed": true,
+      "planning_issues": [],
+      "missing_response_fields": [],
+      "design_section_mapping": null,
+      "intentional_design_deviations": null,
+      "product_first_checklist": null,
+      "primary_ux_prohibited_surfaces": []
+    },
+    "product_contract_conformance": {
+      "required": false,
+      "passed": true,
+      "missing_response_fields": [],
+      "missing_layers": [],
+      "product_contract": null,
+      "layers_audited": null,
+      "misleading_partials_avoided": null,
+      "not_done_until": null,
+      "remaining_gaps": null,
+      "expected_layers": []
+    },
+    "review_result": {}
+  },
+  "unproven_runtime_gaps": [
+    "Builder repo is dirty before automated execution; refusing to continue."
+  ],
+  "failure_taxonomy": {
+    "failure_class": "repo_state_failure",
+    "recovery_action": "block_pending_operator_decision",
+    "retryable": false
+  },
+  "eval_result": null
+}

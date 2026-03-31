@@ -27,6 +27,7 @@ def main() -> int:
     synthesis = snapshot["synthesis"]
     artifact = snapshot["artifact_panel"]
     eval_result = snapshot["eval_result"]
+    review_result = snapshot.get("review_result") or {}
     latest_blocker = snapshot["latest_blocker"] or {}
 
     print("=== Jorb Builder Status ===")
@@ -67,6 +68,9 @@ def main() -> int:
     print(f"- eval_passed: {eval_result.get('passed', 'n/a')}")
     print(f"- eval_trajectory_quality: {(eval_result.get('scores') or {}).get('trajectory_quality', 'n/a')}")
     print(f"- judge_result: {snapshot.get('judge_result') or 'none'}")
+    print(f"- review_verdict: {review_result.get('verdict', 'n/a')}")
+    print(f"- review_passed: {review_result.get('passed', 'n/a')}")
+    print(f"- review_summary: {review_result.get('summary') or 'none'}")
     print(f"- runtime_proof_expected: {bool((snapshot.get('task') or {}).get('requires_vm_runtime_proof'))}")
 
     print("\nQueue and backlog evolution:")

@@ -35,19 +35,25 @@
     },
     {
       "name": "ui_validation_quality",
-      "weight": 0.22,
+      "weight": 0.18,
       "threshold": 0.8,
       "description": "UX conformance must be explicit and passing."
     },
     {
-      "name": "evidence_quality",
+      "name": "product_contract_completeness",
       "weight": 0.16,
+      "threshold": 0.8,
+      "description": "The final report must prove the full product contract, audited layers, and avoided misleading partials."
+    },
+    {
+      "name": "evidence_quality",
+      "weight": 0.14,
       "threshold": 0.8,
       "description": "Evidence bundle and judge output must be complete."
     },
     {
       "name": "operator_handoff_quality",
-      "weight": 0.14,
+      "weight": 0.12,
       "threshold": 0.7,
       "description": "The operator should understand what changed and what remains unproven."
     }

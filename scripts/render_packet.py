@@ -7,6 +7,9 @@ import textwrap
 from common import (
     build_memory_store,
     builder_root,
+    default_not_done_until,
+    default_product_contract,
+    default_systemic_layers,
     format_artifact_bundle_text,
     format_memory_bundle_text,
     is_product_facing_ux_task,
@@ -16,6 +19,7 @@ from common import (
     load_repo_local_standards,
     retrieve_artifacts_for_role,
     retrieve_memory_for_role,
+    task_target_kind,
     validate_memory_store_schema,
     write_data,
     product_repo_path,
@@ -64,15 +68,6 @@ def ux_requirements_block(task: dict) -> str:
     return "\n".join(lines)
 
 
-def target_kind_for_task(task: dict, builder_label: str) -> str:
-    allowlist = list(task.get("allowlist", []))
-    if task.get("repo_path") == builder_label or task.get("area") == "builder":
-        return "builder"
-    if any(str(entry).startswith("../jorb-builder") for entry in allowlist):
-        return "builder"
-    return "product"
-
-
 def repo_local_standards_block() -> str:
     standards = load_repo_local_standards(ROOT)
     lines = [
@@ -107,6 +102,33 @@ def phase4_enforcement_block(task: dict) -> str:
             "- pause if materially different implementation options exist without a selected approach.",
         ]
     )
+
+
+def product_contract_requirements_block(task: dict) -> str:
+    if task_target_kind(task) != "product":
+        return "- none"
+    contract = str(task.get("product_contract") or default_product_contract(task)).strip()
+    layers = list(task.get("systemic_layers", default_systemic_layers(task)))
+    misleading = list(task.get("misleading_partial_implementations", []))
+    not_done_until = list(task.get("not_done_until", default_not_done_until(task)))
+    lines = [f"Product contract: {contract or 'none'}", "Systemic layers that must be audited before calling the task done:"]
+    lines.extend([f"  - {item}" for item in layers] if layers else ["  - none"])
+    lines.extend(
+        [
+            "Misleading partial implementations that do NOT count as done:",
+            *([f"  - {item}" for item in misleading] if misleading else ["  - none"]),
+            "Not done until:",
+            *([f"  - {item}" for item in not_done_until] if not_done_until else ["  - none"]),
+            "For product tasks, section 1 of the final response must include labeled lines for:",
+            "  - Product Contract:",
+            "  - Layers Audited:",
+            "  - Misleading Partials Avoided:",
+            "  - Not Done Until:",
+            "  - Remaining Gaps:",
+            "Do not stop at the easiest visible layer if the task contract implies backend, persistence, loading, empty-state, or restore semantics.",
+        ]
+    )
+    return "\n".join(lines)
 
 
 def memory_context_block(task: dict) -> tuple[str, dict]:
@@ -156,7 +178,7 @@ def main() -> int:
         return 2
 
     task = find_task(backlog, task_id)
-    target_kind_label = target_kind_for_task(task, builder_label)
+    target_kind_label = task_target_kind(task)
     target_repo_label = builder_label if target_kind_label == "builder" else product_label
     prompt_name = task.get("prompt") or config["execution"]["default_prompt"]
     prompt_template = (PROMPTS / f"{prompt_name}.md").read_text(encoding="utf-8")
@@ -205,6 +227,7 @@ def main() -> int:
         failure_summary=active.get("failure_summary") or "No failure summary recorded.",
         builder_edit_constraint="- Do not edit product files." if target_kind_label == "builder" else "- Do not edit builder files.",
         ux_conformance_requirements=ux_requirements_block(task),
+        product_contract_requirements=product_contract_requirements_block(task),
         repo_local_standards=repo_local_standards_block(),
         phase4_enforcement_requirements=phase4_enforcement_block(task),
         memory_context=memory_block,

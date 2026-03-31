@@ -21,6 +21,13 @@ Synthesized backlog entries include:
 - `validation`
 - `synthesis_eval`
 
+Product tasks should also carry an explicit completeness contract:
+
+- `product_contract`
+- `systemic_layers`
+- `misleading_partial_implementations`
+- `not_done_until`
+
 Synthesized backlog payload also includes:
 
 - `dependency_graph.nodes`
@@ -35,3 +42,4 @@ Validation rejects:
 - invalid dependencies
 - duplicate ids or near-match duplicate titles
 - empty or generic acceptance criteria
+- product tasks with an empty completeness contract or missing audited layers

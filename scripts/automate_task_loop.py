@@ -31,6 +31,7 @@ from common import (
     load_data,
     load_repo_local_standards,
     load_validated_backlog,
+    task_target_kind,
     product_repo_path,
     retrieve_artifacts_for_role,
     retrieve_memory_for_role,
@@ -145,6 +146,7 @@ TASK_STAGE_NAMES = [
     "Preflight check",
     "Git commit and push",
     "VM validation",
+    "Codex review",
     "Classification",
 ]
 CANONICAL_STATE_LEGEND = {
@@ -163,6 +165,16 @@ NONINTERACTIVE_GIT_ENV = {
 UX_MAPPING_LABEL = "UX Design Section Mapping:"
 UX_DEVIATIONS_LABEL = "UX Intentional Design Deviations:"
 UX_CHECKLIST_LABEL = "UX Product-First Checklist:"
+PRODUCT_CONTRACT_LABEL = "Product Contract:"
+LAYERS_AUDITED_LABEL = "Layers Audited:"
+MISLEADING_PARTIALS_LABEL = "Misleading Partials Avoided:"
+NOT_DONE_UNTIL_LABEL = "Not Done Until:"
+REMAINING_GAPS_LABEL = "Remaining Gaps:"
+REVIEW_VERDICT_LABEL = "Review Verdict:"
+REVIEW_SUMMARY_LABEL = "Review Summary:"
+REVIEW_FINDINGS_LABEL = "Review Findings:"
+REVIEW_RECOMMENDATION_LABEL = "Review Recommendation:"
+REVIEW_FOCUS_LABEL = "Review Focus:"
 TRANSIENT_EXECUTOR_FAILURE_PATTERNS = (
     "stream disconnected before completion",
     "error sending request for url",
@@ -1555,6 +1567,9 @@ def history_evidence_artifacts(run_dir: Path | None, prompt_file: Path | None) -
                 ("automation_summary", run_dir / SUMMARY_FILE),
                 ("progress_log", run_dir / PROGRESS_FILE),
                 ("executor_output", run_dir / "codex_last_message.md"),
+                ("review_prompt", run_dir / "codex_review_prompt.md"),
+                ("review_output", run_dir / "codex_review.md"),
+                ("review_result", run_dir / "review_result.json"),
                 ("local_validation", run_dir / "local_validation.json"),
                 ("vm_validation", run_dir / "vm_validation.json"),
                 ("git", run_dir / "git.json"),
@@ -1653,6 +1668,192 @@ def ux_conformance_result(task: dict[str, Any], executor_output: str) -> dict[st
     return result
 
 
+def product_contract_conformance_result(task: dict[str, Any], executor_output: str) -> dict[str, Any]:
+    required = task_target_kind(task) == "product"
+    expected_layers = [str(item).strip().lower() for item in task.get("systemic_layers", []) if str(item).strip()]
+    result = {
+        "required": required,
+        "passed": True,
+        "missing_response_fields": [],
+        "missing_layers": [],
+        "product_contract": extract_labeled_line(executor_output, PRODUCT_CONTRACT_LABEL),
+        "layers_audited": extract_labeled_line(executor_output, LAYERS_AUDITED_LABEL),
+        "misleading_partials_avoided": extract_labeled_line(executor_output, MISLEADING_PARTIALS_LABEL),
+        "not_done_until": extract_labeled_line(executor_output, NOT_DONE_UNTIL_LABEL),
+        "remaining_gaps": extract_labeled_line(executor_output, REMAINING_GAPS_LABEL),
+        "expected_layers": expected_layers,
+    }
+    if not required:
+        return result
+
+    missing: list[str] = []
+    if result["product_contract"] is None:
+        missing.append("response.product_contract")
+    if result["layers_audited"] is None:
+        missing.append("response.layers_audited")
+    if result["misleading_partials_avoided"] is None:
+        missing.append("response.misleading_partials_avoided")
+    if result["not_done_until"] is None:
+        missing.append("response.not_done_until")
+    if result["remaining_gaps"] is None:
+        missing.append("response.remaining_gaps")
+    audited_text = str(result["layers_audited"] or "").lower()
+    missing_layers = [layer for layer in expected_layers if layer not in audited_text]
+    result["missing_response_fields"] = missing
+    result["missing_layers"] = missing_layers
+    result["passed"] = not missing and not missing_layers
+    return result
+
+
+def review_focus_for_task(task: dict[str, Any]) -> list[str]:
+    if task_target_kind(task) == "product":
+        return [
+            "backend/UI semantic mismatch",
+            "persistence or reload gaps",
+            "empty/loading/error-state incompleteness",
+            "adjacent flow regressions",
+            "narrow visible fixes that miss deeper product contract requirements",
+        ]
+    return [
+        "truth mismatch across operator surfaces",
+        "state transition regressions",
+        "eval, retrieval, or orchestration regressions",
+        "misleading operator guidance",
+    ]
+
+
+def build_code_review_prompt(
+    task: dict[str, Any],
+    *,
+    run_dir: Path,
+    changed_files: list[str],
+    summary: str,
+    executor_output: str,
+    ux_conformance: dict[str, Any],
+    product_contract_conformance: dict[str, Any],
+    local_validation_payload: dict[str, Any] | None,
+    vm_validation_payload: dict[str, Any] | None,
+) -> str:
+    focus = review_focus_for_task(task)
+    executor_excerpt = tail_text(executor_output, 4000)
+    return "\n".join(
+        [
+            "# Codex Review Request",
+            "",
+            "You are performing the formal second-pass code review gate for this builder run.",
+            "Review the current repo state, current diff, changed files, and run artifacts before final acceptance.",
+            "Do not treat passing tests as sufficient if you find regressions, incomplete contract coverage, or misleading partial implementations.",
+            "",
+            f"Task ID: {task.get('id')}",
+            f"Task Title: {task.get('title')}",
+            f"Task Area: {task.get('area')}",
+            f"Task Target Kind: {task_target_kind(task)}",
+            f"Run Directory: {run_dir}",
+            f"Current Summary Candidate: {summary}",
+            "",
+            "Acceptance Criteria:",
+            *[f"- {item}" for item in (task.get("acceptance") or task.get("acceptance_criteria") or [])],
+            "",
+            "Review Focus:",
+            *[f"- {item}" for item in focus],
+            "",
+            "Changed Files:",
+            *([f"- {item}" for item in changed_files] or ["- none reported"]),
+            "",
+            "Validation Signals:",
+            f"- local_validation_passed: {(local_validation_payload or {}).get('passed', 'n/a')}",
+            f"- vm_validation_passed: {(vm_validation_payload or {}).get('passed', 'n/a')}",
+            f"- ux_conformance_passed: {ux_conformance.get('passed')}",
+            f"- product_contract_passed: {product_contract_conformance.get('passed')}",
+            "",
+            "Recent Executor Output Excerpt:",
+            executor_excerpt or "(none)",
+            "",
+            "Output Requirements:",
+            f"- {REVIEW_VERDICT_LABEL} accept | refine | block",
+            f"- {REVIEW_SUMMARY_LABEL} one sentence",
+            f"- {REVIEW_FINDINGS_LABEL} concise semicolon-separated findings, or none",
+            f"- {REVIEW_RECOMMENDATION_LABEL} concise next action",
+            f"- {REVIEW_FOCUS_LABEL} list the focus areas you actually checked",
+            "",
+            "Be strict and literal. Flag misleading partial implementations instead of waving them through.",
+        ]
+    ) + "\n"
+
+
+def parse_code_review_result(task: dict[str, Any], review_output: str) -> dict[str, Any]:
+    raw_verdict = str(extract_labeled_line(review_output, REVIEW_VERDICT_LABEL) or "").strip().lower()
+    verdict = "refined"
+    if raw_verdict in {"accept", "accepted", "pass", "passed"}:
+        verdict = "accepted"
+    elif raw_verdict in {"block", "blocked"}:
+        verdict = "blocked"
+    elif raw_verdict in {"refine", "refined", "request_refinement"}:
+        verdict = "refined"
+    findings = extract_labeled_line(review_output, REVIEW_FINDINGS_LABEL)
+    summary = extract_labeled_line(review_output, REVIEW_SUMMARY_LABEL)
+    recommendation = extract_labeled_line(review_output, REVIEW_RECOMMENDATION_LABEL)
+    focus_checked = extract_labeled_line(review_output, REVIEW_FOCUS_LABEL)
+    missing: list[str] = []
+    if extract_labeled_line(review_output, REVIEW_VERDICT_LABEL) is None:
+        missing.append("response.review_verdict")
+    if summary is None:
+        missing.append("response.review_summary")
+    if findings is None:
+        missing.append("response.review_findings")
+    if recommendation is None:
+        missing.append("response.review_recommendation")
+    if focus_checked is None:
+        missing.append("response.review_focus")
+    required_focus = review_focus_for_task(task)
+    return {
+        "required": True,
+        "passed": verdict == "accepted" and not missing,
+        "verdict": verdict,
+        "summary": summary,
+        "findings": findings,
+        "recommendation": recommendation,
+        "focus_checked": focus_checked,
+        "required_focus": required_focus,
+        "missing_response_fields": missing,
+        "output_file": None,
+        "prompt_file": None,
+    }
+
+
+def apply_code_review_gate(
+    *,
+    classification: str,
+    summary: str,
+    review_result: dict[str, Any],
+    steps: list[dict[str, Any]],
+) -> tuple[str, str]:
+    if not review_result.get("required"):
+        return classification, summary
+    verdict = str(review_result.get("verdict") or "refined")
+    detail_parts: list[str] = []
+    if review_result.get("summary"):
+        detail_parts.append(str(review_result.get("summary")))
+    if review_result.get("findings") and str(review_result.get("findings")).lower() != "none":
+        detail_parts.append(str(review_result.get("findings")))
+    if review_result.get("missing_response_fields"):
+        detail_parts.append("missing review fields: " + ", ".join(review_result["missing_response_fields"]))
+    steps.append(
+        {
+            "name": "code_review",
+            "outcome": "accepted" if review_result.get("passed") else verdict,
+            "detail": " | ".join(detail_parts) if detail_parts else "Codex review completed.",
+        }
+    )
+    if classification != "accepted":
+        return classification, summary
+    if review_result.get("passed"):
+        return classification, summary
+    if verdict == "blocked":
+        return "blocked", str(review_result.get("summary") or "Codex review identified a blocking regression or contract gap.")
+    return "refined", str(review_result.get("summary") or "Codex review requested refinement before acceptance.")
+
+
 def history_operator_diagnostics(task: dict[str, Any], automation_result: dict[str, Any]) -> dict[str, Any]:
     accepted = automation_result.get("classification") == "accepted"
     executor_output = ""
@@ -1661,6 +1862,7 @@ def history_operator_diagnostics(task: dict[str, Any], automation_result: dict[s
             executor_output = str(step.get("detail") or "")
             break
     ux_conformance = ux_conformance_result(task, executor_output)
+    product_contract_conformance = automation_result.get("product_contract_conformance") or product_contract_conformance_result(task, executor_output)
     step_outcomes = [
         {"name": step.get("name"), "outcome": step.get("outcome"), "detail": step.get("detail")}
         for step in automation_result.get("steps", [])
@@ -1675,6 +1877,8 @@ def history_operator_diagnostics(task: dict[str, Any], automation_result: dict[s
         "changed_files": automation_result.get("changed_files", []),
         "unproven_runtime_gaps": automation_result.get("unproven_runtime_gaps", []),
         "ux_conformance": ux_conformance,
+        "product_contract_conformance": product_contract_conformance,
+        "review_result": automation_result.get("review_result") or {},
     }
 
 
@@ -3719,6 +3923,7 @@ def codex_exec_argv(
     executor_config: dict[str, Any],
     *,
     run_dir: Path,
+    output_filename: str | None = None,
 ) -> list[str]:
     cli = str(executor_config.get("codex_cli") or "codex")
     argv = [cli, "exec"]
@@ -3727,7 +3932,7 @@ def codex_exec_argv(
         argv.extend(["--sandbox", str(sandbox_mode)])
     if executor_config.get("full_auto", True):
         argv.append("--full-auto")
-    output_path = run_dir / str(executor_config.get("last_message_file") or "codex_last_message.md")
+    output_path = run_dir / str(output_filename or executor_config.get("last_message_file") or "codex_last_message.md")
     argv.extend(["-o", str(output_path), "-"])
     return argv
 
@@ -4846,6 +5051,7 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         summary = "Automated loop completed with builder-side local validation success."
     executor_output = str(executor_result.get("last_message") or "")
     ux_conformance = ux_conformance_result(task, executor_output)
+    product_contract_conformance = product_contract_conformance_result(task, executor_output)
     if classification == "accepted" and not ux_conformance["passed"]:
         classification = "refined"
         summary = "UX conformance evidence is incomplete for this product-facing UX task."
@@ -4856,6 +5062,145 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
                 "detail": "Missing UX conformance evidence: " + ", ".join(ux_conformance["missing_response_fields"]),
             }
         )
+    if classification == "accepted" and not product_contract_conformance["passed"]:
+        classification = "refined"
+        summary = "Product contract completeness evidence is incomplete for this product task."
+        missing_detail = list(product_contract_conformance["missing_response_fields"])
+        missing_layers = product_contract_conformance["missing_layers"]
+        if missing_layers:
+            missing_detail.append("missing_layers:" + ", ".join(missing_layers))
+        steps.append(
+            {
+                "name": "product_contract_conformance",
+                "outcome": "refined",
+                "detail": "Missing product contract evidence: " + ", ".join(missing_detail),
+            }
+        )
+    review_result = {
+        "required": executor_mode == "codex_exec",
+        "passed": classification == "accepted",
+        "verdict": "accepted" if classification == "accepted" else classification,
+        "summary": "Codex review was skipped because the run did not reach an acceptance candidate.",
+        "findings": "none",
+        "recommendation": "Address the existing blocker or refinement before rerunning review.",
+        "focus_checked": "; ".join(review_focus_for_task(task)),
+        "required_focus": review_focus_for_task(task),
+        "missing_response_fields": [],
+        "output_file": None,
+        "prompt_file": None,
+    }
+    if classification == "accepted" and executor_mode == "codex_exec":
+        review_prompt_path = run_dir / "codex_review_prompt.md"
+        review_output_path = run_dir / "codex_review.md"
+        review_prompt = build_code_review_prompt(
+            task,
+            run_dir=run_dir,
+            changed_files=changed_files,
+            summary=summary,
+            executor_output=executor_output,
+            ux_conformance=ux_conformance,
+            product_contract_conformance=product_contract_conformance,
+            local_validation_payload=local_validation_payload,
+            vm_validation_payload=vm_validation_payload,
+        )
+        review_prompt_path.write_text(review_prompt, encoding="utf-8")
+
+        def emit_review_heartbeat(payload: dict[str, Any]) -> None:
+            detail = (
+                f"status={payload.get('status')} | waiting_on={payload.get('waiting_on')} | "
+                f"pid={payload.get('pid')} | elapsed={payload.get('elapsed_seconds')}s | "
+                f"timeout_remaining={payload.get('timeout_remaining_seconds')}s | "
+                f"prompt={review_prompt_path} | output={payload.get('output_file')} | "
+                f"output_exists={str(payload.get('last_message_exists')).lower()} | "
+                f"output_size={payload.get('last_message_size_bytes')}B | "
+                f"output_mtime={payload.get('last_message_mtime') or 'none'} | "
+                f"artifact_age={(str(payload.get('seconds_since_artifact_change')) + 's') if payload.get('seconds_since_artifact_change') is not None else 'none'} | "
+                f"stream_age={(str(payload.get('seconds_since_stream_activity')) + 's') if payload.get('seconds_since_stream_activity') is not None else 'none'} | "
+                f"stdout_seen={str(payload.get('stdout_seen')).lower()} | "
+                f"stderr_seen={str(payload.get('stderr_seen')).lower()} | "
+                f"poll={payload.get('process_status')}"
+            )
+            emit_progress(
+                run_dir,
+                task_id=task["id"],
+                stage_index=9,
+                backlog=backlog,
+                task_started_at=progress_started_at,
+                detail=detail,
+                extra_payload={"review_prompt_file": str(review_prompt_path), **payload},
+            )
+
+        emit_progress(
+            run_dir,
+            task_id=task["id"],
+            stage_index=9,
+            backlog=backlog,
+            task_started_at=progress_started_at,
+            detail="Codex second-pass review is running against the current diff and run artifacts.",
+            extra_payload={"review_prompt_file": str(review_prompt_path), "output_file": str(review_output_path)},
+        )
+        review_exec_result = run_codex_exec(
+            codex_exec_argv(executor_config, run_dir=run_dir, output_filename="codex_review.md"),
+            target_repo,
+            input_text=review_prompt,
+            output_path=review_output_path,
+            timeout=int(executor_config.get("review_timeout_seconds", executor_config.get("timeout_seconds", 300))),
+            heartbeat_seconds=int(executor_config.get("heartbeat_seconds", 15)),
+            stall_seconds=int(executor_config.get("stall_threshold_seconds", 0) or 0),
+            heartbeat=emit_review_heartbeat,
+        )
+        write_step(run_dir, "review_executor", review_exec_result)
+        if review_exec_result.get("passed"):
+            review_result = parse_code_review_result(task, str(review_exec_result.get("last_message") or ""))
+            review_result["output_file"] = str(review_output_path)
+            review_result["prompt_file"] = str(review_prompt_path)
+            write_step(run_dir, "review_result", review_result)
+            review_classification_before_gate = classification
+            classification, summary = apply_code_review_gate(
+                classification=classification,
+                summary=summary,
+                review_result=review_result,
+                steps=steps,
+            )
+            emit_progress(
+                run_dir,
+                task_id=task["id"],
+                stage_index=9,
+                backlog=backlog,
+                task_started_at=progress_started_at,
+                state="completed" if classification == review_classification_before_gate else "failed",
+                detail=str(review_result.get("summary") or "Codex review completed."),
+            )
+        else:
+            review_result = {
+                "required": True,
+                "passed": False,
+                "verdict": "blocked",
+                "summary": "Codex review failed before a verdict could be produced.",
+                "findings": review_exec_result.get("stderr_tail") or review_exec_result.get("stderr") or "review executor failure",
+                "recommendation": "Fix the review executor failure and rerun automation.",
+                "focus_checked": "; ".join(review_focus_for_task(task)),
+                "required_focus": review_focus_for_task(task),
+                "missing_response_fields": ["response.review_verdict"],
+                "output_file": str(review_output_path),
+                "prompt_file": str(review_prompt_path),
+            }
+            write_step(run_dir, "review_result", review_result)
+            classification, summary = apply_code_review_gate(
+                classification=classification,
+                summary=summary,
+                review_result=review_result,
+                steps=steps,
+            )
+            emit_progress(
+                run_dir,
+                task_id=task["id"],
+                stage_index=9,
+                backlog=backlog,
+                task_started_at=progress_started_at,
+                state="failed",
+                detail=review_result["summary"],
+            )
     automation_result = {
         "task_id": task["id"],
         "classification": classification,
@@ -4865,11 +5210,13 @@ def run_loop(args: argparse.Namespace, *, allow_follow_on: bool) -> int:
         "changed_files": changed_files,
         "blocker_evidence": [],
         "unproven_runtime_gaps": [] if vm_passed else [summary],
+        "product_contract_conformance": product_contract_conformance,
+        "review_result": review_result,
     }
     emit_progress(
         run_dir,
         task_id=task["id"],
-        stage_index=9,
+        stage_index=10,
         backlog=backlog,
         task_started_at=progress_started_at,
         state="completed" if classification == "accepted" else "failed",

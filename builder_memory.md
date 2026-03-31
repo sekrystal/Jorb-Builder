@@ -341,3 +341,5 @@ Does this directly improve:
 - JORB-INFRA-035 blocked by automated loop via BLK-JORB-INFRA-035.yml. History: 2026-03-31T152930Z-JORB-INFRA-035.yml
 
 - DRAFT-JORB-INFRA-EVAL_REGRESSION blocked by automated loop via BLK-DRAFT-JORB-INFRA-EVAL_REGRESSION.yml. History: 2026-03-31T163056Z-DRAFT-JORB-INFRA-EVAL_REGRESSION.yml
+
+- JORB-INFRA-041 blocked by automated loop via BLK-JORB-INFRA-041.yml. History: 2026-03-31T205019Z-JORB-INFRA-041.yml

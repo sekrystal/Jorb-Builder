@@ -51,6 +51,11 @@ DEFAULT_PRODUCT_FIRST_UX_CHECKLIST = [
     "confirm prohibited surfaces stay out of the primary user-facing shell",
     "confirm backend wiring or real data alone is not treated as sufficient UX acceptance evidence",
 ]
+DEFAULT_PRODUCT_COMPLETENESS_WARNINGS = [
+    "declaring success after only the easiest visible layer was fixed",
+    "treating a UI-only patch as done when backend or persistence semantics still disagree",
+    "keeping a visible control that is still unwired, misleading, or not durable across refresh",
+]
 CANONICAL_FIGMA_SOURCE = "/Users/samuelkrystal/projects/jorb/design/figma"
 PHASE4_BUILDER_TASK_PATTERN = re.compile(r"^JORB-INFRA-(0(1[0-9]|2[0-9])|03[0-3])$")
 MEMORY_STORE_FILE = "memory_store.json"
@@ -213,6 +218,14 @@ def infer_task_repo_path(task: dict, config: dict) -> str:
     return str(config["paths"]["product_repo"])
 
 
+def task_target_kind(task: dict, config: dict | None = None) -> str:
+    cfg = config or load_config()
+    repo_path = str(task.get("repo_path") or infer_task_repo_path(task, cfg))
+    if expand_path(repo_path) == expand_path(str(cfg["paths"]["builder_root"])):
+        return "builder"
+    return "product"
+
+
 def is_product_facing_ux_task(task: dict) -> bool:
     if bool(task.get("product_facing_ux")):
         return True
@@ -226,6 +239,57 @@ def is_phase4_builder_task(task: dict) -> bool:
         return False
     area = str(task.get("area", "")).strip().lower()
     return area == "builder"
+
+
+def default_systemic_layers(task: dict, config: dict | None = None) -> list[str]:
+    if task_target_kind(task, config) != "product":
+        return []
+    area = str(task.get("area") or "").strip().lower()
+    allowlist_text = " ".join(str(item) for item in task.get("allowlist", []))
+    layers: list[str] = []
+    if area in {"frontend", "ux"}:
+        layers.extend(["ui", "loading_state", "empty_state"])
+    if area in {"backend", "api", "data"}:
+        layers.extend(["backend", "data_contract"])
+    if any(token in allowlist_text for token in ("services/", "models/", "core/", "api/")):
+        layers.extend(["backend", "persistence"])
+    if any(token in allowlist_text for token in ("ui/", "components/", "screens/")):
+        layers.extend(["ui", "loading_state", "empty_state"])
+    if not layers:
+        layers.extend(["ui", "backend", "persistence"])
+    ordered: list[str] = []
+    for name in ("ui", "backend", "persistence", "data_contract", "loading_state", "empty_state", "restore_flow"):
+        if name in layers and name not in ordered:
+            ordered.append(name)
+    return ordered
+
+
+def default_product_contract(task: dict, config: dict | None = None) -> str:
+    if task_target_kind(task, config) != "product":
+        return ""
+    objective = str(task.get("objective") or "").strip()
+    title = str(task.get("title") or "").strip()
+    acceptance = [str(item).strip() for item in task.get("acceptance", []) if str(item).strip()]
+    base = objective or title or "Deliver the requested product behavior end to end."
+    if acceptance:
+        return f"{base} The product is not complete unless these user-visible semantics hold: {'; '.join(acceptance)}."
+    return base
+
+
+def default_not_done_until(task: dict, config: dict | None = None) -> list[str]:
+    layers = default_systemic_layers(task, config)
+    if not layers:
+        return []
+    mapping = {
+        "ui": "the visible product interaction matches the stated contract and does not imply unsupported behavior",
+        "backend": "backend semantics match the user-visible behavior instead of only patching presentation",
+        "persistence": "state survives refresh or reload when the product implies durability",
+        "data_contract": "API and stored data semantics match the intended product behavior",
+        "loading_state": "loading and in-progress states are explicit instead of silent or broken-looking",
+        "empty_state": "empty, zero-result, and unavailable states are validated and non-misleading",
+        "restore_flow": "restore or undo behavior is present and reversible when the product contract implies it",
+    }
+    return [mapping[layer] for layer in layers if layer in mapping]
 
 
 def load_repo_local_standards(root: Path | None = None) -> dict:
@@ -1369,6 +1433,14 @@ def canonicalize_task(task: dict, config: dict) -> dict:
     if "acceptance_criteria" not in normalized:
         normalized["acceptance_criteria"] = list(task.get("acceptance", []))
     normalized.setdefault("allow_noop_completion", bool(task.get("allow_noop_completion", False)))
+    if task_target_kind(normalized, config) == "product":
+        normalized.setdefault("product_contract", default_product_contract(normalized, config))
+        normalized.setdefault("systemic_layers", list(task.get("systemic_layers", default_systemic_layers(normalized, config))))
+        normalized.setdefault(
+            "misleading_partial_implementations",
+            list(task.get("misleading_partial_implementations", DEFAULT_PRODUCT_COMPLETENESS_WARNINGS)),
+        )
+        normalized.setdefault("not_done_until", list(task.get("not_done_until", default_not_done_until(normalized, config))))
     if is_product_facing_ux_task(normalized):
         normalized.setdefault("product_facing_ux", True)
         normalized.setdefault("design_section_mapping", list(task.get("design_section_mapping", [])))
@@ -1419,6 +1491,19 @@ def validate_backlog_payload(payload: dict, config: dict) -> dict:
             errors.append({"code": "invalid_acceptance_criteria", "task_id": task_id, "detail": "acceptance_criteria must be a list"})
         if "allow_noop_completion" in task and not isinstance(task.get("allow_noop_completion"), bool):
             errors.append({"code": "invalid_allow_noop_completion", "task_id": task_id, "detail": "allow_noop_completion must be a boolean"})
+        if task_target_kind(task, config) == "product":
+            if not isinstance(task.get("product_contract", ""), str) or not str(task.get("product_contract", "")).strip():
+                errors.append({"code": "invalid_product_contract", "task_id": task_id, "detail": "product_contract must be a non-empty string"})
+            for field in ("systemic_layers", "misleading_partial_implementations", "not_done_until"):
+                value = task.get(field, [])
+                if not isinstance(value, list) or not [str(item).strip() for item in value if str(item).strip()]:
+                    errors.append(
+                        {
+                            "code": f"invalid_{field}",
+                            "task_id": task_id,
+                            "detail": f"{field} must be a non-empty list for product tasks",
+                        }
+                    )
         vm_runtime_issues = vm_runtime_contract_issues(task, config)
         if vm_runtime_issues:
             errors.append(

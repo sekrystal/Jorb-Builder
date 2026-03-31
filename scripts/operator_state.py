@@ -39,6 +39,7 @@ OPERATOR_STAGE_ORDER = [
     "execution_started",
     "validation",
     "judge",
+    "review",
     "terminal",
 ]
 
@@ -50,6 +51,7 @@ OPERATOR_STAGE_LABELS = {
     "execution_started": "Execution started",
     "validation": "Validation",
     "judge": "Judge",
+    "review": "Codex review",
     "terminal": "Accepted / Blocked",
 }
 
@@ -62,7 +64,8 @@ PROGRESS_STAGE_MAP = {
     6: "validation",
     7: "validation",
     8: "validation",
-    9: "terminal",
+    9: "review",
+    10: "terminal",
 }
 
 CANONICAL_EVENT_SCHEMA_VERSION = 1
@@ -70,6 +73,7 @@ CANONICAL_EVENT_KINDS = {
     "running",
     "blocked",
     "failed",
+    "refined",
     "accepted",
     "completed",
     "applied",
@@ -244,6 +248,16 @@ def _latest_judge_result(run_dir: Path | None) -> str | None:
     return "present"
 
 
+def _load_review_result(run_dir: Path | None, automation_result: dict[str, Any]) -> dict[str, Any]:
+    if isinstance(automation_result.get("review_result"), dict) and automation_result.get("review_result"):
+        return dict(automation_result.get("review_result") or {})
+    if run_dir:
+        review_path = run_dir / "review_result.json"
+        if review_path.exists():
+            return _safe_load(review_path, {})
+    return {}
+
+
 def _git_status_lines(root: Path) -> list[str]:
     try:
         completed = subprocess.run(
@@ -270,6 +284,7 @@ def _stage_progress(
     automation_result: dict[str, Any],
     artifact_panel: dict[str, Any],
     eval_result: dict[str, Any],
+    review_result: dict[str, Any],
 ) -> list[dict[str, Any]]:
     progress = _safe_jsonl(run_dir / "progress.jsonl") if run_dir else []
     seen_stages = {PROGRESS_STAGE_MAP.get(int(item.get("stage_index", 0))) for item in progress}
@@ -306,6 +321,10 @@ def _stage_progress(
         statuses["judge"] = "pending"
     else:
         statuses["judge"] = "skipped"
+    if review_result:
+        statuses["review"] = "complete" if review_result.get("passed") else "failed"
+    elif task_source == "active" and ("review" in seen_stages or latest_mapped == "review"):
+        statuses["review"] = "current"
     if completed:
         statuses["terminal"] = "complete"
     elif blocked:
@@ -817,6 +836,7 @@ def _truth_warnings(
     task: dict[str, Any] | None,
     backlog_diag: dict[str, Any],
     latest_blocker: dict[str, Any] | None,
+    review_result: dict[str, Any],
 ) -> list[str]:
     warnings: list[str] = []
     blocked_ids = set(str(item) for item in backlog_diag.get("blocked_task_ids", []))
@@ -838,6 +858,8 @@ def _truth_warnings(
         warnings.append("Top-level status suggests an active run, but there is no active task bound in canonical state.")
     if ready_ids and status_state == "completed":
         warnings.append("Top-level status says completed even though canonical backlog still has ready work.")
+    if review_result and review_result.get("passed") is False and status_state == "completed":
+        warnings.append("Latest run says completed, but Codex review did not pass.")
     return warnings
 
 
@@ -847,6 +869,7 @@ def _system_reality(
     latest_run_dir: Path | None,
     memory_store: dict[str, Any],
     eval_result: dict[str, Any],
+    review_result: dict[str, Any],
     truth_warnings: list[str],
 ) -> list[dict[str, str]]:
     fixtures_dir = root / "eval_fixtures"
@@ -885,6 +908,16 @@ def _system_reality(
             "status": "partially_proven",
             "detail": "Run continuity exists through active_task.yml, status.yml, run_ledger.json, and progress logs.",
             "limit": "Streaming remains poll/file based, not webhook or push-event based.",
+        },
+        {
+            "name": "Code review",
+            "status": "proven" if review_result.get("passed") else ("partially_proven" if review_result else "implemented_not_proven"),
+            "detail": (
+                f"Codex review verdict for the latest run: {review_result.get('verdict')}."
+                if review_result
+                else "A formal Codex review stage exists, but the latest run does not yet show a review result."
+            ),
+            "limit": "Review quality still depends on structured prompt focus and the review model catching what tests miss.",
         },
         {
             "name": "Control plane",
@@ -956,6 +989,7 @@ def build_operator_snapshot(root: Path | None = None) -> dict[str, Any]:
     artifact_panel = _artifact_panel(current_run_dir, task, ledger, allow_ledger_fallback=(task_source == "active"))
     eval_result = _load_latest_eval(current_run_dir, ledger, allow_ledger_fallback=(task_source == "active"))
     judge_result = _latest_judge_result(current_run_dir)
+    review_result = _load_review_result(current_run_dir, automation_result)
     stage_progress = _stage_progress(
         task=task,
         task_source=task_source,
@@ -965,6 +999,7 @@ def build_operator_snapshot(root: Path | None = None) -> dict[str, Any]:
         automation_result=automation_result,
         artifact_panel=artifact_panel,
         eval_result=eval_result,
+        review_result=review_result,
     )
     event_feed = build_canonical_event_stream(repo_root, run_dir=latest_run_dir)
     plain_state = _plain_state(
@@ -991,12 +1026,14 @@ def build_operator_snapshot(root: Path | None = None) -> dict[str, Any]:
         task=task,
         backlog_diag=backlog_diag,
         latest_blocker=latest_blocker,
+        review_result=review_result,
     )
     system_reality = _system_reality(
         root=repo_root,
         latest_run_dir=latest_run_dir,
         memory_store=memory_store,
         eval_result=eval_result,
+        review_result=review_result,
         truth_warnings=truth_warnings,
     )
     next_action = _recommended_action(
@@ -1069,6 +1106,7 @@ def build_operator_snapshot(root: Path | None = None) -> dict[str, Any]:
         "artifact_panel": artifact_panel,
         "eval_result": eval_result,
         "judge_result": judge_result,
+        "review_result": review_result,
         "stage_progress": stage_progress,
         "plain_state": plain_state,
         "compact_progress": compact_progress,
